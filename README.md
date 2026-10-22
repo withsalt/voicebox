@@ -23,7 +23,7 @@ VoiceBox 是基于 **.NET** 开发的模块化语音交互框架，**基本覆�
 - **训练费用**：**300 元 / 次**。
 - **下单入口**：[闲鱼 · 唤醒词训练服务](https://m.tb.cn/h.j2Os9hw?tk=3LcHTEIx4nR)。
 
-唤醒词训练代码也已 **完全开源**：[voicebox-kws-train-opensource](https://github.com/withsalt/voicebox-kws-train-opensource)。你可以自行训练，也可以选择由我协助完成。感谢你以自己的方式支持开源！
+唤醒词训练代码也已 **完全开源**：[voicebox-kws-train-opensource](https://github.com/withsalt/voicebox-kws-train-opensource)。你可以自行训练，也可以选择由我们协助完成。感谢你以自己的方式支持开源！
 
 ## 模型下载
 
