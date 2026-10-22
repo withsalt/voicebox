@@ -1,0 +1,91 @@
+<Solution>
+  <Folder Name="/Demos/">
+    <Project Path="Demos/VoiceAssistantDemo/VoiceAssistantDemo.csproj" />
+  </Folder>
+  <Folder Name="/Demos/ASR/">
+    <Project Path="Demos/Confucius4AsrDemo/Confucius4AsrDemo.csproj" />
+    <Project Path="Demos/DoubaoOnlineAsrDemo/DoubaoOnlineAsrDemo.csproj" />
+    <Project Path="Demos/FireRedASRDemo/FireRedASRDemo.csproj" />
+    <Project Path="Demos/Qwen3ASRDemo/Qwen3ASRDemo.csproj" />
+  </Folder>
+  <Folder Name="/Demos/AudioBackend/">
+    <Project Path="Demos/AudioPlayDemo/AudioPlayDemo.csproj" />
+    <Project Path="Demos/AudioRecordDemo/AudioRecordDemo.csproj" />
+  </Folder>
+  <Folder Name="/Demos/DNR_AEC/">
+    <Project Path="Demos/DeepFilterNetLiveDemo/DeepFilterNetLiveDemo.csproj" />
+    <Project Path="Demos/DPDFNetLiveDemo/DPDFNetLiveDemo.csproj" />
+    <Project Path="Demos/DTLNAecDemo/DTLNAecDemo.csproj" />
+    <Project Path="Demos/HushDnrLiveDemo/HushDnrLiveDemo.csproj" />
+    <Project Path="Demos/WebRtcApmLiveDemo/WebRtcApmLiveDemo.csproj" />
+  </Folder>
+  <Folder Name="/Demos/LLM/">
+    <Project Path="Demos/LLamaSharpLLMDemo/LLamaSharpLLMDemo.csproj" />
+    <Project Path="Demos/OnnxGenAILLMDemo/OnnxGenAILLMDemo.csproj" />
+    <Project Path="Demos/OpenAILLMDemo/OpenAILLMDemo.csproj" />
+  </Folder>
+  <Folder Name="/Demos/Speaker/">
+    <Project Path="Demos/CampPlusSpeakerLiveDemo/CampPlusSpeakerLiveDemo.csproj" />
+    <Project Path="Demos/WeSpeakerSpeakerLiveDemo/WeSpeakerSpeakerLiveDemo.csproj" />
+  </Folder>
+  <Folder Name="/Demos/TTS/">
+    <Project Path="Demos/DoubaoOnlineTtsDemo/DoubaoOnlineTtsDemo.csproj" />
+    <Project Path="Demos/KokoroTtsDemo/KokoroTtsDemo.csproj" />
+    <Project Path="Demos/MossNanoTtsDemo/MossNanoTtsDemo.csproj" Id="9321947e-eca6-4b59-ab8d-8bf1cf2540a3" />
+    <Project Path="Demos/Qwen3TtsDemo/Qwen3TtsDemo.csproj" />
+    <Project Path="Demos/VoxCPMTtsDemo/VoxCPMTtsDemo.csproj" />
+  </Folder>
+  <Folder Name="/Demos/Wakeup/">
+    <Project Path="Demos/FsmnKwsDemo/FsmnKwsDemo.csproj" />
+    <Project Path="Demos/SherpaOnnxKwsDemo/SherpaOnnxKwsDemo.csproj" />
+    <Project Path="Demos/WakeWordDemo/WakeWordDemo.csproj" />
+  </Folder>
+  <Folder Name="/SDKS/">
+    <Project Path="SDKs/Misaki.NET/Misaki.NET.csproj" Id="40d57ff6-449f-43c7-a95f-60afd348afa3" />
+    <Project Path="SDKs/RNNoise.NET/RNNoise.NET.csproj" />
+    <Project Path="SDKs/WeTextProcessing.NET/WeTextProcessing.NET.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/Misaki.Tests/Misaki.Tests.csproj" />
+    <Project Path="Tests/VoiceBox.ASR.Qwen3.Benchmark/VoiceBox.ASR.Qwen3.Benchmark.csproj" />
+    <Project Path="Tests/VoiceBox.Assistant.AecChallenge.Benchmark/VoiceBox.Assistant.AecChallenge.Benchmark.csproj" />
+    <Project Path="Tests/VoiceBox.Assistant.Tests/VoiceBox.Assistant.Tests.csproj" />
+    <Project Path="Tests/VoiceBox.DNR.Benchmark/VoiceBox.DNR.Benchmark.csproj" />
+    <Project Path="Tests/VoiceBox.Wakeup.FsmnKws.Tests/VoiceBox.Wakeup.FsmnKws.Tests.csproj" />
+    <Project Path="Tests/WeTextProcessing.Tests/WeTextProcessing.Tests.csproj" Id="05d2a9f9-c53f-438a-947f-1bd885f02d04" />
+  </Folder>
+  <Project Path="VoiceBox.AEC.DFSMN/VoiceBox.AEC.DFSMN.csproj" />
+  <Project Path="VoiceBox.AEC.DTLN/VoiceBox.AEC.DTLN.csproj" />
+  <Project Path="VoiceBox.APM.WebRtc/VoiceBox.APM.WebRtc.csproj" />
+  <Project Path="VoiceBox.ASR.Confucius4/VoiceBox.ASR.Confucius4.csproj" />
+  <Project Path="VoiceBox.ASR.DoubaoOnline/VoiceBox.ASR.DoubaoOnline.csproj" />
+  <Project Path="VoiceBox.ASR.FireRedASR2/VoiceBox.ASR.FireRedASR2.csproj" Id="fce5fef5-4bfd-437d-98cc-5d2cb381b540" />
+  <Project Path="VoiceBox.ASR.Qwen3/VoiceBox.ASR.Qwen3.csproj" Id="e8b6cb2b-c0d9-40f5-af20-9693b200189a" />
+  <Project Path="VoiceBox.Assistant.Integrations.Mcp/VoiceBox.Assistant.Integrations.Mcp.csproj" />
+  <Project Path="VoiceBox.Assistant/VoiceBox.Assistant.csproj" />
+  <Project Path="VoiceBox.Audio.Common/VoiceBox.Audio.Common.csproj" />
+  <Project Path="VoiceBox.Audio.MiniAudio/VoiceBox.Audio.MiniAudio.csproj" />
+  <Project Path="VoiceBox.Audio.PortAudio/VoiceBox.Audio.PortAudio.csproj" />
+  <Project Path="VoiceBox.Core/VoiceBox.Core.csproj" />
+  <Project Path="VoiceBox.DNR.DeepFilterNet/VoiceBox.DNR.DeepFilterNet.csproj" />
+  <Project Path="VoiceBox.DNR.DPDFNet/VoiceBox.DNR.DPDFNet.csproj" />
+  <Project Path="VoiceBox.DNR.Hush/VoiceBox.DNR.Hush.csproj" />
+  <Project Path="VoiceBox.DNR.RNNoise/VoiceBox.DNR.RNNoise.csproj" Id="1ee035ef-a27b-4c40-8205-d32505a77d05" />
+  <Project Path="VoiceBox.DTD.RenderAware/VoiceBox.DTD.RenderAware.csproj" />
+  <Project Path="VoiceBox.HPF.Butterworth/VoiceBox.HPF.Butterworth.csproj" />
+  <Project Path="VoiceBox.LLM.LLamaSharp/VoiceBox.LLM.LLamaSharp.csproj" />
+  <Project Path="VoiceBox.LLM.OnnxGenAI/VoiceBox.LLM.OnnxGenAI.csproj" Id="c8b2e5e1-31e1-468c-83c9-b1fefe3e843a" />
+  <Project Path="VoiceBox.LLM.OpenAI/VoiceBox.LLM.OpenAI.csproj" />
+  <Project Path="VoiceBox.Speaker.CampPlus/VoiceBox.Speaker.CampPlus.csproj" />
+  <Project Path="VoiceBox.Speaker.WeSpeaker/VoiceBox.Speaker.WeSpeaker.csproj" />
+  <Project Path="VoiceBox.TTS.DoubaoOnline/VoiceBox.TTS.DoubaoOnline.csproj" />
+  <Project Path="VoiceBox.TTS.Kokoro/VoiceBox.TTS.Kokoro.csproj" />
+  <Project Path="VoiceBox.TTS.MossNano/VoiceBox.TTS.MossNano.csproj" />
+  <Project Path="VoiceBox.TTS.Qwen3/VoiceBox.TTS.Qwen3.csproj" />
+  <Project Path="VoiceBox.TTS.VoxCPM/VoiceBox.TTS.VoxCPM.csproj" />
+  <Project Path="VoiceBox.VAD.FireRed/VoiceBox.VAD.FireRed.csproj" Id="ee07d613-69cc-4c35-8f5c-f511bfde9053" />
+  <Project Path="VoiceBox.VAD.Silero/VoiceBox.VAD.Silero.csproj" Id="5260b298-53b9-4977-8de5-acf23c60e9c8" />
+  <Project Path="VoiceBox.Wakeup.FsmnKws/VoiceBox.Wakeup.FsmnKws.csproj" />
+  <Project Path="VoiceBox.Wakeup.OpenWakeWord/VoiceBox.Wakeup.OpenWakeWord.csproj" />
+  <Project Path="VoiceBox.Wakeup.SherpaOnnxKws/VoiceBox.Wakeup.SherpaOnnxKws.csproj" />
+</Solution>

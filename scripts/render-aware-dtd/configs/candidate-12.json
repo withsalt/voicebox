@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "name": "candidate-12",
+  "selection_policy_version": "low_fpr_grid_v1",
+  "provenance": {
+    "anchor": "candidate-7",
+    "changed_parameter_group": "AdamW weight decay: 1e-4 -> 2e-4",
+    "selected_epoch": 147,
+    "reference_checkpoint": "E:\\Projects\\render-aware-dtd\\artifacts-v4\\candidate-12\\validation-selected.pt",
+    "reference_checkpoint_sha256": "B1693E3B1A1B93434E65450EF4E877AD365E4DBF2710D78143B259D334671C1F"
+  },
+  "trainer": "../train_dtd.py",
+  "initial_num_workers": 8,
+  "recovery_num_workers": 4,
+  "protected_output_directories": [
+    "E:\\Projects\\render-aware-dtd\\artifacts-v4\\candidate-2",
+    "E:\\Projects\\render-aware-dtd\\artifacts-v4\\candidate-12"
+  ],
+  "frozen_inputs": [
+    {
+      "path": "../train_dtd.py",
+      "sha256": "9E02478B21780BF75F8FD80F0A8C989C7B1FB39046D119013DA347F6EEF65AEC"
+    },
+    {
+      "path": "../dtd_model.py",
+      "sha256": "54D42E9A7BBB3C7015B77942557C136FF9742AC0587A65BC56BE52C51C4B2362"
+    },
+    {
+      "path": "../dtd_metrics.py",
+      "sha256": "CBD8EFB16B78518C070366790B8A679EECB2510BE6252E5A7FAC5D13BAFD2966"
+    },
+    {
+      "path": "../enriched_dataset.py",
+      "sha256": "524040B9D9538D4E0EBDE57157AA0AAE1508FBCC507E52B201291B63DFF5AC78"
+    },
+    {
+      "path": "../export_dtd_onnx.py",
+      "sha256": "9C8E9BB72914951DC5776B7754E032611E9B19FB4C2CB96ECC83A43855A3DB05"
+    },
+    {
+      "path": "E:\\Projects\\render-aware-dtd\\datasets\\render-aware-dtd-v4\\dataset_summary.json",
+      "sha256": "347ED8D7935FEDF49708FCB3B828BCB94A6270B2825282A4F7D1DBF6D87613DB"
+    }
+  ],
+  "training_arguments": [
+    ["--dataset-root", "E:\\Projects\\render-aware-dtd\\datasets\\AEC-Challenge"],
+    ["--enriched-root", "E:\\Projects\\render-aware-dtd\\datasets\\render-aware-dtd-v4"],
+    ["--epochs", "150"],
+    ["--batch-size", "128"],
+    ["--sequence-seconds", "8"],
+    ["--learning-rate", "8e-4"],
+    ["--lr-schedule", "cosine"],
+    ["--warmup-epochs", "5"],
+    ["--min-learning-rate", "1e-5"],
+    ["--weight-decay", "2e-4"],
+    ["--positive-weight", "1.5"],
+    ["--model-size", "256"],
+    ["--gru-layers", "3"],
+    ["--dropout", "0.1"],
+    ["--aec-narrow-weight", "0.40"],
+    ["--aec-fullband-weight", "0.20"],
+    ["--wenet-weight", "0.20"],
+    ["--aec-real-weight", "0.20"],
+    ["--wenet-far-only-probability", "0.40"],
+    ["--examples-per-epoch", "12000"],
+    ["--validation-examples", "1500"],
+    ["--validation-modulo", "20"],
+    ["--train-limit", "0"],
+    ["--validation-limit", "0"],
+    ["--seed", "43"],
+    ["--device", "cuda"],
+    ["--early-stopping-patience", "0"],
+    ["--early-stopping-min-delta", "0.0002"]
+  ]
+}

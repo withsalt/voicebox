@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "name": "candidate-14",
+  "selection_policy_version": "v5_event_lexicographic_v1",
+  "provenance": {"label": "A1", "anchor": "candidate-13", "changed_parameter_group": "v5 training data semantics: reset=0.2, hard-far-only=0.5"},
+  "trainer": "../train_dtd.py",
+  "initial_num_workers": 4,
+  "recovery_num_workers": 4,
+  "protected_output_directories": ["E:\\Projects\\render-aware-dtd\\artifacts-v4", "E:\\Projects\\render-aware-dtd\\artifacts-v5\\candidate-13", "E:\\Projects\\render-aware-dtd\\artifacts-v5\\candidate-13-attempt-002"],
+  "frozen_inputs": [
+    {"path": "../train_dtd.py", "sha256": "C7D8299335E4C149E7EC3F0A6F4B1F4A3FD4D486C0930341319E48E6E9396040"}, {"path": "../dtd_model.py", "sha256": "54D42E9A7BBB3C7015B77942557C136FF9742AC0587A65BC56BE52C51C4B2362"}, {"path": "../dtd_metrics.py", "sha256": "CBD8EFB16B78518C070366790B8A679EECB2510BE6252E5A7FAC5D13BAFD2966"}, {"path": "../dtd_event_metrics.py", "sha256": "AAEF4B0828C9F58F1270575554994AD7046CD466CB8B1C95BFEB9A3AF97636F0"}, {"path": "../dtd_training_objectives.py", "sha256": "0BB0955845ED72870A4DB0C68C98ECCEB003C39B08715805022658A1FC273A8A"}, {"path": "../enriched_dataset.py", "sha256": "AA9221AC01816977C34D6C5E02E2F3D611890998DF6C60DDEB37D9B1C64BC536"}, {"path": "E:\\Projects\\render-aware-dtd\\datasets\\render-aware-dtd-v4\\dataset_summary.json", "sha256": "347ED8D7935FEDF49708FCB3B828BCB94A6270B2825282A4F7D1DBF6D87613DB"}
+  ],
+  "training_arguments": [
+    ["--dataset-root", "E:\\Projects\\render-aware-dtd\\datasets\\AEC-Challenge"], ["--enriched-root", "E:\\Projects\\render-aware-dtd\\datasets\\render-aware-dtd-v4"],
+    ["--epochs", "200"], ["--batch-size", "128"], ["--sequence-seconds", "8"], ["--learning-rate", "8e-4"], ["--lr-schedule", "cosine"], ["--warmup-epochs", "5"], ["--min-learning-rate", "1e-5"], ["--weight-decay", "2e-4"], ["--positive-weight", "1.5"],
+    ["--model-size", "288"], ["--gru-layers", "3"], ["--frequency-bands", "80"], ["--dropout", "0.1"],
+    ["--aec-narrow-weight", "0.40"], ["--aec-fullband-weight", "0.20"], ["--wenet-weight", "0.20"], ["--aec-real-weight", "0.20"], ["--wenet-far-only-probability", "0.40"], ["--examples-per-epoch", "12000"], ["--validation-examples", "1500"], ["--validation-modulo", "20"], ["--train-limit", "0"], ["--validation-limit", "0"], ["--seed", "43"], ["--device", "cuda"], ["--early-stopping-patience", "30"], ["--early-stopping-min-delta", "0.0002"],
+    ["--hard-negative-loss-weight", "0"], ["--onset-loss-weight", "0"], ["--event-loss-weight", "0"], ["--reset-loss-weight", "0"], ["--hard-negative-top-fraction", "0.10"], ["--event-decision-threshold", "0.55"], ["--event-temperature", "0.08"],
+    ["--v5-reset-probability", "0.2"], ["--v5-hard-far-only-probability", "0.5"], ["--v5-maximum-gap-hops", "8"], ["--v5-validation-reset-probability", "0.2"], ["--v5-validation-hard-far-only-probability", "0.5"], ["--v5-validation-maximum-gap-hops", "8"]
+  ]
+}

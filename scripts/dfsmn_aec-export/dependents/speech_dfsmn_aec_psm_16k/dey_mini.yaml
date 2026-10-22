@@ -1,0 +1,41 @@
+# input feature/output target part
+io:
+  mask_on: 'out_linear'
+  use_nearend_mic: true
+  use_out_linear: true
+  use_out_ref: false
+  use_out_echo: true
+  linear_aec_delay: 0.02
+  linear_aec_block: 160
+  feature_size: 80
+  mitaec_library: 'libmitaec_pyio.so'
+  fbank_config:
+    dither: 1.0
+    frame_length: 40
+    frame_shift: 20
+    num_mel_bins: 80
+    sample_frequency: 16000
+    window_type: 'hamming'
+  feat_type: 'fbank'
+  mvn: 'feature.DEY.mvn.txt'
+
+# network architecture part
+nnet:
+  module: modelscope.models.audio.aec.network.se_net
+  main: MaskNet
+  args:
+    indim: 240
+    outdim: 321
+    layers: 12
+    #rorder: 20
+    hidden_dim: 512
+    vad: True
+
+# loss part
+loss:
+  module: network.loss
+  main: mask_loss_function
+  args:
+    loss_func: psm_vad_loss_dlen
+    n_fft: 640
+    hop_length: 320

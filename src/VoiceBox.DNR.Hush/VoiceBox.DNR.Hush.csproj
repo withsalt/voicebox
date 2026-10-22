@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.31.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VoiceBox.Core\VoiceBox.Core.csproj" />
+  </ItemGroup>
+	
+  <ItemGroup>
+    <None Remove="runtimes\models\dnr\hush\**\*.onnx" />
+    <None Remove="runtimes\models\dnr\hush\**\*.ini" />
+    <None Include="runtimes\models\dnr\hush\**\*.onnx" Pack="true" PackagePath="runtimes\models\dnr\hush\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="runtimes\models\dnr\hush\**\*.ini" Pack="true" PackagePath="runtimes\models\dnr\hush\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="build\VoiceBox.DNR.Hush.targets" Pack="true" PackagePath="build\VoiceBox.DNR.Hush.targets" />
+    <None Include="build\VoiceBox.DNR.Hush.targets" Pack="true" PackagePath="buildTransitive\VoiceBox.DNR.Hush.targets" />
+  </ItemGroup>
+
+</Project>

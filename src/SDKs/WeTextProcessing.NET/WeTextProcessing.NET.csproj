@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>WeTextProcessing.NET</RootNamespace>
+    <AssemblyName>WeTextProcessing.NET</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package">
+    <PackageId>WeTextProcessing.NET</PackageId>
+    <PackageVersion>$(Version)</PackageVersion>
+    <Title>WeTextProcessing.NET</Title>
+    <Version>1.2.0</Version>
+    <AssemblyVersion>1.2.0</AssemblyVersion>
+    <FileVersion>1.2.0</FileVersion>
+    <Authors>Zhendong Peng; Xingchen Song; withsalt</Authors>
+    <Description>.NET wrapper for WeTextProcessing, including Chinese and English text normalization (TN) and inverse text normalization (ITN) through bundled FST models and native runtime.</Description>
+    <PackageProjectUrl>https://github.com/wenet-e2e/WeTextProcessing</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/wenet-e2e/WeTextProcessing</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageTags>wetextprocessing;text-normalization;inverse-text-normalization;tn;itn;fst;openfst</PackageTags>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<None Include="runtimes\models\WeTextProcessing\*.fst" Pack="true" PackagePath="runtimes\models\WeTextProcessing\">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="runtimes\linux-arm64\native\*.so" Pack="true" PackagePath="runtimes\linux-arm64\native\">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="runtimes\linux-x64\native\*.so" Pack="true" PackagePath="runtimes\linux-x64\native\">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="runtimes\win-x64\native\*.dll" Pack="true" PackagePath="runtimes\win-x64\native\">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="build\WeTextProcessing.targets" Pack="true" PackagePath="build\WeTextProcessing.targets" />
+		<None Include="build\WeTextProcessing.targets" Pack="true" PackagePath="buildTransitive\WeTextProcessing.targets" />
+	</ItemGroup>
+
+</Project>

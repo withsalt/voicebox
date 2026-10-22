@@ -1,0 +1,19 @@
+{
+  "schema": "voicebox.assistant/scenario-trace/v1",
+  "catalogVersion": "v1",
+  "scenarioId": "CR-006",
+  "oracleKind": "ExactTrace",
+  "scheduleId": "SC00B-CR006-response-completion-versus-barge-in",
+  "inputs": [
+    { "ordinal": 1, "type": "response.generated", "detail": "history committed" },
+    { "ordinal": 2, "type": "playback.drain.entered", "detail": "barrier" },
+    { "ordinal": 3, "type": "barge-in", "detail": "interrupt during drain" }
+  ],
+  "publicEvents": [
+    { "publicationSeq": 1, "type": "AssistantResponseGenerated", "text": "好的。" }
+  ],
+  "providerCalls": [
+    { "ordinal": 1, "type": "history.commit", "detail": "T1 remains" }
+  ],
+  "final": { "runtimeState": "Idle", "wakeMode": "Disabled" }
+}

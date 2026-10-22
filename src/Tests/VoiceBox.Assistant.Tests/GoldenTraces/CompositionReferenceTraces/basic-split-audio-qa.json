@@ -1,0 +1,107 @@
+{
+  "schema": "voicebox.assistant/scenario-trace/v1",
+  "catalogVersion": "v1",
+  "scenarioId": "basic-split-audio-qa",
+  "oracleKind": "ExactTrace",
+  "inputs": [
+    {
+      "ordinal": 1,
+      "type": "runtime.start",
+      "detail": "BasicSplitAudioQa"
+    },
+    {
+      "ordinal": 2,
+      "type": "vad.speech.started",
+      "detail": "source=manual"
+    },
+    {
+      "ordinal": 3,
+      "type": "vad.speaking",
+      "detail": "samples=3"
+    },
+    {
+      "ordinal": 4,
+      "type": "vad.speech.ended",
+      "detail": "durationMs=120"
+    },
+    {
+      "ordinal": 5,
+      "type": "runtime.stop",
+      "detail": "caller=host"
+    }
+  ],
+  "publicEvents": [
+    {
+      "publicationSeq": 1,
+      "type": "StateChanged",
+      "from": "Idle",
+      "to": "Listening"
+    },
+    {
+      "publicationSeq": 2,
+      "type": "StateChanged",
+      "from": "Listening",
+      "to": "Recognizing"
+    },
+    {
+      "publicationSeq": 3,
+      "type": "StateChanged",
+      "from": "Recognizing",
+      "to": "Thinking"
+    },
+    {
+      "publicationSeq": 4,
+      "type": "StateChanged",
+      "from": "Thinking",
+      "to": "Speaking"
+    },
+    {
+      "publicationSeq": 5,
+      "type": "AssistantReplied",
+      "text": "\u597D\u7684\u3002"
+    },
+    {
+      "publicationSeq": 6,
+      "type": "StateChanged",
+      "from": "Speaking",
+      "to": "Idle"
+    },
+    {
+      "publicationSeq": 7,
+      "type": "StateChanged",
+      "from": "Idle",
+      "to": "Stopped"
+    }
+  ],
+  "providerCalls": [
+    {
+      "ordinal": 1,
+      "type": "audio.playback.start",
+      "detail": "count=1"
+    },
+    {
+      "ordinal": 2,
+      "type": "audio.capture.start",
+      "detail": "count=1"
+    },
+    {
+      "ordinal": 3,
+      "type": "asr.finish",
+      "detail": "count=1"
+    },
+    {
+      "ordinal": 4,
+      "type": "audio.capture.stop",
+      "detail": "count=1"
+    },
+    {
+      "ordinal": 5,
+      "type": "audio.playback.stop",
+      "detail": "count=1"
+    }
+  ],
+  "final": {
+    "runtimeState": "Stopped",
+    "wakeMode": "Disabled"
+  }
+}

@@ -1,0 +1,36 @@
+include(gflags)
+# We can't build glog with gflags, unless gflags is pre-installed.
+# If build glog with pre-installed gflags, there will be conflict.
+set(WITH_GFLAGS OFF CACHE BOOL "whether build glog with gflags" FORCE)
+include(glog)
+
+set(HAVE_BIN OFF CACHE BOOL "Build the fst binaries" FORCE)
+set(HAVE_SCRIPT OFF CACHE BOOL "Build the fstscript" FORCE)
+set(HAVE_COMPACT OFF CACHE BOOL "Build compact" FORCE)
+set(HAVE_CONST OFF CACHE BOOL "Build const" FORCE)
+set(HAVE_GRM OFF CACHE BOOL "Build grm" FORCE)
+set(HAVE_FAR OFF CACHE BOOL "Build far" FORCE)
+set(HAVE_PDT OFF CACHE BOOL "Build pdt" FORCE)
+set(HAVE_MPDT OFF CACHE BOOL "Build mpdt" FORCE)
+set(HAVE_LINEAR OFF CACHE BOOL "Build linear" FORCE)
+set(HAVE_LOOKAHEAD OFF CACHE BOOL "Build lookahead" FORCE)
+set(HAVE_NGRAM OFF CACHE BOOL "Build ngram" FORCE)
+set(HAVE_SPECIAL OFF CACHE BOOL "Build special" FORCE)
+
+if(MSVC)
+  add_compile_options(/W0 /wd4244 /wd4267)
+endif()
+
+# "OpenFST port for Windows" builds openfst with cmake for multiple platforms.
+set(openfst_URL https://github.com/csukuangfj/openfst/archive/refs/tags/v1.8.5-2026-04-11.tar.gz)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/third_party/openfst-1.8.5-2026-04-11.tar.gz)
+  set(openfst_URL ${CMAKE_CURRENT_SOURCE_DIR}/third_party/openfst-1.8.5-2026-04-11.tar.gz)
+endif()
+
+set(openfst_SOURCE_DIR ${fc_base}/openfst-src CACHE PATH "OpenFST source directory")
+FetchContent_Declare(openfst
+  URL      ${openfst_URL}
+  URL_HASH SHA256=57fbc4b950ae81b1a0e1e298af15652da968a6723a592b7874e9b4027a80a5b4
+)
+FetchContent_MakeAvailable(openfst)
+include_directories(${openfst_SOURCE_DIR}/src/include)

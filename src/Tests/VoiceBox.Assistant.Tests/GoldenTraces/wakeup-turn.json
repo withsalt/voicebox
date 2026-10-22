@@ -1,0 +1,73 @@
+{
+  "schema": "voicebox.assistant/scenario-trace/v1",
+  "catalogVersion": "v1",
+  "scenarioId": "wakeup-turn",
+  "oracleKind": "ExactTrace",
+  "inputs": [
+    {
+      "ordinal": 1,
+      "type": "runtime.start",
+      "detail": "full-stack-duplex\u002Bwakeup"
+    },
+    {
+      "ordinal": 2,
+      "type": "capture.frame",
+      "detail": "samples=1600"
+    },
+    {
+      "ordinal": 3,
+      "type": "kws.wakeup",
+      "detail": "keyword=\u5C0F\u7231\u540C\u5B66"
+    },
+    {
+      "ordinal": 4,
+      "type": "capture.frame",
+      "detail": "samples=1600"
+    },
+    {
+      "ordinal": 5,
+      "type": "runtime.stop",
+      "detail": "caller=host"
+    }
+  ],
+  "publicEvents": [
+    {
+      "publicationSeq": 1,
+      "type": "WakeModeChanged",
+      "from": "Disabled",
+      "to": "WaitingForWakeWord"
+    },
+    {
+      "publicationSeq": 2,
+      "type": "WakeModeChanged",
+      "from": "WaitingForWakeWord",
+      "to": "ContinuousConversation"
+    },
+    {
+      "publicationSeq": 3,
+      "type": "WakeupDetected",
+      "text": "\u5C0F\u7231\u540C\u5B66"
+    }
+  ],
+  "providerCalls": [
+    {
+      "ordinal": 1,
+      "type": "wakeup.start",
+      "detail": "count=2"
+    },
+    {
+      "ordinal": 2,
+      "type": "wakeup.feed",
+      "detail": "count=1"
+    },
+    {
+      "ordinal": 3,
+      "type": "wakeup.stop",
+      "detail": "count=2"
+    }
+  ],
+  "final": {
+    "runtimeState": "Stopped",
+    "wakeMode": "ContinuousConversation"
+  }
+}

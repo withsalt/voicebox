@@ -1,0 +1,7 @@
+{
+  "framework": "pytorch",
+  "task": "acoustic-echo-cancellation",
+  "pipeline": {
+     "type": "speech-dfsmn-aec-psm-16k"
+  }
+}

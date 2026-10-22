@@ -1,0 +1,36 @@
+{
+  "reference": "wespeaker/bin/infer_onnx.py",
+  "model_sha256": "78817ca21a9707ad886d50745162231027a09c997fbf2ecf741c5d8ff4db1bf8",
+  "sample_rate": 16000,
+  "waveform_scale": 32768.0,
+  "feature_dim": 80,
+  "embedding_size": 256,
+  "window_frames": 198,
+  "hop_frames": 25,
+  "threshold": 0.55,
+  "files": {
+    "spk1_snt1": {
+      "wav": "spk1_snt1.wav",
+      "num_samples": 45920,
+      "num_frames": 285,
+      "num_windows": 4
+    },
+    "spk1_snt2": {
+      "wav": "spk1_snt2.wav",
+      "num_samples": 50400,
+      "num_frames": 313,
+      "num_windows": 5
+    },
+    "spk2_snt1": {
+      "wav": "spk2_snt1.wav",
+      "num_samples": 32160,
+      "num_frames": 199,
+      "num_windows": 1
+    }
+  },
+  "scores": {
+    "spk1_snt1|spk1_snt2": 0.76620877,
+    "spk1_snt1|spk2_snt1": 0.44178647,
+    "spk1_snt2|spk2_snt1": 0.38640696
+  }
+}

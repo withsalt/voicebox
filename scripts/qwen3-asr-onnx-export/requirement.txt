@@ -1,0 +1,7 @@
+numpy
+onnxruntime-gpu
+librosa
+soundfile
+transformers==4.57.6
+onnx
+qwen-asr

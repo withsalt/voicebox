@@ -1,0 +1,25 @@
+<Project>
+  <PropertyGroup Condition="$(MSBuildProjectName.StartsWith('VoiceBox.'))">
+    <!-- VoiceBox.* 项目的统一版本号。发布新版本时只需修改此处。 -->
+    <Version>1.0.0</Version>
+    <Authors>withsalt</Authors>
+    <Company>withsalt</Company>
+    <Description>A modular .NET framework for building real-time voice applications with composable audio I/O, acoustic echo cancellation, noise reduction, voice activity detection, wake word detection, speech recognition, LLM, text-to-speech, and voice assistant services.</Description>
+    <PackageProjectUrl>https://github.com/withsalt/voicebox</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/withsalt/voicebox</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>voice;audio;speech;asr;tts;vad;wake-word;llm;onnx;dotnet</PackageTags>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup Condition="$(MSBuildProjectName.StartsWith('VoiceBox.'))">
+    <None Include="$(MSBuildThisFileDirectory)..\README.md"
+          Pack="true"
+          PackagePath="\"
+          Link="README.md" />
+  </ItemGroup>
+</Project>

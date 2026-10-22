@@ -1,0 +1,7 @@
+node_modules/
+dist/
+public/ort/
+test-results/
+playwright-report/
+tests/fixtures/
+*.local

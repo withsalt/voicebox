@@ -1,0 +1,36 @@
+{
+  "schema": "voicebox.assistant/schedule-manifest/v1",
+  "catalogVersion": "v1",
+  "scenarioId": "speech-end-vs-asr-start",
+  "oracleKind": "AllowedTraceSet",
+  "variants": [
+    {
+      "scheduleId": "speech-end-first",
+      "traceFile": "speech-end-first.json",
+      "happensBefore": "speech-end -> asr-start",
+      "status": "frozen",
+      "sha256": "7a655723133a5b0b953c5cc9b73c319b901fddfee9f4da5b97f163c83b5e319e"
+    },
+    {
+      "scheduleId": "asr-ready-first",
+      "traceFile": "asr-ready-first.json",
+      "happensBefore": "asr-start -> speech-end",
+      "status": "frozen",
+      "sha256": "c706394fe53dfb290bc0c8faef181771f60a8fab25d1d27d153e8eb753bb0ae4"
+    },
+    {
+      "scheduleId": "runtime-speech-end-first",
+      "traceFile": "runtime-speech-end-first.json",
+      "happensBefore": "speech-end -> asr-start; full Runtime replay",
+      "status": "frozen",
+      "sha256": "cca16960a00ece05711bf3dcd4cb2ad3a8dac924d33b07e9aba35c7e3ea85b68"
+    },
+    {
+      "scheduleId": "runtime-asr-ready-first",
+      "traceFile": "runtime-asr-ready-first.json",
+      "happensBefore": "asr-start -> speech-end; full Runtime replay",
+      "status": "frozen",
+      "sha256": "4bfb505742562a86226f0a12ceaafb95fb6935841a86a009148a20201de6d347"
+    }
+  ]
+}

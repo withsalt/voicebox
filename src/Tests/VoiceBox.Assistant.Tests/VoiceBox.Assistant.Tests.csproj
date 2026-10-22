@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\VoiceBox.Assistant\VoiceBox.Assistant.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.Assistant.Integrations.Mcp\VoiceBox.Assistant.Integrations.Mcp.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.LLM.OpenAI\VoiceBox.LLM.OpenAI.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.LLM.LLamaSharp\VoiceBox.LLM.LLamaSharp.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.ASR.Qwen3\VoiceBox.ASR.Qwen3.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.ASR.FireRedASR2\VoiceBox.ASR.FireRedASR2.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.ASR.Confucius4\VoiceBox.ASR.Confucius4.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.ASR.DoubaoOnline\VoiceBox.ASR.DoubaoOnline.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="GoldenTraces\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

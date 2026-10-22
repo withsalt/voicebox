@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageId>YellowDogMan.RNNoise.NET</PackageId>
+    <PackageVersion>$(Version)</PackageVersion>
+    <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
+    <Description>.NET Wrapper for the RNNoise supression library.</Description>
+    <Copyright>Yellow Dog Man Studios S.r.o. 2023</Copyright>
+    <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
+    <Authors>Yellow Dog Man Studios</Authors>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>rnnoise,supression</PackageTags>
+    <RepositoryUrl>https://github.com/Yellow-Dog-Man/RNNoise.Net</RepositoryUrl>
+    <PackageProjectURL>https://github.com/Yellow-Dog-Man/RNNoise.Net</PackageProjectURL>
+    <IsAotCompatible>true</IsAotCompatible>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="runtimes\linux-arm64\native\*.so" Pack="true" PackagePath="runtimes\linux-arm64\native\">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="runtimes\linux-x64\native\*.so" Pack="true" PackagePath="runtimes\linux-x64\native\">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="runtimes\win-x64\native\*.dll" Pack="true" PackagePath="runtimes\win-x64\native\">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="build\YellowDogMan.RNNoise.NET.targets" Pack="true" PackagePath="build\YellowDogMan.RNNoise.NET.targets" />
+		<None Include="build\YellowDogMan.RNNoise.NET.targets" Pack="true" PackagePath="buildTransitive\YellowDogMan.RNNoise.NET.targets" />
+	</ItemGroup>
+</Project>

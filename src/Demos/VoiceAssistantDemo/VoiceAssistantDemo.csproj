@@ -1,0 +1,67 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>VoiceAssistantDemo</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.13" />
+    <!--<PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.31.0" />-->
+		<PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.31.0" />
+		<!--<PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Cuda" Version="0.17.1" />-->
+		<PackageReference Include="LLamaSharp.Backend.Vulkan" Version="0.30.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\VoiceBox.APM.WebRtc\VoiceBox.APM.WebRtc.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.ASR.Confucius4\VoiceBox.ASR.Confucius4.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.ASR.FireRedASR2\VoiceBox.ASR.FireRedASR2.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.AEC.DTLN\VoiceBox.AEC.DTLN.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.ASR.DoubaoOnline\VoiceBox.ASR.DoubaoOnline.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.ASR.Qwen3\VoiceBox.ASR.Qwen3.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.Assistant.Integrations.Mcp\VoiceBox.Assistant.Integrations.Mcp.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.Audio.MiniAudio\VoiceBox.Audio.MiniAudio.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.Audio.PortAudio\VoiceBox.Audio.PortAudio.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.DNR.DeepFilterNet\VoiceBox.DNR.DeepFilterNet.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.DNR.DPDFNet\VoiceBox.DNR.DPDFNet.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.DNR.RNNoise\VoiceBox.DNR.RNNoise.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.HPF.Butterworth\VoiceBox.HPF.Butterworth.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.LLM.LLamaSharp\VoiceBox.LLM.LLamaSharp.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.LLM.OnnxGenAI\VoiceBox.LLM.OnnxGenAI.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.Assistant\VoiceBox.Assistant.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.Core\VoiceBox.Core.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.LLM.OpenAI\VoiceBox.LLM.OpenAI.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.Speaker.CampPlus\VoiceBox.Speaker.CampPlus.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.Speaker.WeSpeaker\VoiceBox.Speaker.WeSpeaker.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.TTS.Kokoro\VoiceBox.TTS.Kokoro.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.TTS.MossNano\VoiceBox.TTS.MossNano.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.TTS.DoubaoOnline\VoiceBox.TTS.DoubaoOnline.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.TTS.Qwen3\VoiceBox.TTS.Qwen3.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.TTS.VoxCPM\VoiceBox.TTS.VoxCPM.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.VAD.FireRed\VoiceBox.VAD.FireRed.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.Wakeup.FsmnKws\VoiceBox.Wakeup.FsmnKws.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>    <None Update="voices\*.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\weather_district_id.csv" />
+    <EmbeddedResource Include="Resources\weather_district_id.csv">
+      <LogicalName>VoiceAssistantDemo.Resources.weather_district_id.csv</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="runtimes\models\kws\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

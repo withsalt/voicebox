@@ -1,0 +1,20 @@
+{
+  "schema": "voicebox.assistant/scenario-trace/v1",
+  "catalogVersion": "v1",
+  "scenarioId": "CR-013",
+  "oracleKind": "ExactTrace",
+  "scheduleId": "SC00B-CR013-validation-timeout",
+  "inputs": [
+    { "ordinal": 1, "type": "barge-in.validation", "detail": "ASR held" },
+    { "ordinal": 2, "type": "time.advance", "detail": "20ms" },
+    { "ordinal": 3, "type": "asr.finish.release", "detail": "valid text" }
+  ],
+  "publicEvents": [
+    { "publicationSeq": 1, "type": "BargeInValidation", "text": "Heard" },
+    { "publicationSeq": 2, "type": "BargeInValidation", "text": "Accepted:audio-confirmed-timeout" }
+  ],
+  "providerCalls": [
+    { "ordinal": 1, "type": "playback.clear", "detail": "count=1" }
+  ],
+  "final": { "runtimeState": "Idle", "wakeMode": "Disabled" }
+}

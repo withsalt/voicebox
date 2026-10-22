@@ -1,0 +1,31 @@
+{
+  "name": "voicebox-kws-online-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "packageManager": "pnpm@11.25.0",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "postinstall": "node scripts/copy-runtime.mjs",
+    "build": "node scripts/copy-runtime.mjs && vue-tsc --noEmit && vite build && node scripts/build-sw.mjs",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "test:e2e": "node scripts/prepare-fixtures.mjs && playwright test"
+  },
+  "dependencies": {
+    "onnxruntime-web": "1.30.0",
+    "vue": "3.5.44"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@types/node": "24.10.0",
+    "@vitejs/plugin-vue": "6.0.10",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "vitest": "5.0.5",
+    "vue-tsc": "3.3.13"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "voicebox.assistant/scenario-trace/v1",
+  "catalogVersion": "v1",
+  "scenarioId": "CR-009",
+  "oracleKind": "ExactTrace",
+  "scheduleId": "SC00B-CR009-cancellation-ignoring-task",
+  "inputs": [
+    { "ordinal": 1, "type": "tts.ignore-cancellation.entered", "detail": "barrier" },
+    { "ordinal": 2, "type": "runtime.stop", "detail": "must remain pending" },
+    { "ordinal": 3, "type": "tts.ignore-cancellation.release", "detail": "task convergence" }
+  ],
+  "publicEvents": [
+    { "publicationSeq": 1, "type": "StateChanged", "to": "Stopped" }
+  ],
+  "providerCalls": [
+    { "ordinal": 1, "type": "audio.stop", "detail": "count=1" }
+  ],
+  "final": { "runtimeState": "Stopped", "wakeMode": "Disabled" }
+}

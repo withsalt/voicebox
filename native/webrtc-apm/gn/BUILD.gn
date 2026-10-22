@@ -1,0 +1,48 @@
+import("//webrtc.gni")
+
+rtc_shared_library("webrtc_apm") {
+  output_name = "webrtc-apm"
+
+  sources = [
+    "include/apm_shim.h",
+    "src/apm_delay_shim.cc",
+    "src/apm_shim.cc",
+  ]
+
+  include_dirs = [ "include" ]
+  defines = [
+    "WEBRTC_APM_BUILDING_SHIM",
+    "WEBRTC_APM_DEBUG_DUMP=0",
+  ]
+
+  # The C ABI boundary catches all native exceptions and maps them to status
+  # codes. WebRTC disables exceptions globally, so opt this target back in.
+  suppressed_configs = [ "//build/config/compiler:no_exceptions" ]
+  configs += [ "//build/config/compiler:exceptions" ]
+
+  allow_poison = [
+    "default_neural_residual_echo_estimator",
+    "environment_construction",
+  ]
+  deps = [
+    "//api/audio:builtin_audio_processing_builder",
+    "//api/audio:neural_residual_echo_estimator_creator",
+    "//api/environment:environment_factory",
+    "//modules/audio_processing/aec3",
+    "//modules/audio_processing:apm_logging",
+    "//third_party/tflite:tflite_standalone",
+  ]
+
+  if (is_linux) {
+    ldflags = [
+      "-Wl,--version-script=" +
+          rebase_path("apm.map", root_build_dir),
+    ]
+  }
+}
+
+executable("abi_probe") {
+  sources = [ "test/abi_probe.cpp" ]
+  include_dirs = [ "include" ]
+  deps = [ ":webrtc_apm" ]
+}

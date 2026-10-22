@@ -1,0 +1,16 @@
+<Project>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\models\speaker\campplus\**\*.onnx">
+      <Link>runtimes\models\speaker\campplus\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\models\speaker\campplus\**\*.ini">
+      <Link>runtimes\models\speaker\campplus\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+  </ItemGroup>
+
+</Project>

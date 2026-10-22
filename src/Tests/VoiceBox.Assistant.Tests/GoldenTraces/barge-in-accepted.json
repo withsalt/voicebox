@@ -1,0 +1,177 @@
+{
+  "schema": "voicebox.assistant/scenario-trace/v1",
+  "catalogVersion": "v1",
+  "scenarioId": "barge-in-accepted",
+  "oracleKind": "ExactTrace",
+  "inputs": [
+    {
+      "ordinal": 1,
+      "type": "runtime.start",
+      "detail": "full-stack-duplex"
+    },
+    {
+      "ordinal": 2,
+      "type": "vad.speech.started",
+      "detail": "response-turn"
+    },
+    {
+      "ordinal": 3,
+      "type": "vad.speech.ended",
+      "detail": "response-turn"
+    },
+    {
+      "ordinal": 4,
+      "type": "vad.speech",
+      "detail": "barge-in;kws=off"
+    },
+    {
+      "ordinal": 5,
+      "type": "barge-in.validation",
+      "detail": "accepted:audio-confirmed;before-asr-text"
+    },
+    {
+      "ordinal": 6,
+      "type": "asr.finish",
+      "detail": "text=\u505C\u4E00\u4E0B"
+    },
+    {
+      "ordinal": 7,
+      "type": "runtime.stop",
+      "detail": "caller=host"
+    }
+  ],
+  "publicEvents": [
+    {
+      "publicationSeq": 1,
+      "type": "StateChanged",
+      "from": "Idle",
+      "to": "Listening"
+    },
+    {
+      "publicationSeq": 2,
+      "type": "StateChanged",
+      "from": "Listening",
+      "to": "Recognizing"
+    },
+    {
+      "publicationSeq": 3,
+      "type": "UserSpoke",
+      "text": "\u4F60\u597D"
+    },
+    {
+      "publicationSeq": 4,
+      "type": "StateChanged",
+      "from": "Recognizing",
+      "to": "Thinking"
+    },
+    {
+      "publicationSeq": 5,
+      "type": "StateChanged",
+      "from": "Thinking",
+      "to": "Speaking"
+    },
+    {
+      "publicationSeq": 6,
+      "type": "AssistantText",
+      "text": "\u597D\u7684\u3002",
+      "isThinking": false
+    },
+    {
+      "publicationSeq": 7,
+      "type": "AssistantResponseGenerated",
+      "text": "\u597D\u7684\u3002"
+    },
+    {
+      "publicationSeq": 8,
+      "type": "BargeInValidation",
+      "text": "Heard"
+    },
+    {
+      "publicationSeq": 9,
+      "type": "StateChanged",
+      "from": "Speaking",
+      "to": "Listening"
+    },
+    {
+      "publicationSeq": 10,
+      "type": "BargeInValidation",
+      "text": "Accepted:audio-confirmed"
+    },
+    {
+      "publicationSeq": 11,
+      "type": "UserSpoke",
+      "text": "\u505C\u4E00\u4E0B"
+    },
+    {
+      "publicationSeq": 12,
+      "type": "StateChanged",
+      "from": "Listening",
+      "to": "Thinking"
+    },
+    {
+      "publicationSeq": 13,
+      "type": "StateChanged",
+      "from": "Thinking",
+      "to": "Speaking"
+    },
+    {
+      "publicationSeq": 14,
+      "type": "AssistantText",
+      "text": "\u597D\u7684\u3002",
+      "isThinking": false
+    },
+    {
+      "publicationSeq": 15,
+      "type": "AssistantResponseGenerated",
+      "text": "\u597D\u7684\u3002"
+    },
+    {
+      "publicationSeq": 16,
+      "type": "AssistantReplied",
+      "text": "\u597D\u7684\u3002"
+    },
+    {
+      "publicationSeq": 17,
+      "type": "StateChanged",
+      "from": "Speaking",
+      "to": "Idle"
+    },
+    {
+      "publicationSeq": 18,
+      "type": "StateChanged",
+      "from": "Idle",
+      "to": "Stopped"
+    }
+  ],
+  "providerCalls": [
+    {
+      "ordinal": 1,
+      "type": "playback.clear",
+      "detail": "count=1;before-asr-text"
+    },
+    {
+      "ordinal": 2,
+      "type": "asr.finish",
+      "detail": "count=2"
+    },
+    {
+      "ordinal": 3,
+      "type": "playback.clear",
+      "detail": "count=1"
+    },
+    {
+      "ordinal": 4,
+      "type": "playback.gain",
+      "detail": "gain=1;changes=0"
+    },
+    {
+      "ordinal": 5,
+      "type": "llm.stream",
+      "detail": "count=2"
+    }
+  ],
+  "final": {
+    "runtimeState": "Stopped",
+    "wakeMode": "Disabled"
+  }
+}

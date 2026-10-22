@@ -1,0 +1,7 @@
+# Local build output. Official WebRTC sources and GN outputs live in the user
+# cache selected by build.py; deployable binaries are committed under the
+# managed project's runtimes/<rid>/native directories.
+build/
+out/
+__pycache__/
+*.pyc

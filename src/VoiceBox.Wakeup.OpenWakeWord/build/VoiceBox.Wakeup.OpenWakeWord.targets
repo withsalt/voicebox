@@ -1,0 +1,16 @@
+<Project>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\models\wakewords\*.onnx">
+      <Link>runtimes\models\wakewords\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\models\wakewords\*.tflite">
+      <Link>runtimes\models\wakewords\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+  </ItemGroup>
+
+</Project>

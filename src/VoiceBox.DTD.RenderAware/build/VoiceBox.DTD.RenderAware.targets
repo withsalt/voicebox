@@ -1,0 +1,11 @@
+<Project>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\models\dtd\render-aware\*.*">
+      <Link>runtimes\models\dtd\render-aware\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+  </ItemGroup>
+
+</Project>

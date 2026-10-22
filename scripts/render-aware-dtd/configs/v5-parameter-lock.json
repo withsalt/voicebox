@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "round": "v5-288x3x80",
+  "selection_policy_version": "v5_event_lexicographic_v1",
+  "parameter_source_order": [
+    "user-required 288x3x80 contract and training constraints (2026-08-03)",
+    "current HEAD 86377bd",
+    "candidate-12 checkpoint training_args for unchanged comparison parameters"
+  ],
+  "locked_parameters": {
+    "optimizer": {"value": "AdamW", "source": "train_dtd.py", "locked": true},
+    "epochs": {"value": 200, "source": "user requirement", "locked": true},
+    "batch_size": {"value": 128, "source": "user requirement", "locked": true},
+    "sequence_seconds": {"value": 8.0, "source": "user requirement", "locked": true},
+    "learning_rate": {"value": 0.0008, "source": "candidate-12 checkpoint", "locked": true},
+    "lr_schedule": {"value": "cosine", "source": "candidate-12 checkpoint", "locked": true},
+    "warmup_epochs": {"value": 5, "source": "candidate-12 checkpoint", "locked": true},
+    "min_learning_rate": {"value": 0.00001, "source": "candidate-12 checkpoint", "locked": true},
+    "weight_decay": {"value": 0.0002, "source": "candidate-12 checkpoint", "locked": true},
+    "positive_weight": {"value": 1.5, "source": "candidate-12 checkpoint", "locked": true},
+    "model_size": {"value": 288, "source": "user requirement/current runtime contract", "locked": true},
+    "gru_layers": {"value": 3, "source": "user requirement/current runtime contract", "locked": true},
+    "frequency_bands": {"value": 80, "source": "user requirement/current runtime contract", "locked": true},
+    "dropout": {"value": 0.1, "source": "candidate-12 checkpoint", "locked": true},
+    "aec_narrow_weight": {"value": 0.4, "source": "candidate-12 checkpoint", "locked": true},
+    "aec_fullband_weight": {"value": 0.2, "source": "candidate-12 checkpoint", "locked": true},
+    "wenet_weight": {"value": 0.2, "source": "candidate-12 checkpoint", "locked": true},
+    "aec_real_weight": {"value": 0.2, "source": "candidate-12 checkpoint", "locked": true},
+    "wenet_far_only_probability": {"value": 0.4, "source": "candidate-12 checkpoint", "locked": true},
+    "examples_per_epoch": {"value": 12000, "source": "candidate-12 checkpoint", "locked": true},
+    "validation_examples": {"value": 1500, "source": "candidate-12 checkpoint", "locked": true},
+    "validation_modulo": {"value": 20, "source": "candidate-12 checkpoint", "locked": true},
+    "train_limit": {"value": 0, "source": "candidate-12 checkpoint", "locked": true},
+    "validation_limit": {"value": 0, "source": "candidate-12 checkpoint", "locked": true},
+    "seed": {"value": 43, "source": "user requirement", "locked": true},
+    "device": {"value": "cuda", "source": "host capability", "locked": true},
+    "initial_num_workers": {"value": 8, "source": "user requirement; candidate-13 initial attempt", "locked": true},
+    "recovery_num_workers": {"value": 4, "source": "user requirement", "locked": true},
+    "early_stopping_patience": {"value": 30, "source": "validation-only overfit control", "locked": true},
+    "early_stopping_min_delta": {"value": 0.0002, "source": "candidate-12 checkpoint", "locked": true},
+    "event_decision_threshold": {"value": 0.55, "source": "production contract", "locked": true}
+  },
+  "v5_added_parameters": {
+    "v5_validation_reset_probability": {"locked_value_for_all_ablations": 0.2},
+    "v5_validation_hard_far_only_probability": {"locked_value_for_all_ablations": 0.5},
+    "v5_validation_maximum_gap_hops": {"locked_value_for_all_ablations": 8},
+    "v5_reset_probability": {"candidate-13": 0.0, "candidate-14_to_18": 0.2},
+    "v5_hard_far_only_probability": {"candidate-13": 0.0, "candidate-14_to_18": 0.5},
+    "hard_negative_loss_weight": {"candidate-13_to_14": 0.0, "candidate-15_to_18": 0.15},
+    "hard_negative_top_fraction": {"locked_value_for_all_ablations": 0.1},
+    "onset_loss_weight": {"candidate-13_to_15": 0.0, "candidate-16_to_18": 0.1},
+    "event_loss_weight": {"candidate-13_to_16": 0.0, "candidate-17_to_18": 0.1},
+    "reset_loss_weight": {"candidate-13_to_17": 0.0, "candidate-18": 0.1},
+    "event_temperature": {"locked_value_for_all_ablations": 0.08}
+  },
+  "test_isolation": {
+    "epoch_hyperparameter_threshold_selection": "validation only",
+    "model_test_suites": "opened once after final validation selection",
+    "assistant_acceptance_audio": "excluded from training and validation",
+    "worker_mitigation": "candidate-13 started with 8 workers; measured commit reached 83.7%, so its resume and every subsequent candidate use 4 workers"
+  }
+}

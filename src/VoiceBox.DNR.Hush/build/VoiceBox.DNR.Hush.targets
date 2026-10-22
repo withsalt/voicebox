@@ -1,0 +1,16 @@
+<Project>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\models\dnr\hush\**\*.onnx">
+      <Link>runtimes\models\dnr\hush\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\models\dnr\hush\**\*.ini">
+      <Link>runtimes\models\dnr\hush\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+  </ItemGroup>
+
+</Project>

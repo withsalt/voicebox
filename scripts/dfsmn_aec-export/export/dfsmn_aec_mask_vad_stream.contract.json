@@ -1,0 +1,14 @@
+{
+  "sample_rate": "16000",
+  "feature_dim": "240",
+  "feature_bins": "80",
+  "mask_bins": "321",
+  "frame_length": "640",
+  "hop_length": "320",
+  "num_layers": "12",
+  "hidden_size": "512",
+  "cache_frames": "19",
+  "chunk_frames": "1",
+  "outputs": "mask,vad_prob,cache_out",
+  "vad_dim": "1"
+}

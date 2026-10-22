@@ -1,0 +1,134 @@
+{
+  "schema": "voicebox.assistant/scenario-trace/v1",
+  "catalogVersion": "v1",
+  "scenarioId": "response-complete-vs-barge-in",
+  "oracleKind": "ExactTrace",
+  "inputs": [
+    {
+      "ordinal": 1,
+      "type": "response.started",
+      "detail": "T1"
+    },
+    {
+      "ordinal": 2,
+      "type": "barge-in",
+      "detail": "before response.generated"
+    },
+    {
+      "ordinal": 3,
+      "type": "asr.finish",
+      "detail": "session-2"
+    }
+  ],
+  "publicEvents": [
+    {
+      "publicationSeq": 1,
+      "type": "StateChanged",
+      "from": "Idle",
+      "to": "Listening"
+    },
+    {
+      "publicationSeq": 2,
+      "type": "StateChanged",
+      "from": "Listening",
+      "to": "Recognizing"
+    },
+    {
+      "publicationSeq": 3,
+      "type": "UserSpoke",
+      "text": "\u4F60\u597D"
+    },
+    {
+      "publicationSeq": 4,
+      "type": "StateChanged",
+      "from": "Recognizing",
+      "to": "Thinking"
+    },
+    {
+      "publicationSeq": 5,
+      "type": "AssistantText",
+      "text": "\u5148\u5206\u6790\u4E00\u4E0B\u3002",
+      "isThinking": true
+    },
+    {
+      "publicationSeq": 6,
+      "type": "StateChanged",
+      "from": "Thinking",
+      "to": "Listening"
+    },
+    {
+      "publicationSeq": 7,
+      "type": "StateChanged",
+      "from": "Listening",
+      "to": "Recognizing"
+    },
+    {
+      "publicationSeq": 8,
+      "type": "UserSpoke",
+      "text": "\u505C\u4E00\u4E0B"
+    },
+    {
+      "publicationSeq": 9,
+      "type": "StateChanged",
+      "from": "Recognizing",
+      "to": "Thinking"
+    },
+    {
+      "publicationSeq": 10,
+      "type": "AssistantText",
+      "text": "\u5148\u5206\u6790\u4E00\u4E0B\u3002",
+      "isThinking": true
+    },
+    {
+      "publicationSeq": 11,
+      "type": "StateChanged",
+      "from": "Thinking",
+      "to": "Speaking"
+    },
+    {
+      "publicationSeq": 12,
+      "type": "AssistantText",
+      "text": "\u597D\u7684\u3002",
+      "isThinking": false
+    },
+    {
+      "publicationSeq": 13,
+      "type": "AssistantResponseGenerated",
+      "text": "\u597D\u7684\u3002"
+    },
+    {
+      "publicationSeq": 14,
+      "type": "AssistantReplied",
+      "text": "\u597D\u7684\u3002"
+    },
+    {
+      "publicationSeq": 15,
+      "type": "StateChanged",
+      "from": "Speaking",
+      "to": "Idle"
+    },
+    {
+      "publicationSeq": 16,
+      "type": "StateChanged",
+      "from": "Idle",
+      "to": "Stopped"
+    }
+  ],
+  "providerCalls": [
+    {
+      "ordinal": 1,
+      "type": "llm.stream",
+      "detail": "count=2"
+    },
+    {
+      "ordinal": 2,
+      "type": "asr.finish",
+      "detail": "count=2"
+    }
+  ],
+  "final": {
+    "runtimeState": "Stopped",
+    "wakeMode": "Disabled"
+  },
+  "scheduleId": "runtime-barge-in-before-response-generated"
+}

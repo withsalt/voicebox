@@ -1,0 +1,10 @@
+numpy
+onnx
+onnxruntime
+onnxscript
+psutil
+pytest
+scipy
+soundfile
+sympy
+torch

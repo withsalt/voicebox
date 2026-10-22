@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.31.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VoiceBox.Core\VoiceBox.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="runtimes\models\dnr\dpdfnet\*.onnx" />
+    <None Include="runtimes\models\dnr\dpdfnet\*.onnx" Pack="true" PackagePath="runtimes\models\dnr\dpdfnet\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="build\VoiceBox.DNR.DPDFNet.targets" Pack="true" PackagePath="build\VoiceBox.DNR.DPDFNet.targets" />
+    <None Include="build\VoiceBox.DNR.DPDFNet.targets" Pack="true" PackagePath="buildTransitive\VoiceBox.DNR.DPDFNet.targets" />
+  </ItemGroup>
+
+</Project>

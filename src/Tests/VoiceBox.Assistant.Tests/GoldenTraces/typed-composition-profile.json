@@ -1,0 +1,20 @@
+{
+  "$schema": "voicebox.assistant/composition-profile/v2",
+  "profile": "BasicDuplexQa",
+  "compositionRoot": "VoiceAssistantBuilder",
+  "capabilities": [
+    "AudioCapture",
+    "AudioPlayback",
+    "CaptureTimeline",
+    "TurnBoundary",
+    "SpeechRecognition",
+    "ResponseGeneration",
+    "SpeechSynthesis",
+    "SimultaneousCapturePlayback",
+    "RenderReference",
+    "ProcessedCaptureTimeline",
+    "CaptureProcessorStage"
+  ],
+  "lifecycleStartOrder": ["AudioFrontend"],
+  "effectBindingMode": "closed-typed"
+}

@@ -1,0 +1,17 @@
+# conda env: voxcpm (Python 3.13, torch 2.12.1+cu132)
+# 直接用环境 python 运行（conda run 在本机偶发异常）:
+#   E:/.packages/conda/envs/voxcpm/python.exe export.py --dtype fp32
+torch>=2.12
+transformers>=5.0
+tokenizers>=0.22
+onnx>=1.21
+onnxruntime>=1.26
+onnxconverter-common>=1.16
+numpy>=2.0
+soundfile
+einops
+pydantic>=2.0
+librosa           # 仅 voxcpm 包 import 链需要 (voxcpm2), 导出本身不用
+tqdm
+# 注意: torchaudio 2.11 的 load() 依赖 torchcodec(未装), 本导出链路只用
+# torchaudio.functional.resample(纯 torch 算子), 音频解码一律走 soundfile。

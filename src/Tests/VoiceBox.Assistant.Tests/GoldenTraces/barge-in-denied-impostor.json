@@ -1,0 +1,140 @@
+{
+  "schema": "voicebox.assistant/scenario-trace/v1",
+  "catalogVersion": "v1",
+  "scenarioId": "barge-in-denied-impostor",
+  "oracleKind": "ExactTrace",
+  "inputs": [
+    {
+      "ordinal": 1,
+      "type": "runtime.start",
+      "detail": "full-stack-duplex\u002Bwakeup\u002Bspeaker"
+    },
+    {
+      "ordinal": 2,
+      "type": "kws.wakeup",
+      "detail": "owner"
+    },
+    {
+      "ordinal": 3,
+      "type": "vad.speech.started",
+      "detail": "response-turn"
+    },
+    {
+      "ordinal": 4,
+      "type": "vad.speech.ended",
+      "detail": "response-turn"
+    },
+    {
+      "ordinal": 5,
+      "type": "vad.speech",
+      "detail": "impostor;kws=on"
+    },
+    {
+      "ordinal": 6,
+      "type": "runtime.stop",
+      "detail": "caller=host"
+    }
+  ],
+  "publicEvents": [
+    {
+      "publicationSeq": 1,
+      "type": "WakeModeChanged",
+      "from": "Disabled",
+      "to": "WaitingForWakeWord"
+    },
+    {
+      "publicationSeq": 2,
+      "type": "WakeModeChanged",
+      "from": "WaitingForWakeWord",
+      "to": "ContinuousConversation"
+    },
+    {
+      "publicationSeq": 3,
+      "type": "WakeupDetected",
+      "text": "\u5C0F\u7231\u540C\u5B66"
+    },
+    {
+      "publicationSeq": 4,
+      "type": "StateChanged",
+      "from": "Idle",
+      "to": "Listening"
+    },
+    {
+      "publicationSeq": 5,
+      "type": "StateChanged",
+      "from": "Listening",
+      "to": "Recognizing"
+    },
+    {
+      "publicationSeq": 6,
+      "type": "UserSpoke",
+      "text": "\u4F60\u597D"
+    },
+    {
+      "publicationSeq": 7,
+      "type": "StateChanged",
+      "from": "Recognizing",
+      "to": "Thinking"
+    },
+    {
+      "publicationSeq": 8,
+      "type": "StateChanged",
+      "from": "Thinking",
+      "to": "Speaking"
+    },
+    {
+      "publicationSeq": 9,
+      "type": "AssistantText",
+      "text": "\u597D\u7684\u3002",
+      "isThinking": false
+    },
+    {
+      "publicationSeq": 10,
+      "type": "AssistantResponseGenerated",
+      "text": "\u597D\u7684\u3002"
+    },
+    {
+      "publicationSeq": 11,
+      "type": "AssistantReplied",
+      "text": "\u597D\u7684\u3002"
+    },
+    {
+      "publicationSeq": 12,
+      "type": "StateChanged",
+      "from": "Speaking",
+      "to": "Idle"
+    },
+    {
+      "publicationSeq": 13,
+      "type": "StateChanged",
+      "from": "Idle",
+      "to": "Stopped"
+    }
+  ],
+  "providerCalls": [
+    {
+      "ordinal": 1,
+      "type": "speaker.extract",
+      "detail": "observed=True"
+    },
+    {
+      "ordinal": 2,
+      "type": "playback.clear",
+      "detail": "count=0;after-impostor"
+    },
+    {
+      "ordinal": 3,
+      "type": "playback.gain",
+      "detail": "gain=1;changes=0"
+    },
+    {
+      "ordinal": 4,
+      "type": "llm.stream",
+      "detail": "count=1"
+    }
+  ],
+  "final": {
+    "runtimeState": "Stopped",
+    "wakeMode": "ContinuousConversation"
+  }
+}

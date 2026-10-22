@@ -1,0 +1,82 @@
+[
+  {
+    "id": "xiaoai",
+    "keyword": "小爱同学",
+    "label": "爱",
+    "revision": "8a8cb13c7f299344409dbc32b4dd0e327c534133",
+    "files": [
+      {
+        "name": "kws_meta.json",
+        "size": 22172,
+        "sha256": "b98263e902369c7a76ecfa934a47fe533ab5e0008e42328d3cbf374808452655",
+        "url": "https://www.modelscope.cn/models/withsalt/voicebox_models/resolve/8a8cb13c7f299344409dbc32b4dd0e327c534133/v1/kws/kws-xiaoai-onnx/kws_meta.json"
+      },
+      {
+        "name": "kws_streaming.onnx",
+        "size": 3107439,
+        "sha256": "457df572684cadf0e865822a965c0fd651b4f9321adc2aa18d00a3b1c18b80c2",
+        "url": "https://www.modelscope.cn/models/withsalt/voicebox_models/resolve/8a8cb13c7f299344409dbc32b4dd0e327c534133/v1/kws/kws-xiaoai-onnx/kws_streaming.onnx"
+      }
+    ]
+  },
+  {
+    "id": "xiaomu",
+    "keyword": "小木小木",
+    "label": "木",
+    "revision": "8a8cb13c7f299344409dbc32b4dd0e327c534133",
+    "files": [
+      {
+        "name": "kws_meta.json",
+        "size": 22172,
+        "sha256": "e4372f0c209b86cc3080ce00b14a13d6c381921aec0b7de6e7ef1e4c0b63d04a",
+        "url": "https://www.modelscope.cn/models/withsalt/voicebox_models/resolve/8a8cb13c7f299344409dbc32b4dd0e327c534133/v1/kws/kws-xiaomu-onnx/kws_meta.json"
+      },
+      {
+        "name": "kws_streaming.onnx",
+        "size": 3038302,
+        "sha256": "23f0460183aaa323b0796305b07bfbacb0ac28adccdf18d040655721d68130f0",
+        "url": "https://www.modelscope.cn/models/withsalt/voicebox_models/resolve/8a8cb13c7f299344409dbc32b4dd0e327c534133/v1/kws/kws-xiaomu-onnx/kws_streaming.onnx"
+      }
+    ]
+  },
+  {
+    "id": "xiaowang",
+    "keyword": "小王同学",
+    "label": "王",
+    "revision": "8a8cb13c7f299344409dbc32b4dd0e327c534133",
+    "files": [
+      {
+        "name": "kws_meta.json",
+        "size": 22172,
+        "sha256": "c0b951c44b5cb0eccd7d3fcef397abf6dc0b0e9cbff8c14801ddfeeb3c7b3ef6",
+        "url": "https://www.modelscope.cn/models/withsalt/voicebox_models/resolve/8a8cb13c7f299344409dbc32b4dd0e327c534133/v1/kws/kws-xiaowang-onnx/kws_meta.json"
+      },
+      {
+        "name": "kws_streaming.onnx",
+        "size": 3107439,
+        "sha256": "fbea125c28f411f2f852262b72ef570f4b173bf7be26926e38ecaab2846982cd",
+        "url": "https://www.modelscope.cn/models/withsalt/voicebox_models/resolve/8a8cb13c7f299344409dbc32b4dd0e327c534133/v1/kws/kws-xiaowang-onnx/kws_streaming.onnx"
+      }
+    ]
+  },
+  {
+    "id": "xiaoyun",
+    "keyword": "小云小云",
+    "label": "云",
+    "revision": "8a8cb13c7f299344409dbc32b4dd0e327c534133",
+    "files": [
+      {
+        "name": "kws_meta.json",
+        "size": 22205,
+        "sha256": "969bc65da3d1d655e1d3a4f87fabba3794f6ab67c00bf6cbcb4c283048288761",
+        "url": "https://www.modelscope.cn/models/withsalt/voicebox_models/resolve/8a8cb13c7f299344409dbc32b4dd0e327c534133/v1/kws/kws-xiaoyun-onnx/kws_meta.json"
+      },
+      {
+        "name": "kws_streaming.onnx",
+        "size": 3103334,
+        "sha256": "d599d193a5e813999bd0e4d1a381d26fec9849fbf55eb1007a27c02f10bfab89",
+        "url": "https://www.modelscope.cn/models/withsalt/voicebox_models/resolve/8a8cb13c7f299344409dbc32b4dd0e327c534133/v1/kws/kws-xiaoyun-onnx/kws_streaming.onnx"
+      }
+    ]
+  }
+]

@@ -1,0 +1,19 @@
+{
+  global:
+    apm_abi_version;
+    apm_webrtc_version;
+    apm_create;
+    apm_create_with_neural_residual_echo_model;
+    apm_destroy;
+    apm_set_stream_delay_ms;
+    apm_process_reverse;
+    apm_process_capture;
+    apm_get_stats;
+    apm_reset;
+    apm_delay_create;
+    apm_delay_destroy;
+    apm_delay_process;
+    apm_delay_reset;
+  local:
+    *;
+};

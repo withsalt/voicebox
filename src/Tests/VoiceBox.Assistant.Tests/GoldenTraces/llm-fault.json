@@ -1,0 +1,86 @@
+{
+  "schema": "voicebox.assistant/scenario-trace/v1",
+  "catalogVersion": "v1",
+  "scenarioId": "llm-fault",
+  "oracleKind": "ExactTrace",
+  "inputs": [
+    {
+      "ordinal": 1,
+      "type": "runtime.start",
+      "detail": "full-stack-duplex"
+    },
+    {
+      "ordinal": 2,
+      "type": "vad.speech.started",
+      "detail": "source=manual"
+    },
+    {
+      "ordinal": 3,
+      "type": "vad.speaking",
+      "detail": "samples=3"
+    },
+    {
+      "ordinal": 4,
+      "type": "vad.speech.ended",
+      "detail": "durationMs=120"
+    },
+    {
+      "ordinal": 5,
+      "type": "runtime.stop",
+      "detail": "caller=host"
+    }
+  ],
+  "publicEvents": [
+    {
+      "publicationSeq": 1,
+      "type": "StateChanged",
+      "from": "Idle",
+      "to": "Listening"
+    },
+    {
+      "publicationSeq": 2,
+      "type": "StateChanged",
+      "from": "Listening",
+      "to": "Recognizing"
+    },
+    {
+      "publicationSeq": 3,
+      "type": "StateChanged",
+      "from": "Recognizing",
+      "to": "Thinking"
+    },
+    {
+      "publicationSeq": 4,
+      "type": "StateChanged",
+      "from": "Thinking",
+      "to": "Idle"
+    },
+    {
+      "publicationSeq": 5,
+      "type": "StateChanged",
+      "from": "Idle",
+      "to": "Stopped"
+    }
+  ],
+  "providerCalls": [
+    {
+      "ordinal": 1,
+      "type": "asr.finish",
+      "detail": "count=1"
+    },
+    {
+      "ordinal": 2,
+      "type": "llm.stream",
+      "detail": "count=1"
+    },
+    {
+      "ordinal": 3,
+      "type": "tts.synthesize",
+      "detail": "count=0"
+    }
+  ],
+  "final": {
+    "runtimeState": "Stopped",
+    "wakeMode": "Disabled"
+  }
+}

@@ -1,0 +1,31 @@
+namespace VoiceBox.Assistant.Runtime.Control.Models;
+
+internal enum AssistantSignalKind
+{
+    SpeechStarted,
+    SpeechAudioAvailable,
+    SpeechEnded,
+    WakeupModeChanged,
+    WakeupObserved,
+    InterruptionRequested,
+    InterruptionResolved,
+    ActiveNearEndInterruptionRequested,
+    ActiveNearEndSpeechEnded,
+    ActiveNearEndSpeechDrainCompleted,
+    PlaybackTransportStarted,
+    SpeakerGateResolved,
+    RecognitionStarted,
+    RecognitionCompleted,
+    RecognitionFailed,
+    ResponseStarted,
+    ResponseSpeakableStarted,
+    ResponseCompleted,
+    ResponseFailed,
+    PlaybackCompleted,
+    PlaybackFailed,
+    ValidationCancelled,
+    TurnCompleted,
+    OperationCanceled,
+    RuntimeFault,
+    BackgroundResponseStarted,
+}

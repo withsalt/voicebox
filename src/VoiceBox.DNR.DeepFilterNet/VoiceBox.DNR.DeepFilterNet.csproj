@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.31.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VoiceBox.Audio.Common\VoiceBox.Audio.Common.csproj" />
+    <ProjectReference Include="..\VoiceBox.Core\VoiceBox.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="runtimes\models\dnr\deepfilternet\**\*.onnx" />
+    <None Remove="runtimes\models\dnr\deepfilternet\**\*.ini" />
+    <None Include="runtimes\models\dnr\deepfilternet\**\*.onnx" Pack="true" PackagePath="runtimes\models\dnr\deepfilternet\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="runtimes\models\dnr\deepfilternet\**\*.ini" Pack="true" PackagePath="runtimes\models\dnr\deepfilternet\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="build\VoiceBox.DNR.DeepFilterNet.targets" Pack="true" PackagePath="build\VoiceBox.DNR.DeepFilterNet.targets" />
+    <None Include="build\VoiceBox.DNR.DeepFilterNet.targets" Pack="true" PackagePath="buildTransitive\VoiceBox.DNR.DeepFilterNet.targets" />
+  </ItemGroup>
+
+</Project>

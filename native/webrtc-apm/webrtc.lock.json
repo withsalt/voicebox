@@ -1,0 +1,7 @@
+{
+  "chrome_version": "156.0.8078.12",
+  "milestone": 156,
+  "chromium_branch": 8078,
+  "webrtc_commit": "3987dfb7b952b5c86cb7d93370d48416a81d6397",
+  "depot_tools_commit": "9073d17d5650ede601bc1f59c822973d2c25b86a"
+}

@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SDKs\RNNoise.NET\RNNoise.NET.csproj" />
+    <ProjectReference Include="..\VoiceBox.Audio.Common\VoiceBox.Audio.Common.csproj" />
+    <ProjectReference Include="..\VoiceBox.Core\VoiceBox.Core.csproj" />
+  </ItemGroup>
+
+</Project>

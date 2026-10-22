@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.13" />
+		<PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.31.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\VoiceBox.Audio.PortAudio\VoiceBox.Audio.PortAudio.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.TTS.VoxCPM\VoiceBox.TTS.VoxCPM.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.Core\VoiceBox.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="voices\*.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

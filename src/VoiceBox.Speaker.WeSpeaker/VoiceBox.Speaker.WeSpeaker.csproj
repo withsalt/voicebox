@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.31.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VoiceBox.Core\VoiceBox.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="runtimes\models\speaker\wespeaker\**\*.onnx" />
+    <None Remove="runtimes\models\speaker\wespeaker\**\*.ini" />
+    <None Remove="runtimes\models\speaker\wespeaker\**\*.md" />
+    <None Remove="runtimes\models\speaker\wespeaker\**\*.txt" />
+    <None Include="runtimes\models\speaker\wespeaker\**\*.onnx" Pack="true" PackagePath="runtimes\models\speaker\wespeaker\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="runtimes\models\speaker\wespeaker\**\*.ini" Pack="true" PackagePath="runtimes\models\speaker\wespeaker\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="runtimes\models\speaker\wespeaker\**\*.md" Pack="true" PackagePath="runtimes\models\speaker\wespeaker\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="runtimes\models\speaker\wespeaker\**\*.txt" Pack="true" PackagePath="runtimes\models\speaker\wespeaker\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="build\VoiceBox.Speaker.WeSpeaker.targets" Pack="true" PackagePath="build\VoiceBox.Speaker.WeSpeaker.targets" />
+    <None Include="build\VoiceBox.Speaker.WeSpeaker.targets" Pack="true" PackagePath="buildTransitive\VoiceBox.Speaker.WeSpeaker.targets" />
+  </ItemGroup>
+
+</Project>

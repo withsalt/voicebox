@@ -1,0 +1,68 @@
+{
+  "schema": "voicebox.assistant/kernel-semantic-trace/v1",
+  "catalogVersion": "v1",
+  "scenarioId": "normal-turn",
+  "oracleKind": "ExactTrace",
+  "steps": [
+    {
+      "ordinal": 1,
+      "signal": "turn.speech.started.v1",
+      "previousState": "Idle",
+      "nextState": "Listening",
+      "effects": [
+        { "effectIndex": 0, "type": "effect.public-event.publish.v1", "detail": "StateChanged:Idle->Listening" },
+        { "effectIndex": 1, "type": "effect.recognition.prepare.v1", "detail": "turnId=T1;operationId=O1" }
+      ]
+    },
+    {
+      "ordinal": 2,
+      "signal": "turn.recognition.session-ready.v1",
+      "previousState": "Listening",
+      "nextState": "Recognizing",
+      "effects": [
+        { "effectIndex": 0, "type": "effect.public-event.publish.v1", "detail": "StateChanged:Listening->Recognizing" }
+      ]
+    },
+    {
+      "ordinal": 3,
+      "signal": "turn.recognition.completed.v1",
+      "previousState": "Recognizing",
+      "nextState": "Thinking",
+      "effects": [
+        { "effectIndex": 0, "type": "effect.public-event.publish.v1", "detail": "UserSpoke:你好" },
+        { "effectIndex": 1, "type": "effect.public-event.publish.v1", "detail": "StateChanged:Recognizing->Thinking" },
+        { "effectIndex": 2, "type": "effect.response.generate.v1", "detail": "turnId=T1;operationId=O2" }
+      ]
+    },
+    {
+      "ordinal": 4,
+      "signal": "turn.playback.started.v1",
+      "previousState": "Thinking",
+      "nextState": "Speaking",
+      "effects": [
+        { "effectIndex": 0, "type": "effect.public-event.publish.v1", "detail": "StateChanged:Thinking->Speaking" }
+      ]
+    },
+    {
+      "ordinal": 5,
+      "signal": "turn.response.generated.v1",
+      "previousState": "Speaking",
+      "nextState": "Speaking",
+      "effects": [
+        { "effectIndex": 0, "type": "effect.history.commit.v1", "detail": "turnId=T1" },
+        { "effectIndex": 1, "type": "effect.public-event.publish.v1", "detail": "AssistantResponseGenerated:好的。" }
+      ]
+    },
+    {
+      "ordinal": 6,
+      "signal": "turn.playback.completed.v1",
+      "previousState": "Speaking",
+      "nextState": "Idle",
+      "effects": [
+        { "effectIndex": 0, "type": "effect.public-event.publish.v1", "detail": "AssistantReplied:好的。" },
+        { "effectIndex": 1, "type": "effect.turn.complete.v1", "detail": "turnId=T1" },
+        { "effectIndex": 2, "type": "effect.public-event.publish.v1", "detail": "StateChanged:Speaking->Idle" }
+      ]
+    }
+  ]
+}

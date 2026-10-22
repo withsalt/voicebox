@@ -1,0 +1,21 @@
+{
+  "schema": "voicebox.assistant/scenario-trace/v1",
+  "catalogVersion": "v1",
+  "scenarioId": "CR-003",
+  "oracleKind": "ExactTrace",
+  "scheduleId": "SC00B-CR003-asr-ready-before-speech-end",
+  "inputs": [
+    { "ordinal": 1, "type": "vad.speech.started", "detail": "turn=T1" },
+    { "ordinal": 2, "type": "asr.session.ready", "detail": "session-1" },
+    { "ordinal": 3, "type": "vad.speech.ended", "detail": "after session ready" }
+  ],
+  "publicEvents": [
+    { "publicationSeq": 1, "type": "StateChanged", "to": "Listening" },
+    { "publicationSeq": 2, "type": "StateChanged", "to": "Recognizing" },
+    { "publicationSeq": 3, "type": "AssistantReplied", "text": "好的。" }
+  ],
+  "providerCalls": [
+    { "ordinal": 1, "type": "asr.finish", "detail": "count=1" }
+  ],
+  "final": { "runtimeState": "Idle", "wakeMode": "Disabled" }
+}

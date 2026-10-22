@@ -1,0 +1,18 @@
+{
+  "model_type": "render-aware-nearend-dtd",
+  "sample_rate": "16000",
+  "frame_length": "640",
+  "hop_length": "320",
+  "input_names": "microphone,render,state_in",
+  "output_names": "nearend_probability,state_out",
+  "audio_input_shape": "1,640",
+  "state_shape": "3,1,288",
+  "frequency_bands": "80",
+  "probability_shape": "1,1,1",
+  "decision_threshold": "0.55",
+  "label_definition": "propagated near-end at microphone; 20ms RMS >= max(0.0005,3% utterance peak); gaps <=100ms filled",
+  "training_source": "Enriched multi-source: AEC Challenge narrow/fullband/real plus external speech, noise, and RIR online synthesis",
+  "trainable_parameters": "1656577",
+  "streaming_mmacs_per_second": "92.7304",
+  "runtime_resampling": "source files read at per-file header rate and resampled to 16kHz"
+}

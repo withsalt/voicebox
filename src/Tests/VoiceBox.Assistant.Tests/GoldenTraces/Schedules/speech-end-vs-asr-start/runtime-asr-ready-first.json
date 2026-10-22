@@ -1,0 +1,94 @@
+{
+  "schema": "voicebox.assistant/scenario-trace/v1",
+  "catalogVersion": "v1",
+  "scenarioId": "speech-end-vs-asr-start",
+  "oracleKind": "ExactTrace",
+  "inputs": [
+    {
+      "ordinal": 1,
+      "type": "vad.speech.started",
+      "detail": "turn=T1"
+    },
+    {
+      "ordinal": 2,
+      "type": "asr.session.ready",
+      "detail": "session-1"
+    },
+    {
+      "ordinal": 3,
+      "type": "vad.speech.ended",
+      "detail": "after session ready"
+    }
+  ],
+  "publicEvents": [
+    {
+      "publicationSeq": 1,
+      "type": "StateChanged",
+      "from": "Idle",
+      "to": "Listening"
+    },
+    {
+      "publicationSeq": 2,
+      "type": "StateChanged",
+      "from": "Listening",
+      "to": "Recognizing"
+    },
+    {
+      "publicationSeq": 3,
+      "type": "UserSpoke",
+      "text": "\u4F60\u597D"
+    },
+    {
+      "publicationSeq": 4,
+      "type": "StateChanged",
+      "from": "Recognizing",
+      "to": "Thinking"
+    },
+    {
+      "publicationSeq": 5,
+      "type": "StateChanged",
+      "from": "Thinking",
+      "to": "Speaking"
+    },
+    {
+      "publicationSeq": 6,
+      "type": "AssistantText",
+      "text": "\u597D\u7684\u3002",
+      "isThinking": false
+    },
+    {
+      "publicationSeq": 7,
+      "type": "AssistantResponseGenerated",
+      "text": "\u597D\u7684\u3002"
+    },
+    {
+      "publicationSeq": 8,
+      "type": "AssistantReplied",
+      "text": "\u597D\u7684\u3002"
+    },
+    {
+      "publicationSeq": 9,
+      "type": "StateChanged",
+      "from": "Speaking",
+      "to": "Idle"
+    },
+    {
+      "publicationSeq": 10,
+      "type": "StateChanged",
+      "from": "Idle",
+      "to": "Stopped"
+    }
+  ],
+  "providerCalls": [
+    {
+      "ordinal": 1,
+      "type": "asr.finish",
+      "detail": "count=1"
+    }
+  ],
+  "final": {
+    "runtimeState": "Stopped",
+    "wakeMode": "Disabled"
+  },
+  "scheduleId": "runtime-asr-ready-first"
+}

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.31.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VoiceBox.Core\VoiceBox.Core.csproj" />
+    <!-- 复用 webrtc-apm 原生 shim 暴露的 AEC3 延迟估计器(WebRtcAec3DelayEstimator)。仅在 DtlnAecOptions.DelayEstimator = WebRtcAec3 时实际加载原生库。 -->
+    <ProjectReference Include="..\VoiceBox.APM.WebRtc\VoiceBox.APM.WebRtc.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="runtimes\models\aec\dtln\*.onnx" />
+    <None Include="runtimes\models\aec\dtln\*.onnx" Pack="true" PackagePath="runtimes\models\aec\dtln\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="build\VoiceBox.AEC.DTLN.targets" Pack="true" PackagePath="build\VoiceBox.AEC.DTLN.targets" />
+    <None Include="build\VoiceBox.AEC.DTLN.targets" Pack="true" PackagePath="buildTransitive\VoiceBox.AEC.DTLN.targets" />
+  </ItemGroup>
+
+</Project>

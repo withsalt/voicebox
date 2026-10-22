@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voicebox.assistant/scenario-trace/v1",
+  "type": "object",
+  "required": ["schema", "catalogVersion", "scenarioId", "oracleKind", "inputs", "publicEvents", "providerCalls", "final"],
+  "properties": {
+    "schema": { "const": "voicebox.assistant/scenario-trace/v1" },
+    "catalogVersion": { "type": "string" },
+    "scenarioId": { "type": "string" },
+    "oracleKind": { "enum": ["ExactTrace", "AllowedTraceSet"] },
+    "inputs": { "type": "array" },
+    "publicEvents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["publicationSeq", "type"],
+        "properties": {
+          "publicationSeq": { "type": "integer", "minimum": 1 },
+          "type": { "type": "string" }
+        }
+      }
+    },
+    "providerCalls": { "type": "array" },
+    "final": { "type": "object" }
+  }
+}

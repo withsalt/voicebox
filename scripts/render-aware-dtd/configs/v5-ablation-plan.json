@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "round": "v5-288x3x80",
+  "maximum_formal_candidates": 6,
+  "fixed_seed": 43,
+  "fixed_validation_distribution": {
+    "examples": 1500,
+    "reset_probability": 0.2,
+    "hard_far_only_probability": 0.5,
+    "maximum_gap_hops": 8
+  },
+  "selection_order": [
+    "reject validation frame/event non-regressions",
+    "minimize false-trigger and censoring regressions",
+    "maximize recall_lower95",
+    "minimize right-censored latency_p95_ms then latency_p50_ms"
+  ],
+  "candidates": [
+    {"name": "candidate-13", "label": "A0", "anchor": "candidate-12 historical recipe", "changed_parameter_group": "mandatory 288x3x80 contract and 200-epoch budget"},
+    {"name": "candidate-14", "label": "A1", "anchor": "candidate-13", "changed_parameter_group": "v5 training data semantics: reset=0.2, hard-far-only=0.5"},
+    {"name": "candidate-15", "label": "A2", "anchor": "candidate-14", "changed_parameter_group": "hard-negative objective: weight=0.15, top-fraction=0.10"},
+    {"name": "candidate-16", "label": "A3", "anchor": "candidate-15", "changed_parameter_group": "onset objective: weight=0.10"},
+    {"name": "candidate-17", "label": "A4", "anchor": "candidate-16", "changed_parameter_group": "production-event surrogate: weight=0.10, temperature=0.08"},
+    {"name": "candidate-18", "label": "A5", "anchor": "candidate-17", "changed_parameter_group": "reset/cold-start objective: weight=0.10"}
+  ],
+  "stop_rules": [
+    "Do not open fixed test suites before validation freezes the final candidate and epoch.",
+    "Stop adding objective groups when no validation Pareto survivor remains.",
+    "A recoverable Windows worker or commit-memory failure resumes the same candidate from last.pt with four workers.",
+    "Never overwrite or delete a failed candidate artifact."
+  ]
+}

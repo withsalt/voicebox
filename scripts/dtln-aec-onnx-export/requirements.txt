@@ -1,0 +1,6 @@
+tensorflow>=2.21.0
+tf2onnx>=1.17.0
+onnx>=1.22.0
+onnxruntime>=1.27.0
+numpy>=2.5.0
+soundfile>=0.14.0

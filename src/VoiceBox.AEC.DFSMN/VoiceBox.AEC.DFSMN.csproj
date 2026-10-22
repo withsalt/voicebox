@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.31.0" />
+		<PackageReference Include="System.Numerics.Tensors" Version="10.0.13" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\VoiceBox.Core\VoiceBox.Core.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Remove="runtimes\models\aec\dfsmn\*.*" />
+		<None Include="runtimes\models\aec\dfsmn\*.*" Pack="true" PackagePath="runtimes\models\aec\dfsmn\">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="build\VoiceBox.AEC.DFSMN.targets" Pack="true" PackagePath="build\VoiceBox.AEC.DFSMN.targets" />
+		<None Include="build\VoiceBox.AEC.DFSMN.targets" Pack="true" PackagePath="buildTransitive\VoiceBox.AEC.DFSMN.targets" />
+	</ItemGroup>
+
+</Project>

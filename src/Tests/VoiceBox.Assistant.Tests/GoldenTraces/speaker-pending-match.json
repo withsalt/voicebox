@@ -1,0 +1,20 @@
+{
+  "schema": "voicebox.assistant/scenario-trace/v1",
+  "catalogVersion": "v1",
+  "scenarioId": "CR-005",
+  "oracleKind": "ExactTrace",
+  "scheduleId": "SC00B-CR005-speaker-versus-speech-end",
+  "inputs": [
+    { "ordinal": 1, "type": "speaker.feed.entered", "detail": "barrier" },
+    { "ordinal": 2, "type": "vad.speech.ended", "detail": "speaker decision pending" },
+    { "ordinal": 3, "type": "speaker.feed.release", "detail": "owner evidence available" }
+  ],
+  "publicEvents": [
+    { "publicationSeq": 1, "type": "BargeInValidation", "text": "Heard" }
+  ],
+  "providerCalls": [
+    { "ordinal": 1, "type": "playback.clear", "detail": "count=1" },
+    { "ordinal": 2, "type": "asr.feed", "detail": "session-2 candidate audio once" }
+  ],
+  "final": { "runtimeState": "Listening", "wakeMode": "ContinuousConversation" }
+}

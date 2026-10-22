@@ -1,0 +1,8 @@
+# 构建有状态流式 ONNX + 生成对拍向量所需依赖。
+numpy
+onnx
+onnxruntime
+onnxsim            # 可选：合并后简化图（更小/更快）。缺失时自动跳过。
+# 仅 compare_wav.py（音频指标对比）需要：
+scipy
+soundfile

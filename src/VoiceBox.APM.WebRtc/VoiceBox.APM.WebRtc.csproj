@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VoiceBox.Core\VoiceBox.Core.csproj" />
+  </ItemGroup>
+
+  <!--
+    Native shim (webrtc-apm) packaging — mirrors WeTextProcessing.NET.
+    The library is built manually from native/webrtc-apm (see its README) and
+    the binaries are committed under runtimes/<rid>/native/. Here they are copied
+    into THIS project's output preserving the runtimes/<rid>/native/ layout; the
+    structure-preserving copy also flows transitively to referencing projects
+    (Demos/Tests). At run time NativeLibraryLoader probes that layout and loads
+    the right binary for the current RID. The build/*.targets re-declares the
+    same items for NuGet/transitive consumers (Pack=true).
+
+    Globs match zero files gracefully for RIDs not yet built.
+  -->
+  <ItemGroup>
+    <None Include="runtimes\win-x64\native\*" Pack="true" PackagePath="runtimes\win-x64\native\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="runtimes\linux-x64\native\*" Pack="true" PackagePath="runtimes\linux-x64\native\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="runtimes\linux-arm64\native\*" Pack="true" PackagePath="runtimes\linux-arm64\native\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="runtimes\models\**\*" Pack="true" PackagePath="runtimes\models\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="build\VoiceBox.APM.WebRtc.targets" Pack="true" PackagePath="build\VoiceBox.APM.WebRtc.targets" />
+    <None Include="build\VoiceBox.APM.WebRtc.targets" Pack="true" PackagePath="buildTransitive\VoiceBox.APM.WebRtc.targets" />
+  </ItemGroup>
+
+</Project>

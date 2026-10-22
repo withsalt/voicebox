@@ -1,0 +1,22 @@
+{
+  "schema": "voicebox.assistant/schedule-manifest/v1",
+  "catalogVersion": "v1",
+  "scenarioId": "response-complete-vs-barge-in",
+  "oracleKind": "AllowedTraceSet",
+  "variants": [
+    {
+      "scheduleId": "response-generated-first",
+      "traceFile": "response-generated-first.json",
+      "happensBefore": "response-generated -> playback-drain barrier -> barge-in",
+      "status": "frozen",
+      "sha256": "abbeef5adeb23efd2fbfb44209bb53a71ba0dc9e8de8d4067b86941506ecce30"
+    },
+    {
+      "scheduleId": "runtime-barge-in-before-response-generated",
+      "traceFile": "runtime-barge-in-before-response-generated.json",
+      "happensBefore": "barge-in -> response-generated; full Runtime replay",
+      "status": "frozen",
+      "sha256": "a682f36fa1d45105def00f96c71d2497753e90c575f6ff44189ff7fd14ae2e13"
+    }
+  ]
+}

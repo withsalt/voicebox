@@ -1,0 +1,42 @@
+<Project>
+
+  <!--
+    Ensures the webrtc-apm native binaries are copied into the output of any
+    project that consumes VoiceBox.APM.WebRtc (transitively / via NuGet),
+    preserving the runtimes/<rid>/native/ layout that NativeLibraryLoader probes.
+    Globs match zero files gracefully for RIDs not yet built.
+  -->
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\win-x64\native\*">
+      <Link>runtimes\win-x64\native\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\win-x86\native\*">
+      <Link>runtimes\win-x86\native\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\linux-x64\native\*">
+      <Link>runtimes\linux-x64\native\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\linux-arm64\native\*">
+      <Link>runtimes\linux-arm64\native\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\linux-arm\native\*">
+      <Link>runtimes\linux-arm\native\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\models\**\*">
+      <Link>runtimes\models\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+  </ItemGroup>
+
+</Project>
