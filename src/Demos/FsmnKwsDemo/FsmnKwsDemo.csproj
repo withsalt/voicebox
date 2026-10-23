@@ -13,6 +13,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\VoiceBox.APM.WebRtc\VoiceBox.APM.WebRtc.csproj" />
 		<ProjectReference Include="..\..\VoiceBox.Audio.PortAudio\VoiceBox.Audio.PortAudio.csproj" />
 		<ProjectReference Include="..\..\VoiceBox.Wakeup.FsmnKws\VoiceBox.Wakeup.FsmnKws.csproj" />
 	</ItemGroup>

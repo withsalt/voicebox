@@ -839,7 +839,7 @@
     "warmup_frames": 35,
     "blank_id": 0
   },
-  "source_checkpoint": "output\\小爱同学\\retrain_weak_fast_20261021\\training\\avg_10.pt",
+  "source_checkpoint": "output\\小爱同学\\retrain_low_volume_20261022\\training\\avg_10.pt",
   "checkpoint_kind": "avg",
   "opset": 19
 }

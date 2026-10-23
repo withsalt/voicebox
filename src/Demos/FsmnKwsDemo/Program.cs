@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using VoiceBox.APM.WebRtc;
 using VoiceBox.Audio.PortAudio;
 using VoiceBox.Core;
 using VoiceBox.Core.Onnx;
@@ -12,7 +13,7 @@ namespace FsmnKwsDemo
     /// <summary>
     /// 演示 FsmnKws (FSMN+CTC) 流式唤醒。
     /// 用法:
-    ///   - 无参数:                            读取麦克风, 持续侦听模型自带的唤醒词
+    ///   - 无参数:                            麦克风音频经 WebRTC APM 处理后, 持续侦听模型自带的唤醒词
     ///   - 参数为 wav 文件路径 (16kHz/mono):  从 wav 推流解码
     /// 唤醒词由模型目录的 kws_meta.json 决定 (不再硬编码)。
     /// 模型资源目录默认取 BASE_MODEL_DIR/kws/kws-xiaomu-onnx, 可用环境变量 FSMN_KWS_MODEL_DIR 覆盖。
@@ -21,7 +22,7 @@ namespace FsmnKwsDemo
     {
         private const string BASE_MODEL_DIR = @"D:\ML\Audio\voicebox_models\v1";
 
-        private static readonly string ModelDir = Path.Combine(BASE_MODEL_DIR, "kws", "kws-xiaomu-onnx");
+        private static readonly string ModelDir = Path.Combine(BASE_MODEL_DIR, "kws", "kws-xiaoai-onnx");
 
         /// <summary>从模型目录的 kws_meta.json 读取唤醒词 (仅用于提示显示)。</summary>
         private static string ReadKeyword() =>
@@ -112,11 +113,23 @@ namespace FsmnKwsDemo
                     b.SetMinimumLevel(LogLevel.Debug);
                     b.AddSimpleConsole(o => { o.SingleLine = true; o.TimestampFormat = "HH:mm:ss "; });
                 })
-                .AddPortAudioRecordService(options =>
+                .AddPortAudioDuplexService(options =>
                 {
                     options.SampleRate = 16000;
                     options.ChannelCount = 1;
                     options.SampleFormat = SampleFormat.Float32;
+                    options.EnableAec = true;
+                    options.EnableDnr = false;
+                    options.EnableHpf = false;
+                })
+                .AddWebRtcApmService(o =>
+                {
+                    o.SampleRate = 16000;
+                    o.ChannelCount = 1;
+                    o.EnableHighPassFilter = true;
+                    o.EnableEchoCanceller = true;
+                    o.EnableNoiseSuppression = true;
+                    o.EnableAgc2 = true;
                 })
                 .AddFsmnKwsService(o =>
                 {
@@ -140,6 +153,7 @@ namespace FsmnKwsDemo
                 Console.WriteLine($">>> [#{hits}] 命中: keyword={e.Keyword} score={e.Score}% threshold={e.Threshold}% t={e.StartTimeMs}ms");
             };
 
+            // 全双工服务派发的是经过 WebRTC APM 处理后的音频。
             record.OnDataAvailable += audio => wake.FeedAudio(audio);
 
             var inputs = record.ListAudioDevices(AudioDeviceType.Input)?.OrderBy(d => d.Id).ToList();
