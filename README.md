@@ -1,7 +1,7 @@
 # VoiceBox
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
 
 **简体中文** | [English](README.en.md)
 
@@ -267,4 +267,4 @@ Plan02 需要 `VOLC_ASR_API_KEY`、`OPENAI_API_KEY`、`VOLC_TTS_API_KEY`，音�
 
 ## 许可证
 
-VoiceBox 代码采用 [MIT License](LICENSE)。第三方代码、原生库、模型权重与音色素材遵循各自的许可证；使用或分发时请同时查看对应项目及模型包的授权说明。
+VoiceBox 代码采用 [Apache License 2.0](LICENSE)。第三方代码、原生库、模型权重与音色素材遵循各自的许可证；使用或分发时请同时查看对应项目及模型包的授权说明。

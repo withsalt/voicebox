@@ -1,7 +1,7 @@
 # VoiceBox
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
 
 [简体中文](README.md) | **English**
 
@@ -268,4 +268,4 @@ This project uses or draws on the following projects, models, and SDKs. Thanks t
 
 ## License
 
-VoiceBox code is licensed under the [MIT License](LICENSE). Third-party code, native libraries, model weights, and voice assets are subject to their respective licenses. Review the license terms of the relevant projects and model packages when using or distributing them.
+VoiceBox code is licensed under the [Apache License 2.0](LICENSE). Third-party code, native libraries, model weights, and voice assets are subject to their respective licenses. Review the license terms of the relevant projects and model packages when using or distributing them.
