@@ -225,7 +225,7 @@ namespace VoiceBox.LLM.LLamaSharp.Internal
             bool enableThinking = grammar is null && (options?.EnableThinking ?? false);
             string prompt = LlamaPromptBuilder.Build(
                 session, messages, addGenerationPrompt: true, enableThinking);
-            LLamaToken[] tokens = session.SharedContext.Tokenize(prompt, addBos: true, special: true);
+            LLamaToken[] tokens = LlamaTokenUtils.TokenizePrompt(session.Weights, prompt, session.Encoding);
             if (tokens.Length == 0)
                 throw new InvalidOperationException("Prompt tokenized to zero tokens.");
 

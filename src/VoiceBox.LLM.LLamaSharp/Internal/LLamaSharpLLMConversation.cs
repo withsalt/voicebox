@@ -178,7 +178,7 @@ namespace VoiceBox.LLM.LLamaSharp.Internal
                     _session, messages, addGenerationPrompt: true, enableThinking);
 
                 var context = _context ??= _session.CreateConversationContext();
-                LLamaToken[] newIds = context.Tokenize(prompt, addBos: true, special: true);
+                LLamaToken[] newIds = LlamaTokenUtils.TokenizePrompt(_session.Weights, prompt, _session.Encoding);
                 if (newIds.Length == 0)
                     throw new InvalidOperationException("Prompt tokenized to zero tokens.");
 
