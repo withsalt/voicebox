@@ -19,7 +19,6 @@ namespace VoiceBox.LLM.OpenAI
 
             services.AddOptions<OpenAILLMOptions>()
                 .Configure(configure)
-                .Validate(o => !string.IsNullOrWhiteSpace(o.ApiKey), "OpenAILLMOptions.ApiKey cannot be null or empty.")
                 .Validate(o => o.Endpoint is not null, "OpenAILLMOptions.Endpoint cannot be null.")
                 .Validate(o => !string.IsNullOrWhiteSpace(o.Model), "OpenAILLMOptions.Model cannot be null or empty.")
                 .Validate(o => o.MaxConcurrentRequests >= 1, "OpenAILLMOptions.MaxConcurrentRequests must be >= 1.")

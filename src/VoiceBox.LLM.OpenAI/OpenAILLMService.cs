@@ -1,5 +1,6 @@
 using System;
 using System.ClientModel;
+using System.ClientModel.Primitives;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -80,6 +81,14 @@ namespace VoiceBox.LLM.OpenAI
                 Endpoint = options.Endpoint,
                 NetworkTimeout = options.HttpTimeout,
             };
+            if (string.IsNullOrWhiteSpace(options.ApiKey))
+            {
+                // SDK 的自定义认证策略构造函数标记为实验性，用于无需认证的本地端点。
+#pragma warning disable OPENAI001
+                return new ChatClient(options.Model, new NoAuthenticationPolicy(), clientOptions);
+#pragma warning restore OPENAI001
+            }
+
             var credential = new ApiKeyCredential(options.ApiKey);
             return new ChatClient(options.Model, credential, clientOptions);
         }
@@ -365,8 +374,6 @@ namespace VoiceBox.LLM.OpenAI
 
         private static void ValidateOptions(OpenAILLMOptions options)
         {
-            if (string.IsNullOrWhiteSpace(options.ApiKey))
-                throw new ArgumentException("OpenAILLMOptions.ApiKey cannot be null or empty.", nameof(options));
             if (options.Endpoint is null)
                 throw new ArgumentException("OpenAILLMOptions.Endpoint cannot be null.", nameof(options));
             if (string.IsNullOrWhiteSpace(options.Model))
@@ -381,6 +388,19 @@ namespace VoiceBox.LLM.OpenAI
                 throw new ArgumentOutOfRangeException(nameof(options), "StreamChannelCapacity must be >= 0.");
             if (options.HttpTimeout <= TimeSpan.Zero)
                 throw new ArgumentOutOfRangeException(nameof(options), "HttpTimeout must be > 0.");
+        }
+
+        private sealed class NoAuthenticationPolicy : AuthenticationPolicy
+        {
+            public override void Process(
+                PipelineMessage message,
+                IReadOnlyList<PipelinePolicy> pipeline,
+                int currentIndex) => ProcessNext(message, pipeline, currentIndex);
+
+            public override ValueTask ProcessAsync(
+                PipelineMessage message,
+                IReadOnlyList<PipelinePolicy> pipeline,
+                int currentIndex) => ProcessNextAsync(message, pipeline, currentIndex);
         }
 
         private sealed class StreamingToolCallBuilder

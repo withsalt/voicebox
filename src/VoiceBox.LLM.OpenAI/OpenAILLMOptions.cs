@@ -17,9 +17,10 @@ namespace VoiceBox.LLM.OpenAI
     public sealed class OpenAILLMOptions
     {
         /// <summary>
-        /// 访问凭据 (Bearer token)。多数 OpenAI 兼容服务都要求, 留空时大概率以 401 失败。
+        /// 访问凭据 (Bearer token)。可留空以访问无需认证的本地模型服务;
+        /// 为 null、空字符串或纯空白时不发送 Authorization 请求头。
         /// </summary>
-        public string ApiKey { get; set; } = string.Empty;
+        public string? ApiKey { get; set; } = string.Empty;
 
         /// <summary>
         /// 服务根 URI, 即官方 <c>base_url</c>。SDK 会在其后追加 <c>/chat/completions</c>。
