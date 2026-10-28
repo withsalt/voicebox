@@ -1,6 +1,4 @@
 using System.Collections.Concurrent;
-using System.Reflection;
-using VoiceBox.Assistant.Modules.BargeIn.Controllers;
 using VoiceBox.Assistant.Modules.Recognition.Contracts;
 
 namespace VoiceBox.Assistant.Tests;
@@ -8,8 +6,8 @@ namespace VoiceBox.Assistant.Tests;
 /// <summary>
 /// Test-only driver for recognition-port helpers that are not part of the production
 /// <see cref="IRecognitionAudioPort"/> surface. ASR pump and session lifecycle stay owned by
-/// RecognitionModule; these helpers keep data-plane tests from putting those methods on
-/// ActiveNearEndCoordinator.
+/// RecognitionModule; these helpers keep data-plane tests from putting those methods on the
+/// near-end module.
 /// </summary>
 internal interface IRecognitionAudioTestDriver
 {
@@ -19,47 +17,42 @@ internal interface IRecognitionAudioTestDriver
 }
 
 /// <summary>
-/// Test-only access to the recognition audio port.
+/// Test-only access to the recognition audio port behind a composed near-end module.
 /// </summary>
 internal static class ActiveNearEndTestExtensions
 {
-    private static readonly ConcurrentDictionary<ActiveNearEndCoordinator, PumpState> Pumps = new();
+    private static readonly ConcurrentDictionary<NearEndTestHarness, PumpState> Pumps = new();
 
     public static ValueTask AttachAsrSessionAsync(
-        this ActiveNearEndCoordinator coordinator,
+        this NearEndTestHarness harness,
         long turnId,
         string sessionId)
-        => TestDriver(coordinator).AttachSessionAsync(turnId, sessionId);
+        => TestDriver(harness).AttachSessionAsync(turnId, sessionId);
 
-    public static bool HasPendingAsrFeedAudio(this ActiveNearEndCoordinator coordinator)
-        => TestDriver(coordinator).HasPendingAudio;
+    public static bool HasPendingAsrFeedAudio(this NearEndTestHarness harness)
+        => TestDriver(harness).HasPendingAudio;
 
-    public static ValueTask DrainAsrFeedQueueAsync(this ActiveNearEndCoordinator coordinator)
-        => AudioPort(coordinator).DrainAudioAsync();
+    public static ValueTask DrainAsrFeedQueueAsync(this NearEndTestHarness harness)
+        => harness.RecognitionAudio.DrainAudioAsync();
 
     public static Task StartAsrFeedPump(
-        this ActiveNearEndCoordinator coordinator,
+        this NearEndTestHarness harness,
         CancellationToken cancellationToken)
     {
-        PumpState state = Pumps.GetOrAdd(coordinator, static _ => new PumpState());
+        PumpState state = Pumps.GetOrAdd(harness, static _ => new PumpState());
         if (Interlocked.Exchange(ref state.Started, 1) != 0)
             throw new InvalidOperationException("ASR feed pump can only be started once.");
-        return AudioPort(coordinator).StartAudioPump(cancellationToken);
+        return harness.RecognitionAudio.StartAudioPump(cancellationToken);
     }
 
-    public static void SignalAsrFeedPump(this ActiveNearEndCoordinator coordinator)
+    public static void SignalAsrFeedPump(this NearEndTestHarness harness)
     {
         // RecognitionModule signals its own bounded pump when admission occurs, so this test
-        // helper intentionally has no state on the near-end owner.
+        // helper intentionally has no state on the near-end module.
     }
 
-    private static IRecognitionAudioPort AudioPort(ActiveNearEndCoordinator coordinator)
-        => (IRecognitionAudioPort)typeof(ActiveNearEndCoordinator)
-            .GetField("_recognitionAudio", BindingFlags.Instance | BindingFlags.NonPublic)!
-            .GetValue(coordinator)!;
-
-    private static IRecognitionAudioTestDriver TestDriver(ActiveNearEndCoordinator coordinator)
-        => AudioPort(coordinator) as IRecognitionAudioTestDriver
+    private static IRecognitionAudioTestDriver TestDriver(NearEndTestHarness harness)
+        => harness.RecognitionAudio as IRecognitionAudioTestDriver
             ?? throw new InvalidOperationException(
                 "The injected recognition audio port does not expose test session-admission helpers.");
 

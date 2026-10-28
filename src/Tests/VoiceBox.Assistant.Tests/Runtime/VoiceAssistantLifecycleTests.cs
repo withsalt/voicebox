@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging.Abstractions;
+﻿using Microsoft.Extensions.Logging.Abstractions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using VoiceBox.Assistant.Api.Configuration;
@@ -10,6 +10,8 @@ using VoiceBox.Assistant.Diagnostics.Benchmarking.Models;
 using VoiceBox.Assistant.Kernel.Models;
 using VoiceBox.Assistant.Modules.AudioFrontend.Adapters;
 using VoiceBox.Assistant.Modules.AudioFrontend.Models;
+using VoiceBox.Assistant.Modules.BargeIn.Adapters;
+using VoiceBox.Assistant.Modules.BargeIn.Buffering;
 using VoiceBox.Assistant.Modules.BargeIn.Contracts;
 using VoiceBox.Assistant.Modules.BargeIn.Controllers;
 using VoiceBox.Assistant.Modules.BargeIn.Models;
@@ -1448,7 +1450,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         var nearEndTimeline = RuntimeGraphProbe.RequireField<ISpeechTimelineLocator>(
             runtime,
             "_timeline");
-        Assert.IsType<ActiveNearEndCoordinator>(nearEndTimeline);
+        Assert.IsType<NearEndTimelineAdapter>(nearEndTimeline);
         Assert.True(nearEndTimeline.TryLocate(
             guardedPrefix,
             out long streamEpoch,
@@ -2513,7 +2515,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             SpeakerVerificationStatus.Mismatch);
         int confirmedCount = 0;
         long confirmationOperationId = 0;
-        var coordinator = CreateActiveNearEndCoordinator(
+        var coordinator = CreateNearEndTestHarness(
             options,
             new TestRecognitionAudioPort(services.Asr),
             () => turns.IsSpeakingWithoutPendingCandidate,
@@ -2579,9 +2581,9 @@ public sealed partial class VoiceAssistantLifecycleTests
             DelaySamples: 0,
             HasDiscontinuity: false));
 
-        Assert.True(coordinator.TryTakeConfirmation(
+        Assert.True(coordinator.TryAcquire(
             confirmationOperationId,
-            out ActiveNearEndConfirmationRequest request));
+            out NearEndConfirmationLease request));
         Assert.True(request.IdentityRequired);
         Assert.True(request.IdentityAuthorized);
         Assert.Equal(new SpeakerCandidateId(1), request.CandidateId);
@@ -2644,7 +2646,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             FirstAcceptedStartSample: 0);
         var speakerEvidence = new SequencedSpeakerEvidenceProvider(SpeakerVerificationStatus.Match);
         long confirmationOperationId = 0;
-        var coordinator = CreateActiveNearEndCoordinator(
+        var coordinator = CreateNearEndTestHarness(
             options,
             new TestRecognitionAudioPort(services.Asr),
             () => turns.IsSpeakingWithoutPendingCandidate,
@@ -2678,7 +2680,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Equal(1, speakerEvidence.EvaluateCount);
         Assert.Equal(SpeakerVerificationPurpose.BargeInCommand, speakerEvidence.Queries[0].Purpose);
         Assert.Equal(1, coordinator.CommandAuthorizedCount);
-        Assert.True(coordinator.TryTakeConfirmation(confirmationOperationId, out ActiveNearEndConfirmationRequest request));
+        Assert.True(coordinator.TryAcquire(confirmationOperationId, out NearEndConfirmationLease request));
         Assert.Equal(BargeInAction.Continue, request.Decision.Action);
         Assert.True(request.IdentityAuthorized);
 
@@ -2707,7 +2709,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             ActiveNearEndAudioDrainTimeoutMs = 100,
         };
         int drainRequests = 0;
-        var coordinator = CreateActiveNearEndCoordinator(
+        var coordinator = CreateNearEndTestHarness(
             options,
             new TestRecognitionAudioPort(services.Asr),
             isSpeakingWithoutPendingCandidate: static () => true,
@@ -2741,10 +2743,11 @@ public sealed partial class VoiceAssistantLifecycleTests
              publishSpeechEnded: static (_, _) => { },
             reportDataPlaneFault: static _ => { });
 
-        var request = new ActiveNearEndConfirmationRequest(
+        var request = new NearEndConfirmationLease(
             OperationId: 1,
             InitialAudio: [],
             Decision: default,
+            StreamEpoch: 1,
             Selection: new ActiveNearEndPreRollSelection(
                 "test",
                 Samples: 0,
@@ -2757,13 +2760,13 @@ public sealed partial class VoiceAssistantLifecycleTests
             IdentityRequired: false,
             IdentityAuthorized: false,
             CandidateId: default,
-            OwnerTurnId: 0,
+            OwnerTurnId: 1,
             SpeakerResult: default);
         var confirmed = new SpeakingDecision(
             SpeakingDecisionKind.ConfirmedBargeIn,
             AsrSessionId: null,
             ResponseToCancel: null,
-            InterruptedTurnId: 0,
+            InterruptedTurnId: 1,
             OldState: AssistantState.Speaking,
             TurnId: 1,
             ConfirmedCandidateSamples: 0,
@@ -2791,7 +2794,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             services.Asr.FedAudio["validation-1"].SelectMany(static chunk => chunk));
 
         static void FeedRecognitionAudio(
-            ActiveNearEndCoordinator coordinator,
+            NearEndTestHarness coordinator,
             long startSample,
             float[] samples)
         {
@@ -3008,7 +3011,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             ActiveNearEndAudioDrainTimeoutMs = 100,
         };
         var faults = new List<AssistantFailure>();
-        var coordinator = CreateActiveNearEndCoordinator(
+        var coordinator = CreateNearEndTestHarness(
             options,
             new TestRecognitionAudioPort(services.Asr, directFeedAttached: false),
             isSpeakingWithoutPendingCandidate: static () => true,
@@ -3042,10 +3045,11 @@ public sealed partial class VoiceAssistantLifecycleTests
              publishSpeechEnded: static (_, _) => { },
             reportDataPlaneFault: faults.Add);
 
-        var request = new ActiveNearEndConfirmationRequest(
+        var request = new NearEndConfirmationLease(
             OperationId: 1,
             InitialAudio: [],
             Decision: default,
+            StreamEpoch: 1,
             Selection: new ActiveNearEndPreRollSelection(
                 "test",
                 Samples: 0,
@@ -3058,13 +3062,13 @@ public sealed partial class VoiceAssistantLifecycleTests
             IdentityRequired: false,
             IdentityAuthorized: false,
             CandidateId: default,
-            OwnerTurnId: 0,
+            OwnerTurnId: 1,
             SpeakerResult: default);
         var confirmed = new SpeakingDecision(
             SpeakingDecisionKind.ConfirmedBargeIn,
             AsrSessionId: null,
             ResponseToCancel: null,
-            InterruptedTurnId: 0,
+            InterruptedTurnId: 1,
             OldState: AssistantState.Speaking,
             TurnId: 1,
             ConfirmedCandidateSamples: 0,
@@ -3087,7 +3091,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Equal("asr-feed-queue-overflow", failure.MessageKey);
 
         static void FeedRecognitionAudio(
-            ActiveNearEndCoordinator coordinator,
+            NearEndTestHarness coordinator,
             long startSample,
             float[] samples)
         {
@@ -3117,7 +3121,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         var coordinator = CreateDataPlaneCoordinator(services, faults);
-        coordinator.ApplyConfirmedCapture(CreateConfirmationRequest(0), CreateConfirmedDecision());
+        coordinator.ApplyConfirmedCapture(CreateConfirmationLease(0), CreateConfirmedDecision());
 
         for (int index = 0; index < 258; index++)
             FeedRecognitionAudio(coordinator, index, [(float)index]);
@@ -3141,8 +3145,8 @@ public sealed partial class VoiceAssistantLifecycleTests
             ActiveNearEndAudioDrainTimeoutMs = 100,
         };
         int speechEnded = 0;
-        ActiveNearEndCoordinator? drainOwner = null;
-        var coordinator = CreateActiveNearEndCoordinator(
+        NearEndTestHarness? drainOwner = null;
+        var coordinator = CreateNearEndTestHarness(
             options,
             new TestRecognitionAudioPort(services.Asr),
             isSpeakingWithoutPendingCandidate: static () => true,
@@ -3177,10 +3181,11 @@ public sealed partial class VoiceAssistantLifecycleTests
             reportDataPlaneFault: static _ => { });
         drainOwner = coordinator;
 
-        var request = new ActiveNearEndConfirmationRequest(
+        var request = new NearEndConfirmationLease(
             OperationId: 1,
             InitialAudio: [],
             Decision: default,
+            StreamEpoch: 1,
             Selection: new ActiveNearEndPreRollSelection(
                 "test",
                 Samples: 0,
@@ -3193,13 +3198,13 @@ public sealed partial class VoiceAssistantLifecycleTests
             IdentityRequired: false,
             IdentityAuthorized: false,
             CandidateId: default,
-            OwnerTurnId: 0,
+            OwnerTurnId: 1,
             SpeakerResult: default);
         var confirmed = new SpeakingDecision(
             SpeakingDecisionKind.ConfirmedBargeIn,
             AsrSessionId: null,
             ResponseToCancel: null,
-            InterruptedTurnId: 0,
+            InterruptedTurnId: 1,
             OldState: AssistantState.Speaking,
             TurnId: 1,
             ConfirmedCandidateSamples: 0,
@@ -3238,7 +3243,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             services.Asr.FedAudio["validation-1"].SelectMany(static chunk => chunk));
 
         static void FeedRecognitionAudio(
-            ActiveNearEndCoordinator coordinator,
+            NearEndTestHarness coordinator,
             long startSample,
             float[] samples)
         {
@@ -3275,8 +3280,8 @@ public sealed partial class VoiceAssistantLifecycleTests
             ActiveNearEndAudioDrainTimeoutMs = 100,
         };
         int speechEnded = 0;
-        ActiveNearEndCoordinator? drainOwner = null;
-        var coordinator = CreateActiveNearEndCoordinator(
+        NearEndTestHarness? drainOwner = null;
+        var coordinator = CreateNearEndTestHarness(
             options,
             new TestRecognitionAudioPort(services.Asr),
             isSpeakingWithoutPendingCandidate: static () => true,
@@ -3315,10 +3320,11 @@ public sealed partial class VoiceAssistantLifecycleTests
             coordinator,
             startSample: 0,
             samples: [1f, 2f, 3f, 4f, 5f, 6f, 7f, 8f]);
-        var request = new ActiveNearEndConfirmationRequest(
+        var request = new NearEndConfirmationLease(
             OperationId: 1,
             InitialAudio: [],
             Decision: default,
+            StreamEpoch: 1,
             Selection: new ActiveNearEndPreRollSelection(
                 "test",
                 Samples: 4,
@@ -3331,13 +3337,13 @@ public sealed partial class VoiceAssistantLifecycleTests
             IdentityRequired: false,
             IdentityAuthorized: false,
             CandidateId: default,
-            OwnerTurnId: 0,
+            OwnerTurnId: 1,
             SpeakerResult: default);
         var confirmed = new SpeakingDecision(
             SpeakingDecisionKind.ConfirmedBargeIn,
             AsrSessionId: null,
             ResponseToCancel: null,
-            InterruptedTurnId: 0,
+            InterruptedTurnId: 1,
             OldState: AssistantState.Speaking,
             TurnId: 1,
             ConfirmedCandidateSamples: 0,
@@ -3350,7 +3356,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             ConfirmedBargeInDiagnostics: default);
 
         coordinator.ApplyConfirmedCapture(request, confirmed);
-        Assert.Equal(8L, GetPrivateField<long>(coordinator, "_activeDirectFeedNextSample"));
+        Assert.Equal(8L, coordinator.Module.Capture.DirectFeedNextSample);
         await coordinator.AttachAsrSessionAsync(1, "validation-1");
         Assert.Equal(
             [5f, 6f, 7f, 8f],
@@ -3368,7 +3374,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             services.Asr.FedAudio["validation-1"].SelectMany(static chunk => chunk));
 
         static void FeedRecognitionAudio(
-            ActiveNearEndCoordinator coordinator,
+            NearEndTestHarness coordinator,
             long startSample,
             float[] samples)
         {
@@ -3398,12 +3404,12 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         var coordinator = CreateDataPlaneCoordinator(services, faults);
-        SetPrivateField(coordinator, "_pendingConfirmation", CreateConfirmationRequest(selectedEndSample: 4));
+        coordinator.SeedPendingConfirmation(CreateConfirmationLease(selectedEndSample: 4));
 
         ObserveRecognitionAudio(coordinator, 0, [1f, 2f, 3f, 4f]);
         ObserveRecognitionAudio(coordinator, 4, [5f, 6f, 7f, 8f]);
 
-        Assert.True(coordinator.TryTakeConfirmation(1, out var taken));
+        Assert.True(coordinator.TryAcquire(1, out var taken));
         coordinator.ApplyConfirmedCapture(taken, CreateConfirmedDecision());
         await coordinator.AttachAsrSessionAsync(1, "validation-processed-gap");
 
@@ -3419,15 +3425,15 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         var coordinator = CreateDataPlaneCoordinator(services, faults);
-        var request = CreateConfirmationRequest(selectedEndSample: 2);
-        SetPrivateField(coordinator, "_pendingConfirmation", request);
+        var request = CreateConfirmationLease(selectedEndSample: 2);
+        coordinator.SeedPendingConfirmation(request);
 
         FeedRecognitionAudio(coordinator, 0, [1f, 2f, 3f, 4f]);
         coordinator.ObserveDuplexAudio(
             CreateDuplexFrame(sequence: 1, startSample: 0, sampleCount: 4),
             playbackStartupGuardActive: false);
 
-        Assert.True(coordinator.TryTakeConfirmation(1, out var taken));
+        Assert.True(coordinator.TryAcquire(1, out var taken));
         coordinator.ApplyConfirmedCapture(taken, CreateConfirmedDecision());
         await coordinator.AttachAsrSessionAsync(1, "validation-tail");
 
@@ -3441,7 +3447,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         var coordinator = CreateDataPlaneCoordinator(services, faults);
-        SetPrivateField(coordinator, "_pendingConfirmation", CreateConfirmationRequest(selectedEndSample: 2));
+        coordinator.SeedPendingConfirmation(CreateConfirmationLease(selectedEndSample: 2));
 
         ObserveRecognitionAudio(coordinator, 0, [1f, 2f, 3f, 4f, 5f, 6f, 7f, 8f]);
         coordinator.ObserveDuplexAudio(
@@ -3449,7 +3455,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             playbackStartupGuardActive: false,
             latestNearEndSpeech: false);
 
-        Assert.True(coordinator.TryTakeConfirmation(1, out var taken));
+        Assert.True(coordinator.TryAcquire(1, out var taken));
         coordinator.ApplyConfirmedCapture(taken, CreateConfirmedDecision());
         await coordinator.AttachAsrSessionAsync(1, "validation-full-first-tail");
 
@@ -3469,12 +3475,12 @@ public sealed partial class VoiceAssistantLifecycleTests
             services,
             faults,
             publishSpeechEnded: (_, _) => speechEnded++);
-        SetPrivateField(coordinator, "_pendingConfirmation", CreateConfirmationRequest(0));
+        coordinator.SeedPendingConfirmation(CreateConfirmationLease(0));
 
         // Before control-plane confirmation, this VAD endpoint belongs to the still-pending
         // candidate; it must be ignored while no capture is active yet.
         coordinator.ObserveEndpointSpeechEnded();
-        Assert.True(coordinator.TryTakeConfirmation(1, out var taken));
+        Assert.True(coordinator.TryAcquire(1, out var taken));
 
         coordinator.ApplyConfirmedCapture(taken, CreateConfirmedDecision());
 
@@ -3493,7 +3499,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             services,
             faults,
             publishSpeechEnded: (_, _) => speechEnded++);
-        SetPrivateField(coordinator, "_pendingConfirmation", CreateConfirmationRequest(0));
+        coordinator.SeedPendingConfirmation(CreateConfirmationLease(0));
 
         // VAD records its endpoint and the control loop consumes that endpoint before the
         // queued confirmation. The DTD tail arrives in the same callback burst.
@@ -3506,7 +3512,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             latestNearEndSpeech: false);
         ObserveRecognitionAudio(coordinator, 2, [3f, 4f]);
 
-        Assert.True(coordinator.TryTakeConfirmation(1, out var taken));
+        Assert.True(coordinator.TryAcquire(1, out var taken));
         coordinator.ApplyConfirmedCapture(taken, CreateConfirmedDecision());
         await coordinator.AttachAsrSessionAsync(1, "validation-endpoint-before-confirmation");
 
@@ -3527,7 +3533,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             services,
             faults,
             publishSpeechEnded: (_, _) => speechEnded++);
-        SetPrivateField(coordinator, "_pendingConfirmation", CreateConfirmationRequest(2));
+        coordinator.SeedPendingConfirmation(CreateConfirmationLease(2));
 
         // The endpoint shares the confirmation boundary, leaving no DTD frame for the
         // confirmation-tail queue to replay. Its control-plane observation has also completed,
@@ -3536,7 +3542,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         coordinator.ObserveUnownedEndpointSpeechEnded();
         coordinator.ObserveEndpointSpeechEnded();
 
-        Assert.True(coordinator.TryTakeConfirmation(1, out var taken));
+        Assert.True(coordinator.TryAcquire(1, out var taken));
         coordinator.ApplyConfirmedCapture(taken, CreateConfirmedDecision());
         await coordinator.AttachAsrSessionAsync(1, "validation-endpoint-no-tail");
 
@@ -3555,14 +3561,14 @@ public sealed partial class VoiceAssistantLifecycleTests
             services,
             faults,
             publishSpeechEnded: (_, _) => speechEnded++);
-        SetPrivateField(coordinator, "_pendingConfirmation", CreateConfirmationRequest(2));
+        coordinator.SeedPendingConfirmation(CreateConfirmationLease(2));
 
         // The capture callback records an endpoint, but its queued control-plane signal has
         // not run when near-end confirmation commits. Later recognition frames must remain
         // eligible for the new ASR session rather than being cut at the pre-roll boundary.
         ObserveRecognitionAudio(coordinator, 0, [1f, 2f]);
         coordinator.ObserveUnownedEndpointSpeechEnded();
-        Assert.True(coordinator.TryTakeConfirmation(1, out var taken));
+        Assert.True(coordinator.TryAcquire(1, out var taken));
 
         coordinator.ApplyConfirmedCapture(taken, CreateConfirmedDecision());
         FeedRecognitionAudio(coordinator, 2, [3f, 4f]);
@@ -3586,7 +3592,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             services,
             faults,
             publishSpeechEnded: (_, _) => speechEnded++);
-        SetPrivateField(coordinator, "_pendingConfirmation", CreateConfirmationRequest(selectedEndSample: 4));
+        coordinator.SeedPendingConfirmation(CreateConfirmationLease(selectedEndSample: 4));
 
         // The endpoint reached the control plane, but DTD advanced the immutable confirmation
         // boundary beyond it. This is the E2E ordering that previously truncated ASR to pre-roll.
@@ -3594,7 +3600,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         coordinator.ObserveUnownedEndpointSpeechEnded();
         coordinator.ObserveEndpointSpeechEnded();
         ObserveRecognitionAudio(coordinator, 2, [3f, 4f]);
-        Assert.True(coordinator.TryTakeConfirmation(1, out var taken));
+        Assert.True(coordinator.TryAcquire(1, out var taken));
 
         coordinator.ApplyConfirmedCapture(taken, CreateConfirmedDecision());
         FeedRecognitionAudio(coordinator, 4, [5f, 6f]);
@@ -3614,22 +3620,22 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         var coordinator = CreateDataPlaneCoordinator(services, faults);
-        SetPrivateField(coordinator, "_pendingConfirmation", CreateConfirmationRequest(2));
+        coordinator.SeedPendingConfirmation(CreateConfirmationLease(2));
         ObserveRecognitionAudio(coordinator, 0, [1f, 2f, 3f, 4f, 5f]);
 
-        Assert.True(coordinator.TryTakeConfirmation(1, out var taken));
+        Assert.True(coordinator.TryAcquire(1, out var taken));
         coordinator.ObserveDuplexAudio(
             CreateDuplexFrame(sequence: 1, startSample: 0, sampleCount: 5),
             playbackStartupGuardActive: false,
             latestNearEndSpeech: true);
-        Assert.True(HasQueuedItem(coordinator, "_confirmationTailFrames"));
+        Assert.True(coordinator.Module.Replay.HasFrames);
 
         coordinator.ApplyConfirmedCapture(taken, CreateConfirmedDecision());
         await coordinator.AttachAsrSessionAsync(1, "validation-taken-tail");
 
         Assert.Empty(faults);
-        Assert.False(HasQueuedItem(coordinator, "_confirmationTailFrames"));
-        Assert.Equal(0.6d, GetPrivateField<double>(coordinator, "_speechDurationMs"), 6);
+        Assert.False(coordinator.Module.Replay.HasFrames);
+        Assert.Equal(0.6d, coordinator.Module.Capture.SpeechDurationMs, 6);
         Assert.Equal(
             [3f, 4f, 5f],
             services.Asr.FedAudio["validation-taken-tail"].SelectMany(static chunk => chunk));
@@ -3641,25 +3647,25 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         var coordinator = CreateDataPlaneCoordinator(services, faults);
-        SetPrivateField(coordinator, "_pendingConfirmation", CreateConfirmationRequest(2));
+        coordinator.SeedPendingConfirmation(CreateConfirmationLease(2));
         ObserveRecognitionAudio(coordinator, 0, [1f, 2f]);
 
-        Assert.True(coordinator.TryTakeConfirmation(1, out var taken));
+        Assert.True(coordinator.TryAcquire(1, out var taken));
         coordinator.ObserveDuplexAudio(
             CreateDuplexFrame(sequence: 1, startSample: 0, sampleCount: 5),
             playbackStartupGuardActive: false,
             latestNearEndSpeech: true);
         coordinator.ApplyConfirmedCapture(taken, CreateConfirmedDecision());
 
-        Assert.True(HasQueuedItem(coordinator, "_confirmationTailFrames"));
-        Assert.Equal(0d, GetPrivateField<double>(coordinator, "_speechDurationMs"));
+        Assert.True(coordinator.Module.Replay.HasFrames);
+        Assert.Equal(0d, coordinator.Module.Capture.SpeechDurationMs);
 
         FeedRecognitionAudio(coordinator, 2, [3f, 4f, 5f]);
         await coordinator.AttachAsrSessionAsync(1, "validation-late-tail");
 
         Assert.Empty(faults);
-        Assert.False(HasQueuedItem(coordinator, "_confirmationTailFrames"));
-        Assert.Equal(0.6d, GetPrivateField<double>(coordinator, "_speechDurationMs"), 6);
+        Assert.False(coordinator.Module.Replay.HasFrames);
+        Assert.Equal(0.6d, coordinator.Module.Capture.SpeechDurationMs, 6);
         Assert.Equal(
             [3f, 4f, 5f],
             services.Asr.FedAudio["validation-late-tail"].SelectMany(static chunk => chunk));
@@ -3674,29 +3680,22 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         var coordinator = CreateDataPlaneCoordinator(services, faults);
-        SetPrivateField(coordinator, "_pendingConfirmation", CreateConfirmationRequest(2));
         ObserveRecognitionAudio(coordinator, 0, [1f, 2f, 3f, 4f]);
-        Assert.True(coordinator.TryTakeConfirmation(1, out var taken));
-        coordinator.ObserveDuplexAudio(
-            CreateDuplexFrame(sequence: 1, startSample: 0, sampleCount: 4),
-            playbackStartupGuardActive: false,
-            latestNearEndSpeech: true);
+        coordinator.SeedPendingConfirmation(CreateConfirmationLease(2));
+        Assert.True(coordinator.TryAcquire(1, out NearEndConfirmationLease taken));
 
-        if (generationMismatch)
-        {
-            long generation = GetPrivateField<long>(coordinator, "_mainAudioGeneration");
-            SetPrivateField(coordinator, "_mainAudioGeneration", generation + 1);
-        }
-        else
-        {
-            SetPrivateField(coordinator, "_mainAudioStreamEpoch", 2L);
-        }
+        long generation = coordinator.Module.Timeline.Generation;
+        long streamEpoch = coordinator.Module.Timeline.StreamEpoch;
+        var tail = generationMismatch
+            ? new NearEndConfirmationTailFrame(generation + 1, streamEpoch, 2, 4, false, true, 0.1)
+            : new NearEndConfirmationTailFrame(generation, streamEpoch + 1, 2, 4, false, true, 0.1);
+        Assert.True(coordinator.Module.Replay.TryWrite(in tail));
 
         coordinator.ApplyConfirmedCapture(taken, CreateConfirmedDecision());
 
         AssistantFailure failure = Assert.Single(faults);
         Assert.Equal("confirmation-tail-timeline-mismatch", failure.MessageKey);
-        Assert.True(HasQueuedItem(coordinator, "_confirmationTailFrames"));
+        Assert.True(coordinator.Module.Replay.HasFrames);
     }
 
     [Theory]
@@ -3709,16 +3708,16 @@ public sealed partial class VoiceAssistantLifecycleTests
         var faults = new List<AssistantFailure>();
         var coordinator = CreateDataPlaneCoordinator(services, faults);
         await coordinator.AttachAsrSessionAsync(1, "validation-discontinuity-tail");
-        SetPrivateField(coordinator, "_pendingConfirmation", CreateConfirmationRequest(2));
+        coordinator.SeedPendingConfirmation(CreateConfirmationLease(2));
         ObserveRecognitionAudio(coordinator, 0, [1f, 2f, 3f, 4f]);
 
-        Assert.True(coordinator.TryTakeConfirmation(1, out var taken));
+        Assert.True(coordinator.TryAcquire(1, out var taken));
         coordinator.ObserveDuplexAudio(
             CreateDuplexFrame(sequence: 1, startSample: 0, sampleCount: 5),
             playbackStartupGuardActive: false,
             latestNearEndSpeech: true);
         coordinator.ApplyConfirmedCapture(taken, CreateConfirmedDecision());
-        Assert.True(HasQueuedItem(coordinator, "_confirmationTailFrames"));
+        Assert.True(coordinator.Module.Replay.HasFrames);
 
         float[] discontinuousAudio = [5f, 6f];
         var discontinuousRange = new CaptureRange(
@@ -3740,7 +3739,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         coordinator.FeedFromRecognitionAudio(discontinuousAudio, discontinuousObservation);
 
         Assert.Empty(faults);
-        Assert.False(HasQueuedItem(coordinator, "_confirmationTailFrames"));
+        Assert.False(coordinator.Module.Replay.HasFrames);
 
         FeedRecognitionAudio(coordinator, 7, [8f, 9f]);
         Assert.Equal(
@@ -3748,32 +3747,119 @@ public sealed partial class VoiceAssistantLifecycleTests
             services.Asr.FedAudio["validation-discontinuity-tail"].SelectMany(static chunk => chunk));
     }
 
-    [Theory]
-    [InlineData(0L, true)]
-    [InlineData(1L, false)]
-    public void ActiveNearEndCapture_ConfirmationTailWaitsForFullyActiveDirectFeed(
-        long activeTurnId,
-        bool directFeed)
+    [Fact]
+    public void ActiveNearEndCapture_ConfirmationTailWaitsForAnActiveCapture()
     {
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         var coordinator = CreateDataPlaneCoordinator(services, faults);
-        SetPrivateField(coordinator, "_pendingConfirmation", CreateConfirmationRequest(2));
+        coordinator.SeedPendingConfirmation(CreateConfirmationLease(2));
         ObserveRecognitionAudio(coordinator, 0, [1f, 2f, 3f, 4f]);
-        Assert.True(coordinator.TryTakeConfirmation(1, out _));
+        Assert.True(coordinator.TryAcquire(1, out _));
         coordinator.ObserveDuplexAudio(
             CreateDuplexFrame(sequence: 1, startSample: 0, sampleCount: 4),
             playbackStartupGuardActive: false,
             latestNearEndSpeech: true);
-        SetPrivateField(coordinator, "_activeTurnId", activeTurnId);
-        SetPrivateField(coordinator, "_directFeed", directFeed);
 
-        InvokePrivate(coordinator, "DrainConfirmationTail");
-
+        // Capture is still idle: feeding the recognition observation must leave the tail queued.
+        FeedRecognitionAudio(coordinator, 4, [5f, 6f]);
         Assert.Empty(faults);
-        Assert.True(HasQueuedItem(coordinator, "_confirmationTailFrames"));
-        Assert.Equal(0, GetPrivateField<int>(coordinator, "_confirmationTailDrainActive"));
+        Assert.True(coordinator.Module.Replay.HasFrames);
+        Assert.False(coordinator.Module.Replay.DrainActive);
         Assert.Empty(services.Asr.FedAudio);
+    }
+
+    [Fact]
+    public async Task NearEndDataPlane_ProcessedCaptureAndDuplexConcurrency_Converges()
+    {
+        var services = TestServices.Create();
+        var faults = new List<AssistantFailure>();
+        var coordinator = CreateDataPlaneCoordinator(services, faults);
+        const int iterations = 4_000;
+
+        Task capture = Task.Run(() =>
+        {
+            for (int index = 0; index < iterations; index++)
+            {
+                FeedRecognitionAudio(
+                    coordinator,
+                    startSample: index * 4,
+                    samples: [1f, 2f, 3f, 4f]);
+            }
+        });
+        Task duplex = Task.Run(() =>
+        {
+            for (int index = 0; index < iterations; index++)
+            {
+                coordinator.ObserveDuplexAudio(
+                    CreateDuplexFrame(
+                        sequence: index + 1,
+                        startSample: index * 4,
+                        sampleCount: 4),
+                    playbackStartupGuardActive: false);
+            }
+        });
+
+        await Task.WhenAll(capture, duplex).WaitAsync(TimeSpan.FromSeconds(15));
+        Assert.Empty(faults);
+        Assert.Equal(0, coordinator.GetDiagnosticSnapshot().ActiveTurnId);
+    }
+
+    [Fact]
+    public async Task NearEndDataPlane_ResetConcurrentWithFeed_DoesNotResurrectOldTurn()
+    {
+        var services = TestServices.Create();
+        var faults = new List<AssistantFailure>();
+        var coordinator = CreateDataPlaneCoordinator(
+            services,
+            faults,
+            directFeedAttached: false);
+        coordinator.ApplyConfirmedCapture(CreateConfirmationLease(0), CreateConfirmedDecision());
+
+        Task feeding = Task.Run(() =>
+        {
+            // Stay below the 256-chunk pending queue so scheduling cannot turn this concurrency
+            // test into the separate pending-overflow fault path.
+            for (int index = 0; index < 200; index++)
+            {
+                FeedRecognitionAudio(
+                    coordinator,
+                    startSample: index * 2,
+                    samples: [(float)index, (float)index + 1f]);
+            }
+        });
+        Task resetting = Task.Run(() =>
+        {
+            for (int index = 0; index < 200; index++)
+                coordinator.Reset();
+        });
+
+        await Task.WhenAll(feeding, resetting).WaitAsync(TimeSpan.FromSeconds(15));
+        Assert.Empty(faults);
+        Assert.Equal(0, coordinator.GetDiagnosticSnapshot().ActiveTurnId);
+    }
+
+    [Fact]
+    public void NearEndDataPlane_SteadyDuplexCallbackDoesNotAllocate()
+    {
+        var services = TestServices.Create();
+        var coordinator = CreateDataPlaneCoordinator(services, new List<AssistantFailure>());
+        DuplexAudioFrame frame = CreateDuplexFrame(
+            sequence: 1,
+            startSample: 0,
+            sampleCount: 320);
+
+        for (int index = 0; index < 100; index++)
+            coordinator.ObserveDuplexAudio(frame, playbackStartupGuardActive: false);
+
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int index = 0; index < 1_000; index++)
+            coordinator.ObserveDuplexAudio(frame, playbackStartupGuardActive: false);
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        // The steady callback path only reads immutable state, computes a decision and records
+        // bounded metadata; a small tolerance absorbs runtime bookkeeping noise.
+        Assert.InRange(allocated, 0, 256);
     }
 
     [Fact]
@@ -3782,9 +3868,9 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         var coordinator = CreateDataPlaneCoordinator(services, faults);
-        SetPrivateField(coordinator, "_pendingConfirmation", CreateConfirmationRequest(4));
+        coordinator.SeedPendingConfirmation(CreateConfirmationLease(4));
         ObserveRecognitionAudio(coordinator, 0, [1f, 2f, 3f, 4f]);
-        Assert.True(coordinator.TryTakeConfirmation(1, out _));
+        Assert.True(coordinator.TryAcquire(1, out _));
 
         coordinator.ObserveDuplexAudio(
             CreateDuplexFrame(sequence: 1, startSample: 0, sampleCount: 4),
@@ -3792,19 +3878,19 @@ public sealed partial class VoiceAssistantLifecycleTests
             latestNearEndSpeech: true);
 
         Assert.Empty(faults);
-        Assert.False(HasQueuedItem(coordinator, "_confirmationTailFrames"));
+        Assert.False(coordinator.Module.Replay.HasFrames);
     }
 
     [Fact]
     public async Task ActiveNearEndCapture_StartedAsrPumpConsumesQueuedFeedAndStops()
     {
         var services = TestServices.Create();
-        ActiveNearEndCoordinator? coordinator = null;
+        NearEndTestHarness? coordinator = null;
         var faults = new List<AssistantFailure>();
         coordinator = CreateDataPlaneCoordinator(
              services,
              faults);
-        coordinator.ApplyConfirmedCapture(CreateConfirmationRequest(0), CreateConfirmedDecision());
+        coordinator.ApplyConfirmedCapture(CreateConfirmationLease(0), CreateConfirmedDecision());
         await coordinator.AttachAsrSessionAsync(1, "validation-pump");
 
         using var cancellation = new CancellationTokenSource();
@@ -3827,7 +3913,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         var attachedServices = TestServices.Create();
         var attachedFaults = new List<AssistantFailure>();
         var attached = CreateDataPlaneCoordinator(attachedServices, attachedFaults);
-        attached.ApplyConfirmedCapture(CreateConfirmationRequest(0), CreateConfirmedDecision());
+        attached.ApplyConfirmedCapture(CreateConfirmationLease(0), CreateConfirmedDecision());
         await attached.AttachAsrSessionAsync(1, "attached-session");
         FeedRecognitionAudio(attached, 0, [1f]);
 
@@ -3838,7 +3924,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         var pendingServices = TestServices.Create();
         var pendingFaults = new List<AssistantFailure>();
         var pending = CreateDataPlaneCoordinator(pendingServices, pendingFaults);
-        pending.ApplyConfirmedCapture(CreateConfirmationRequest(0), CreateConfirmedDecision());
+        pending.ApplyConfirmedCapture(CreateConfirmationLease(0), CreateConfirmedDecision());
         FeedRecognitionAudio(pending, 0, [2f]);
 
         Assert.True(pending.HasPendingAsrFeedAudio());
@@ -3854,12 +3940,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         var coordinator = CreateDataPlaneCoordinator(services, faults);
-        coordinator.ApplyConfirmedCapture(CreateConfirmationRequest(0), CreateConfirmedDecision());
+        coordinator.ApplyConfirmedCapture(CreateConfirmationLease(0), CreateConfirmedDecision());
         await coordinator.AttachAsrSessionAsync(1, "capacity-session");
 
-        TestRecognitionAudioPort audioPort = GetPrivateField<TestRecognitionAudioPort>(
-            coordinator,
-            "_recognitionAudio");
+        TestRecognitionAudioPort audioPort = (TestRecognitionAudioPort)coordinator.RecognitionAudio;
         audioPort.RejectNextFeed = true;
         FeedRecognitionAudio(coordinator, 0, [2f]);
 
@@ -3870,11 +3954,20 @@ public sealed partial class VoiceAssistantLifecycleTests
     [Fact]
     public void ActiveNearEndCapture_DoesNotOwnRecognitionPumpSynchronization()
     {
-        FieldInfo[] fields = typeof(ActiveNearEndCoordinator)
+        FieldInfo[] dataPlaneFields = typeof(NearEndDataPlane)
             .GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.DoesNotContain(fields, field => field.Name.StartsWith("_asrFeed", StringComparison.Ordinal));
-        Assert.DoesNotContain(fields, field => field.FieldType == typeof(SemaphoreSlim));
-        Assert.Contains(fields, field => field.FieldType == typeof(IRecognitionAudioPort));
+        Assert.DoesNotContain(
+            dataPlaneFields,
+            field => field.Name.StartsWith("_asrFeed", StringComparison.Ordinal));
+        Assert.DoesNotContain(dataPlaneFields, field => field.FieldType == typeof(SemaphoreSlim));
+        Assert.DoesNotContain(dataPlaneFields, field => field.FieldType == typeof(IRecognitionAudioPort));
+
+        // The narrow recognition sink lives in the effect executor, the single external exit.
+        FieldInfo[] executorFields = typeof(NearEndEffectExecutor)
+            .GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.Contains(
+            executorFields,
+            field => field.FieldType == typeof(INearEndRecognitionAudioSink));
     }
 
     [Fact]
@@ -3883,7 +3976,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         var coordinator = CreateDataPlaneCoordinator(services, faults);
-        coordinator.ApplyConfirmedCapture(CreateConfirmationRequest(0), CreateConfirmedDecision());
+        coordinator.ApplyConfirmedCapture(CreateConfirmationLease(0), CreateConfirmedDecision());
         await coordinator.AttachAsrSessionAsync(1, "validation-explicit-pump");
 
         var feedObserved = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -3899,98 +3992,33 @@ public sealed partial class VoiceAssistantLifecycleTests
     }
 
     [Fact]
-    public void ActiveNearEndCapture_DrainPolicyHonorsTurnTimelineDeadlineAndAlignmentBoundaries()
-    {
-        var services = TestServices.Create();
-        var faults = new List<AssistantFailure>();
-        int ended = 0;
-        var coordinator = CreateDataPlaneCoordinator(
-            services,
-            faults,
-            publishSpeechEnded: (_, _) => ended++);
-
-        SetPrivateField(coordinator, "_activeTurnId", 2L);
-        SetPrivateField(coordinator, "_directFeed", true);
-        SetPrivateField(coordinator, "_speechDurationMs", 0d);
-        InvokePrivate(coordinator, "ProcessActiveAudioFacts", 1L, 1L, 1L, false, 1d, false);
-        Assert.Equal(0d, GetPrivateField<double>(coordinator, "_speechDurationMs"));
-
-        SetPrivateField(coordinator, "_activeTurnId", 1L);
-        SetPrivateField(coordinator, "_directFeed", false);
-        InvokePrivate(coordinator, "ProcessActiveAudioFacts", 1L, 1L, 1L, false, 1d, false);
-        Assert.Equal(0d, GetPrivateField<double>(coordinator, "_speechDurationMs"));
-
-        SetPrivateField(coordinator, "_directFeed", true);
-        SetPrivateField(coordinator, "_endDrainPending", true);
-        SetPrivateField(coordinator, "_endDrainStreamEpoch", 1L);
-        SetPrivateField(coordinator, "_endDrainTargetSample", 10L);
-        SetPrivateField(coordinator, "_endDrainDeadlineSample", 10L);
-        SetPrivateField(coordinator, "_activeDirectFeedNextSample", 0L);
-        SetPrivateField(coordinator, "_endDrainForced", false);
-        InvokePrivate(coordinator, "ProcessActiveAudioFacts", 1L, 2L, 1L, false, 1d, false);
-        Assert.Equal(1, ended);
-
-        ended = 0;
-        SetPrivateField(coordinator, "_activeTurnId", 1L);
-        SetPrivateField(coordinator, "_directFeed", true);
-        SetPrivateField(coordinator, "_endDrainPending", true);
-        SetPrivateField(coordinator, "_endDrainStreamEpoch", 1L);
-        SetPrivateField(coordinator, "_endDrainTargetSample", 10L);
-        SetPrivateField(coordinator, "_endDrainDeadlineSample", 10L);
-        SetPrivateField(coordinator, "_activeDirectFeedNextSample", 0L);
-        SetPrivateField(coordinator, "_endDrainForced", false);
-        InvokePrivate(coordinator, "ProcessActiveAudioFacts", 1L, 1L, 10L, false, 1d, false);
-        Assert.Equal(1, ended);
-
-        SetPrivateField(coordinator, "_activeTurnId", 1L);
-        SetPrivateField(coordinator, "_directFeed", true);
-        SetPrivateField(coordinator, "_endDrainPending", false);
-        SetPrivateField(coordinator, "_endDrainForced", false);
-        InvokePrivate(coordinator, "BeginEndDrainLocked", 1L, 0L, 1L, false);
-        Assert.True(GetPrivateField<bool>(coordinator, "_endDrainForced"));
-
-        SetPrivateField(coordinator, "_endDrainPending", false);
-        SetPrivateField(coordinator, "_endDrainForced", false);
-        InvokePrivate(coordinator, "BeginEndDrainLocked", 1L, 1L, 0L, false);
-        Assert.False(GetPrivateField<bool>(coordinator, "_endDrainForced"));
-
-        SetPrivateField(coordinator, "_endDrainPending", false);
-        SetPrivateField(coordinator, "_endDrainForced", false);
-        InvokePrivate(coordinator, "BeginEndDrainLocked", 1L, 1L, 1L, true);
-        Assert.True(GetPrivateField<bool>(coordinator, "_endDrainForced"));
-
-        SetPrivateField(coordinator, "_endDrainPending", false);
-        SetPrivateField(coordinator, "_endDrainForced", false);
-        SetPrivateField(coordinator, "_activeDirectFeedNextSample", 5L);
-        InvokePrivate(coordinator, "BeginEndDrainLocked", 1L, 1L, 5L, false);
-        Assert.Equal("aligned", GetPrivateField<string>(coordinator, "_endDrainReason"));
-
-        SetPrivateField(coordinator, "_activeTurnId", 1L);
-        SetPrivateField(coordinator, "_directFeed", false);
-        Assert.False((bool)InvokePrivate(coordinator, "IsDirectFeedActive", 1L)!);
-        SetPrivateField(coordinator, "_activeTurnId", 2L);
-        SetPrivateField(coordinator, "_directFeed", true);
-        Assert.False((bool)InvokePrivate(coordinator, "IsDirectFeedActive", 1L)!);
-        Assert.Empty(faults);
-    }
-
-    [Fact]
     public async Task ActiveNearEndCapture_DelegatesDrainAndRetainsSingleTerminalFault()
     {
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         var coordinator = CreateDataPlaneCoordinator(services, faults);
-        coordinator.ApplyConfirmedCapture(CreateConfirmationRequest(0), CreateConfirmedDecision());
+        coordinator.ApplyConfirmedCapture(CreateConfirmationLease(0), CreateConfirmedDecision());
         await coordinator.AttachAsrSessionAsync(1, "validation-drain-one");
 
         FeedRecognitionAudio(coordinator, 0, [1f, 2f]);
         await coordinator.DrainAsrFeedQueueAsync();
         Assert.Equal([1f, 2f], services.Asr.FedAudio["validation-drain-one"].SelectMany(static chunk => chunk));
 
-        InvokePrivate(coordinator, "ReportDataPlaneFault", "first-fault");
-        InvokePrivate(coordinator, "ReportDataPlaneFault", "second-fault");
-        AssistantFailure fault = Assert.Single(faults);
-        Assert.Equal("first-fault", fault.MessageKey);
+        // The bounded replay queue is overflowed through the public duplex path: the first
+        // overflow reports one terminal data-plane fault, later overflows are absorbed.
+        var faultServices = TestServices.Create();
+        var faultFaults = new List<AssistantFailure>();
+        var faulted = CreateDataPlaneCoordinator(faultServices, faultFaults);
+        faulted.SeedPendingConfirmation(CreateConfirmationLease(0));
+        for (int index = 0; index < 258; index++)
+        {
+            faulted.ObserveDuplexAudio(
+                CreateDuplexFrame(sequence: index + 1, startSample: index, sampleCount: 1),
+                playbackStartupGuardActive: false);
+        }
+
+        AssistantFailure fault = Assert.Single(faultFaults);
+        Assert.Equal("confirmation-tail-overflow", fault.MessageKey);
     }
 
     [Fact]
@@ -4002,13 +4030,13 @@ public sealed partial class VoiceAssistantLifecycleTests
             services,
             faults,
             directFeedAttached: false);
-        coordinator.ApplyConfirmedCapture(CreateConfirmationRequest(0), CreateConfirmedDecision());
+        coordinator.ApplyConfirmedCapture(CreateConfirmationLease(0), CreateConfirmedDecision());
         await coordinator.AttachAsrSessionAsync(1, "old-session");
         FeedRecognitionAudio(coordinator, 0, [1f, 2f]);
         Assert.True(coordinator.HasPendingAsrFeedAudio());
 
         coordinator.Reset();
-        coordinator.ApplyConfirmedCapture(CreateConfirmationRequest(0), CreateConfirmedDecision());
+        coordinator.ApplyConfirmedCapture(CreateConfirmationLease(0), CreateConfirmedDecision());
         await coordinator.AttachAsrSessionAsync(1, "new-session");
 
         Assert.Empty(faults);
@@ -4022,11 +4050,11 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         var coordinator = CreateDataPlaneCoordinator(services, faults);
-        coordinator.ApplyConfirmedCapture(CreateConfirmationRequest(0), CreateConfirmedDecision());
+        coordinator.ApplyConfirmedCapture(CreateConfirmationLease(0), CreateConfirmedDecision());
         FeedRecognitionAudio(coordinator, 0, [1f, 2f]);
 
         coordinator.Reset();
-        coordinator.ApplyConfirmedCapture(CreateConfirmationRequest(0), CreateConfirmedDecision());
+        coordinator.ApplyConfirmedCapture(CreateConfirmationLease(0), CreateConfirmedDecision());
         await coordinator.AttachAsrSessionAsync(1, "new-session");
 
         Assert.Empty(faults);
@@ -4044,7 +4072,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             "AttachAsrSessionAsync",
             "CanAttachAsrSessionLocked",
         ];
-        MethodInfo[] methods = typeof(ActiveNearEndCoordinator)
+        MethodInfo[] methods = typeof(NearEndDataPlane)
             .GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         Assert.DoesNotContain(methods, method => supersededMethods.Contains(method.Name, StringComparer.Ordinal));
     }
@@ -4052,11 +4080,23 @@ public sealed partial class VoiceAssistantLifecycleTests
     [Fact]
     public void ActiveNearEndCapture_DelegatesSessionAdmissionStateToRecognitionPort()
     {
-        FieldInfo[] fields = typeof(ActiveNearEndCoordinator)
+        FieldInfo[] dataPlaneFields = typeof(NearEndDataPlane)
             .GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.Contains(fields, field => field.FieldType == typeof(IRecognitionAudioPort));
-        Assert.DoesNotContain(fields, field => field.Name.Contains("AsrSession", StringComparison.Ordinal));
-        Assert.DoesNotContain(fields, field => field.Name.Contains("SessionAttached", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            dataPlaneFields,
+            field => field.Name.Contains("AsrSession", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            dataPlaneFields,
+            field => field.Name.Contains("SessionAttached", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            dataPlaneFields,
+            field => field.FieldType == typeof(IRecognitionAudioPort));
+
+        FieldInfo[] executorFields = typeof(NearEndEffectExecutor)
+            .GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.Contains(
+            executorFields,
+            field => field.FieldType == typeof(INearEndRecognitionAudioSink));
     }
 
     [Fact]
@@ -4065,24 +4105,25 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         var coordinator = CreateDataPlaneCoordinator(services, faults);
-        INearEndConfirmationStore confirmations = coordinator;
-        SetPrivateField(coordinator, "_pendingConfirmation", CreateConfirmationRequest(0));
+        INearEndConfirmationStore confirmations = coordinator.Confirmations;
+        coordinator.SeedPendingConfirmation(CreateConfirmationLease(0));
 
         ObserveRecognitionAudio(coordinator, 0, [1f, 2f]);
 
-        Assert.True(confirmations.TryTakeConfirmation(1, out _));
+        Assert.True(confirmations.TryAcquire(1, out NearEndConfirmationLease taken));
         coordinator.ObserveDuplexAudio(
             CreateDuplexFrame(sequence: 1, startSample: 0, sampleCount: 2),
             playbackStartupGuardActive: false,
             latestNearEndSpeech: true);
-        Assert.True(HasQueuedItem(coordinator, "_confirmationTailFrames"));
-        confirmations.DiscardTakenConfirmation(2);
+        Assert.True(coordinator.Module.Replay.HasFrames);
+        NearEndConfirmationLease stale = taken with { OperationId = 2 };
+        confirmations.Abort(in stale);
         Assert.True(confirmations.GetDiagnosticSnapshot().ConfirmationPending);
-        Assert.True(HasQueuedItem(coordinator, "_confirmationTailFrames"));
+        Assert.True(coordinator.Module.Replay.HasFrames);
 
-        confirmations.DiscardTakenConfirmation(1);
+        confirmations.Abort(in taken);
         Assert.False(confirmations.GetDiagnosticSnapshot().ConfirmationPending);
-        Assert.False(HasQueuedItem(coordinator, "_confirmationTailFrames"));
+        Assert.False(coordinator.Module.Replay.HasFrames);
         Assert.Empty(faults);
     }
 
@@ -4133,7 +4174,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             SpeakerVerificationStatus.Pending,
             SpeakerVerificationStatus.Mismatch);
         int confirmations = 0;
-        var coordinator = CreateActiveNearEndCoordinator(
+        var coordinator = CreateNearEndTestHarness(
             options,
             new TestRecognitionAudioPort(services.Asr),
             () => turns.IsSpeakingWithoutPendingCandidate,
@@ -4179,6 +4220,123 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Equal(AssistantState.Speaking, turns.State);
         Assert.Equal(0, services.Audio.ClearQueueCount);
         Assert.Empty(services.Audio.PlaybackGainChanges);
+    }
+
+    [Fact]
+    public void ActiveNearEndReset_CancelsInFlightSpeakerCandidate()
+    {
+        var services = TestServices.Create();
+        var options = new VoiceAssistantBargeInOptions
+        {
+            Enable = true,
+            MinDurationMs = 120,
+            MinRms = 0.03f,
+            PlaybackMaxCandidateMs = 500,
+            ActiveNearEndWindowMs = 160,
+            ActiveNearEndPreRollMs = 0,
+        };
+        var turns = new AssistantTurnObservationStoreHarness(
+            new BargeInDetector(options.MinDurationMs, options.MinRms, 16000, 1));
+        long responseTurnId = turns.OnSpeechStarted(enableBargeIn: false).TurnId;
+        Assert.True(turns.TryTransitionForTurn(
+            responseTurnId,
+            AssistantState.Speaking,
+            out _,
+            out _));
+
+        var decision = new BargeInDecision(
+            BargeInAction.Interrupt,
+            FrameCount: 8,
+            AcceptedFrameCount: 8,
+            RejectedFrameCount: 0,
+            EchoLikeFrameCount: 0,
+            TotalDurationMs: 160,
+            AcceptedDurationMs: 160,
+            RequiredDurationMs: 120,
+            ScoreDurationMs: 160,
+            PeakScoreDurationMs: 160,
+            LastFrameRms: 0.1,
+            LastRequiredRms: 0.03,
+            MinRequiredRms: 0.03,
+            MaxRequiredRms: 0.03,
+            Reason: "test",
+            StreamEpoch: 1,
+            StartSample: 0,
+            EndSampleExclusive: 1920,
+            LatestFrameAccepted: true,
+            FirstAcceptedStartSample: 0);
+        var speakerEvidence = new SequencedSpeakerEvidenceProvider(
+            SpeakerVerificationStatus.Pending,
+            SpeakerVerificationStatus.Pending);
+        var coordinator = CreateNearEndTestHarness(
+            options,
+            new TestRecognitionAudioPort(services.Asr),
+            () => turns.IsSpeakingWithoutPendingCandidate,
+            (_, _, _) => decision,
+            new AssistantAudioFormat(
+                new DuplexAssistantAudioFrontend(services.Audio).Input,
+                new SpeechSynthesisStreamAdapter(services.Tts, voice: null, speed: null)),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance,
+            isStopping: static () => false,
+            isPlaybackActive: static () => true,
+            requestConfirmation: static _ => true,
+            publishSpeechEnded: static (_, _) => { },
+            speakerEvidence,
+            reportDataPlaneFault: static _ => { });
+
+        coordinator.ObserveDuplexAudio(
+            CreateDuplexFrame(sequence: 1, startSample: 0, sampleCount: 1920),
+            playbackStartupGuardActive: false);
+        Assert.True(coordinator.GetDiagnosticSnapshot().CandidateActive);
+
+        coordinator.Reset();
+
+        Assert.Contains(new SpeakerCandidateId(1), speakerEvidence.Cancelled);
+        Assert.False(coordinator.GetDiagnosticSnapshot().CandidateActive);
+    }
+
+    [Fact]
+    public async Task ActiveNearEndCapture_CommitRebasesAfterStreamEpochChange()
+    {
+        var services = TestServices.Create();
+        var faults = new List<AssistantFailure>();
+        var coordinator = CreateDataPlaneCoordinator(services, faults);
+        coordinator.SeedPendingConfirmation(CreateConfirmationLease(selectedEndSample: 4));
+        Assert.True(coordinator.TryAcquire(1, out NearEndConfirmationLease taken));
+
+        // The capture stream restarts while the confirmation is pending: the timeline moves to
+        // a new epoch and sample coordinates start from zero again.
+        ObserveRecognitionAudio(coordinator, 0, [1f, 2f, 3f, 4f]);
+        ObserveRecognitionAudio(coordinator, streamEpoch: 2, startSample: 0, samples: [1f, 2f, 3f, 4f]);
+
+        coordinator.ApplyConfirmedCapture(taken, CreateConfirmedDecision());
+        await coordinator.AttachAsrSessionAsync(1, "validation-epoch-rebase");
+
+        FeedRecognitionAudio(
+            coordinator,
+            streamEpoch: 2,
+            startSample: 4,
+            samples: [5f, 6f, 7f, 8f]);
+
+        Assert.Empty(faults);
+        Assert.Equal(
+            [5f, 6f, 7f, 8f],
+            services.Asr.FedAudio["validation-epoch-rebase"].SelectMany(static chunk => chunk));
+    }
+
+    [Fact]
+    public async Task ActiveNearEndCapture_CreditsDirectFeedSamplesForDiagnostics()
+    {
+        var services = TestServices.Create();
+        var faults = new List<AssistantFailure>();
+        var coordinator = CreateDataPlaneCoordinator(services, faults);
+        coordinator.ApplyConfirmedCapture(CreateConfirmationLease(0), CreateConfirmedDecision());
+        await coordinator.AttachAsrSessionAsync(1, "validation-feed-stats");
+
+        FeedRecognitionAudio(coordinator, 0, [1f, 2f, 3f, 4f]);
+
+        Assert.Empty(faults);
+        Assert.Equal(4, coordinator.Module.Capture.DirectFeedSamples);
     }
 
     /// <summary>
@@ -4310,7 +4468,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             var runtime = (VoiceBox.Assistant.Runtime.AssistantRuntime)typeof(VoiceAssistant)
                 .GetField("_runtime", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .GetValue(assistant)!;
-            var nearEnd = RuntimeGraphProbe.RequireField<ActiveNearEndCoordinator>(runtime, "_confirmations");
+            var nearEnd = RuntimeGraphProbe.RequireField<VoiceBox.Assistant.Modules.BargeIn.Controllers.NearEndDataPlane>(runtime, "_dataPlane");
 
             services.Speaker.StreamingEmbedding = FakeSpeakerService.UnitEmbedding(1);
             int feedsBeforeImpostor = services.Speaker.FeedCount;
@@ -5270,7 +5428,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             HasDiscontinuity: false);
     }
 
-    private static ActiveNearEndCoordinator CreateActiveNearEndCoordinator(
+    private static NearEndTestHarness CreateNearEndTestHarness(
         VoiceAssistantBargeInOptions options,
         IRecognitionAudioPort recognitionAudio,
         Func<bool> isSpeakingWithoutPendingCandidate,
@@ -5295,26 +5453,29 @@ public sealed partial class VoiceAssistantLifecycleTests
             publishSpeechEnded,
             reportDataPlaneFault ?? (static _ => { }),
             currentTurnId ?? (static () => 1));
-        return new ActiveNearEndCoordinator(
-            options,
-            recognitionAudio,
-            ports,
-            ports,
-            audioFormat,
-            logger,
-            ports,
-            ports,
-            ports,
-            speakerEvidence,
-            timeProvider);
+        NearEndModule module = NearEndModuleFactory.Create(new NearEndModuleDependencies
+        {
+            Options = options,
+            Conversation = ports,
+            Decisions = ports,
+            AudioFormat = audioFormat,
+            Logger = logger,
+            Runtime = ports,
+            Playback = ports,
+            Control = ports,
+            RecognitionAudio = new RecognitionNearEndAudioSink(recognitionAudio),
+            SpeakerEvidence = speakerEvidence,
+            TimeProvider = timeProvider,
+        });
+        return new NearEndTestHarness(module, recognitionAudio);
     }
 
-    private static ActiveNearEndCoordinator CreateDataPlaneCoordinator(
+    private static NearEndTestHarness CreateDataPlaneCoordinator(
         TestServices services,
         List<AssistantFailure> faults,
         Action<long, TimeSpan>? publishSpeechEnded = null,
         bool directFeedAttached = true)
-        => CreateActiveNearEndCoordinator(
+        => CreateNearEndTestHarness(
             new VoiceAssistantBargeInOptions
             {
                 Enable = true,
@@ -5530,12 +5691,13 @@ public sealed partial class VoiceAssistantLifecycleTests
         }
     }
 
-    private static ActiveNearEndConfirmationRequest CreateConfirmationRequest(
+    private static NearEndConfirmationLease CreateConfirmationLease(
         long selectedEndSample)
         => new(
             OperationId: 1,
-            InitialAudio: [],
-            Decision: default,
+            CandidateId: default,
+            OwnerTurnId: 1,
+            StreamEpoch: 1,
             Selection: new ActiveNearEndPreRollSelection(
                 "test",
                 Samples: checked((int)selectedEndSample),
@@ -5544,11 +5706,11 @@ public sealed partial class VoiceAssistantLifecycleTests
                 DecisionEndSample: selectedEndSample + 4,
                 SelectedStartSample: 0,
                 SelectedEndSample: selectedEndSample),
+            InitialAudio: [],
+            Decision: default,
             EndpointVadCandidate: false,
             IdentityRequired: false,
             IdentityAuthorized: false,
-            CandidateId: default,
-            OwnerTurnId: 0,
             SpeakerResult: default);
 
     private static SpeakingDecision CreateConfirmedDecision()
@@ -5556,7 +5718,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             SpeakingDecisionKind.ConfirmedBargeIn,
             AsrSessionId: null,
             ResponseToCancel: null,
-            InterruptedTurnId: 0,
+            InterruptedTurnId: 1,
             OldState: AssistantState.Speaking,
             TurnId: 1,
             ConfirmedCandidateSamples: 0,
@@ -5569,22 +5731,24 @@ public sealed partial class VoiceAssistantLifecycleTests
             ConfirmedBargeInDiagnostics: default);
 
     private static void FeedRecognitionAudio(
-        ActiveNearEndCoordinator coordinator,
+        NearEndTestHarness coordinator,
         long startSample,
-        float[] samples)
+        float[] samples,
+        long streamEpoch = 1)
     {
         MainAudioObservation observation =
-            ObserveRecognitionAudio(coordinator, startSample, samples);
+            ObserveRecognitionAudio(coordinator, startSample, samples, streamEpoch);
         coordinator.FeedFromRecognitionAudio(samples, observation);
     }
 
     private static MainAudioObservation ObserveRecognitionAudio(
-        ActiveNearEndCoordinator coordinator,
+        NearEndTestHarness coordinator,
         long startSample,
-        float[] samples)
+        float[] samples,
+        long streamEpoch = 1)
     {
         var range = new CaptureRange(
-            StreamEpoch: 1,
+            StreamEpoch: streamEpoch,
             StartSequenceNumber: startSample + 1,
             EndSequenceNumber: startSample + 1,
             StartSample: startSample,
@@ -5600,41 +5764,8 @@ public sealed partial class VoiceAssistantLifecycleTests
         return coordinator.ObserveRecognitionAudio(frame);
     }
 
-    private static bool HasQueuedItem(object instance, string fieldName)
-    {
-        object queue = instance.GetType()
-            .GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic)?
-            .GetValue(instance)
-            ?? throw new Xunit.Sdk.XunitException($"Queue field '{fieldName}' was not found.");
-        MethodInfo tryPeek = queue.GetType().GetMethod("TryPeek")
-            ?? throw new Xunit.Sdk.XunitException($"Queue field '{fieldName}' has no TryPeek method.");
-        object?[] arguments = [null];
-        return (bool)(tryPeek.Invoke(queue, arguments)
-            ?? throw new Xunit.Sdk.XunitException($"Queue field '{fieldName}' returned no result."));
-    }
-
-    private static void SetPrivateField<T>(object instance, string name, T value)
-    {
-        if (TryResolveNearEndState(instance, name, out object owner, out string member))
-        {
-            SetStateMember(owner, member, value);
-            return;
-        }
-
-        FieldInfo field = instance.GetType()
-            .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)
-            ?? throw new Xunit.Sdk.XunitException($"Field '{name}' was not found.");
-        field.SetValue(instance, value);
-    }
-
     private static T GetPrivateField<T>(object instance, string name)
     {
-        if (TryResolveNearEndState(instance, name, out object owner, out string member))
-        {
-            return (T)(GetStateMember(owner, member)
-                ?? throw new Xunit.Sdk.XunitException($"Member '{member}' was null."));
-        }
-
         FieldInfo? field = instance.GetType()
             .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
         if (field is not null)
@@ -5689,87 +5820,6 @@ public sealed partial class VoiceAssistantLifecycleTests
         }
 
         return false;
-    }
-
-    /// <summary>
-    /// Near-end capture/endpoint/speaker state lives in dedicated owner types. These
-    /// tests still address the state by its historical field name, so map that name onto its
-    /// new owner instead of restoring a flattened field.
-    /// </summary>
-    private static readonly Dictionary<string, (string Field, string Member)> NearEndStateMap = new(StringComparer.Ordinal)
-    {
-        ["_activeTurnId"] = ("_capture", "ActiveTurnId"),
-        ["_directFeed"] = ("_capture", "DirectFeed"),
-        ["_activeDirectFeedNextSample"] = ("_capture", "DirectFeedNextSample"),
-        ["_activeDirectFeedSamples"] = ("_capture", "DirectFeedSamples"),
-        ["_directFeedsInFlight"] = ("_capture", "DirectFeedsInFlight"),
-        ["_endDrainTargetSample"] = ("_capture", "EndDrainTargetSample"),
-        ["_endDrainDeadlineSample"] = ("_capture", "EndDrainDeadlineSample"),
-        ["_endDrainPending"] = ("_capture", "EndDrainPending"),
-        ["_endDrainForced"] = ("_capture", "EndDrainForced"),
-        ["_endDrainReason"] = ("_capture", "EndDrainReason"),
-        ["_endDrainStreamEpoch"] = ("_capture", "EndDrainStreamEpoch"),
-        ["_speakerCandidateActive"] = ("_speakerCandidate", "Active"),
-        ["_speakerCandidateAuthorized"] = ("_speakerCandidate", "Authorized"),
-        ["_speakerCandidateEndSample"] = ("_speakerCandidate", "EndSample"),
-        ["_speakerCandidateMainStartSample"] = ("_speakerCandidate", "MainStartSample"),
-        ["_endpointVadCandidateActive"] = ("_endpoint", "CandidateActive"),
-        ["_unownedEndpointVadObserved"] = ("_endpoint", "UnownedObserved"),
-        ["_unownedEndpointVadProcessed"] = ("_endpoint", "UnownedProcessed"),
-    };
-
-    private static bool TryResolveNearEndState(
-        object instance,
-        string name,
-        out object owner,
-        out string member)
-    {
-        owner = null!;
-        member = string.Empty;
-        if (!NearEndStateMap.TryGetValue(name, out (string Field, string Member) mapping))
-            return false;
-
-        FieldInfo? stateField = instance.GetType()
-            .GetField(mapping.Field, BindingFlags.Instance | BindingFlags.NonPublic);
-        if (stateField?.GetValue(instance) is not { } value)
-            return false;
-
-        owner = value;
-        member = mapping.Member;
-        return true;
-    }
-
-    private static void SetStateMember(object owner, string member, object? value)
-    {
-        Type type = owner.GetType();
-        PropertyInfo? property = type.GetProperty(member, BindingFlags.Instance | BindingFlags.Public);
-        if (property?.SetMethod is not null)
-        {
-            property.SetValue(owner, value);
-            return;
-        }
-
-        // Read-only projections are backed by an auto-property field; tests may still seed them.
-        FieldInfo backing = type.GetField(
-            $"<{member}>k__BackingField",
-            BindingFlags.Instance | BindingFlags.NonPublic)
-            ?? throw new Xunit.Sdk.XunitException($"State member '{member}' is not settable.");
-        backing.SetValue(owner, value);
-    }
-
-    private static object? GetStateMember(object owner, string member)
-        => owner.GetType()
-            .GetProperty(member, BindingFlags.Instance | BindingFlags.Public)
-            ?.GetValue(owner)
-            ?? throw new Xunit.Sdk.XunitException($"State member '{member}' was not found.");
-
-    private static object? InvokePrivate(object instance, string name, params object?[] args)
-    {
-        MethodInfo method = instance.GetType().GetMethod(
-                name,
-                BindingFlags.Instance | BindingFlags.NonPublic)
-            ?? throw new Xunit.Sdk.XunitException($"Method '{name}' was not found.");
-        return method.Invoke(instance, args);
     }
 
     private static void EmitPlaybackEchoFrames(TestServices services, int count, double renderRms, double echoRms)

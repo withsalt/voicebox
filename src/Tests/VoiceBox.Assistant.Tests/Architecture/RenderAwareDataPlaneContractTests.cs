@@ -1,5 +1,6 @@
 using System.Reflection;
 using VoiceBox.Assistant.Kernel.Models;
+using VoiceBox.Assistant.Modules.BargeIn.Adapters;
 using VoiceBox.Assistant.Modules.BargeIn.Buffering;
 using VoiceBox.Assistant.Modules.BargeIn.Contracts;
 using VoiceBox.Assistant.Modules.BargeIn.Controllers;
@@ -8,6 +9,7 @@ using VoiceBox.Assistant.Modules.BargeIn.Policies;
 using VoiceBox.Assistant.Modules.BargeIn.RenderAware.Controllers;
 using VoiceBox.Assistant.Modules.BargeIn.RenderAware.Models;
 using VoiceBox.Assistant.Modules.BargeIn.RenderAware.Policies;
+using VoiceBox.Assistant.Modules.BargeIn.State;
 using VoiceBox.Assistant.Modules.TurnBoundary.Contracts;
 using VoiceBox.Assistant.Realtime.Timeline;
 using VoiceBox.Assistant.Runtime;
@@ -29,11 +31,19 @@ public sealed class RenderAwareDataPlaneContractTests
         Assert.Contains(runtimeFields, field => field.FieldType == typeof(INearEndRenderPort));
         Assert.Contains(runtimeFields, field => field.FieldType == typeof(INearEndEndpointPort));
         Assert.DoesNotContain(runtimeFields, field => field.FieldType.Name == "IActiveNearEndModule");
-        Assert.DoesNotContain(runtimeFields, field => field.FieldType == typeof(ActiveNearEndCoordinator));
+        Assert.DoesNotContain(runtimeFields, field => field.FieldType == typeof(NearEndDataPlane));
 
         Type[] dataPlaneTypes =
         [
-            typeof(ActiveNearEndCoordinator),
+            typeof(NearEndDataPlane),
+            typeof(NearEndEffectExecutor),
+            typeof(NearEndTimelineBuffer),
+            typeof(NearEndEndpointTracker),
+            typeof(NearEndCandidateStateMachine),
+            typeof(NearEndCaptureStateMachine),
+            typeof(NearEndConfirmationJournal),
+            typeof(NearEndReplayBuffer),
+            typeof(PlaybackDuckingPolicy),
             typeof(RenderAwarePlaybackBargeInDetector),
             typeof(RenderAwareDtdEvidencePolicy),
             typeof(BargeInDecisionAccumulator),
@@ -63,7 +73,8 @@ public sealed class RenderAwareDataPlaneContractTests
             typeof(INearEndResetPort),
         ];
         Assert.All(facets, facet => Assert.True(facet.IsInterface));
-        Assert.All(facets, facet => Assert.Contains(facet, typeof(ActiveNearEndCoordinator).GetInterfaces()));
+        PropertyInfo[] ports = typeof(NearEndPorts).GetProperties();
+        Assert.All(facets, facet => Assert.Contains(ports, port => port.PropertyType == facet));
 
         MethodInfo duplex = typeof(INearEndRenderPort).GetMethod(nameof(INearEndRenderPort.ObserveDuplexAudio))!;
         Assert.Equal(typeof(DuplexAudioFrame).MakeByRefType(), duplex.GetParameters()[0].ParameterType);
@@ -78,26 +89,38 @@ public sealed class RenderAwareDataPlaneContractTests
     }
 
     [Fact]
-    public void ActiveNearEndCoordinator_UsesOnlySmallTypedCollaboratorPorts()
+    public void NearEndDataPlane_UsesOnlySmallTypedCollaboratorsAndOneEffectExecutor()
     {
-        FieldInfo[] fields = typeof(ActiveNearEndCoordinator).GetFields(
+        FieldInfo[] fields = typeof(NearEndDataPlane).GetFields(
             BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.DoesNotContain(fields, field => typeof(Delegate).IsAssignableFrom(field.FieldType));
 
-        ConstructorInfo constructor = Assert.Single(typeof(ActiveNearEndCoordinator).GetConstructors());
+        ConstructorInfo constructor = Assert.Single(typeof(NearEndDataPlane).GetConstructors());
         Assert.DoesNotContain(
             constructor.GetParameters(),
             parameter => typeof(Delegate).IsAssignableFrom(parameter.ParameterType));
 
-        Type[] requiredPorts =
+        Type[] requiredCollaborators =
         [
             typeof(IActiveNearEndConversationView),
             typeof(IActiveNearEndDecisionSource),
             typeof(IRuntimeLivenessView),
-            typeof(IActiveNearEndPlaybackPort),
-            typeof(IActiveNearEndSignalSink),
+            typeof(INearEndAuthorizationPolicy),
+            typeof(NearEndEffectExecutor),
         ];
-        Assert.All(requiredPorts, port => Assert.Contains(fields, field => field.FieldType == port));
+        Assert.All(requiredCollaborators, port => Assert.Contains(fields, field => field.FieldType == port));
+
+        // Playback, control ingress and recognition are reachable only through the executor.
+        Assert.DoesNotContain(fields, field => field.FieldType == typeof(IActiveNearEndPlaybackPort));
+        Assert.DoesNotContain(fields, field => field.FieldType == typeof(IActiveNearEndSignalSink));
+        Assert.DoesNotContain(fields, field => field.FieldType == typeof(INearEndRecognitionAudioSink));
+
+        FieldInfo[] executorFields = typeof(NearEndEffectExecutor).GetFields(
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.DoesNotContain(executorFields, field => typeof(Delegate).IsAssignableFrom(field.FieldType));
+        Assert.Contains(executorFields, field => field.FieldType == typeof(IActiveNearEndPlaybackPort));
+        Assert.Contains(executorFields, field => field.FieldType == typeof(IActiveNearEndSignalSink));
+        Assert.Contains(executorFields, field => field.FieldType == typeof(INearEndRecognitionAudioSink));
     }
 
     [Fact]
@@ -131,6 +154,8 @@ public sealed class RenderAwareDataPlaneContractTests
         [
             typeof(BoundedFractionalRenderBuffer),
             typeof(NearEndAudioReservoir),
+            typeof(NearEndTimelineBuffer),
+            typeof(NearEndReplayBuffer),
             typeof(TimelineMonoResampler),
             typeof(TimelinePairResampler),
         ];

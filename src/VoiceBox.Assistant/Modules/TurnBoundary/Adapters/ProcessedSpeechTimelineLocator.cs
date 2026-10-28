@@ -14,6 +14,7 @@ namespace VoiceBox.Assistant.Modules.TurnBoundary.Adapters;
 internal sealed class ProcessedSpeechTimelineLocator : IProcessedCaptureFrameSink, ISpeechTimelineLocator
 {
     private readonly NearEndAudioReservoir _reservoir;
+    private readonly object _lock = new();
 
     public ProcessedSpeechTimelineLocator(int capacitySamples)
     {
@@ -28,7 +29,8 @@ internal sealed class ProcessedSpeechTimelineLocator : IProcessedCaptureFrameSin
         if (audio.IsEmpty)
             return;
         CaptureRange sourceRange = frame.SourceRange;
-        _reservoir.Add(audio, in sourceRange, frame.HasDiscontinuity);
+        lock (_lock)
+            _reservoir.Add(audio, in sourceRange, frame.HasDiscontinuity);
     }
 
     public bool TryLocate(
@@ -36,5 +38,8 @@ internal sealed class ProcessedSpeechTimelineLocator : IProcessedCaptureFrameSin
         out long streamEpoch,
         out long startSample,
         out long endSample)
-        => _reservoir.TryLocate(audio, out streamEpoch, out startSample, out endSample);
+    {
+        lock (_lock)
+            return _reservoir.TryLocate(audio, out streamEpoch, out startSample, out endSample);
+    }
 }

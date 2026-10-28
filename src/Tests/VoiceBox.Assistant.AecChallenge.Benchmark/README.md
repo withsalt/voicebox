@@ -8,7 +8,7 @@ barge-in 声学判定是否可靠。benchmark 不实例化或编排一套平行�
 1. WebRTC APM 主 AEC；
 2. render-aware DTD 及 render/capture 时间线对齐；
 3. 当前 barge-in 窗口累计规则；
-4. `ActiveNearEndCoordinator`、turn 状态机和真实 `BargeInValidationKind.Heard` 事件。
+4. `NearEndDataPlane`、turn 状态机和真实 `BargeInValidationKind.Heard` 事件。
 
 `VoiceAssistantBenchmarkProbe` 是被动只读探针，只补充概率峰值和未触发诊断，
 不参与裁决。生产 public 构造函数和默认时钟均未改变；benchmark 通过 internal friend

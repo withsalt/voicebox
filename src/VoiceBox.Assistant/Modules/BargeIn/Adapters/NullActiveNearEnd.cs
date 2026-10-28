@@ -65,16 +65,16 @@ internal sealed class NullActiveNearEnd :
 
     public void ClearAudioReservoirs() { }
 
-    public bool TryTakeConfirmation(long operationId, out ActiveNearEndConfirmationRequest request)
+    public bool TryAcquire(long operationId, out NearEndConfirmationLease lease)
     {
-        request = default;
+        lease = default;
         return false;
     }
 
-    public void DiscardTakenConfirmation(long operationId) { }
+    public bool TryCommit(
+        in NearEndConfirmationLease lease,
+        in SpeakingDecision confirmed) => false;
 
-    public void ApplyConfirmedCapture(
-        in ActiveNearEndConfirmationRequest request,
-        in SpeakingDecision confirmed) { }
+    public void Abort(in NearEndConfirmationLease lease) { }
 
 }

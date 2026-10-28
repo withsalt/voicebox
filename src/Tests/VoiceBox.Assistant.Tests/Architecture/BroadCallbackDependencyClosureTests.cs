@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using VoiceBox.Assistant.Modules.BargeIn.Contracts;
 using VoiceBox.Assistant.Runtime.Contracts;
@@ -18,25 +18,25 @@ public sealed class BroadCallbackDependencyClosureTests
 
     private static readonly HashSet<string> AllowedDelegateFields =
     [
-        "VoiceBox.Assistant.Runtime.Lifecycle.AssistantRuntimeSubscriptionOwner._processedCapture",
-        "VoiceBox.Assistant.Runtime.Lifecycle.AssistantRuntimeSubscriptionOwner._duplexFrame",
-        "VoiceBox.Assistant.Runtime.Lifecycle.AssistantRuntimeSubscriptionOwner._speechStarted",
-        "VoiceBox.Assistant.Runtime.Lifecycle.AssistantRuntimeSubscriptionOwner._speaking",
-        "VoiceBox.Assistant.Runtime.Lifecycle.AssistantRuntimeSubscriptionOwner._speechEnded",
-        "VoiceBox.Assistant.Modules.TurnBoundary.VadTurnBoundaryAdapter._speaking",
-        "VoiceBox.Assistant.Modules.TurnBoundary.VadTurnBoundaryAdapter._speechEnded",
-        "VoiceBox.Assistant.Modules.BargeIn.RenderAware.RenderAwarePlaybackBargeInDetector._resampledPairHandler",
+        "VoiceBox.Assistant.Runtime.Lifecycle.Controllers.AssistantRuntimeSubscriptionOwner._processedCapture",
+        "VoiceBox.Assistant.Runtime.Lifecycle.Controllers.AssistantRuntimeSubscriptionOwner._duplexFrame",
+        "VoiceBox.Assistant.Runtime.Lifecycle.Controllers.AssistantRuntimeSubscriptionOwner._speechStarted",
+        "VoiceBox.Assistant.Runtime.Lifecycle.Controllers.AssistantRuntimeSubscriptionOwner._speaking",
+        "VoiceBox.Assistant.Runtime.Lifecycle.Controllers.AssistantRuntimeSubscriptionOwner._speechEnded",
+        "VoiceBox.Assistant.Modules.TurnBoundary.Adapters.VadTurnBoundaryAdapter._speaking",
+        "VoiceBox.Assistant.Modules.TurnBoundary.Adapters.VadTurnBoundaryAdapter._speechEnded",
+        "VoiceBox.Assistant.Modules.BargeIn.RenderAware.Controllers.RenderAwarePlaybackBargeInDetector._resampledPairHandler",
     ];
 
     private static readonly HashSet<string> AllowedDelegateMembers =
     [
-        "VoiceBox.Assistant.Runtime.Lifecycle.AssistantRuntimeSubscriptionOwner..ctor",
-        "VoiceBox.Assistant.Runtime.Effects.IEffectBackgroundScheduler.Schedule",
-        "VoiceBox.Assistant.Runtime.Lifecycle.AssistantTaskSupervisor.VoiceBox.Assistant.Runtime.Effects.IEffectBackgroundScheduler.Schedule",
-        "VoiceBox.Assistant.Modules.Speaker.SpeakerEnrollmentCoordinator.EnrollAsync",
-        "VoiceBox.Assistant.Modules.Speaker.SpeakerEnrollmentCoordinator.EnrollCoreAsync",
-        "VoiceBox.Assistant.Modules.Wakeup.WakeupDetectorAdapter.Subscribe",
-        "VoiceBox.Assistant.Modules.Wakeup.WakeupDetectorAdapter.Unsubscribe",
+        "VoiceBox.Assistant.Runtime.Lifecycle.Controllers.AssistantRuntimeSubscriptionOwner..ctor",
+        "VoiceBox.Assistant.Runtime.Effects.Contracts.IEffectBackgroundScheduler.Schedule",
+        "VoiceBox.Assistant.Runtime.Lifecycle.Controllers.AssistantTaskSupervisor.VoiceBox.Assistant.Runtime.Effects.Contracts.IEffectBackgroundScheduler.Schedule",
+        "VoiceBox.Assistant.Modules.Speaker.Enrollment.SpeakerEnrollmentCoordinator.EnrollAsync",
+        "VoiceBox.Assistant.Modules.Speaker.Enrollment.SpeakerEnrollmentCoordinator.EnrollCoreAsync",
+        "VoiceBox.Assistant.Modules.Wakeup.Adapters.WakeupDetectorAdapter.Subscribe",
+        "VoiceBox.Assistant.Modules.Wakeup.Adapters.WakeupDetectorAdapter.Unsubscribe",
     ];
 
     [Fact]

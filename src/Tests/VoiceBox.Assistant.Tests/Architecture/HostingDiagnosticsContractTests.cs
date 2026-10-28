@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
@@ -70,7 +70,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         Type diagnostics = RequireType(
             hosting,
-            "VoiceBox.Assistant.Hosting.VoiceAssistantDiagnostics");
+            "VoiceBox.Assistant.Hosting.Diagnostics.VoiceAssistantDiagnostics");
         Assert.NotNull(diagnostics.GetProperty("RuntimeLifecycle"));
         Assert.NotNull(diagnostics.GetProperty("Turn"));
         Assert.NotNull(diagnostics.GetProperty("Modules"));

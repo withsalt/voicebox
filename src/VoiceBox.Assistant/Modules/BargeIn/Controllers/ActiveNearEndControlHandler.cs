@@ -48,39 +48,40 @@ internal sealed class ActiveNearEndControlHandler
     public BargeInSemanticPlan ProcessInterruptionRequested(long operationId)
     {
         _benchmarkProbe?.ObserveControlTrace("near-end.confirmation.reduce.begin", operationId: operationId);
-        ActiveNearEndConfirmationRequest request = default;
+        NearEndConfirmationLease lease = default;
         SpeakingDecision confirmed = default;
-        bool tookConfirmation = _confirmations.TryTakeConfirmation(operationId, out request);
+        bool tookConfirmation = _confirmations.TryAcquire(operationId, out lease);
         // A KWS-enabled candidate reaches the control plane only after its own speaker Match; a
         // KWS-disabled one only after an acoustic Interrupt. Both are re-checked against the current
         // snapshot here, and the stop itself is issued by the Kernel, never by this handler.
-        bool identityPermits = !request.IdentityRequired || request.IdentityAuthorized;
+        bool identityPermits = !lease.IdentityRequired || lease.IdentityAuthorized;
         bool confirmedNearEnd = tookConfirmation &&
+            lease.OwnerTurnId == _bargeInTurns.CurrentTurnId &&
             identityPermits &&
             _bargeInTurns.TryConfirmFromNearEndWindow(
-                request.InitialAudio,
-                request.Decision,
-                request.IdentityRequired && request.IdentityAuthorized,
-                out confirmed);
+                lease.InitialAudio,
+                lease.Decision,
+                lease.IdentityRequired && lease.IdentityAuthorized,
+                out confirmed) &&
+            _confirmations.TryCommit(in lease, in confirmed);
         if (confirmedNearEnd)
         {
             _benchmarkProbe?.ObserveControlTrace(
                 "near-end.confirmation.reduced",
                 confirmed.TurnId,
                 operationId);
-            _confirmations.ApplyConfirmedCapture(request, confirmed);
             ObserveBenchmarkProgress();
             return _bargeInTurns.ObserveConfirmedBargeIn(
                 confirmed,
                 BargeInTriggerSource.NearEndWindow,
-                request.InitialAudio,
-                request.IdentityRequired
-                    ? BargeInIdentityContext.AuthorizedSpeaker(request.CandidateId.Value)
+                lease.InitialAudio,
+                lease.IdentityRequired
+                    ? BargeInIdentityContext.AuthorizedSpeaker(lease.CandidateId.Value)
                     : BargeInIdentityContext.NotRequired);
         }
 
         if (tookConfirmation)
-            _confirmations.DiscardTakenConfirmation(operationId);
+            _confirmations.Abort(in lease);
         ObserveBenchmarkProgress();
         return default;
     }

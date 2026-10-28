@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text.Json;
 using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Composition.Builder;
@@ -139,7 +139,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         // The shell must face the semantic ports, never a concrete audio or VAD provider.
         Assert.Contains("VoiceBox.Assistant.Modules.AudioFrontend.Contracts.IAssistantAudioFrontend", fieldTypes);
         Assert.Contains("VoiceBox.Assistant.Modules.AudioFrontend.Contracts.IAssistantAudioOutput", fieldTypes);
-        Assert.Contains("VoiceBox.Assistant.Modules.TurnBoundary.ITurnBoundarySource", fieldTypes);
+        Assert.Contains("VoiceBox.Assistant.Modules.TurnBoundary.Contracts.ITurnBoundarySource", fieldTypes);
         Assert.DoesNotContain("VoiceBox.Core.Services.AudioService.IAudioDuplexService", fieldTypes);
         Assert.DoesNotContain("VoiceBox.Core.Services.AudioService.IAudioRecordService", fieldTypes);
         Assert.DoesNotContain("VoiceBox.Core.Services.AudioService.IAudioPlayService", fieldTypes);
@@ -194,21 +194,32 @@ public sealed partial class VoiceAssistantLifecycleTests
     public void NearEndAndDetector_SplitOwnershipIntoDedicatedStateTypes()
     {
         Assembly assembly = typeof(VoiceAssistant).Assembly;
-        Type coordinator = assembly.GetType("VoiceBox.Assistant.Modules.BargeIn.ActiveNearEndCoordinator")!;
-        Type detector = assembly.GetType(
-            "VoiceBox.Assistant.Modules.BargeIn.RenderAware.RenderAwarePlaybackBargeInDetector")!;
+        Assert.Null(assembly.GetType("VoiceBox.Assistant.Modules.BargeIn.Controllers.ActiveNearEndCoordinator"));
+        Assert.Null(assembly.GetType("VoiceBox.Assistant.Modules.BargeIn.Policies.NearEndEndpointPolicy"));
+        Assert.Null(assembly.GetType("VoiceBox.Assistant.Modules.BargeIn.State.NearEndSpeakerCandidateState"));
+        Assert.Null(assembly.GetType("VoiceBox.Assistant.Modules.BargeIn.State.NearEndCaptureSession"));
 
-        // Candidate, capture session and endpoint policy each have one owner type.
-        string[] coordinatorFieldTypes = coordinator
+        Type dataPlane = assembly.GetType("VoiceBox.Assistant.Modules.BargeIn.Controllers.NearEndDataPlane")!;
+        Type detector = assembly.GetType(
+            "VoiceBox.Assistant.Modules.BargeIn.RenderAware.Controllers.RenderAwarePlaybackBargeInDetector")!;
+
+        // Timeline, endpoint, candidate, capture, confirmation, replay, ducking and effects each
+        // have exactly one owner type.
+        string[] dataPlaneFieldTypes = dataPlane
             .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
             .Select(static field => field.FieldType.Name)
             .ToArray();
-        Assert.Contains("NearEndEndpointPolicy", coordinatorFieldTypes);
-        Assert.Contains("NearEndSpeakerCandidateState", coordinatorFieldTypes);
-        Assert.Contains("NearEndCaptureSession", coordinatorFieldTypes);
+        Assert.Contains("NearEndTimelineBuffer", dataPlaneFieldTypes);
+        Assert.Contains("NearEndEndpointTracker", dataPlaneFieldTypes);
+        Assert.Contains("NearEndCandidateStateMachine", dataPlaneFieldTypes);
+        Assert.Contains("NearEndCaptureStateMachine", dataPlaneFieldTypes);
+        Assert.Contains("NearEndConfirmationJournal", dataPlaneFieldTypes);
+        Assert.Contains("NearEndReplayBuffer", dataPlaneFieldTypes);
+        Assert.Contains("PlaybackDuckingPolicy", dataPlaneFieldTypes);
+        Assert.Contains("NearEndEffectExecutor", dataPlaneFieldTypes);
 
-        // The migrated state must no longer exist as flattened coordinator fields.
-        string[] coordinatorFieldNames = coordinator
+        // The retired flattened state must not reappear on the aggregate root.
+        string[] dataPlaneFieldNames = dataPlane
             .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
             .Select(static field => field.Name)
             .ToArray();
@@ -219,9 +230,10 @@ public sealed partial class VoiceAssistantLifecycleTests
             "_endDrainPending",
             "_speakerCandidateActive",
             "_endpointVadCandidateActive",
+            "_pendingConfirmation",
         })
         {
-            Assert.DoesNotContain(retired, coordinatorFieldNames);
+            Assert.DoesNotContain(retired, dataPlaneFieldNames);
         }
 
         // The alignment stage is a dedicated pipeline collaborator.
@@ -244,7 +256,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Null(assembly.GetType("VoiceBox.Assistant.Modules.Speaker.SpeakerAudioQueue"));
         Assert.Null(assembly.GetType("VoiceBox.Assistant.Modules.Speaker.SpeakerEvidenceLedger"));
 
-        Type verifier = assembly.GetType("VoiceBox.Assistant.Modules.Speaker.SpeechGatedSpeakerVerifier")!;
+        Type verifier = assembly.GetType("VoiceBox.Assistant.Modules.Speaker.Controllers.SpeechGatedSpeakerVerifier")!;
         string[] fieldTypes = verifier
             .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
             .Select(static field => field.FieldType.Name)
@@ -275,9 +287,9 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         // The scheduler is the only owner of the provider worker; the prefetch gate never calls the
         // provider itself.
-        Type scheduler = assembly.GetType("VoiceBox.Assistant.Modules.Speaker.SpeakerInferenceScheduler")!;
+        Type scheduler = assembly.GetType("VoiceBox.Assistant.Modules.Speaker.Evidence.SpeakerInferenceScheduler")!;
         Assert.Contains("_worker", scheduler.GetFields(BindingFlags.Instance | BindingFlags.NonPublic).Select(static field => field.Name));
-        Type prefetch = assembly.GetType("VoiceBox.Assistant.Modules.Speaker.SpeakerSpeechPrefetchGate")!;
+        Type prefetch = assembly.GetType("VoiceBox.Assistant.Modules.Speaker.Evidence.SpeakerSpeechPrefetchGate")!;
         Assert.DoesNotContain(
             prefetch.GetFields(BindingFlags.Instance | BindingFlags.NonPublic),
             static field => field.FieldType.Name == "ISpeakerService");
@@ -287,7 +299,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     public void WakeupGate_SplitsModePreRollAuthorizationAndServiceAdapter()
     {
         Type gate = typeof(VoiceAssistant).Assembly.GetType(
-            "VoiceBox.Assistant.Modules.Wakeup.WakeupSessionGate")!;
+            "VoiceBox.Assistant.Modules.Wakeup.Controllers.WakeupSessionGate")!;
         string[] fieldTypes = gate
             .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
             .Select(static field => field.FieldType.Name)
@@ -303,7 +315,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     public void RuntimeTelemetry_UsesStructuredEventIdsAndKeepsTracingOutOfRuntimeAndKernel()
     {
         Assembly assembly = typeof(VoiceAssistant).Assembly;
-        Type eventIds = assembly.GetType("VoiceBox.Assistant.Runtime.AssistantRuntimeEventIds")
+        Type eventIds = assembly.GetType("VoiceBox.Assistant.Runtime.Telemetry.AssistantRuntimeEventIds")
             ?? throw new Xunit.Sdk.XunitException("AssistantRuntimeEventIds is missing.");
 
         Assert.Equal(
@@ -368,7 +380,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     }
 
     [Fact]
-    public void BuilderWithoutBargeIn_DoesNotConstructActiveNearEndCoordinator()
+    public void BuilderWithoutBargeIn_DoesNotConstructNearEndDataPlane()
     {
         var services = TestServices.Create();
         using VoiceAssistant assistant = VoiceAssistant.CreateBuilder()
@@ -382,9 +394,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         object runtime = typeof(VoiceAssistant)
             .GetField("_runtime", BindingFlags.Instance | BindingFlags.NonPublic)!
             .GetValue(assistant)!;
-        object? activeNearEnd = RuntimeGraphProbe.FindField(runtime, "_activeNearEnd");
-
-        Assert.Null(activeNearEnd);
+        Assert.Null(RuntimeGraphProbe.FindField(runtime, "_dataPlane"));
         Assert.Null(RuntimeGraphProbe.FindField(runtime, "_validationRunner"));
         Assert.DoesNotContain(
             runtime.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
@@ -425,7 +435,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Type recognitionOwner = assembly.GetType(
             "VoiceBox.Assistant.Modules.Recognition.Controllers.RecognitionModule")!;
         Type validationOwner = assembly.GetType(
-            "VoiceBox.Assistant.Modules.BargeIn.BargeInValidationTurnOwner")!;
+            "VoiceBox.Assistant.Modules.BargeIn.Controllers.BargeInValidationTurnOwner")!;
 
         Assert.NotNull(recognitionRouter);
         Assert.NotNull(recognitionOwner);

@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using VoiceBox.Assistant.Runtime.Lifecycle;
 using VoiceBox.Assistant.Runtime.Lifecycle.Controllers;
 using VoiceBox.Assistant.Runtime.Lifecycle.Models;
@@ -13,13 +13,13 @@ public sealed class LifecycleShellContractTests
     {
         Assembly assembly = typeof(VoiceAssistant).Assembly;
 
-        Type state = Require(assembly, "VoiceBox.Assistant.Runtime.Lifecycle.AssistantRuntimeLifecycleState");
+        Type state = Require(assembly, "VoiceBox.Assistant.Runtime.Lifecycle.Models.AssistantRuntimeLifecycleState");
         Assert.True(state.IsEnum);
         Assert.Equal(
             ["Created", "Starting", "Running", "Stopping", "Stopped", "Faulted", "Disposed"],
             Enum.GetNames(state));
 
-        Type stateMachine = Require(assembly, "VoiceBox.Assistant.Runtime.Lifecycle.AssistantRuntimeLifecycleStateMachine");
+        Type stateMachine = Require(assembly, "VoiceBox.Assistant.Runtime.Lifecycle.Controllers.AssistantRuntimeLifecycleStateMachine");
         Assert.NotNull(stateMachine.GetProperty("State", BindingFlags.Instance | BindingFlags.Public));
         Assert.NotNull(stateMachine.GetMethod("BeginStart", BindingFlags.Instance | BindingFlags.Public));
         Assert.NotNull(stateMachine.GetMethod("CompleteStart", BindingFlags.Instance | BindingFlags.Public));
@@ -27,17 +27,17 @@ public sealed class LifecycleShellContractTests
         Assert.NotNull(stateMachine.GetMethod("CompleteStop", BindingFlags.Instance | BindingFlags.Public));
         Assert.NotNull(stateMachine.GetMethod("MarkDisposed", BindingFlags.Instance | BindingFlags.Public));
 
-        Type subscriptions = Require(assembly, "VoiceBox.Assistant.Runtime.Lifecycle.AssistantRuntimeSubscriptionOwner");
+        Type subscriptions = Require(assembly, "VoiceBox.Assistant.Runtime.Lifecycle.Controllers.AssistantRuntimeSubscriptionOwner");
         Assert.NotNull(subscriptions.GetProperty("IsAttached", BindingFlags.Instance | BindingFlags.Public));
         Assert.NotNull(subscriptions.GetMethod("Attach", BindingFlags.Instance | BindingFlags.Public));
         Assert.NotNull(subscriptions.GetMethod("Detach", BindingFlags.Instance | BindingFlags.Public));
 
-        Type supervisor = Require(assembly, "VoiceBox.Assistant.Runtime.Lifecycle.AssistantTaskSupervisor");
+        Type supervisor = Require(assembly, "VoiceBox.Assistant.Runtime.Lifecycle.Controllers.AssistantTaskSupervisor");
         Assert.NotNull(supervisor.GetProperty("ActiveTaskCount", BindingFlags.Instance | BindingFlags.Public));
         Assert.NotNull(supervisor.GetMethod("Track", BindingFlags.Instance | BindingFlags.Public));
         Assert.NotNull(supervisor.GetMethod("WaitForCompletionAsync", BindingFlags.Instance | BindingFlags.Public));
 
-        Type coordinator = Require(assembly, "VoiceBox.Assistant.Runtime.Lifecycle.AssistantRuntimeLifecycleCoordinator");
+        Type coordinator = Require(assembly, "VoiceBox.Assistant.Runtime.Lifecycle.Controllers.AssistantRuntimeLifecycleCoordinator");
         Assert.DoesNotContain(coordinator.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public),
             static field => field.FieldType.Name is "AssistantCapabilityGraph" or "IServiceProvider" or "IAudioServiceManager");
         Assert.Contains(coordinator.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic),

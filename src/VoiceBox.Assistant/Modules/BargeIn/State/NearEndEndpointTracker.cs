@@ -1,20 +1,20 @@
 using VoiceBox.Assistant.Modules.BargeIn.Buffering;
 
-namespace VoiceBox.Assistant.Modules.BargeIn.Policies;
+namespace VoiceBox.Assistant.Modules.BargeIn.State;
 
 /// <summary>
-/// Tracks endpoint VAD audio on the main AEC timeline, including endpoints seen while a DTD
-/// candidate is still forming. The coordinator protects this state with its data-plane lock.
+/// Tracks endpoint-VAD audio on the main AEC timeline, including endpoints seen while a DTD
+/// candidate is still forming and endpoints recorded by a capture callback the control plane has
+/// not acknowledged yet. All mutation happens under the near-end data-plane lock.
 /// </summary>
-internal sealed class NearEndEndpointPolicy
+internal sealed class NearEndEndpointTracker
 {
-    private readonly NearEndAudioReservoir _mainAudioReservoir;
+    private readonly NearEndTimelineBuffer _timeline;
 
-    public NearEndEndpointPolicy(NearEndAudioReservoir mainAudioReservoir)
-        => _mainAudioReservoir = mainAudioReservoir
-            ?? throw new ArgumentNullException(nameof(mainAudioReservoir));
+    public NearEndEndpointTracker(NearEndTimelineBuffer timeline)
+        => _timeline = timeline ?? throw new ArgumentNullException(nameof(timeline));
 
-    // Endpoint VAD candidate.
+    // Endpoint VAD candidate formed before capture commits.
     public bool CandidateActive { get; private set; }
     public bool CandidateLocated { get; private set; }
     public bool CandidateLocationAttempted { get; private set; }
@@ -23,22 +23,22 @@ internal sealed class NearEndEndpointPolicy
     public long CandidateStartSample { get; private set; }
     public long CandidateEndSample { get; private set; }
 
-    // Endpoint observation while capture already owns the direct feed.
-    public bool Observed { get; set; }
-    public bool SpeechActive { get; set; }
+    // Endpoint ownership while capture already owns the direct feed.
+    public bool CaptureObserved { get; private set; }
+    public bool CaptureSpeechActive { get; private set; }
 
     // Endpoint recorded by a capture callback that the control plane has not acknowledged yet.
     public bool UnownedObserved { get; private set; }
-    public bool UnownedProcessed { get; set; }
+    public bool UnownedProcessed { get; private set; }
     public long UnownedGeneration { get; private set; }
     public long UnownedStreamEpoch { get; private set; }
     public long UnownedEndSample { get; private set; }
 
-    public void BeginCandidate(long mainAudioGeneration, long mainAudioStreamEpoch)
+    public void BeginCandidate()
     {
         CandidateActive = true;
-        CandidateGeneration = mainAudioGeneration;
-        CandidateStreamEpoch = mainAudioStreamEpoch;
+        CandidateGeneration = _timeline.Generation;
+        CandidateStreamEpoch = _timeline.StreamEpoch;
     }
 
     public void ClearCandidate()
@@ -69,6 +69,32 @@ internal sealed class NearEndEndpointPolicy
         UnownedEndSample = 0;
     }
 
+    public void MarkUnownedProcessed() => UnownedProcessed = true;
+
+    public void ObserveCaptureStarted(bool endpointVadCandidate)
+    {
+        CaptureObserved = endpointVadCandidate;
+        CaptureSpeechActive = endpointVadCandidate;
+    }
+
+    public void MarkCaptureSpeechActive()
+    {
+        CaptureObserved = true;
+        CaptureSpeechActive = true;
+    }
+
+    public void MarkCaptureSpeechEnded()
+    {
+        CaptureObserved = true;
+        CaptureSpeechActive = false;
+    }
+
+    public void ClearCaptureObservation()
+    {
+        CaptureObserved = false;
+        CaptureSpeechActive = false;
+    }
+
     /// <summary>
     /// Extends the located candidate interval with one VAD chunk that was matched against the
     /// main-AEC reservoir.
@@ -89,7 +115,7 @@ internal sealed class NearEndEndpointPolicy
     }
 
     /// <summary>
-    /// Locates one VAD chunk on the main-AEC reservoir. <see cref="CandidateLocationAttempted"/>
+    /// Locates one VAD chunk on the main-AEC timeline. <see cref="CandidateLocationAttempted"/>
     /// records that a location attempt already happened, which distinguishes "not yet observed"
     /// from "observed but unmatched".
     /// </summary>
@@ -100,10 +126,6 @@ internal sealed class NearEndEndpointPolicy
         out long endSample)
     {
         CandidateLocationAttempted = true;
-        return _mainAudioReservoir.TryLocate(
-            audio,
-            out streamEpoch,
-            out startSample,
-            out endSample);
+        return _timeline.TryLocate(audio, out streamEpoch, out startSample, out endSample);
     }
 }

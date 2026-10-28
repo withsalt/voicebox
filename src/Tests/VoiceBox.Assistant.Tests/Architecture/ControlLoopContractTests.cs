@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using VoiceBox.Assistant.Composition.Wiring;
@@ -25,14 +25,14 @@ public sealed class ControlLoopContractTests
     {
         Assembly assembly = typeof(VoiceAssistant).Assembly;
 
-        Type runtimeCommand = Require(assembly, "VoiceBox.Assistant.Runtime.Control.RuntimeCommand");
-        Type assistantSignal = Require(assembly, "VoiceBox.Assistant.Runtime.Control.AssistantSignal");
-        Type envelope = Require(assembly, "VoiceBox.Assistant.Runtime.Control.ControlEnvelope");
-        Type ingress = Require(assembly, "VoiceBox.Assistant.Runtime.Control.AssistantControlIngress");
-        Type loop = Require(assembly, "VoiceBox.Assistant.Runtime.Control.AssistantControlLoop");
-        Type publication = Require(assembly, "VoiceBox.Assistant.Runtime.Publications.OrderedPublicationBoundary");
+        Type runtimeCommand = Require(assembly, "VoiceBox.Assistant.Runtime.Control.Models.RuntimeCommand");
+        Type assistantSignal = Require(assembly, "VoiceBox.Assistant.Runtime.Control.Models.AssistantSignal");
+        Type envelope = Require(assembly, "VoiceBox.Assistant.Runtime.Control.Models.ControlEnvelope");
+        Type ingress = Require(assembly, "VoiceBox.Assistant.Runtime.Control.Controllers.AssistantControlIngress");
+        Type loop = Require(assembly, "VoiceBox.Assistant.Runtime.Control.Controllers.AssistantControlLoop");
+        Type publication = Require(assembly, "VoiceBox.Assistant.Runtime.Publications.Dispatching.OrderedPublicationBoundary");
         Type effect = Require(assembly, "VoiceBox.Assistant.Kernel.Effects.AssistantEffect");
-        Type effectRunner = Require(assembly, "VoiceBox.Assistant.Runtime.Effects.AssistantEffectRunner");
+        Type effectRunner = Require(assembly, "VoiceBox.Assistant.Runtime.Effects.Execution.AssistantEffectRunner");
 
         Assert.True(runtimeCommand.IsValueType || runtimeCommand.IsAbstract);
         Assert.True(assistantSignal.IsValueType || assistantSignal.IsAbstract);
@@ -57,18 +57,18 @@ public sealed class ControlLoopContractTests
         Assembly assembly = typeof(VoiceAssistant).Assembly;
         Type[] turnOwners =
         [
-            Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.SpeechCandidateOwner"),
-            Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.BargeInValidationTurnOwner"),
+            Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.Controllers.SpeechCandidateOwner"),
+            Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.Controllers.BargeInValidationTurnOwner"),
             Require(assembly, "VoiceBox.Assistant.Modules.Recognition.Controllers.RecognitionTurnOwner"),
-            Require(assembly, "VoiceBox.Assistant.Runtime.Control.AssistantControlLoopTurnWriter"),
+            Require(assembly, "VoiceBox.Assistant.Runtime.Control.Controllers.AssistantControlLoopTurnWriter"),
         ];
-        Type eventDispatcher = Require(assembly, "VoiceBox.Assistant.Runtime.Publications.AssistantEventDispatcher");
+        Type eventDispatcher = Require(assembly, "VoiceBox.Assistant.Runtime.Publications.Dispatching.AssistantEventDispatcher");
 
         foreach (Type module in new[]
         {
             typeof(RecognitionModule),
             typeof(ResponseModule),
-            typeof(ActiveNearEndCoordinator),
+            typeof(NearEndDataPlane),
             typeof(BargeInRecognitionOutcomeCoordinator),
         })
         {
@@ -90,13 +90,13 @@ public sealed class ControlLoopContractTests
 
         Type commitPort = Require(
             assembly,
-            "VoiceBox.Assistant.Runtime.Control.ITurnSemanticCommitPort");
+            "VoiceBox.Assistant.Runtime.Control.Contracts.ITurnSemanticCommitPort");
         Type writer = Require(
             assembly,
-            "VoiceBox.Assistant.Runtime.Control.AssistantControlLoopTurnWriter");
+            "VoiceBox.Assistant.Runtime.Control.Controllers.AssistantControlLoopTurnWriter");
         Type router = Require(
             assembly,
-            "VoiceBox.Assistant.Runtime.Control.AssistantControlLoopRouter");
+            "VoiceBox.Assistant.Runtime.Control.Controllers.AssistantControlLoopRouter");
         Type[] featureCoordinators =
         [
             typeof(SpeechBoundaryCoordinator),
@@ -125,7 +125,7 @@ public sealed class ControlLoopContractTests
     {
         Assert.NotNull(Require(
             typeof(VoiceAssistant).Assembly,
-            "VoiceBox.Assistant.Runtime.Control.AssistantControlLoop"));
+            "VoiceBox.Assistant.Runtime.Control.Controllers.AssistantControlLoop"));
 
         // Collaborators may share a reference to the loop and the effect runner, so "exactly one"
         // is a construction fact: the whole assembly creates each of them in a single place.
@@ -146,8 +146,8 @@ public sealed class ControlLoopContractTests
         Assert.Null(assembly.GetType("VoiceBox.Assistant.State.AssistantTurnObservationStore"));
         Assert.Null(assembly.GetType("VoiceBox.Assistant.Runtime.AssistantTurnObservationCoordinator"));
 
-        Type candidates = Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.SpeechCandidateOwner");
-        Type validation = Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.BargeInValidationTurnOwner");
+        Type candidates = Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.Controllers.SpeechCandidateOwner");
+        Type validation = Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.Controllers.BargeInValidationTurnOwner");
         Type recognitionTurn = Require(assembly, "VoiceBox.Assistant.Modules.Recognition.Controllers.RecognitionTurnOwner");
 
         // The facade holds none of the three owners: it can no longer observe or mutate a turn.
@@ -276,8 +276,8 @@ public sealed class ControlLoopContractTests
             .Select(static field => field.FieldType.FullName ?? field.FieldType.Name)
             .ToArray();
 
-        Assert.Contains("VoiceBox.Assistant.Runtime.Control.IResponseControlSignalPort", fieldTypes);
-        Assert.Contains("VoiceBox.Assistant.Runtime.Publications.IAssistantTextStreamSink", fieldTypes);
+        Assert.Contains("VoiceBox.Assistant.Runtime.Control.Contracts.IResponseControlSignalPort", fieldTypes);
+        Assert.Contains("VoiceBox.Assistant.Runtime.Publications.Contracts.IAssistantTextStreamSink", fieldTypes);
         Assert.DoesNotContain("VoiceBox.Assistant.State.IResponseTurnControlPort", fieldTypes);
         Assert.DoesNotContain("VoiceBox.Assistant.Runtime.Publications.IAssistantPublicEventSink", fieldTypes);
     }
@@ -291,7 +291,7 @@ public sealed class ControlLoopContractTests
             .Select(static field => field.FieldType.FullName ?? field.FieldType.Name)
             .ToArray();
 
-        Assert.Contains("VoiceBox.Assistant.Runtime.Control.IRecognitionControlSignalPort", fieldTypes);
+        Assert.Contains("VoiceBox.Assistant.Runtime.Control.Contracts.IRecognitionControlSignalPort", fieldTypes);
         Assert.DoesNotContain("VoiceBox.Assistant.State.IRecognitionTurnControlPort", fieldTypes);
         Assert.DoesNotContain("VoiceBox.Assistant.Runtime.Publications.IAssistantPublicEventSink", fieldTypes);
     }
@@ -305,7 +305,7 @@ public sealed class ControlLoopContractTests
             .Select(static field => field.FieldType.FullName ?? field.FieldType.Name)
             .ToArray();
 
-        Assert.Contains("VoiceBox.Assistant.Runtime.Control.IBargeInValidationControlSignalPort", fieldTypes);
+        Assert.Contains("VoiceBox.Assistant.Runtime.Control.Contracts.IBargeInValidationControlSignalPort", fieldTypes);
         Assert.DoesNotContain(typeof(ResponseModule).FullName!, fieldTypes);
         Assert.DoesNotContain("VoiceBox.Assistant.State.IBargeInValidationTurnControlPort", fieldTypes);
         Assert.DoesNotContain("VoiceBox.Assistant.Runtime.Publications.IAssistantPublicEventSink", fieldTypes);
@@ -330,8 +330,8 @@ public sealed class ControlLoopContractTests
         Assembly assembly = typeof(VoiceAssistant).Assembly;
         Type[] owners =
         [
-            Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.SpeechCandidateOwner"),
-            Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.BargeInValidationTurnOwner"),
+            Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.Controllers.SpeechCandidateOwner"),
+            Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.Controllers.BargeInValidationTurnOwner"),
             Require(assembly, "VoiceBox.Assistant.Modules.Recognition.Controllers.RecognitionTurnOwner"),
         ];
         Assert.DoesNotContain(
@@ -432,8 +432,8 @@ public sealed class ControlLoopContractTests
         Assembly assembly = typeof(VoiceAssistant).Assembly;
         Type[] owners =
         [
-            Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.SpeechCandidateOwner"),
-            Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.BargeInValidationTurnOwner"),
+            Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.Controllers.SpeechCandidateOwner"),
+            Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.Controllers.BargeInValidationTurnOwner"),
             Require(assembly, "VoiceBox.Assistant.Modules.Recognition.Controllers.RecognitionTurnOwner"),
         ];
         MethodInfo method = type.GetMethod(

@@ -63,8 +63,13 @@ public sealed class RecognitionModuleContractTests
     [Fact]
     public void RecognitionConsumers_UseOnlyRecognitionPortsWithoutDirectAsrOwnership()
     {
+        // The near-end module consumes a narrow sink owned by the effect executor, never the
+        // recognition port itself; provider sessions and the feed pump stay in Recognition.
         Assert.Contains(
-            typeof(ActiveNearEndCoordinator).GetFields(BindingFlags.Instance | BindingFlags.NonPublic),
+            typeof(NearEndEffectExecutor).GetFields(BindingFlags.Instance | BindingFlags.NonPublic),
+            field => field.FieldType == typeof(INearEndRecognitionAudioSink));
+        Assert.DoesNotContain(
+            typeof(NearEndDataPlane).GetFields(BindingFlags.Instance | BindingFlags.NonPublic),
             field => field.FieldType == typeof(IRecognitionAudioPort));
         Assert.Contains(
             typeof(BargeInRecognitionOutcomeCoordinator).GetFields(BindingFlags.Instance | BindingFlags.NonPublic),
@@ -76,7 +81,8 @@ public sealed class RecognitionModuleContractTests
         foreach (Type consumer in new[]
         {
             typeof(AssistantRuntime),
-            typeof(ActiveNearEndCoordinator),
+            typeof(NearEndDataPlane),
+            typeof(NearEndEffectExecutor),
             typeof(BargeInRecognitionOutcomeCoordinator),
         })
         {

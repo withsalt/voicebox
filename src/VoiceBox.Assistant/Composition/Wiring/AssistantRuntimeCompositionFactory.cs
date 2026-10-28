@@ -290,26 +290,28 @@ internal static class AssistantRuntimeCompositionFactory
             logger,
             benchmarkProbe);
 
-        object nearEndOwner = detector is null
-            ? NullActiveNearEnd.Instance
-            : new ActiveNearEndCoordinator(
-                bargeInOptions,
-                recognition,
-                bargeInTurns,
-                detector,
-                audioFormat,
-                logger,
-                runScope,
-                playbackInterruption,
-                nearEndSignals,
-                speaker,
-                timeProvider);
-        INearEndCapturePort nearEndCapture = (INearEndCapturePort)nearEndOwner;
-        INearEndRenderPort nearEndRender = (INearEndRenderPort)nearEndOwner;
-        INearEndEndpointPort nearEndEndpoint = (INearEndEndpointPort)nearEndOwner;
-        INearEndConfirmationStore nearEndConfirmations = (INearEndConfirmationStore)nearEndOwner;
+        NearEndPorts nearEndPorts = detector is null
+            ? NearEndPorts.Disabled()
+            : NearEndModuleFactory.Create(new NearEndModuleDependencies
+            {
+                Options = bargeInOptions,
+                Conversation = bargeInTurns,
+                Decisions = detector,
+                AudioFormat = audioFormat,
+                Logger = logger,
+                Runtime = runScope,
+                Playback = playbackInterruption,
+                Control = nearEndSignals,
+                RecognitionAudio = new RecognitionNearEndAudioSink(recognition),
+                SpeakerEvidence = speaker,
+                TimeProvider = timeProvider,
+            }).Ports;
+        INearEndCapturePort nearEndCapture = nearEndPorts.Capture;
+        INearEndRenderPort nearEndRender = nearEndPorts.Render;
+        INearEndEndpointPort nearEndEndpoint = nearEndPorts.Endpoint;
+        INearEndConfirmationStore nearEndConfirmations = nearEndPorts.Confirmation;
         // The VAD speaker gate locates every candidate chunk on the processed source timeline. With
-        // barge-in installed the near-end coordinator's reservoir is that timeline; a KWS-enabled
+        // barge-in installed the near-end module's timeline is that source; a KWS-enabled
         // composition that verifies single talk without barge-in retains its own processed reservoir.
         bool singleTalkEffective = speaker is not null &&
             speaker.Policy.Get(SpeakerVerificationPurpose.SingleTalk).Enabled;
@@ -320,10 +322,9 @@ internal static class AssistantRuntimeCompositionFactory
                     audioFormat.AudioSampleRate,
                     audioFormat.AudioChannels))
             : null;
-        ISpeechTimelineLocator speechTimeline = standaloneSpeechTimeline ?? (ISpeechTimelineLocator)nearEndOwner;
-        INearEndCaptureControlPort nearEndCaptureControl =
-            (INearEndCaptureControlPort)nearEndOwner;
-        INearEndResetPort nearEndReset = (INearEndResetPort)nearEndOwner;
+        ISpeechTimelineLocator speechTimeline = standaloneSpeechTimeline ?? nearEndPorts.Timeline;
+        INearEndCaptureControlPort nearEndCaptureControl = nearEndPorts.CaptureControl;
+        INearEndResetPort nearEndReset = nearEndPorts.Reset;
 
         RecognitionTurnCoordinator recognitionTurns = new(
             recognition,
