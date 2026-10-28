@@ -10,6 +10,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="Serilog" Version="4.4.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -29,6 +32,14 @@
 
   <ItemGroup>
     <None Include="GoldenTraces\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- 验证 Demo 的模块源码，避免引用可执行项目并加载其 GPU/模型运行时依赖。 -->
+  <ItemGroup>
+    <Compile Include="..\..\Demos\VoiceAssistantDemo\ConsoleUI\*.cs" Link="Demo\ConsoleUI\%(Filename)%(Extension)" />
+    <Compile Include="..\..\Demos\VoiceAssistantDemo\Logging\*.cs" Link="Demo\Logging\%(Filename)%(Extension)" />
+    <Compile Include="..\..\Demos\VoiceAssistantDemo\Presentation\*.cs" Link="Demo\Presentation\%(Filename)%(Extension)" />
+    <Compile Include="..\..\Demos\VoiceAssistantDemo\TtsCalibrationStimulusPlayer.cs" Link="Demo\TtsCalibrationStimulusPlayer.cs" />
   </ItemGroup>
 
 </Project>
