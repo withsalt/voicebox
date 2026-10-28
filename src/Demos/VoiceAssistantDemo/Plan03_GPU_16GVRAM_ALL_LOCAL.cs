@@ -154,9 +154,9 @@ namespace VoiceAssistantDemo
                 .AddLLamaSharpLLMService(o =>
                 {
                     o.ModelPath = AudioDefaults.LlmGgufModelPath;
-                    o.ContextSize = 4096;
+                    o.ContextSize = 8192;
                     o.GpuLayerCount = -1;        // 纯 CPU; 有 GPU 时改为 -1 (全部卸载)
-                    o.MaxTokens = 4096;
+                    o.MaxTokens = 16384;
                     // 以下采样参数适合对话场景
                     o.DoSample = true;
                     o.Temperature = 0.7f;

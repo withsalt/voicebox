@@ -69,7 +69,7 @@ namespace VoiceBox.LLM.LLamaSharp
         /// 默认 <b>新生成</b> token 上限 (语义同 transformers 的 <c>max_new_tokens</c>)。
         /// 可由每次调用的 <see cref="LlmCompleteOptions.MaxTokens"/> 覆盖。
         /// </summary>
-        public int MaxTokens { get; set; } = 4096;
+        public int MaxTokens { get; set; } = 16384;
 
         /// <summary>
         /// 是否启用采样。<c>false</c> 表示贪心解码 (确定性输出)。
@@ -135,10 +135,5 @@ namespace VoiceBox.LLM.LLamaSharp
         /// 使用依赖注入时也可调用 <c>AddLLamaSharpModelProfile&lt;T&gt;()</c> 注册。
         /// </summary>
         public IList<ILlamaModelProfile> AdditionalModelProfiles { get; } = new List<ILlamaModelProfile>();
-
-        /// <summary>
-        /// 构造服务时是否跑一次最小推理预热 (kernel 初始化 / 内存池预分配)。默认 true。
-        /// </summary>
-        public bool WarmupOnLoad { get; set; } = true;
     }
 }

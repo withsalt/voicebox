@@ -21,22 +21,22 @@ namespace VoiceAssistantDemo
 
         public const string BASE_MODEL_DIR = "D:\\ML\\Audio\\voicebox_models\\v1";
 
-        public static string WakeupKwsPath = Path.Combine(AppContext.BaseDirectory, "runtimes", "models", "kws", "kws-xiaoyun-onnx");
+        public static string WakeupKwsPath = Path.Combine(AppContext.BaseDirectory, "runtimes", "models", "kws", "kws-xiaomu-onnx");
 
-        public static string WakeupWord = "小云小云";
+        public static string WakeupWord = "小木小木";
 
         /// <summary>
         /// 模型名称
         /// </summary>
         /// <remarks>
-        /// "doubao-seed-2-1-turbo-260628"; "deepseek-v4-1-flash-260910"; "doubao-seed-2-1-lite-260915";
+        /// "deepseek-flash", "doubao-seed-2-1-turbo-260628"; "deepseek-v4-1-flash-260910"; "doubao-seed-2-1-lite-260915";
         /// </remarks>
-        public static string LlmModelName = "doubao-seed-2-1-turbo-260628";
+        public static string LlmModelName = "deepseek-flash";
 
         /// <summary>
         /// 火山引擎
         /// </summary>
-        public static Uri LlmEndpoint = new Uri("https://ark.cn-beijing.volces.com/api/v3");
+        public static Uri LlmEndpoint = new Uri("https://api.deepseek.com");
 
         public static string AssistantName = ConvertWakeupWordToAssistantName(WakeupWord);
 

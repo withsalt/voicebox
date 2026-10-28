@@ -58,21 +58,10 @@ namespace VoiceBox.LLM.LLamaSharp
             _session = new LlamaModelSession(_options, modelProfiles);
             _gate = new SemaphoreSlim(_options.MaxConcurrentRequests, _options.MaxConcurrentRequests);
 
-            if (_options.WarmupOnLoad)
-            {
-                try
-                {
-                    _session.Warmup();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "LLamaSharp model warmup failed; first request may be slower.");
-                }
-            }
+            try { _session.Warmup(); }
+            catch (Exception ex) { _logger.LogWarning(ex, "LLamaSharp model warmup failed; first request may be slower."); }
 
-            _logger.LogDebug(
-                "LLamaSharpLLMService initialized: model={ModelPath}, profile={Profile}, ctx={CtxSize}",
-                _options.ModelPath, _session.Profile.Name, _session.SharedContext.ContextSize);
+            _logger.LogDebug("LLamaSharpLLMService initialized: model={ModelPath}, profile={Profile}, ctx={CtxSize}", _options.ModelPath, _session.Profile.Name, _session.SharedContext.ContextSize);
         }
 
         public async Task<LlmCompletionResult> CompleteAsync(

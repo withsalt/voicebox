@@ -75,7 +75,7 @@ namespace VoiceAssistantDemo
                 ProfilePath = Path.Combine("tmp", "owner-speaker.json"),
                 Confirmation =
                 {
-                    Enable = false,
+                    Enable = true,
                     WindowCount = 3,
                     RequiredMatches = 2,
                     MinimumSpeechMs = 300,
