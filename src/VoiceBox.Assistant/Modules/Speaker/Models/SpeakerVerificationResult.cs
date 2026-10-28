@@ -21,7 +21,9 @@ internal readonly record struct SpeakerVerificationResult(
     float CentroidScore = 0,
     float BestPrototypeScore = 0,
     float Top2MeanScore = 0,
-    SpeakerCandidateId CandidateId = default)
+    SpeakerCandidateId CandidateId = default,
+    long PendingWindowStartSample = -1,
+    long PendingWindowEndSampleExclusive = -1)
 {
     public bool IsFinal => Status != SpeakerVerificationStatus.Pending;
 
@@ -30,6 +32,14 @@ internal readonly record struct SpeakerVerificationResult(
             or SpeakerVerificationStatus.InsufficientEvidence
             or SpeakerVerificationStatus.Unavailable
             or SpeakerVerificationStatus.Cancelled;
+
+    /// <summary>Preserves the latest evidence when a caller's inference deadline expires.</summary>
+    public SpeakerVerificationResult WithInferenceTimeout()
+        => this with
+        {
+            Status = SpeakerVerificationStatus.Unavailable,
+            Reason = SpeakerVerificationReason.InferenceTimeout,
+        };
 
     public static SpeakerVerificationResult Pending(
         float threshold,

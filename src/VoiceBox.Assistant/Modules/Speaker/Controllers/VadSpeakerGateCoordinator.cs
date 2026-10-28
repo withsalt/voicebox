@@ -259,11 +259,7 @@ internal sealed class VadSpeakerGateCoordinator : ISpeakerGateBoundaryPort
                 return result;
         }
 
-        return SpeakerVerificationResult.Unavailable(
-            result.Threshold,
-            in query,
-            SpeakerVerificationReason.InferenceTimeout,
-            result.RequiredMatches);
+        return result.WithInferenceTimeout();
     }
 
     private BargeInSpeakerGateStatus Deny(

@@ -35,7 +35,7 @@ namespace VoiceAssistantDemo
         private static bool _streamingThinking = true;
 
         // 助手文本流式输出期间, 低优先级日志 (Debug/Info) 先缓冲, 等这轮 "助手：" 行收尾再统一
-        // 落盘, 避免一条 barge-in 调试日志把单条回复劈成两段 "助手："。Warning/Error 仍即时插入。
+        // 输出, 避免一条 barge-in 调试日志把单条回复劈成两段 "助手："。Warning/Error 仍即时插入。
         private static readonly List<(LogLevel Level, string Ts, string Message)> _pendingLogs = new();
 
         static async Task Main()
@@ -46,14 +46,9 @@ namespace VoiceAssistantDemo
                 try { Console.InputEncoding = System.Text.Encoding.UTF8; } catch { }
             }
 
-            // 自定义日志 Provider: 走 Program 的 _consoleLock + 状态行逻辑, 让每条日志独占一行、
-            // 打在"活动状态行"上方。默认的 AddSimpleConsole 从后台队列直写 stdout, 绕开 _consoleLock,
-            // 会把 "22:42:25 info:..." 拼接到 UI 停在行首的状态行上 (如 "小云小云22:42:25 info:")。
-            using var loggerFactory = LoggerFactory.Create(builder =>
-            {
-                builder.SetMinimumLevel(LogLevel.Debug);
-                builder.AddProvider(new ConsoleUiLoggerProvider(LogLevel.Debug, WriteLogLine));
-            });
+            // Serilog 控制台 sink 走 _consoleLock + 状态行逻辑，让每条日志独占一行，
+            // 打在活动状态行上方；开启 debug 时同时同步写入 tmp/log。
+            using var loggerFactory = DemoLogging.CreateLoggerFactory(WriteLogLine);
 
             Console.WriteLine();
             Console.WriteLine("  正在唤醒语音助手, 首次启动需要加载模型, 请稍候...");
@@ -658,7 +653,7 @@ namespace VoiceAssistantDemo
         }
 
         /// <summary>
-        /// 日志输出入口 (注入给 ConsoleUiLoggerProvider)。走 _consoleLock。
+        /// 日志输出入口 (注入给 ConsoleUiLogEventSink)。走 _consoleLock。
         /// 流式输出助手文本/思考期间, 低优先级日志 (Debug/Info) 暂存到 _pendingLogs, 等该行收尾
         /// (FinishAssistantLineLocked) 再统一打出, 避免把单条回复劈成多段 "助手："; Warning/Error
         /// 仍即时插入。诊断内容原样输出 (含 barge-in 长行)。
@@ -682,7 +677,7 @@ namespace VoiceAssistantDemo
             }
         }
 
-        /// <summary>把缓冲的低优先级日志按序落盘。调用方需持有 _consoleLock 且已收尾流式行。</summary>
+        /// <summary>把缓冲的低优先级日志按序打印。调用方需持有 _consoleLock 且已收尾流式行。</summary>
         private static void FlushPendingLogsLocked()
         {
             if (_pendingLogs.Count == 0) return;

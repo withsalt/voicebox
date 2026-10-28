@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Collections.Concurrent;
 using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Modules.AudioFrontend.Models;
 using VoiceBox.Assistant.Modules.Speaker.Controllers;
@@ -370,6 +372,68 @@ public sealed class SpeechGatedSpeakerVerifierTests : IDisposable
     }
 
     [Fact]
+    public async Task InferenceTimeout_PreservesPartialEvidenceAndReportsWorkerTimings()
+    {
+        var logger = new RecordingLogger();
+        SpeechGatedSpeakerVerifier verifier = Create(logger: logger);
+        verifier.Prefetch.SetEnabled(false);
+        FeedFrames(verifier, count: 4, ownerScore: 0.6f);
+        verifier.Evaluate(BargeInQuery(candidateId: 103, end: 4 * Hop));
+        FeedFrames(verifier, count: 1, ownerScore: 0.6f, startFrame: 4);
+        verifier.Evaluate(BargeInQuery(candidateId: 103, end: Window));
+        await WaitUntilAsync(() => verifier.Cache.Count >= 1);
+        SpeakerVerificationResult waiting = verifier.Evaluate(BargeInQuery(candidateId: 103, end: Window));
+        Assert.Equal(SpeakerVerificationReason.WaitingForEvidence, waiting.Reason);
+
+        _speaker.ExtractEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _speaker.ExtractBlock = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        FeedFrames(verifier, count: 1, ownerScore: 0.6f, startFrame: 5);
+        try
+        {
+            Task<SpeakerVerificationResult> decision = verifier.WaitForDecisionAsync(
+                BargeInQuery(candidateId: 103, end: Window + Hop, inputComplete: true),
+                TimeSpan.FromMilliseconds(100));
+            await _speaker.ExtractEntered.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            SpeakerVerificationResult result = await decision;
+
+            Assert.Equal(SpeakerVerificationStatus.Unavailable, result.Status);
+            Assert.Equal(SpeakerVerificationReason.InferenceTimeout, result.Reason);
+            Assert.Equal(1, result.ObservedWindows);
+            Assert.Equal(1, result.MatchedWindows);
+            Assert.Equal(2, result.RequiredMatches);
+            Assert.Equal(0.6f, result.Score, 4);
+            Assert.Equal(Hop, result.PendingWindowStartSample);
+            Assert.Equal(Window + Hop, result.PendingWindowEndSampleExclusive);
+
+            IReadOnlyDictionary<string, object?> timeout = Assert.Single(logger.Entries, entry =>
+                entry.TryGetValue("Reason", out object? reason) && Equals(reason, SpeakerVerificationReason.InferenceTimeout));
+            Assert.True(Assert.IsType<double>(timeout["CollectingMs"]) >= 0);
+            Assert.True(Assert.IsType<double>(timeout["EvidenceWaitMs"]) >= 0);
+            double inferenceWaitMs = Assert.IsType<double>(timeout["InferenceWaitMs"]);
+            double inferenceElapsedMs = Assert.IsType<double>(timeout["InferenceElapsedMs"]);
+            Assert.True(inferenceWaitMs > 0);
+            Assert.True(inferenceElapsedMs >= inferenceWaitMs);
+        }
+        finally
+        {
+            _speaker.ExtractBlock.TrySetResult();
+        }
+
+        await WaitUntilAsync(() => logger.Entries.Any(entry => entry.ContainsKey("EmbeddingMs") &&
+            Equals(entry["Start"], (long)Hop)));
+        IReadOnlyDictionary<string, object?> completed = Assert.Single(logger.Entries, entry =>
+            entry.ContainsKey("EmbeddingMs") && Equals(entry["Start"], (long)Hop));
+        Assert.True(Assert.IsType<double>(completed["QueueWaitMs"]) >= 0);
+        double embeddingMs = Assert.IsType<double>(completed["EmbeddingMs"]);
+        double jobMs = Assert.IsType<double>(completed["JobMs"]);
+        Assert.True(embeddingMs > 0);
+        Assert.True(jobMs >= embeddingMs);
+        Assert.True(Assert.IsType<double>(completed["TotalMs"]) >= jobMs);
+        Assert.Equal(103L, completed["CandidateId"]);
+        Assert.Equal(SpeakerWindowEvidenceKind.Scored, completed["Kind"]);
+    }
+
+    [Fact]
     public async Task Cancel_DropsQueuedCandidateJobsButKeepsCachedEmbeddings()
     {
         SpeechGatedSpeakerVerifier verifier = Create();
@@ -468,7 +532,8 @@ public sealed class SpeechGatedSpeakerVerifierTests : IDisposable
     private SpeechGatedSpeakerVerifier Create(
         VoiceAssistantSpeakerOptions? options = null,
         bool includeDoubleTalk = true,
-        bool singleTalk = false)
+        bool singleTalk = false,
+        ILogger? logger = null)
     {
         options ??= SpeakerTestProfiles.Options("unused");
         SpeakerVerificationPolicy policy = SpeakerTestProfiles.Policy(_speaker, options, singleTalk: singleTalk);
@@ -476,7 +541,7 @@ public sealed class SpeechGatedSpeakerVerifierTests : IDisposable
             _speaker,
             policy,
             SpeakerTestProfiles.Variant(SpeakerTestProfiles.Descriptor(), includeDoubleTalk),
-            NullLogger.Instance);
+            logger ?? NullLogger.Instance);
         verifier.Start();
         _verifiers.Add(verifier);
         return verifier;
@@ -556,5 +621,25 @@ public sealed class SpeechGatedSpeakerVerifierTests : IDisposable
     {
         foreach (SpeechGatedSpeakerVerifier verifier in _verifiers)
             verifier.Dispose();
+    }
+
+    private sealed class RecordingLogger : ILogger
+    {
+        private readonly ConcurrentQueue<IReadOnlyDictionary<string, object?>> _entries = new();
+
+        public IReadOnlyList<IReadOnlyDictionary<string, object?>> Entries => _entries.ToArray();
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => logLevel >= LogLevel.Debug;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            if (state is IEnumerable<KeyValuePair<string, object?>> fields)
+            {
+                _entries.Enqueue(fields.ToDictionary(pair => pair.Key, pair => pair.Value));
+            }
+        }
     }
 }

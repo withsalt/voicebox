@@ -104,6 +104,16 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
         _lastTrimEpoch = 0;
         _lastTrimStart = long.MinValue;
         _scheduler.Start();
+        foreach (SpeakerPurposePolicy purpose in _policy.EnabledPurposes)
+        {
+            _logger.LogDebug(
+                "Speaker timing configuration: purpose={Purpose}, windowMs={WindowMs:F1}, hopMs={HopMs:F1}, " +
+                "minimumSpeechMs={MinimumSpeechMs:F1}, timeoutMs={TimeoutMs:F1}, windows={WindowCount}, required={RequiredMatches}.",
+                purpose.Purpose, _policy.WindowSamples * 1000d / _policy.SampleRate,
+                _policy.HopSamples * 1000d / _policy.SampleRate,
+                purpose.MinimumSpeechSamples * 1000d / _policy.SampleRate,
+                purpose.InferenceTimeout.TotalMilliseconds, purpose.WindowCount, purpose.RequiredMatches);
+        }
     }
 
     public async Task StopAsync(CancellationToken cancellationToken = default)
@@ -359,6 +369,18 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
                 return SpeakerVerificationResult.Unavailable(policy.Threshold, in query, SpeakerVerificationReason.RuntimeStopping, policy.RequiredMatches);
         }
 
+        SpeakerVerificationResult pending = SpeakerVerificationResult.Pending(
+            policy.Threshold, in query, SpeakerVerificationReason.WaitingForInference,
+            observed, matched, policy.RequiredMatches, ambiguous, rejected, invalid, selection.RequiredEvidenceEnd) with
+        {
+            Score = observed > 0 ? bestScore : 0,
+            CentroidScore = bestWindow.CentroidScore,
+            BestPrototypeScore = bestWindow.BestPrototypeScore,
+            Top2MeanScore = bestWindow.Top2MeanScore,
+            PendingWindowStartSample = nextMissing?.StartSample ?? -1,
+            PendingWindowEndSampleExclusive = nextMissing?.EndSampleExclusive ?? -1,
+        };
+
         if (overloaded && observed == 0)
         {
             // Single-talk is allowed to keep accumulating while ASR is running. Queue pressure is
@@ -366,17 +388,7 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
             // deny the command before its endpoint. The completed-query path still fails closed.
             if (!query.InputComplete && query.Purpose == SpeakerVerificationPurpose.SingleTalk)
             {
-                return SpeakerVerificationResult.Pending(
-                    policy.Threshold,
-                    in query,
-                    SpeakerVerificationReason.WaitingForInference,
-                    observed,
-                    matched,
-                    policy.RequiredMatches,
-                    ambiguous,
-                    rejected,
-                    invalid,
-                    selection.RequiredEvidenceEnd);
+                return pending;
             }
 
             return SpeakerVerificationResult.Unavailable(
@@ -388,27 +400,25 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
 
         if (pendingInference > 0)
         {
-            return SpeakerVerificationResult.Pending(policy.Threshold, in query, SpeakerVerificationReason.WaitingForInference,
-                observed, matched, policy.RequiredMatches, ambiguous, rejected, invalid, selection.RequiredEvidenceEnd);
+            return pending;
         }
 
         bool geometryComplete = selection.WindowCount >= policy.WindowCount;
         if (!geometryComplete && !candidateExhausted)
         {
-            return SpeakerVerificationResult.Pending(policy.Threshold, in query,
-                speechSufficient ? SpeakerVerificationReason.WaitingForEvidence : SpeakerVerificationReason.CollectingCandidate,
-                observed, matched, policy.RequiredMatches, ambiguous, rejected, invalid, selection.RequiredEvidenceEnd);
+            return pending with
+            {
+                Reason = speechSufficient ? SpeakerVerificationReason.WaitingForEvidence : SpeakerVerificationReason.CollectingCandidate,
+            };
         }
         if (!speechSufficient && !candidateExhausted)
         {
-            return SpeakerVerificationResult.Pending(policy.Threshold, in query, SpeakerVerificationReason.CollectingCandidate,
-                observed, matched, policy.RequiredMatches, ambiguous, rejected, invalid, selection.RequiredEvidenceEnd);
+            return pending with { Reason = SpeakerVerificationReason.CollectingCandidate };
         }
         if (geometryComplete && !candidateExhausted && query.Purpose != SpeakerVerificationPurpose.Wakeup)
         {
             // Recent-window purposes keep sliding while the candidate is still open.
-            return SpeakerVerificationResult.Pending(policy.Threshold, in query, SpeakerVerificationReason.WaitingForEvidence,
-                observed, matched, policy.RequiredMatches, ambiguous, rejected, invalid, selection.RequiredEvidenceEnd);
+            return pending with { Reason = SpeakerVerificationReason.WaitingForEvidence };
         }
 
         // Terminal without a match.
@@ -452,7 +462,7 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
 
             TimeSpan remaining = timeout - Stopwatch.GetElapsedTime(startedAt);
             if (remaining <= TimeSpan.Zero)
-                return SpeakerVerificationResult.Unavailable(result.Threshold, in query, SpeakerVerificationReason.InferenceTimeout, result.RequiredMatches);
+                return ObserveInferenceTimeout(in query, in result);
 
             try
             {
@@ -460,9 +470,19 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
             }
             catch (TimeoutException)
             {
-                return SpeakerVerificationResult.Unavailable(result.Threshold, in query, SpeakerVerificationReason.InferenceTimeout, result.RequiredMatches);
+                return ObserveInferenceTimeout(in query, in result);
             }
         }
+    }
+
+    private SpeakerVerificationResult ObserveInferenceTimeout(
+        in SpeakerEvidenceQuery query,
+        in SpeakerVerificationResult pending)
+    {
+        SpeakerVerificationResult result = pending.WithInferenceTimeout();
+        _diagnostics.RecordResult(result.Status, result.Reason);
+        _diagnostics.ObserveDecision(in query, in result);
+        return result;
     }
 
     public void Dispose()

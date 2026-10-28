@@ -266,6 +266,7 @@ internal sealed class SpeakerInferenceScheduler : IDisposable
         while (!cancellationToken.IsCancellationRequested)
         {
             QueuedJob? next = null;
+            int queueDepth = 0;
             lock (_lock)
             {
                 if (_stopping) return;
@@ -274,6 +275,7 @@ internal sealed class SpeakerInferenceScheduler : IDisposable
                     next = _queue.Max;
                     _queue.Remove(next.Value);
                     if (next.Value.Job.IsPrefetch) _queuedPrefetchCount--;
+                    queueDepth = _queue.Count;
                 }
             }
             if (next is not { } queued)
@@ -283,12 +285,32 @@ internal sealed class SpeakerInferenceScheduler : IDisposable
                 continue;
             }
 
+            long dequeuedAt = Stopwatch.GetTimestamp();
+            double queueWaitMs = Stopwatch.GetElapsedTime(queued.EnqueuedAt, dequeuedAt).TotalMilliseconds;
+            _diagnostics?.RecordQueueWait(dequeuedAt - queued.EnqueuedAt);
+            _logger.LogDebug(
+                "Speaker inference started: job={JobId}, candidate={CandidateId}, epoch={Epoch}, " +
+                "range=[{Start},{End}), prefetch={Prefetch}, prefix={Prefix}, priority={Priority}, " +
+                "windowMs={WindowMs:F1}, queueDepth={QueueDepth}, queueWaitMs={QueueWaitMs:F1}.",
+                queued.Sequence, queued.Job.CandidateId.Value, queued.Job.StreamEpoch,
+                queued.Job.StartSample, queued.Job.EndSampleExclusive, queued.Job.IsPrefetch,
+                queued.Job.IsPrefix, queued.Job.Priority,
+                (queued.Job.EndSampleExclusive - queued.Job.StartSample) * 1000d / _speaker.SampleRate,
+                queueDepth, queueWaitMs);
+
             long started = Stopwatch.GetTimestamp();
-            _diagnostics?.RecordQueueWait(started - queued.EnqueuedAt);
-            try { RunJobCore(queued.Job, window); }
+            long completedAt;
+            long embeddingTicks;
+            SpeakerWindowEvidence evidence;
+            try
+            {
+                evidence = RunJobCore(queued.Job, window, out embeddingTicks);
+                _cache.Store(evidence);
+            }
             finally
             {
-                _diagnostics?.RecordInferenceCompleted(Stopwatch.GetTimestamp() - started);
+                completedAt = Stopwatch.GetTimestamp();
+                _diagnostics?.RecordInferenceCompleted(completedAt - started);
                 lock (_lock)
                 {
                     var key = (queued.Job.StreamEpoch, queued.Job.StartSample, queued.Job.EndSampleExclusive);
@@ -297,32 +319,41 @@ internal sealed class SpeakerInferenceScheduler : IDisposable
                 }
                 _cache.Pulse();
             }
+
+            _logger.LogDebug(
+                "Speaker inference completed: job={JobId}, candidate={CandidateId}, epoch={Epoch}, " +
+                "range=[{Start},{End}), prefetch={Prefetch}, prefix={Prefix}, kind={Kind}, reason={Reason}, " +
+                "queueWaitMs={QueueWaitMs:F1}, embeddingMs={EmbeddingMs:F1}, jobMs={JobMs:F1}, totalMs={TotalMs:F1}.",
+                queued.Sequence, queued.Job.CandidateId.Value, queued.Job.StreamEpoch,
+                queued.Job.StartSample, queued.Job.EndSampleExclusive, queued.Job.IsPrefetch, queued.Job.IsPrefix,
+                evidence.Kind, evidence.Reason, queueWaitMs, embeddingTicks * 1000d / Stopwatch.Frequency,
+                Stopwatch.GetElapsedTime(started, completedAt).TotalMilliseconds,
+                Stopwatch.GetElapsedTime(queued.EnqueuedAt, completedAt).TotalMilliseconds);
         }
     }
 
-    private void RunJobCore(in SpeakerInferenceJob job, float[] scratch)
+    private SpeakerWindowEvidence RunJobCore(in SpeakerInferenceJob job, float[] scratch, out long embeddingTicks)
     {
+        embeddingTicks = 0;
         Interlocked.Increment(ref _jobsRun);
         int length = checked((int)(job.EndSampleExclusive - job.StartSample));
         if (length <= 0 || length > scratch.Length)
         {
-            _cache.Store(Failed(job, SpeakerVerificationReason.CandidateRangeInvalid));
-            return;
+            return Failed(job, SpeakerVerificationReason.CandidateRangeInvalid);
         }
 
         Span<float> audio = scratch.AsSpan(0, length);
         if (!_timeline.TrySnapshot(job.StreamEpoch, job.StartSample, job.EndSampleExclusive, audio, out SpeakerTimelineFailure failure))
         {
             _diagnostics?.RecordTimelineFailure(failure);
-            _cache.Store(Failed(job, MapTimelineFailure(failure)));
-            return;
+            return Failed(job, MapTimelineFailure(failure));
         }
 
         SpeakerWindowQuality quality = _quality.Evaluate(audio);
         if (!_quality.IsEligible(in quality))
         {
             _diagnostics?.RecordQualityRejected(in quality);
-            _cache.Store(new SpeakerWindowEvidence(
+            return new SpeakerWindowEvidence(
                 job.StreamEpoch,
                 job.StartSample,
                 job.EndSampleExclusive,
@@ -330,11 +361,11 @@ internal sealed class SpeakerInferenceScheduler : IDisposable
                 quality.AllFinite ? SpeakerVerificationReason.InsufficientSpeech : SpeakerVerificationReason.InvalidEmbedding,
                 embedding: null,
                 quality,
-                job.IsPrefix));
-            return;
+                job.IsPrefix);
         }
 
         float[] embedding;
+        long embeddingStarted = Stopwatch.GetTimestamp();
         try
         {
             embedding = _speaker.ExtractEmbedding(audio);
@@ -342,14 +373,16 @@ internal sealed class SpeakerInferenceScheduler : IDisposable
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Speaker embedding extraction failed for window [{Start},{End}).", job.StartSample, job.EndSampleExclusive);
-            _cache.Store(Failed(job, SpeakerVerificationReason.ProviderError, quality));
-            return;
+            return Failed(job, SpeakerVerificationReason.ProviderError, quality);
+        }
+        finally
+        {
+            embeddingTicks = Stopwatch.GetTimestamp() - embeddingStarted;
         }
 
         if (embedding is null || embedding.Length != _speaker.EmbeddingSize || !IsFiniteNonZero(embedding))
         {
-            _cache.Store(Failed(job, SpeakerVerificationReason.InvalidEmbedding, quality));
-            return;
+            return Failed(job, SpeakerVerificationReason.InvalidEmbedding, quality);
         }
 
         var evidence = new SpeakerWindowEvidence(
@@ -372,11 +405,10 @@ internal sealed class SpeakerInferenceScheduler : IDisposable
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Speaker bank comparison failed for window [{Start},{End}).", job.StartSample, job.EndSampleExclusive);
-            _cache.Store(Failed(job, SpeakerVerificationReason.ProviderError, quality));
-            return;
+            return Failed(job, SpeakerVerificationReason.ProviderError, quality);
         }
 
-        _cache.Store(evidence);
+        return evidence;
     }
 
     private static SpeakerWindowEvidence Failed(
