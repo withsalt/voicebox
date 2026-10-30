@@ -33,6 +33,8 @@ namespace VoiceBox.Assistant.Api.Configuration
         /// <summary>
         /// Maximum worker wait after the first complete window is available. A timeout returns
         /// Unavailable(InferenceTimeout). Defaults to 150 milliseconds.
+        /// Playback-time barge-in applies this budget to each outstanding inference window;
+        /// waiting for audio for a subsequent window does not consume that window's budget.
         /// </summary>
         public int InferenceTimeoutMs { get; set; } = 150;
 

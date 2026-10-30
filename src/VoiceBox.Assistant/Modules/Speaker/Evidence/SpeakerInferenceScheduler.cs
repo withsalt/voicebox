@@ -106,7 +106,13 @@ internal sealed class SpeakerInferenceScheduler : IDisposable
             var key = (job.StreamEpoch, job.StartSample, job.EndSampleExclusive);
             if (!job.IsPrefetch && !job.CandidateId.IsNone &&
                 _candidateWindows.TryGetValue(job.CandidateId, out var current) && current != key)
-                return SpeakerScheduleResult.CandidateBusy;
+            {
+                if (_cache.IsInFlight(current.Epoch, current.Start, current.End))
+                    return SpeakerScheduleResult.CandidateBusy;
+                // Store publishes the evidence before the worker retires its candidate mapping.
+                // A caller observing that completion may already need the next window.
+                _candidateWindows.Remove(job.CandidateId);
+            }
 
             if (!_cache.TryReserve(job.StreamEpoch, job.StartSample, job.EndSampleExclusive))
             {
@@ -158,6 +164,27 @@ internal sealed class SpeakerInferenceScheduler : IDisposable
         // Coalesced wakeup: promotion, eviction and cancellation cannot leak semaphore permits.
         try { _available.Release(); } catch (SemaphoreFullException) { }
         return SpeakerScheduleResult.Queued;
+    }
+
+    /// <summary>
+    /// Returns the candidate's actual outstanding window, including a reused prefetch. A newer
+    /// requested window cannot replace this identity while the scheduler reports CandidateBusy.
+    /// </summary>
+    public bool TryGetPendingWindow(SpeakerCandidateId candidateId, out long start, out long end)
+    {
+        lock (_lock)
+        {
+            if (_candidateWindows.TryGetValue(candidateId, out var window) &&
+                _cache.IsInFlight(window.Epoch, window.Start, window.End))
+            {
+                start = window.Start;
+                end = window.End;
+                return true;
+            }
+        }
+
+        start = end = -1;
+        return false;
     }
 
     /// <summary>Frees one queued prefetch reservation for a formal candidate.</summary>

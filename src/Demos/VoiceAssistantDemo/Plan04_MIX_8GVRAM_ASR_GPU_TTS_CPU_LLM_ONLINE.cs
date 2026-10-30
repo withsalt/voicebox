@@ -176,13 +176,6 @@ namespace VoiceAssistantDemo
                 //    o.ExecutionProvider = onnxProvider;
                 //    o.DefaultVoice = TtsVoiceName;
                 //})
-                //.AddQwen3TTSService(o =>
-                //{
-                //    o.ModelPath = AudioDefaults.Qwen3TtsPath;
-                //    o.ExecutionProvider = OnnxExecutionProvider;
-                //    o.DefaultVoice = AudioDefaults.TtsVoiceNameMap["Qwen3TTSService"]; ;
-                //    o.StreamChunkSchedule = [1, 2, 2, 4, 4, 8];
-                //})
                 .AddVoxCPMTTSService(o =>
                 {
                     o.ModelPath = AudioDefaults.VoxCPMTtsPath;

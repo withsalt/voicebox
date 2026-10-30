@@ -39,7 +39,6 @@
     <Compile Include="..\..\Demos\VoiceAssistantDemo\ConsoleUI\*.cs" Link="Demo\ConsoleUI\%(Filename)%(Extension)" />
     <Compile Include="..\..\Demos\VoiceAssistantDemo\Logging\*.cs" Link="Demo\Logging\%(Filename)%(Extension)" />
     <Compile Include="..\..\Demos\VoiceAssistantDemo\Presentation\*.cs" Link="Demo\Presentation\%(Filename)%(Extension)" />
-    <Compile Include="..\..\Demos\VoiceAssistantDemo\TtsCalibrationStimulusPlayer.cs" Link="Demo\TtsCalibrationStimulusPlayer.cs" />
   </ItemGroup>
 
 </Project>

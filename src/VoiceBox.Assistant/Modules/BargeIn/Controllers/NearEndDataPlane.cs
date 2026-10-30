@@ -1004,45 +1004,44 @@ internal sealed class NearEndDataPlane
 
         result = _effects.EvaluateSpeaker(in query);
 
-        if (result.Status == SpeakerVerificationStatus.Pending &&
-            result.Reason == SpeakerVerificationReason.WaitingForInference)
+        bool waitingForInference = result.Status == SpeakerVerificationStatus.Pending &&
+            result.Reason == SpeakerVerificationReason.WaitingForInference;
+        long now = _timeProvider.GetTimestamp();
+        // Provider policy is queried outside the data-plane lock: no foreign owner may be
+        // entered under _lock. The candidate's source-sample deadline still bounds its input.
+        TimeSpan inferenceTimeout = waitingForInference
+            ? _effects.GetInferenceTimeout(SpeakerVerificationPurpose.BargeInCommand)
+            : TimeSpan.Zero;
+        TimeSpan inferenceElapsed = TimeSpan.Zero;
+        lock (_lock)
         {
-            // The first complete window exists; the worker gets the purpose's bounded timeout.
-            long now = _timeProvider.GetTimestamp();
-            // Provider policy is queried outside the data-plane lock: the executor is the only
-            // boundary to speaker-owned code, and no foreign owner may be entered under _lock.
-            TimeSpan inferenceTimeout = _effects.GetInferenceTimeout(
-                SpeakerVerificationPurpose.BargeInCommand);
-            TimeSpan inferenceElapsed;
-            lock (_lock)
+            if (!_candidate.IsCurrent(generation))
             {
-                if (!_candidate.IsCurrent(generation))
-                {
-                    result = SpeakerVerificationResult.Cancelled(
-                        result.Threshold,
-                        in query,
-                        SpeakerVerificationReason.CancelledByNewTurn);
-                    return BargeInSpeakerGateStatus.Rejected;
-                }
+                result = SpeakerVerificationResult.Cancelled(
+                    result.Threshold,
+                    in query,
+                    SpeakerVerificationReason.CancelledByNewTurn);
+                return BargeInSpeakerGateStatus.Rejected;
+            }
 
-                _candidate.MarkInferenceReady(now);
+            _candidate.ObserveInferenceWait(in result, now);
+            if (waitingForInference)
                 inferenceElapsed = _timeProvider.GetElapsedTime(_candidate.InferenceReadyTimestamp, now);
-            }
-            if (inferenceElapsed >= inferenceTimeout)
-            {
-                _logger.LogDebug(
-                    "Speaker inference timeout: purpose={Purpose}, candidate={CandidateId}, owner={OwnerTurnId}, epoch={Epoch}, " +
-                    "range=[{Start},{End}), timeoutMs={TimeoutMs:F1}, inferenceElapsedMs={InferenceElapsedMs:F1}, " +
-                    "lastPendingReason={LastPendingReason}, observed={Observed}, matched={Matched}/{Required}, " +
-                    "score={Score:F4}, pendingWindow=[{PendingStart},{PendingEnd}), requiredEnd={RequiredEnd}.",
-                    query.Purpose, query.CandidateId.Value, query.OwnerTurnId, query.StreamEpoch,
-                    query.CandidateStartSample, query.CandidateEndSampleExclusive,
-                    inferenceTimeout.TotalMilliseconds, inferenceElapsed.TotalMilliseconds,
-                    result.Reason, result.ObservedWindows, result.MatchedWindows, result.RequiredMatches,
-                    result.Score, result.PendingWindowStartSample, result.PendingWindowEndSampleExclusive,
-                    result.RequiredEvidenceEndSampleExclusive);
-                result = result.WithInferenceTimeout();
-            }
+        }
+        if (waitingForInference && inferenceElapsed >= inferenceTimeout)
+        {
+            _logger.LogDebug(
+                "Speaker inference timeout: purpose={Purpose}, candidate={CandidateId}, owner={OwnerTurnId}, epoch={Epoch}, " +
+                "range=[{Start},{End}), timeoutMs={TimeoutMs:F1}, inferenceElapsedMs={InferenceElapsedMs:F1}, " +
+                "lastPendingReason={LastPendingReason}, observed={Observed}, matched={Matched}/{Required}, " +
+                "score={Score:F4}, pendingWindow=[{PendingStart},{PendingEnd}), requiredEnd={RequiredEnd}.",
+                query.Purpose, query.CandidateId.Value, query.OwnerTurnId, query.StreamEpoch,
+                query.CandidateStartSample, query.CandidateEndSampleExclusive,
+                inferenceTimeout.TotalMilliseconds, inferenceElapsed.TotalMilliseconds,
+                result.Reason, result.ObservedWindows, result.MatchedWindows, result.RequiredMatches,
+                result.Score, result.PendingWindowStartSample, result.PendingWindowEndSampleExclusive,
+                result.RequiredEvidenceEndSampleExclusive);
+            result = result.WithInferenceTimeout();
         }
 
         lock (_lock)

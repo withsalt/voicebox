@@ -67,8 +67,8 @@ public sealed class VoiceAssistantBargeInOptions
     /// </summary>
     public int ActiveNearEndAudioDrainTimeoutMs { get; set; } = 1000;
 
-    /// <summary>一次主动打断结束后暂停检测的时长，用于避免语气词或残响立即再次触发。默认 800 ms。</summary>
-    public int ActiveNearEndCooldownMs { get; set; } = 800;
+    /// <summary>一次主动打断结束后暂停检测的时长，用于避免语气词或残响立即再次触发。默认 100 ms。</summary>
+    public int ActiveNearEndCooldownMs { get; set; } = 100;
 
     /// <summary>Render-aware double-talk detector settings used while playback is active.</summary>
     public VoiceAssistantRenderAwareDtdOptions Dtd { get; set; } = new();

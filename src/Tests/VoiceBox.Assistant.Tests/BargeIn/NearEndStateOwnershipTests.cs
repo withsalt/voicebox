@@ -402,7 +402,10 @@ public sealed class NearEndStateOwnershipTests
         BargeInDecision decision = Decision(streamEpoch: 5, start: 100, end: 200);
         candidate.BeginSpeaker(in decision, new SpeakerCandidateId(4), 2, 120, 260, 900, true);
         candidate.Authorize();
-        candidate.MarkInferenceReady(1234);
+        var pending = new SpeakerVerificationResult(
+            SpeakerVerificationStatus.Pending, 0, 0, 5, 120, 260,
+            SpeakerVerificationReason.WaitingForInference);
+        candidate.ObserveInferenceWait(in pending, 1234);
         candidate.MarkEndpointObserved(1_000);
 
         candidate.Clear();

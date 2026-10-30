@@ -10,6 +10,9 @@ namespace VoiceBox.Assistant.Modules.BargeIn.State;
 /// </summary>
 internal sealed class NearEndCandidateStateMachine
 {
+    private long _pendingWindowStart = -1;
+    private long _pendingWindowEnd = -1;
+
     public enum Status
     {
         None,
@@ -55,6 +58,7 @@ internal sealed class NearEndCandidateStateMachine
         EndSample = endSampleExclusive;
         DeadlineSample = deadlineSample;
         InferenceReadyTimestamp = -1;
+        _pendingWindowStart = _pendingWindowEnd = -1;
         StrongUpstreamEvidence = strongUpstreamEvidence;
         DtdInterruptObserved = decision.Action == BargeInAction.Interrupt;
         EndpointObserved = false;
@@ -79,6 +83,7 @@ internal sealed class NearEndCandidateStateMachine
         EndSample = decision.EndSampleExclusive;
         DeadlineSample = decision.EndSampleExclusive;
         InferenceReadyTimestamp = -1;
+        _pendingWindowStart = _pendingWindowEnd = -1;
         StrongUpstreamEvidence = false;
         DtdInterruptObserved = true;
         EndpointObserved = false;
@@ -98,6 +103,7 @@ internal sealed class NearEndCandidateStateMachine
         EndSample = 0;
         DeadlineSample = 0;
         InferenceReadyTimestamp = -1;
+        _pendingWindowStart = _pendingWindowEnd = -1;
         StrongUpstreamEvidence = false;
         DtdInterruptObserved = false;
         EndpointObserved = false;
@@ -140,10 +146,33 @@ internal sealed class NearEndCandidateStateMachine
         EndSample = Math.Min(Math.Max(EndSample, endSampleExclusive), DeadlineSample);
     }
 
-    public void MarkInferenceReady(long timestamp)
+    /// <summary>
+    /// Each outstanding worker window gets its own deadline. Waiting for more audio ends the
+    /// previous wait; repeated polls of the same job must never extend it.
+    /// </summary>
+    public void ObserveInferenceWait(in SpeakerVerificationResult result, long timestamp)
     {
-        if (InferenceReadyTimestamp < 0)
+        if (result.Status != SpeakerVerificationStatus.Pending ||
+            result.Reason != SpeakerVerificationReason.WaitingForInference)
+        {
+            InferenceReadyTimestamp = -1;
+            _pendingWindowStart = _pendingWindowEnd = -1;
+            return;
+        }
+
+        bool hasWindow = result.PendingWindowStartSample >= 0 &&
+            result.PendingWindowEndSampleExclusive > result.PendingWindowStartSample;
+        if (InferenceReadyTimestamp < 0 ||
+            (hasWindow && (_pendingWindowStart != result.PendingWindowStartSample ||
+                           _pendingWindowEnd != result.PendingWindowEndSampleExclusive)))
+        {
             InferenceReadyTimestamp = timestamp;
+        }
+        if (hasWindow)
+        {
+            _pendingWindowStart = result.PendingWindowStartSample;
+            _pendingWindowEnd = result.PendingWindowEndSampleExclusive;
+        }
     }
 
     public void SetSpeakerResult(in SpeakerVerificationResult result)

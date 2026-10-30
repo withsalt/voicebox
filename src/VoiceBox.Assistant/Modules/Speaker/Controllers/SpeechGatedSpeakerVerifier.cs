@@ -369,6 +369,16 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
                 return SpeakerVerificationResult.Unavailable(policy.Threshold, in query, SpeakerVerificationReason.RuntimeStopping, policy.RequiredMatches);
         }
 
+        // The next missing selected window may differ from the job that still owns this
+        // candidate. Report the actual job so sliding selection cannot refresh its deadline.
+        long pendingStart = nextMissing?.StartSample ?? -1;
+        long pendingEnd = nextMissing?.EndSampleExclusive ?? -1;
+        if (_scheduler.TryGetPendingWindow(query.CandidateId, out long scheduledStart, out long scheduledEnd))
+        {
+            pendingStart = scheduledStart;
+            pendingEnd = scheduledEnd;
+        }
+
         SpeakerVerificationResult pending = SpeakerVerificationResult.Pending(
             policy.Threshold, in query, SpeakerVerificationReason.WaitingForInference,
             observed, matched, policy.RequiredMatches, ambiguous, rejected, invalid, selection.RequiredEvidenceEnd) with
@@ -377,8 +387,8 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
             CentroidScore = bestWindow.CentroidScore,
             BestPrototypeScore = bestWindow.BestPrototypeScore,
             Top2MeanScore = bestWindow.Top2MeanScore,
-            PendingWindowStartSample = nextMissing?.StartSample ?? -1,
-            PendingWindowEndSampleExclusive = nextMissing?.EndSampleExclusive ?? -1,
+            PendingWindowStartSample = pendingStart,
+            PendingWindowEndSampleExclusive = pendingEnd,
         };
 
         if (overloaded && observed == 0)
