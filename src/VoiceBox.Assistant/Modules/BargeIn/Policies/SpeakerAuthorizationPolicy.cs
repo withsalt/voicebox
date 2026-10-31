@@ -4,9 +4,9 @@ using VoiceBox.Assistant.Modules.BargeIn.Models;
 namespace VoiceBox.Assistant.Modules.BargeIn.Policies;
 
 /// <summary>
-/// Identity confirmation enabled: the candidate opens on valid near-end speech evidence and only
-/// the current candidate's speaker Match authorizes it. A DTD Interrupt never authorizes on its
-/// own and never lowers playback gain.
+/// Identity confirmation enabled: DTD evidence may open a candidate; the data plane also admits
+/// located endpoint-VAD speech on the same timeline. Only the current candidate's speaker Match
+/// authorizes it. A DTD Interrupt never authorizes on its own and never lowers playback gain.
 /// </summary>
 internal sealed class SpeakerAuthorizationPolicy : INearEndAuthorizationPolicy
 {

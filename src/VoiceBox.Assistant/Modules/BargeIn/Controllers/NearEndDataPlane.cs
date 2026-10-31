@@ -667,8 +667,9 @@ internal sealed class NearEndDataPlane
             return;
         }
 
-        // KWS enabled: Speaker and DTD run in parallel on the same candidate window. The
-        // candidate opens on valid near-end speech evidence, not on Interrupt.
+        // Identity enabled: either DTD evidence or located endpoint-VAD speech can open the
+        // candidate. DTD may miss double talk; the candidate's own speaker Match remains the
+        // only authorization, including when every DTD frame is rejected.
         bool candidateActive;
         bool candidateAuthorized;
         long generation;
@@ -683,8 +684,6 @@ internal sealed class NearEndDataPlane
 
         if (!candidateActive)
         {
-            if (!_authorization.ShouldOpenCandidate(in decision))
-                return;
             if (!BeginSpeakerCandidate(decision, in frame, out generation))
                 return;
         }
@@ -890,7 +889,7 @@ internal sealed class NearEndDataPlane
         generation = 0;
         if (!_authorization.RequiresSpeaker)
             return false;
-        if (decision.HasDiscontinuity ||
+        if (decision.HasDiscontinuity || frame.HasDiscontinuity ||
             decision.StreamEpoch <= 0 ||
             decision.StreamEpoch != frame.StreamEpoch ||
             decision.StartSample < 0 ||
@@ -908,10 +907,19 @@ internal sealed class NearEndDataPlane
             return false;
         }
 
+        // Check admission under the data-plane lock, but allocate the external candidate ID
+        // outside it. Recheck below because the capture callback can retire VAD state meanwhile.
+        lock (_lock)
+        {
+            if (!TryGetSpeakerCandidateAnchorLocked(in decision, out _, out _))
+                return false;
+        }
+
         SpeakerCandidateId candidateId = _effects.NewSpeakerCandidateId();
         long ownerTurnId = _conversation.CurrentTurnId;
         long mainStartSample;
         bool strongUpstreamEvidence;
+        string trigger;
         lock (_lock)
         {
             if (_candidate.Active)
@@ -920,10 +928,8 @@ internal sealed class NearEndDataPlane
                 return true;
             }
 
-            long anchorSample = decision.FirstAcceptedStartSample >= decision.StartSample &&
-                decision.FirstAcceptedStartSample < decision.EndSampleExclusive
-                    ? decision.FirstAcceptedStartSample
-                    : decision.StartSample;
+            if (!TryGetSpeakerCandidateAnchorLocked(in decision, out long anchorSample, out trigger))
+                return false;
             _candidate.BeginSpeaker(
                 in decision,
                 candidateId,
@@ -943,7 +949,7 @@ internal sealed class NearEndDataPlane
         _logger.LogDebug(
             "主动近端 barge-in 创建说话人候选(并行 DTD): candidate={CandidateId}, ownerTurnId={OwnerTurnId}, " +
             "decisionAction={Action}, decisionReason={DecisionReason}, scoreMs={ScoreMs:F0}/{RequiredMs:F0}, " +
-            "range=[{StartSample},{EndSample}), speakerAnchor={SpeakerAnchor}, strongUpstream={StrongUpstream}, epoch={StreamEpoch}.",
+            "range=[{StartSample},{EndSample}), speakerAnchor={SpeakerAnchor}, strongUpstream={StrongUpstream}, epoch={StreamEpoch}, trigger={Trigger}.",
             candidateId,
             ownerTurnId,
             decision.Action,
@@ -954,8 +960,32 @@ internal sealed class NearEndDataPlane
             decision.EndSampleExclusive,
             mainStartSample,
             strongUpstreamEvidence,
-            decision.StreamEpoch);
+            decision.StreamEpoch,
+            trigger);
         return true;
+    }
+
+    private bool TryGetSpeakerCandidateAnchorLocked(
+        in BargeInDecision decision,
+        out long anchorSample,
+        out string trigger)
+    {
+        bool dtdEvidence = _authorization.ShouldOpenCandidate(in decision);
+        bool vadEvidence = !_endpoint.UnownedObserved &&
+            TryGetEndpointVadCandidateStartLocked(in decision, out _, out _, out _) &&
+            _endpoint.CandidateEndSample > decision.StartSample &&
+            _endpoint.CandidateStartSample < decision.EndSampleExclusive;
+        trigger = dtdEvidence ? "dtd" : "endpoint-vad";
+
+        // The already-located utterance start can precede the DTD window. Keep it for speaker
+        // windows too, so the 500ms evidence budget does not restart at a late DTD onset.
+        anchorSample = vadEvidence
+            ? _endpoint.CandidateStartSample
+            : decision.FirstAcceptedStartSample >= decision.StartSample &&
+              decision.FirstAcceptedStartSample < decision.EndSampleExclusive
+                ? decision.FirstAcceptedStartSample
+                : decision.StartSample;
+        return dtdEvidence || vadEvidence;
     }
 
     private BargeInSpeakerGateStatus GetSpeakerGateStatus(
