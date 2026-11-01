@@ -64,7 +64,7 @@ namespace VoiceAssistantDemo
                     o.ChannelCount = AudioDefaults.ChannelCount;
                     o.EnableHighPassFilter = true;
                     o.EnableEchoCanceller = true;
-                    o.EnableNoiseSuppression = AudioDefaults.UsesWebRtcNoiseSuppression;
+                    o.EnableNoiseSuppression = true;
                     o.EnableAgc2 = false;
                     // 调低会更容易保留用户插话，也可能多留一些回声；WebRTC 默认值为 0.25。
                     //o.DominantNearendEnrThreshold = 0.35f;

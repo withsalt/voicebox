@@ -8,17 +8,6 @@ namespace VoiceAssistantDemo
 
         public const int ChannelCount = 1;
 
-        /// <summary>
-        /// 采集主链降噪模式。通过环境变量 VOICEBOX_NOISE_SUPPRESSION 选择：
-        /// none = 仅 AEC；webrtc = AEC + WebRTC NS；dnr = AEC + 独立 DPDFNet DNR。
-        /// WebRTC NS 与独立 DNR 有意互斥。
-        /// </summary>
-        public static CaptureNoiseSuppressionMode NoiseSuppressionMode { get; } = ResolveNoiseSuppressionMode();
-
-        public static bool UsesWebRtcNoiseSuppression=> AudioDefaults.NoiseSuppressionMode == CaptureNoiseSuppressionMode.WebRtc;
-
-        public static bool UsesIndependentDnr=> AudioDefaults.NoiseSuppressionMode == CaptureNoiseSuppressionMode.IndependentDnr;
-
         public const string BASE_MODEL_DIR = "D:\\ML\\Audio\\voicebox_models\\v1";
 
         public static string WakeupKwsPath = Path.Combine(AppContext.BaseDirectory, "runtimes", "models", "kws", "kws-xiaomu-onnx");
@@ -75,8 +64,14 @@ namespace VoiceAssistantDemo
 
         public static float TtsSpeed = 1.0f;
 
+        /// <summary>
+        /// 是否开启LLM思考模式（需要模型支持思考和非思考模式）
+        /// </summary>
         public static bool IsEnableThinking = false;
 
+        /// <summary>
+        /// 是否支持连续对话
+        /// </summary>
         public static bool IsContinuousConversationEnabled = true;
 
         public static string DefaultAssistantPrompt =
@@ -98,19 +93,6 @@ namespace VoiceAssistantDemo
             "    - 单字或孤立语气词 (嗯、啊、对、行、好) 按正常对话回应即可，不要当成错误。\n" +
             "11. 不要在回复里复述\"你刚才说的是 xxx\"这种确认句, 除非确实需要澄清。日常对话不需要复读。\n" +
             "你不需要强调自己的身份，只需要像一个真实的聊天对象一样回应我。";
-
-        private static CaptureNoiseSuppressionMode ResolveNoiseSuppressionMode()
-        {
-            string? value = Environment.GetEnvironmentVariable("VOICEBOX_NOISE_SUPPRESSION");
-            return value?.Trim().ToLowerInvariant() switch
-            {
-                null or "" or "none" or "disabled" => CaptureNoiseSuppressionMode.Disabled,
-                "webrtc" or "ns" => CaptureNoiseSuppressionMode.WebRtc,
-                "dnr" or "independent" => CaptureNoiseSuppressionMode.IndependentDnr,
-                _ => throw new InvalidOperationException(
-                    "VOICEBOX_NOISE_SUPPRESSION must be one of: none, webrtc, dnr."),
-            };
-        }
 
         public static string ConvertWakeupWordToAssistantName(string wakeupWord)
         {
@@ -143,12 +125,5 @@ namespace VoiceAssistantDemo
 
             return wakeupWord;
         }
-    }
-
-    internal enum CaptureNoiseSuppressionMode
-    {
-        Disabled,
-        WebRtc,
-        IndependentDnr,
     }
 }

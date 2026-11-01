@@ -68,7 +68,7 @@ namespace VoiceAssistantDemo
                     o.EnableEchoCanceller = true;
                     o.EnableNoiseSuppression = true;
                     o.EnableNeuralResidualEchoEstimator = true;
-                    o.EnableAgc2 = false;
+                    o.EnableAgc2 = true;
                     // 调低会更容易保留用户插话，也可能多留一些回声；WebRTC 默认值为 0.25。
                     //o.DominantNearendEnrThreshold = 0.35f;
                 })
