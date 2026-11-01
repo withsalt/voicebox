@@ -93,9 +93,6 @@ namespace VoiceAssistantDemo
                 {
                     Enable = true,
                 },
-                // Idle/连续对话态的监听确认门槛: 过滤 TTS 回声残差 (实测 rms≈0.014) 与环境噪声
-                // 触发的 VAD 误报, 否则每次误报都会显示"听到你说话了"并空跑一轮 ASR。
-                // 这里写的就是默认值, 列出来便于按环境微调; 都设 0 可关闭门槛。
                 Listening = new VoiceAssistantListeningOptions
                 {
                     MinDurationMs = 200,
@@ -105,8 +102,6 @@ namespace VoiceAssistantDemo
                 {
                     Enable = true,
                     PreRollMs = 2500,
-                    // FSMN-KWS 的 StartTimeMs 是 CTC token 峰值附近的估计, 不是严格起音点;
-                    // 多留一点回放余量, 避免唤醒后 ASR 偶发少掉"小木小木"开头的字。
                     ReplayLeadInMs = 400,
                 },
                 Speaker = speakerOptions,
@@ -144,9 +139,7 @@ namespace VoiceAssistantDemo
                 .UseSpeechSynthesis(services.Tts)
                 .AddWakeup(services.Wakeup)
                 .AddSpeakerVerification(services.Speaker)
-                .AddBargeIn(
-                    options.BargeIn,
-                    new WebRtcAec3DelayEstimatorFactory())
+                .AddBargeIn(options.BargeIn, new WebRtcAec3DelayEstimatorFactory())
                 .AddAcousticDiagnostics(services.AcousticDiagnostics);
             using var assistant = builder.BuildWithDiagnostics(
                 loggerFactory.CreateLogger<VoiceAssistant>()).Assistant;

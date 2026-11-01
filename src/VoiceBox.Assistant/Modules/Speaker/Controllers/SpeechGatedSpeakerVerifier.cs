@@ -104,16 +104,16 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
         _lastTrimEpoch = 0;
         _lastTrimStart = long.MinValue;
         _scheduler.Start();
-        foreach (SpeakerPurposePolicy purpose in _policy.EnabledPurposes)
-        {
-            _logger.LogDebug(
-                "Speaker timing configuration: purpose={Purpose}, windowMs={WindowMs:F1}, hopMs={HopMs:F1}, " +
-                "minimumSpeechMs={MinimumSpeechMs:F1}, timeoutMs={TimeoutMs:F1}, windows={WindowCount}, required={RequiredMatches}.",
-                purpose.Purpose, _policy.WindowSamples * 1000d / _policy.SampleRate,
-                _policy.HopSamples * 1000d / _policy.SampleRate,
-                purpose.MinimumSpeechSamples * 1000d / _policy.SampleRate,
-                purpose.InferenceTimeout.TotalMilliseconds, purpose.WindowCount, purpose.RequiredMatches);
-        }
+        //foreach (SpeakerPurposePolicy purpose in _policy.EnabledPurposes)
+        //{
+        //    _logger.LogDebug(
+        //        "Speaker timing configuration: purpose={Purpose}, windowMs={WindowMs:F1}, hopMs={HopMs:F1}, " +
+        //        "minimumSpeechMs={MinimumSpeechMs:F1}, timeoutMs={TimeoutMs:F1}, windows={WindowCount}, required={RequiredMatches}.",
+        //        purpose.Purpose, _policy.WindowSamples * 1000d / _policy.SampleRate,
+        //        _policy.HopSamples * 1000d / _policy.SampleRate,
+        //        purpose.MinimumSpeechSamples * 1000d / _policy.SampleRate,
+        //        purpose.InferenceTimeout.TotalMilliseconds, purpose.WindowCount, purpose.RequiredMatches);
+        //}
     }
 
     public async Task StopAsync(CancellationToken cancellationToken = default)
