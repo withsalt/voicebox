@@ -895,15 +895,15 @@ internal sealed class NearEndDataPlane
             decision.StartSample < 0 ||
             decision.EndSampleExclusive <= decision.StartSample)
         {
-            _logger.LogDebug(
-                "主动近端 barge-in 未创建说话人候选: reason=invalid-decision-timeline, " +
-                "decision=[{DecisionStart},{DecisionEnd}), decisionEpoch={DecisionEpoch}, " +
-                "frameEpoch={FrameEpoch}, discontinuity={Discontinuity}.",
-                decision.StartSample,
-                decision.EndSampleExclusive,
-                decision.StreamEpoch,
-                frame.StreamEpoch,
-                decision.HasDiscontinuity || frame.HasDiscontinuity);
+            //_logger.LogDebug(
+            //    "主动近端 barge-in 未创建说话人候选: reason=invalid-decision-timeline, " +
+            //    "decision=[{DecisionStart},{DecisionEnd}), decisionEpoch={DecisionEpoch}, " +
+            //    "frameEpoch={FrameEpoch}, discontinuity={Discontinuity}.",
+            //    decision.StartSample,
+            //    decision.EndSampleExclusive,
+            //    decision.StreamEpoch,
+            //    frame.StreamEpoch,
+            //    decision.HasDiscontinuity || frame.HasDiscontinuity);
             return false;
         }
 

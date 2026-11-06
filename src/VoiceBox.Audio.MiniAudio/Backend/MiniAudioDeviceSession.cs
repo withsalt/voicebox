@@ -18,6 +18,7 @@ internal sealed class MiniAudioDeviceSession : IDisposable
         uint sampleRate,
         uint channels,
         int maxFrameSize,
+        bool fixedSizedCallback,
         double? suggestedLatency,
         bool enableWasapiExclusiveMode,
         ma_device_data_proc dataCallback)
@@ -60,7 +61,7 @@ internal sealed class MiniAudioDeviceSession : IDisposable
                     : ma_device_type.capture;
             ma_device_config config = MiniAudioNative.ma_device_config_init(deviceType);
             config.sampleRate = sampleRate;
-            config.noFixedSizedCallback = 0;
+            config.noFixedSizedCallback = fixedSizedCallback ? (byte)0 : (byte)1;
             if (maxFrameSize > 0)
             {
                 config.periodSizeInFrames = (uint)maxFrameSize;

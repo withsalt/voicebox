@@ -204,6 +204,7 @@ public sealed class MiniAudioPlayService : MiniAudioServiceBase, IAudioPlayServi
                 _options.Value.SampleRate,
                 _options.Value.ChannelCount,
                 _options.Value.MaxFrameSize,
+                _options.Value.FixedSizedCallback,
                 _options.Value.SuggestedLatency,
                 _options.Value.EnableWasapiExclusiveMode,
                 DeviceCallback);
