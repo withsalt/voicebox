@@ -45,6 +45,10 @@
     <Project Path="SDKs/RNNoise.NET/RNNoise.NET.csproj" />
     <Project Path="SDKs/WeTextProcessing.NET/WeTextProcessing.NET.csproj" />
   </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
   <Folder Name="/Tests/">
     <Project Path="Tests/Misaki.Tests/Misaki.Tests.csproj" />
     <Project Path="Tests/VoiceBox.ASR.Qwen3.Benchmark/VoiceBox.ASR.Qwen3.Benchmark.csproj" />

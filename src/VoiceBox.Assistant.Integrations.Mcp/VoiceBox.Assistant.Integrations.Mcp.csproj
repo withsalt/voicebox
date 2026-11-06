@@ -7,10 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="JsonSchema.Net" Version="9.4.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.13" />
-    <PackageReference Include="ModelContextProtocol.Core" Version="2.2.0" />
-    <PackageReference Include="ModelContextProtocol.Extensions.Tasks" Version="2.2.0" />
+    <PackageReference Include="JsonSchema.Net" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="ModelContextProtocol.Core" />
+    <PackageReference Include="ModelContextProtocol.Extensions.Tasks" />
   </ItemGroup>
 
   <ItemGroup>

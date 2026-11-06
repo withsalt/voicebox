@@ -7,9 +7,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="LLamaSharp" Version="0.30.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.13" />
-		<PackageReference Include="Microsoft.Extensions.Options" Version="10.0.13" />
+		<PackageReference Include="LLamaSharp" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+		<PackageReference Include="Microsoft.Extensions.Options" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -8,13 +8,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Serilog" Version="4.4.0" />
-		<PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
-		<PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-		<!--<PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.31.0" />-->
-		<PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.31.0" />
-		<!--<PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Cuda" Version="0.17.1" />-->
-		<PackageReference Include="LLamaSharp.Backend.Vulkan" Version="0.30.0" />
+		<PackageReference Include="Serilog" />
+		<PackageReference Include="Serilog.Extensions.Logging" />
+		<PackageReference Include="Serilog.Sinks.File" />
+		<!--<PackageReference Include="Microsoft.ML.OnnxRuntime" />-->
+		<PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" />
+		<!--<PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Cuda" />-->
+		<PackageReference Include="LLamaSharp.Backend.Vulkan" />
 	</ItemGroup>
 
 	<ItemGroup>

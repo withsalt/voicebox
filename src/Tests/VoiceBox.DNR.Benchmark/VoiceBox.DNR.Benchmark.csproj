@@ -9,9 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
     <!-- Gpu 变体让 ONNX 后端(DeepFilterNet/DPDFNet/Hush)可选 CUDA/DirectML; CPU 亦可跑。 -->
-    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.31.0" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" />
   </ItemGroup>
 
   <ItemGroup>

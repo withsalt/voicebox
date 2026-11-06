@@ -16,10 +16,4 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
-  <ItemGroup Condition="$(MSBuildProjectName.StartsWith('VoiceBox.'))">
-    <None Include="$(MSBuildThisFileDirectory)..\README.md"
-          Pack="true"
-          PackagePath="\"
-          Link="README.md" />
-  </ItemGroup>
 </Project>
