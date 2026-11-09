@@ -2,7 +2,6 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
-	
   <ItemGroup Label="Microsoft.Extensions">
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.14" />
@@ -13,7 +12,6 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.14" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.14" />
   </ItemGroup>
-	
   <ItemGroup Label="Inference">
     <PackageVersion Include="LLamaSharp" Version="0.30.0" />
     <PackageVersion Include="LLamaSharp.Backend.Vulkan" Version="0.30.0" />
@@ -27,7 +25,6 @@
     <PackageVersion Include="Microsoft.ML.Tokenizers" Version="2.0.1" />
     <PackageVersion Include="System.Numerics.Tensors" Version="10.0.14" />
   </ItemGroup>
-	
   <ItemGroup Label="Audio">
     <PackageVersion Include="Concentus" Version="2.2.2" />
     <PackageVersion Include="Concentus.Oggfile" Version="1.0.7" />
@@ -36,21 +33,18 @@
     <PackageVersion Include="org.k2fsa.portaudio.runtime.linux-x64" Version="1.0.6" />
     <PackageVersion Include="org.k2fsa.portaudio.runtime.win-x64" Version="1.0.6" />
   </ItemGroup>
-	
   <ItemGroup Label="Integrations">
     <PackageVersion Include="JsonSchema.Net" Version="9.6.0" />
-    <PackageVersion Include="ModelContextProtocol.Core" Version="2.3.1" />
-    <PackageVersion Include="ModelContextProtocol.Extensions.Tasks" Version="2.3.1" />
+    <PackageVersion Include="ModelContextProtocol.Core" Version="2.4.0" />
+    <PackageVersion Include="ModelContextProtocol.Extensions.Tasks" Version="2.4.0" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageVersion Include="OpenAI" Version="2.15.0" />
   </ItemGroup>
-	
   <ItemGroup Label="Logging">
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
   </ItemGroup>
-	
   <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
     <PackageVersion Include="MSTest" Version="4.5.2" />
