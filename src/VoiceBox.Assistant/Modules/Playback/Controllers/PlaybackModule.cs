@@ -161,7 +161,15 @@ internal sealed class PlaybackModule :
     private static async Task<string> AwaitTextAsync(SpeechEnqueueResult submission)
     {
         Task<string> completion = (Task<string>)submission.Completion;
-        return await completion.ConfigureAwait(false);
+        try
+        {
+            return await completion.ConfigureAwait(false);
+        }
+        catch (OperationCanceledException exception) when (completion.IsCanceled)
+        {
+            // Keep scheduler cancellation distinct from an unexpected provider exception.
+            throw new ResponsePlaybackCanceledException(exception);
+        }
     }
 
     private static async IAsyncEnumerable<SpeakableTextDelta> ToTextStream(

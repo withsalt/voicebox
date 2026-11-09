@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using Microsoft.Extensions.Options;
 using SharpASR.AudioService.Backend;
+using VoiceBox.Audio.PortAudio.Backend;
 using VoiceBox.Audio.PortAudio.Backend.Enums;
 using VoiceBox.Audio.PortAudio.Backend.Models;
 using VoiceBox.Audio.PortAudio.Models;
@@ -24,7 +25,6 @@ namespace VoiceBox.Audio.PortAudio
         private readonly IOptions<PortAudioDuplexOptions> _options;
         private PortAudioStream? _stream;
         private volatile bool _isRecording = false;
-        private volatile bool _isPlaying = false;
         private int _currentInputDeviceIndex = -1;
         private int _currentOutputDeviceIndex = -1;
 
@@ -45,16 +45,14 @@ namespace VoiceBox.Audio.PortAudio
         private bool _captureTimelineProcessorInitialized;
 
         // 播放相关
-        private QueueBuffer? _currentBuffer = null;
-        private int _currentBufferPosition = 0;
-        private readonly Channel<QueueBuffer> _playChannel;
+        private readonly PortAudioPlaybackQueue _playQueue;
         private readonly ManualResetEventSlim _audioDataRequestedEvent = new ManualResetEventSlim(true);
         private readonly ManualResetEventSlim _resetEvent = new ManualResetEventSlim(true);
 
         // 播放增益 (用于 barge-in ducking)：控制线程设目标增益，实时回调内按斜坡平滑逼近，避免增益突变产生咔哒声。
         private const float PlaybackGainRampMs = 15f;
         private float _targetPlaybackGain = 1.0f;   // 控制线程写 / 回调线程读 (Volatile)
-        private float _currentPlaybackGain = 1.0f;   // 仅回调线程访问 (及 ClearQueue 停流窗口)
+        private float _currentPlaybackGain = 1.0f;   // 仅回调线程访问
 
         // 事件
         public event Action<ReadOnlySpan<float>>? OnDataAvailable;
@@ -68,9 +66,9 @@ namespace VoiceBox.Audio.PortAudio
         public override AudioOptionsBase Options => _options.Value;
 
         public bool IsRecording => _isRecording;
-        public bool IsPlaying => _isPlaying;
+        public bool IsPlaying => _playQueue.IsPlaying;
 
-        public int CurrentQueueSize => _playChannel.Reader.Count;
+        public int CurrentQueueSize => _playQueue.Count;
 
         /// <summary>
         /// 可选的采集处理器：在全双工回调内对麦克风信号做处理（典型为回声消除 AEC），
@@ -143,12 +141,7 @@ namespace VoiceBox.Audio.PortAudio
                 _enableHpf = true;
             }
 
-            _playChannel = Channel.CreateBounded<QueueBuffer>(new BoundedChannelOptions((int)_options.Value.PlayMaxQueueSize)
-            {
-                FullMode = BoundedChannelFullMode.Wait,
-                SingleReader = true,
-                SingleWriter = false
-            });
+            _playQueue = new PortAudioPlaybackQueue((int)_options.Value.PlayMaxQueueSize);
 
             AcquirePortAudioReference();
         }
@@ -325,7 +318,6 @@ namespace VoiceBox.Audio.PortAudio
             {
                 _state = AudioServiceState.Error;
                 _isRecording = false;
-                _isPlaying = false;
 
                 CleanupStream();
                 Exception? pipelineError = await CleanupRecordPipelineAsync(CancellationToken.None);
@@ -393,7 +385,6 @@ namespace VoiceBox.Audio.PortAudio
             try
             {
                 _isRecording = false;
-                _isPlaying = false;
 
                 CleanupStream();
                 Exception? pipelineError = await CleanupRecordPipelineAsync(cancellationToken);
@@ -801,62 +792,16 @@ namespace VoiceBox.Audio.PortAudio
         {
             int totalSamples = (int)frameCount * (int)_options.Value.ChannelCount;
             float* outputPtr = (float*)output.ToPointer();
-            int samplesWritten = 0;
+            var outputSamples = new Span<float>(outputPtr, totalSamples);
 
             if (!_resetEvent.IsSet)
             {
-                var remainingBuffer = new Span<float>(&outputPtr[samplesWritten], totalSamples - samplesWritten);
-                remainingBuffer.Clear();
+                outputSamples.Clear();
                 return;
             }
 
-            while (samplesWritten < totalSamples && _resetEvent.IsSet)
-            {
-                if (_currentBuffer != null && _currentBufferPosition >= _currentBuffer.Length)
-                {
-                    _currentBuffer.Release();
-                    _currentBuffer = null;
-                    _currentBufferPosition = 0;
-                }
-
-                if (_currentBuffer == null)
-                {
-                    if (_playChannel.Reader.TryRead(out var newBuffer))
-                    {
-                        _currentBuffer = newBuffer;
-                        _currentBufferPosition = 0;
-
-                        if (!_isPlaying) _isPlaying = true;
-                    }
-                    else
-                    {
-                        if (_isPlaying)
-                        {
-                            _isPlaying = false;
-                            Task.Run(() => OnPlaybackCompleted?.Invoke(this, EventArgs.Empty));
-                        }
-                        break;
-                    }
-                }
-
-                int samplesAvailable = !_resetEvent.IsSet ? 0 : _currentBuffer.Length - _currentBufferPosition;
-                int samplesToCopy = Math.Min(samplesAvailable, totalSamples - samplesWritten);
-                if (samplesToCopy > 0)
-                {
-                    var sourceSpan = new Span<float>(_currentBuffer.Data, _currentBufferPosition, samplesToCopy);
-                    var destinationSpan = new Span<float>(&outputPtr[samplesWritten], samplesToCopy);
-                    sourceSpan.CopyTo(destinationSpan);
-
-                    samplesWritten += samplesToCopy;
-                    _currentBufferPosition += samplesToCopy;
-                }
-            }
-
-            if (samplesWritten < totalSamples)
-            {
-                var remainingBuffer = new Span<float>(&outputPtr[samplesWritten], totalSamples - samplesWritten);
-                remainingBuffer.Clear();
-            }
+            if (_playQueue.Fill(outputSamples))
+                Task.Run(() => OnPlaybackCompleted?.Invoke(this, EventArgs.Empty));
 
             ApplyPlaybackGain(outputPtr, totalSamples);
         }
@@ -1484,31 +1429,16 @@ namespace VoiceBox.Audio.PortAudio
                 return false;
             }
 
-            var buffer = ArrayPool<float>.Shared.Rent(data.Length);
-            try
+            if (!_playQueue.TryEnqueue(data, out droppedSamples))
             {
-                data.CopyTo(buffer);
-                if (!_playChannel.Writer.TryWrite(new QueueBuffer(buffer, data.Length)))
-                {
-                    ArrayPool<float>.Shared.Return(buffer);
-                    droppedSamples = data.Length;
-
-                    OnQueueOverflow?.Invoke(this, new AudioQueueOverflowEventArgs(
-                        droppedSamples,
-                        _playChannel.Reader.Count,
-                        (int)_options.Value.PlayMaxQueueSize));
-
-                    Debug.WriteLine($"[Warning] Audio queue overflow: {droppedSamples} samples discarded.");
-                    return false;
-                }
-                return true;
+                OnQueueOverflow?.Invoke(this, new AudioQueueOverflowEventArgs(
+                    droppedSamples,
+                    _playQueue.Count,
+                    (int)_options.Value.PlayMaxQueueSize));
+                Debug.WriteLine($"[Warning] Audio queue overflow: {droppedSamples} samples discarded.");
+                return false;
             }
-            catch
-            {
-                ArrayPool<float>.Shared.Return(buffer, true);
-                droppedSamples = data.Length;
-                throw;
-            }
+            return true;
         }
 
         public void ClearQueue()
@@ -1521,24 +1451,12 @@ namespace VoiceBox.Audio.PortAudio
                 _resetEvent.Reset();
                 try
                 {
-                    if (_stream != null && _stream.IsActive)
-                    {
-                        _stream.Stop();
-                        _audioDataRequestedEvent.Wait(1000);
-                    }
-
+                    // Playback and capture share one stream. Synchronize buffer ownership
+                    // with the output reader without stopping the microphone during barge-in.
                     CleanupPlayQueue();
 
-                    // 清队列(典型为 barge-in 打断)后恢复满音量，确保下一轮播放不被上一次 ducking 残留压低。
-                    // 此处流已停止、回调不在运行，写 _currentPlaybackGain 安全。
+                    // The live callback alone owns the ramp's current gain.
                     Volatile.Write(ref _targetPlaybackGain, 1f);
-                    _currentPlaybackGain = 1f;
-
-                    if (_isPlaying)
-                        _isPlaying = false;
-
-                    if (_stream != null)
-                        _stream.Start();
                 }
                 finally
                 {
@@ -1615,17 +1533,7 @@ namespace VoiceBox.Audio.PortAudio
         {
             try
             {
-                while (_playChannel.Reader.TryRead(out var buffer))
-                {
-                    buffer.Release();
-                }
-
-                if (_currentBuffer != null)
-                {
-                    _currentBuffer.Release();
-                    _currentBuffer = null;
-                    _currentBufferPosition = 0;
-                }
+                _playQueue.Clear();
             }
             catch (Exception ex)
             {
@@ -1905,7 +1813,7 @@ namespace VoiceBox.Audio.PortAudio
             if (_disposed)
                 return;
 
-            _playChannel.Writer.TryComplete();
+            _playQueue.Complete();
 
             try
             {
@@ -1916,6 +1824,7 @@ namespace VoiceBox.Audio.PortAudio
                 // Ignore errors during disposal
             }
 
+            _playQueue.Dispose();
             _audioDataRequestedEvent?.Dispose();
             _resetEvent?.Dispose();
 

@@ -312,11 +312,24 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
                     turnId, operationId, spokenText, roundSw.Elapsed, ct).ConfigureAwait(false);
             }
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException exception)
         {
+            // Terminal publication can itself release/cancel the response resources. Capture
+            // the original cause first so an unrelated provider cancellation stays an error.
+            bool interrupted = (ct.IsCancellationRequested || exception is ResponsePlaybackCanceledException) &&
+                !cancellationToken.IsCancellationRequested &&
+                !turnResources.RunToken.IsCancellationRequested;
             await TryPublishTerminalOutcomeAsync(
                 operation, ResponseOperationOutcomeKind.Cancelled, failure: null).ConfigureAwait(false);
-            throw;
+            if (interrupted)
+            {
+                // Barge-in cancels this response, not the background message reader.
+                _logger.LogDebug("Background response interrupted: turnId={TurnId}.", turnId);
+            }
+            else
+            {
+                throw;
+            }
         }
         catch (Exception exception)
         {

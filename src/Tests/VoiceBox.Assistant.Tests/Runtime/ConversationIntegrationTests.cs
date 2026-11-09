@@ -1,9 +1,12 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Threading.Channels;
+using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging;
 using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Api.State;
 using VoiceBox.Assistant.Composition.Builder;
 using VoiceBox.Assistant.Conversation.Abstractions;
+using VoiceBox.Assistant.Diagnostics.Benchmarking;
 using Xunit;
 
 namespace VoiceBox.Assistant.Tests;
@@ -190,7 +193,90 @@ public sealed partial class VoiceAssistantLifecycleTests
         await session.DisposeAsync();
     }
 
-    private static VoiceAssistant CreateAssistantWith(TestServices services, IConversationSession session)
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task InterruptedBackgroundPlaybackKeepsListeningWithoutLoggingFailure(bool stopPlaybackOnly)
+    {
+        var services = TestServices.Create();
+        await using var session = new BackgroundConversationSession();
+        var logger = new BackgroundPlaybackLogger();
+        using VoiceAssistant assistant = CreateAssistantWith(services, session, logger, enableBargeIn: true);
+        var replies = new ConcurrentQueue<string>();
+        assistant.AssistantReplied += (_, e) => replies.Enqueue(e.Text);
+
+        await assistant.StartAsync();
+        RunTurn(services, "foreground");
+        await WaitUntilAsync(() => replies.Count == 1 && assistant.State == AssistantState.Idle);
+        ConversationRequest request;
+        lock (session.Requests)
+            request = session.Requests.Single();
+
+        services.Tts.BlockAfterFirstChunk = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        session.Publish(new ConversationBackgroundMessage(Guid.NewGuid(), session.ConversationId, request.RequestId, "天气播报"));
+        await WaitUntilAsync(() => assistant.State == AssistantState.Speaking && services.Tts.SynthesizedTexts.Contains("天气播报"));
+        services.Tts.BlockAfterFirstChunk = null;
+        if (stopPlaybackOnly)
+        {
+            // Stop the scheduler's playback token without canceling the response token.
+            assistant.StopCurrentSpeechPlayback();
+            await WaitUntilAsync(() => assistant.State == AssistantState.Idle);
+        }
+        else
+        {
+            services.Asr.CompleteStart("interruption");
+            services.Asr.SetResult("interruption", "好了，我知道了，退下吧");
+            EmitNearEndFrames(services, count: 10, renderRms: 0.08, captureRms: 0.12, emitMainAudio: true);
+            await WaitUntilAsync(() => assistant.State == AssistantState.Listening && services.Audio.ClearQueueCount > 0);
+            EmitSilenceFrames(services, count: 8, renderRms: 0);
+            await WaitUntilAsync(() => replies.Count == 2 && assistant.State == AssistantState.Idle);
+        }
+
+        // A later background result must still be consumed after the interrupted one.
+        session.Publish(new ConversationBackgroundMessage(Guid.NewGuid(), session.ConversationId, request.RequestId, "后续结果"));
+        await WaitUntilAsync(() => replies.Contains("后续结果"));
+        await assistant.StopAsync();
+        Assert.DoesNotContain("天气播报", replies);
+        Assert.Contains(logger.Entries, entry => entry.Message.Contains("Background response interrupted"));
+        Assert.DoesNotContain(logger.Entries, entry => entry.Level >= LogLevel.Error);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task BackgroundPlaybackStillReportsUnexpectedProviderFailures(bool cancellationException)
+    {
+        var services = TestServices.Create();
+        await using var session = new BackgroundConversationSession();
+        var logger = new BackgroundPlaybackLogger();
+        using VoiceAssistant assistant = CreateAssistantWith(services, session, logger);
+        await assistant.StartAsync();
+        RunTurn(services, "foreground");
+        await WaitUntilAsync(() => services.Tts.SynthesizedTexts.Count == 1 && assistant.State == AssistantState.Idle);
+        ConversationRequest request;
+        lock (session.Requests)
+            request = session.Requests.Single();
+        services.Tts.StreamException = cancellationException
+            ? new OperationCanceledException("provider timeout")
+            : new InvalidOperationException("provider failed");
+        session.Publish(new ConversationBackgroundMessage(Guid.NewGuid(), session.ConversationId, request.RequestId, "后台结果"));
+        await WaitUntilAsync(() => logger.Entries.Any(entry => entry.Level == LogLevel.Error &&
+            entry.Message.Contains("Background conversation playback failed")));
+        await assistant.StopAsync();
+    }
+
+    private sealed class BackgroundPlaybackLogger : ILogger<VoiceAssistant>
+    {
+        public ConcurrentQueue<(LogLevel Level, string Message)> Entries { get; } = new();
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => true;
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
+            Func<TState, Exception?, string> formatter)
+            => Entries.Enqueue((logLevel, formatter(state, exception)));
+    }
+
+    private static VoiceAssistant CreateAssistantWith(TestServices services, IConversationSession session,
+        ILogger<VoiceAssistant>? logger = null, bool enableBargeIn = false)
     {
         var options = new VoiceAssistantOptions
         {
@@ -198,15 +284,19 @@ public sealed partial class VoiceAssistantLifecycleTests
             PlaybackPrerollMs = 0,
             PlaybackTailBufferMs = 0,
             Listening = { MinDurationMs = 0, MinRms = 0 },
+            BargeIn = { Enable = enableBargeIn, MinDurationMs = 120, PlaybackStartupGuardMs = 0, ActiveNearEndEndSilenceMs = 60 },
         };
-        return VoiceAssistant.CreateBuilder()
+        VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
             .UseOptions(options)
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
             .UseConversation(session)
-            .UseSpeechSynthesis(services.Tts)
-            .Build();
+            .UseSpeechSynthesis(services.Tts);
+        if (enableBargeIn)
+            builder.AddBargeIn(options.BargeIn, TestAcousticPathDelayEstimatorFactory.Instance);
+        return builder.BuildForBenchmark(TimeProvider.System, new VoiceAssistantBenchmarkProbe(), logger,
+            playbackBargeInDetectorFactory: new FakePlaybackBargeInDetectorFactory(services.PlaybackDetector));
     }
 
     private static void RunTurn(TestServices services, string asrSessionId)

@@ -1793,8 +1793,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Equal(predictionsBefore + 4, services.Vad.PredictedAudio.Count);
     }
 
-    [Fact]
-    public async Task RenderAwareDtd_MainVadTimelinePreservesPrefixAndActiveEndpoint()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(160)]
+    public async Task RenderAwareDtd_MainVadTimelinePreservesPrefixAndActiveEndpoint(int preRollMs)
     {
         var services = TestServices.Create();
         services.Asr.CompleteStart("session-1");
@@ -1810,7 +1812,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 options.BargeIn.MinRms = 0.08f;
                 options.BargeIn.PlaybackStartupGuardMs = 0;
                 options.BargeIn.ActiveNearEndWindowMs = 160;
-                options.BargeIn.ActiveNearEndPreRollMs = 160;
+                options.BargeIn.ActiveNearEndPreRollMs = preRollMs;
                 options.BargeIn.ActiveNearEndEndSilenceMs = 60;
             });
         var heard = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -1862,10 +1864,11 @@ public sealed partial class VoiceAssistantLifecycleTests
         await WaitUntilAsync(() => services.Asr.FinishCount == finishCount + 1);
 
         float[] fed = services.Asr.FedAudio["session-2"].SelectMany(static chunk => chunk).ToArray();
-        Assert.True(fed.Length >= vadPrefix.Length);
-        Assert.All(fed.AsSpan(0, vadPrefix.Length).ToArray(), sample => Assert.Equal(0.23f, sample));
+        int leadInSamples = preRollMs * 16;
+        Assert.True(fed.Length >= leadInSamples + vadPrefix.Length);
+        Assert.All(fed.AsSpan(leadInSamples, vadPrefix.Length).ToArray(), sample => Assert.Equal(0.23f, sample));
         Assert.Equal(vadPrefix.Length, fed.Count(sample => Math.Abs(sample - 0.23f) < 0.0001f));
-        Assert.DoesNotContain(fed, sample => Math.Abs(sample - 0.19f) < 0.0001f);
+        Assert.Equal(preRollMs == 0 ? 0 : 1280, fed.Count(sample => Math.Abs(sample - 0.19f) < 0.0001f));
     }
 
     [Fact]

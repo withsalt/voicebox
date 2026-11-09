@@ -1271,9 +1271,12 @@ internal sealed class NearEndDataPlane
 
             if (endpointVadCandidate)
             {
+                // VAD can recognize the onset after the first syllables. Its exact location
+                // still needs the configured lead-in from the same recognition timeline.
+                long vadPreRollStart = Math.Max(0, endpointVadStartSample - preRollSamples);
                 if (!TrySnapshotTimelineAligned(
                     endpointVadStreamEpoch,
-                    endpointVadStartSample,
+                    vadPreRollStart,
                     Math.Max(decision.EndSampleExclusive, _timeline.EndSample),
                     candidateAudioLimitSamples,
                     out preRoll,

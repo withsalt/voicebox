@@ -193,11 +193,10 @@ public sealed class MiniAudioDuplexService : MiniAudioServiceBase, IAudioDuplexS
         _asyncLock.Wait();
         try
         {
-            _session?.Stop();
+            // Stopping a duplex device also stops the microphone, losing the rest of a
+            // barge-in utterance. The queue synchronizes with Fill without stopping capture.
             _playQueue.Clear();
-            _currentPlaybackGain = 1f;
             Volatile.Write(ref _targetPlaybackGain, 1f);
-            _session?.Start();
         }
         finally
         {

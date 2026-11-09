@@ -5,6 +5,7 @@ namespace VoiceBox.Audio.MiniAudio.Backend;
 
 internal sealed class MiniAudioPlaybackQueue : IDisposable
 {
+    private readonly object _readerLock = new();
     private readonly Channel<MiniAudioQueueBuffer> _channel;
     private MiniAudioQueueBuffer _currentBuffer;
     private int _currentBufferPosition;
@@ -62,6 +63,26 @@ internal sealed class MiniAudioPlaybackQueue : IDisposable
 
     internal bool Fill(Span<float> output)
     {
+        // A duplex callback must keep capturing while another thread clears playback.
+        // Emit silence during that brief handoff instead of waiting on the control thread.
+        if (!Monitor.TryEnter(_readerLock))
+        {
+            output.Clear();
+            return false;
+        }
+
+        try
+        {
+            return FillCore(output);
+        }
+        finally
+        {
+            Monitor.Exit(_readerLock);
+        }
+    }
+
+    private bool FillCore(Span<float> output)
+    {
         int outputLength = output.Length;
         int samplesWritten = 0;
 
@@ -109,14 +130,17 @@ internal sealed class MiniAudioPlaybackQueue : IDisposable
 
     internal void Clear()
     {
-        _currentBuffer.Release();
-        _currentBufferPosition = 0;
-        while (_channel.Reader.TryRead(out MiniAudioQueueBuffer buffer))
+        lock (_readerLock)
         {
-            buffer.Release();
-        }
+            _currentBuffer.Release();
+            _currentBufferPosition = 0;
+            while (_channel.Reader.TryRead(out MiniAudioQueueBuffer buffer))
+            {
+                buffer.Release();
+            }
 
-        _isPlaying = false;
+            _isPlaying = false;
+        }
     }
 
     public void Dispose()
@@ -127,7 +151,7 @@ internal sealed class MiniAudioPlaybackQueue : IDisposable
 }
 
 // A descriptor has one owner: the writer until TryWrite succeeds, then the reader.
-// Clear/Dispose only run after the device callback has stopped.
+// Fill and Clear serialize reader ownership, including during live duplex capture.
 internal struct MiniAudioQueueBuffer(float[] data, int length)
 {
     private float[]? _data = data;

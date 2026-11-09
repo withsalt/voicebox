@@ -34,6 +34,13 @@
     <None Include="GoldenTraces\**\*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- 验证实时播放缓冲区，无需加载原生音频设备。 -->
+  <ItemGroup>
+    <Compile Include="..\..\VoiceBox.Audio.MiniAudio\Backend\MiniAudioPlaybackQueue.cs" Link="Audio\MiniAudioPlaybackQueue.cs" />
+    <Compile Include="..\..\VoiceBox.Audio.PortAudio\Backend\PortAudioPlaybackQueue.cs" Link="Audio\PortAudioPlaybackQueue.cs" />
+    <Compile Include="..\..\VoiceBox.Audio.PortAudio\Models\QueueBuffer.cs" Link="Audio\PortAudioQueueBuffer.cs" />
+  </ItemGroup>
+
   <!-- 验证 Demo 的模块源码，避免引用可执行项目并加载其 GPU/模型运行时依赖。 -->
   <ItemGroup>
     <Compile Include="..\..\Demos\VoiceAssistantDemo\ConsoleUI\*.cs" Link="Demo\ConsoleUI\%(Filename)%(Extension)" />
