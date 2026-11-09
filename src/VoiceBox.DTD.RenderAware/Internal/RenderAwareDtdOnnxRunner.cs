@@ -42,11 +42,7 @@ internal sealed class RenderAwareDtdOnnxRunner : IDisposable
     private bool _currentStateIsA = true;
     private bool _disposed;
 
-    public RenderAwareDtdOnnxRunner(
-        string modelPath,
-        RenderAwareDtdOptions options,
-        float[] microphoneWindow,
-        float[] renderWindow)
+    public RenderAwareDtdOnnxRunner(string modelPath, RenderAwareDtdOptions options, float[] microphoneWindow, float[] renderWindow)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(modelPath);
         ArgumentNullException.ThrowIfNull(options);
@@ -270,11 +266,7 @@ internal sealed class RenderAwareDtdOnnxRunner : IDisposable
         return stateShape;
     }
 
-    private static int[] RequireStateShape(
-        IReadOnlyDictionary<string, NodeMetadata> metadata,
-        string name,
-        string kind,
-        string modelPath)
+    private static int[] RequireStateShape(IReadOnlyDictionary<string, NodeMetadata> metadata, string name, string kind, string modelPath)
     {
         if (!metadata.TryGetValue(name, out NodeMetadata? node))
         {
@@ -320,11 +312,7 @@ internal sealed class RenderAwareDtdOnnxRunner : IDisposable
         }
     }
 
-    private static void RequireMetadata(
-        IReadOnlyDictionary<string, string> metadata,
-        string key,
-        string expected,
-        string modelPath)
+    private static void RequireMetadata(IReadOnlyDictionary<string, string> metadata, string key, string expected, string modelPath)
     {
         if (!metadata.TryGetValue(key, out string? actual) ||
             !string.Equals(actual, expected, StringComparison.Ordinal))

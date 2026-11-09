@@ -26,10 +26,7 @@ namespace VoiceBox.Speaker.WeSpeaker.Internal
         private int _reusableInputFrames;
         private bool _disposed;
 
-        public WeSpeakerOnnxRunner(
-            string modelPath,
-            WeSpeakerOptions options,
-            WeSpeakerModelConfig config)
+        public WeSpeakerOnnxRunner(string modelPath, WeSpeakerOptions options, WeSpeakerModelConfig config)
         {
             _featureDim = config.FeatureDim;
             _embeddingSize = config.EmbeddingSize;

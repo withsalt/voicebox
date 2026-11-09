@@ -433,11 +433,7 @@ public sealed class BenchmarkHooksTests
         public uint LastSampleRate { get; private set; }
         public int DelaySamples => 0;
 
-        public void Process(
-            Span<float> capture,
-            ReadOnlySpan<float> render,
-            uint channels,
-            uint sampleRate)
+        public void Process(Span<float> capture, ReadOnlySpan<float> render, uint channels, uint sampleRate)
         {
             ProcessCalls++;
             LastChannels = channels;
@@ -459,11 +455,7 @@ public sealed class BenchmarkHooksTests
 
         public int DelaySamples => 2;
 
-        public void Process(
-            Span<float> capture,
-            ReadOnlySpan<float> render,
-            uint channels,
-            uint sampleRate)
+        public void Process(Span<float> capture, ReadOnlySpan<float> render, uint channels, uint sampleRate)
         {
             for (int i = 0; i < capture.Length; i++)
             {

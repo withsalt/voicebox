@@ -199,11 +199,7 @@ internal readonly record struct TurnSignal
             authorization: status,
             candidateId: candidateId);
 
-    public static TurnSignal RecognitionSessionReady(
-        long turnId,
-        long operationId,
-        long sourceSequence = 0,
-        long sourceTick = 0)
+    public static TurnSignal RecognitionSessionReady(long turnId, long operationId, long sourceSequence = 0, long sourceTick = 0)
         => new(
             TurnSignalKind.RecognitionSessionReady,
             sourceSequence,
@@ -216,11 +212,7 @@ internal readonly record struct TurnSignal
             null,
             default);
 
-    public static TurnSignal RecognitionCompleted(
-        long turnId,
-        long operationId,
-        string text,
-        TimeSpan speechDuration = default)
+    public static TurnSignal RecognitionCompleted(long turnId, long operationId, string text, TimeSpan speechDuration = default)
         => new(
             TurnSignalKind.RecognitionCompleted,
             0,
@@ -301,11 +293,7 @@ internal readonly record struct TurnSignal
     public static TurnSignal PlaybackCompleted(long turnId, long operationId, TimeSpan elapsed = default)
         => new(TurnSignalKind.PlaybackCompleted, 0, 0, turnId, operationId, false, elapsed.Ticks, null, null, default);
 
-    public static TurnSignal PlaybackCompleted(
-        long turnId,
-        long operationId,
-        string text,
-        TimeSpan elapsed)
+    public static TurnSignal PlaybackCompleted(long turnId, long operationId, string text, TimeSpan elapsed)
         => new(
             TurnSignalKind.PlaybackCompleted,
             0,

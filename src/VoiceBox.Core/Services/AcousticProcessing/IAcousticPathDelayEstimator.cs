@@ -16,10 +16,7 @@ public interface IAcousticPathDelayEstimator : IDisposable
     /// 产生新估计时返回 <see langword="true"/>；仍在预热或本次没有新估计时返回
     /// <see langword="false"/>。实现错误不得伪装成“无估计”，应抛出异常。
     /// </returns>
-    bool TryEstimate(
-        ReadOnlySpan<float> render,
-        ReadOnlySpan<float> capture,
-        out AcousticPathDelayEstimate estimate);
+    bool TryEstimate(ReadOnlySpan<float> render, ReadOnlySpan<float> capture, out AcousticPathDelayEstimate estimate);
 
     /// <summary>重置流状态并保留格式配置。</summary>
     void Reset();

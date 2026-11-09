@@ -160,18 +160,13 @@ namespace VoiceBox.Assistant.Diagnostics.Benchmarking.Adapters
         public event DuplexAudioFrameHandler? OnDuplexAudioFrame;
         public event ProcessedCaptureFrameHandler? OnProcessedCaptureFrame;
 
-        public IReadOnlyList<AudioDevice> ListAudioDevices(
-            AudioDeviceType? deviceType = null,
-            bool enumAllDevices = false)
+        public IReadOnlyList<AudioDevice> ListAudioDevices(AudioDeviceType? deviceType = null, bool enumAllDevices = false)
             => [];
 
         public int GetDefaultInputDevice() => 0;
         public int GetDefaultOutputDevice() => 0;
 
-        public Task StartAsync(
-            int inputDeviceIndex = -1,
-            int outputDeviceIndex = -1,
-            CancellationToken cancellationToken = default)
+        public Task StartAsync(int inputDeviceIndex = -1, int outputDeviceIndex = -1, CancellationToken cancellationToken = default)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             cancellationToken.ThrowIfCancellationRequested();
@@ -226,17 +221,13 @@ namespace VoiceBox.Assistant.Diagnostics.Benchmarking.Adapters
             return Task.CompletedTask;
         }
 
-        public Task StartRecordingAsync(
-            int deviceIndex = -1,
-            CancellationToken cancellationToken = default)
+        public Task StartRecordingAsync(int deviceIndex = -1, CancellationToken cancellationToken = default)
             => StartAsync(deviceIndex, -1, cancellationToken);
 
         public Task StopRecordingAsync(CancellationToken cancellationToken = default)
             => StopAsync(cancellationToken);
 
-        public Task StartPlayingAsync(
-            int deviceIndex = -1,
-            CancellationToken cancellationToken = default)
+        public Task StartPlayingAsync(int deviceIndex = -1, CancellationToken cancellationToken = default)
             => StartAsync(-1, deviceIndex, cancellationToken);
 
         public Task StopPlayingAsync(CancellationToken cancellationToken = default)

@@ -182,8 +182,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Internal
         /// <summary>
         /// 输入当前状态与 token, 返回 (score 增量, 新状态, 命中节点 (若有))。
         /// </summary>
-        public (float Score, ContextState NewState, ContextState? MatchedNode) ForwardOneStep(
-            ContextState state, int token)
+        public (float Score, ContextState NewState, ContextState? MatchedNode) ForwardOneStep(ContextState state, int token)
         {
             ContextState node;
             float score;

@@ -101,12 +101,7 @@ namespace VoiceBox.AEC.DFSMN.Internal
             RunCore(features, frames, masks, vadProbabilities, requireVad: true);
         }
 
-        private void RunCore(
-            ReadOnlySpan<float> features,
-            int frames,
-            Span<float> masks,
-            Span<float> vadProbabilities,
-            bool requireVad)
+        private void RunCore(ReadOnlySpan<float> features, int frames, Span<float> masks, Span<float> vadProbabilities, bool requireVad)
         {
             if (frames <= 0 || frames > _chunkFrames)
                 throw new ArgumentOutOfRangeException(nameof(frames), frames, $"frames must be in [1, {_chunkFrames}].");

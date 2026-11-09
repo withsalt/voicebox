@@ -21,10 +21,7 @@ namespace VoiceBox.Assistant.Diagnostics.Metrics
         private AcousticProcessingMetricsSnapshot _latest;
         private bool _hasLatest;
 
-        public AecMetricsSampler(
-            IAcousticProcessingDiagnostics? diagnostics,
-            ILogger logger,
-            TimeProvider? timeProvider = null)
+        public AecMetricsSampler(IAcousticProcessingDiagnostics? diagnostics, ILogger logger, TimeProvider? timeProvider = null)
         {
             _diagnostics = diagnostics;
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -81,9 +78,7 @@ namespace VoiceBox.Assistant.Diagnostics.Metrics
             }
         }
 
-        private void StoreLatest(
-            AcousticProcessingMetricsSnapshot metrics,
-            long observationTimestampTicks)
+        private void StoreLatest(AcousticProcessingMetricsSnapshot metrics, long observationTimestampTicks)
         {
             if (metrics.TimestampTicks <= 0)
                 metrics = metrics.WithTimestamp(observationTimestampTicks);

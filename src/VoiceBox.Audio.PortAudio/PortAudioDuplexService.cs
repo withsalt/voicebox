@@ -525,10 +525,7 @@ namespace VoiceBox.Audio.PortAudio
         /// 在回调内调用高通滤波处理器：原地改写 input(麦克风)，滤除直流偏置与低频隆隆声。
         /// 置于采集链最前端（AEC 之前）。在实时线程上执行，吞掉异常以保证音频流不中断。
         /// </summary>
-        private unsafe bool ApplyHighPassFilter(
-            IHighPassFilterService? proc,
-            nint input,
-            uint frameCount)
+        private unsafe bool ApplyHighPassFilter(IHighPassFilterService? proc, nint input, uint frameCount)
         {
             if (proc == null || frameCount == 0 || input == nint.Zero)
             {
@@ -1070,9 +1067,7 @@ namespace VoiceBox.Audio.PortAudio
         /// 消费, 线程提为 Highest 并注册 MMCSS "Pro Audio": 该链路对帧到达节奏最敏感,
         /// 推理满载时一旦帧派发迟到, 下游 AEC 参考对齐与近端检测窗口立即劣化。
         /// </summary>
-        private void DispatchDuplexFramesLoop(
-            Channel<DuplexAudioFrameBuffer> frameChannel,
-            CancellationToken token)
+        private void DispatchDuplexFramesLoop(Channel<DuplexAudioFrameBuffer> frameChannel, CancellationToken token)
         {
             using var mmcss = Backend.MmcssThreadScope.TryEnter("Pro Audio");
             TrySetCurrentThreadPriority(ThreadPriority.Highest, "duplex frame dispatch");
@@ -1147,9 +1142,7 @@ namespace VoiceBox.Audio.PortAudio
             }
         }
 
-        private static void InvokeDuplexAudioFrameHandlers(
-            DuplexAudioFrameHandler handler,
-            in DuplexAudioFrame frame)
+        private static void InvokeDuplexAudioFrameHandlers(DuplexAudioFrameHandler handler, in DuplexAudioFrame frame)
         {
             foreach (Delegate subscriber in handler.GetInvocationList())
             {
@@ -1164,9 +1157,7 @@ namespace VoiceBox.Audio.PortAudio
             }
         }
 
-        private static void InvokeProcessedCaptureFrameHandlers(
-            ProcessedCaptureFrameHandler handler,
-            in ProcessedCaptureFrame frame)
+        private static void InvokeProcessedCaptureFrameHandlers(ProcessedCaptureFrameHandler handler, in ProcessedCaptureFrame frame)
         {
             foreach (Delegate subscriber in handler.GetInvocationList())
             {
@@ -1181,9 +1172,7 @@ namespace VoiceBox.Audio.PortAudio
             }
         }
 
-        private static void InvokeDataAvailableHandlers(
-            Action<ReadOnlySpan<float>> handler,
-            ReadOnlySpan<float> audio)
+        private static void InvokeDataAvailableHandlers(Action<ReadOnlySpan<float>> handler, ReadOnlySpan<float> audio)
         {
             foreach (Delegate subscriber in handler.GetInvocationList())
             {
@@ -1384,10 +1373,7 @@ namespace VoiceBox.Audio.PortAudio
         /// 在录音派发线程上调用 DNR，流式处理并返回本次实际产出的样本数。
         /// 出错时丢弃可能已被原地改写的当前块，并在下一块以 discontinuity 重建时间轴。
         /// </summary>
-        private static bool TryApplyNoiseReduction(
-            IDigitalNoiseReductionService proc,
-            Span<float> buffer,
-            out int produced)
+        private static bool TryApplyNoiseReduction(IDigitalNoiseReductionService proc, Span<float> buffer, out int produced)
         {
             if (buffer.IsEmpty)
             {

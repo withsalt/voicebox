@@ -105,11 +105,7 @@ namespace VoiceBox.Speaker.CampPlus.Internal
             return map;
         }
 
-        private static int GetInt(
-            Dictionary<string, string> cfg,
-            string key,
-            int fallback,
-            string configPath)
+        private static int GetInt(Dictionary<string, string> cfg, string key, int fallback, string configPath)
         {
             if (!cfg.TryGetValue(key, out string? value)) return fallback;
             if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed))
@@ -118,11 +114,7 @@ namespace VoiceBox.Speaker.CampPlus.Internal
                 $"Invalid integer value '{value}' for {key}. [{configPath}]");
         }
 
-        private static float GetFloat(
-            Dictionary<string, string> cfg,
-            string key,
-            float fallback,
-            string configPath)
+        private static float GetFloat(Dictionary<string, string> cfg, string key, float fallback, string configPath)
         {
             if (!cfg.TryGetValue(key, out string? value)) return fallback;
             if (float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsed))

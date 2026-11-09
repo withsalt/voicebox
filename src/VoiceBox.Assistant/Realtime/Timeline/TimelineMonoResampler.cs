@@ -111,11 +111,7 @@ internal sealed class TimelineMonoResampler
         _hasPrevious = false;
     }
 
-    private float ReadMono(
-        ReadOnlySpan<float> samples,
-        long frame,
-        long sourceStartFrame,
-        uint channels)
+    private float ReadMono(ReadOnlySpan<float> samples, long frame, long sourceStartFrame, uint channels)
     {
         if (frame == sourceStartFrame - 1 && _hasPrevious)
             return _previous;

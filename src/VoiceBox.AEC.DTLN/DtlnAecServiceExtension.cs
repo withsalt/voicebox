@@ -25,9 +25,7 @@ namespace VoiceBox.AEC.DTLN
             return services;
         }
 
-        public static IServiceCollection AddDtlnAecService(
-            this IServiceCollection services,
-            Action<DtlnAecOptions> configure)
+        public static IServiceCollection AddDtlnAecService(this IServiceCollection services, Action<DtlnAecOptions> configure)
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(configure);

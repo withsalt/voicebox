@@ -9,11 +9,7 @@ internal interface IPublicEventEffectHandler
     ValueTask PublishStateChangedAsync(PublishStateChangedEffect effect, CancellationToken cancellationToken);
     ValueTask PublishBargeInValidationAsync(PublishBargeInValidationEffect effect, CancellationToken cancellationToken);
     ValueTask PublishUserSpokeAsync(PublishUserSpokeEffect effect, CancellationToken cancellationToken);
-    ValueTask PublishAssistantResponseGeneratedAsync(
-        PublishAssistantResponseGeneratedEffect effect,
-        CancellationToken cancellationToken);
-    ValueTask PublishAssistantRepliedAsync(
-        PublishAssistantRepliedEffect effect,
-        CancellationToken cancellationToken);
+    ValueTask PublishAssistantResponseGeneratedAsync(PublishAssistantResponseGeneratedEffect effect, CancellationToken cancellationToken);
+    ValueTask PublishAssistantRepliedAsync(PublishAssistantRepliedEffect effect, CancellationToken cancellationToken);
     ValueTask PublishFaultedAsync(PublishFaultedEffect effect, CancellationToken cancellationToken);
 }

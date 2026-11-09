@@ -262,9 +262,7 @@ namespace DoubaoOnlineTtsDemo
                 SecretAccessKey: Get("VOLC_SECRET_ACCESS_KEY"));
         }
 
-        private sealed record Credentials(
-            string? ApiKey, string? ResourceId,
-            string? Voice, string? AccessKeyId, string? SecretAccessKey);
+        private sealed record Credentials(string? ApiKey, string? ResourceId, string? Voice, string? AccessKeyId, string? SecretAccessKey);
     }
 
     /// <summary>写 16-bit PCM WAV (单声道/多声道; frame-major 交错)。</summary>

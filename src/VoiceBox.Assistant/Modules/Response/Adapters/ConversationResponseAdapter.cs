@@ -108,9 +108,7 @@ internal sealed class ConversationResponseAdapter
             boundary.TrySetResult();
     }
 
-    public async Task WaitForForegroundBoundaryAsync(
-        Guid requestId,
-        CancellationToken cancellationToken)
+    public async Task WaitForForegroundBoundaryAsync(Guid requestId, CancellationToken cancellationToken)
     {
         if (_pendingForeground.TryGetValue(requestId, out TaskCompletionSource? boundary))
             await boundary.Task.WaitAsync(cancellationToken).ConfigureAwait(false);

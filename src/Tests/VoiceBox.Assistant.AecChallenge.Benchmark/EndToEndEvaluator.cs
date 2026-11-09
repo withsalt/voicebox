@@ -149,9 +149,7 @@ internal sealed class EndToEndEvaluator : IDisposable
             .Build();
     }
 
-    public async Task<EndToEndCaseResult> EvaluateAsync(
-        PreparedEndToEndCase testCase,
-        CancellationToken cancellationToken)
+    public async Task<EndToEndCaseResult> EvaluateAsync(PreparedEndToEndCase testCase, CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         TtsResult ttsResult = await GetTtsAsync(
@@ -647,9 +645,7 @@ internal sealed class EndToEndEvaluator : IDisposable
             }
         }
 
-        static void DumpControlTraceIfRequested(
-            PreparedEndToEndCase testCase,
-            VoiceAssistantBenchmarkProbe probe)
+        static void DumpControlTraceIfRequested(PreparedEndToEndCase testCase, VoiceAssistantBenchmarkProbe probe)
         {
             if (!string.Equals(
                     Environment.GetEnvironmentVariable("VOICEBOX_BENCHMARK_TRACE"),
@@ -672,9 +668,7 @@ internal sealed class EndToEndEvaluator : IDisposable
     public EndToEndSummary Aggregate(IEnumerable<EndToEndCaseResult> cases)
         => EndToEndMetrics.Aggregate(cases);
 
-    private async Task<TtsResult> GetTtsAsync(
-        string prompt,
-        CancellationToken cancellationToken)
+    private async Task<TtsResult> GetTtsAsync(string prompt, CancellationToken cancellationToken)
     {
         if (_ttsCache.TryGetValue(prompt, out TtsResult? cached))
             return cached;
@@ -691,9 +685,7 @@ internal sealed class EndToEndEvaluator : IDisposable
         return result;
     }
 
-    private async Task<float[]> WaitForRenderAsync(
-        TtsResult ttsResult,
-        CancellationToken cancellationToken)
+    private async Task<float[]> WaitForRenderAsync(TtsResult ttsResult, CancellationToken cancellationToken)
     {
         int expected = Math.Max(
             1,
@@ -721,10 +713,7 @@ internal sealed class EndToEndEvaluator : IDisposable
         return options;
     }
 
-    private static void ApplyRenderGap(
-        PreparedEndToEndCase testCase,
-        int frameOffset,
-        Span<float> render)
+    private static void ApplyRenderGap(PreparedEndToEndCase testCase, int frameOffset, Span<float> render)
     {
         if (testCase.RenderGapStartMs is not int gapStartMs ||
             testCase.RenderGapDurationMs <= 0)
@@ -742,10 +731,7 @@ internal sealed class EndToEndEvaluator : IDisposable
             render[localStart..localEnd].Clear();
     }
 
-    private static bool HasRenderGapOverlap(
-        PreparedEndToEndCase testCase,
-        int frameOffset,
-        int frameLength)
+    private static bool HasRenderGapOverlap(PreparedEndToEndCase testCase, int frameOffset, int frameLength)
     {
         if (testCase.RenderGapStartMs is not int gapStartMs ||
             testCase.RenderGapDurationMs <= 0)
@@ -771,9 +757,7 @@ internal sealed class EndToEndEvaluator : IDisposable
         return Math.Sqrt(energy / samples.Length);
     }
 
-    private static async Task WaitUntilAsync(
-        Func<bool> condition,
-        CancellationToken cancellationToken)
+    private static async Task WaitUntilAsync(Func<bool> condition, CancellationToken cancellationToken)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(30));

@@ -42,10 +42,7 @@ internal sealed class NearEndTestHarness
     public void FeedFromRecognitionAudio(ReadOnlySpan<float> audio, MainAudioObservation observation)
         => Ports.Capture.FeedFromRecognitionAudio(audio, observation);
 
-    public void ObserveDuplexAudio(
-        in DuplexAudioFrame frame,
-        bool playbackStartupGuardActive,
-        bool latestNearEndSpeech = false)
+    public void ObserveDuplexAudio(in DuplexAudioFrame frame, bool playbackStartupGuardActive, bool latestNearEndSpeech = false)
         => Ports.Render.ObserveDuplexAudio(in frame, playbackStartupGuardActive, latestNearEndSpeech);
 
     public void ObserveEndpointSpeechStarted() => Ports.Endpoint.ObserveEndpointSpeechStarted();
@@ -65,11 +62,7 @@ internal sealed class NearEndTestHarness
     public ActiveNearEndProcessingState GetProcessingState()
         => Ports.Render.GetProcessingState();
 
-    public bool TryLocate(
-        ReadOnlySpan<float> audio,
-        out long streamEpoch,
-        out long startSample,
-        out long endSample)
+    public bool TryLocate(ReadOnlySpan<float> audio, out long streamEpoch, out long startSample, out long endSample)
         => Ports.Timeline.TryLocate(audio, out streamEpoch, out startSample, out endSample);
 
     public bool StopCapture(long turnId, bool startCooldown)

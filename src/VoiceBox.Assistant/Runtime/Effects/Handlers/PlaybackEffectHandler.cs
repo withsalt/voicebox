@@ -10,9 +10,7 @@ internal sealed class PlaybackEffectHandler : IPlaybackEffectHandler
     private readonly PlaybackInterruptionController _interruption;
     private readonly VoiceAssistantBenchmarkProbe? _benchmarkProbe;
 
-    public PlaybackEffectHandler(
-        PlaybackInterruptionController interruption,
-        VoiceAssistantBenchmarkProbe? benchmarkProbe = null)
+    public PlaybackEffectHandler(PlaybackInterruptionController interruption, VoiceAssistantBenchmarkProbe? benchmarkProbe = null)
     {
         _interruption = interruption ?? throw new ArgumentNullException(nameof(interruption));
         _benchmarkProbe = benchmarkProbe;

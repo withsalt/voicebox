@@ -216,9 +216,7 @@ internal sealed class RecognitionTurnCoordinator :
     /// commit prevents a speech-end-before-ready path from recursively committing the same
     /// recognition-ready transition through the module's request port.
     /// </summary>
-    public RecognitionSemanticPlan CommitSessionStarted(
-        RecognitionSessionStartResult started,
-        KernelCommitResult kernel)
+    public RecognitionSemanticPlan CommitSessionStarted(RecognitionSessionStartResult started, KernelCommitResult kernel)
     {
         if (!started.Attached)
         {
@@ -337,10 +335,7 @@ internal sealed class RecognitionTurnCoordinator :
         return CreateSpeechEndedPlan(turnId, asrSessionId, speechDuration);
     }
 
-    private RecognitionSemanticPlan CreateSpeechEndedPlan(
-        long turnId,
-        string asrSessionId,
-        TimeSpan speechDuration)
+    private RecognitionSemanticPlan CreateSpeechEndedPlan(long turnId, string asrSessionId, TimeSpan speechDuration)
     {
 
         if (!_recognition.TryGetProviderSession(turnId, out _, out string? attachedSessionId) ||
@@ -362,9 +357,7 @@ internal sealed class RecognitionTurnCoordinator :
             TurnSignal.SpeechEnded(turnId, finishOperationId, speechDuration, asrSessionId));
     }
 
-    public RecognitionSemanticPlan CommitSemanticPlan(
-        RecognitionSemanticPlan plan,
-        KernelCommitResult kernel)
+    public RecognitionSemanticPlan CommitSemanticPlan(RecognitionSemanticPlan plan, KernelCommitResult kernel)
     {
         if (plan.Kind == RecognitionSemanticPlanKind.None)
             return default;
@@ -440,10 +433,7 @@ internal sealed class RecognitionTurnCoordinator :
         return RecognitionResetPlan.FinalizeOnly(turnId, isValidationTurn, alreadyAccepted, restored);
     }
 
-    public void CommitResetAfterAsrStartFailure(
-        RecognitionResetPlan plan,
-        KernelCommitResult kernel,
-        CancellationToken cancellationToken)
+    public void CommitResetAfterAsrStartFailure(RecognitionResetPlan plan, KernelCommitResult kernel, CancellationToken cancellationToken)
     {
         if (!plan.Observed)
             return;

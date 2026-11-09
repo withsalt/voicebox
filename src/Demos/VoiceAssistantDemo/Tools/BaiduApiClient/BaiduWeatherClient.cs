@@ -14,8 +14,7 @@ internal sealed class BaiduWeatherClient(HttpClient httpClient)
     private const string Sk = "j9gOYyZc9eBoOjTv0VfGZX8dNMdaLhM1";
     private const string ApiBase = "https://api.map.baidu.com";
 
-    public async Task<WeatherPosition> LocateCurrentIpAsync(
-        CancellationToken cancellationToken)
+    public async Task<WeatherPosition> LocateCurrentIpAsync(CancellationToken cancellationToken)
     {
         const string path = "/location/ip";
         KeyValuePair<string, string>[] parameters =
@@ -44,9 +43,7 @@ internal sealed class BaiduWeatherClient(HttpClient httpClient)
             "ip");
     }
 
-    public async Task<CurrentWeatherReport> QueryCurrentWeatherAsync(
-        WeatherPosition position,
-        CancellationToken cancellationToken)
+    public async Task<CurrentWeatherReport> QueryCurrentWeatherAsync(WeatherPosition position, CancellationToken cancellationToken)
     {
         const string path = "/weather/v1/";
         var parameters = new List<KeyValuePair<string, string>>();
@@ -91,9 +88,7 @@ internal sealed class BaiduWeatherClient(HttpClient httpClient)
         return JsonDocument.Parse(body);
     }
 
-    private static CurrentWeatherReport ParseCurrentWeather(
-        JsonElement root,
-        WeatherPosition position)
+    private static CurrentWeatherReport ParseCurrentWeather(JsonElement root, WeatherPosition position)
     {
         JsonElement result = RequiredObject(root, "result");
         JsonElement location = TryObject(result, "location", out JsonElement value) ||
@@ -127,9 +122,7 @@ internal sealed class BaiduWeatherClient(HttpClient httpClient)
             UpdatedAt: OptionalText(now, "uptime"));
     }
 
-    private static Uri BuildSignedUri(
-        string path,
-        IReadOnlyList<KeyValuePair<string, string>> parameters)
+    private static Uri BuildSignedUri(string path, IReadOnlyList<KeyValuePair<string, string>> parameters)
     {
         string queryString = BaiduSnSigner.BuildQueryString(parameters);
         string sn = BaiduSnSigner.Calculate(path, queryString, Sk);
@@ -187,10 +180,7 @@ internal sealed class BaiduWeatherClient(HttpClient httpClient)
         };
     }
 
-    private static bool TryObject(
-        JsonElement parent,
-        string name,
-        out JsonElement value) =>
+    private static bool TryObject(JsonElement parent, string name, out JsonElement value) =>
         parent.TryGetProperty(name, out value) && value.ValueKind == JsonValueKind.Object;
 
     private static string? NormalizeUnavailable(string? value) =>
@@ -250,8 +240,7 @@ internal static class CoordinateParser
 
 internal static partial class BaiduSnSigner
 {
-    public static string BuildQueryString(
-        IEnumerable<KeyValuePair<string, string>> parameters) =>
+    public static string BuildQueryString(IEnumerable<KeyValuePair<string, string>> parameters) =>
         string.Join(
             '&',
             parameters.Select(static item =>
@@ -276,16 +265,9 @@ internal static partial class BaiduSnSigner
     private static partial Regex PercentEscapeRegex();
 }
 
-internal sealed record WeatherPosition(
-    string? DistrictId,
-    string? Coordinates,
-    string CoordinateType,
-    string Description,
-    string Source)
+internal sealed record WeatherPosition(string? DistrictId, string? Coordinates, string CoordinateType, string Description, string Source)
 {
-    public static WeatherPosition ForDistrict(
-        string districtId,
-        string description) =>
+    public static WeatherPosition ForDistrict(string districtId, string description) =>
         new(districtId, null, "wgs84", description, "specified");
 
     public static WeatherPosition ForCoordinate(
@@ -312,10 +294,7 @@ internal sealed record CurrentWeatherReport(
     string? VisibilityMeters,
     string? UpdatedAt);
 
-internal sealed class BaiduWeatherApiException(
-    int status,
-    string message,
-    bool isIpLocationRequest) : Exception(message)
+internal sealed class BaiduWeatherApiException(int status, string message, bool isIpLocationRequest) : Exception(message)
 {
     public int Status { get; } = status;
 

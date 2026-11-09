@@ -11,9 +11,7 @@ namespace VoiceBox.Core.Services.AudioService.Models
     {
         public bool HasAnyTimeline => Raw.IsValid || BeforeAec.IsValid || AfterAec.IsValid;
 
-        public static DuplexCaptureTimeline Unbuffered(
-            in CaptureRange sourceRange,
-            int bufferLength)
+        public static DuplexCaptureTimeline Unbuffered(in CaptureRange sourceRange, int bufferLength)
         {
             CaptureSignalTimeline signal =
                 CaptureSignalTimeline.FromWholeBuffer(in sourceRange, bufferLength);

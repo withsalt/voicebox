@@ -8,13 +8,7 @@ namespace VoiceBox.AEC.DFSMN.Internal
         private readonly float _release;
         private float _gain = 1f;
 
-        public ResidualEchoSuppressor(
-            float maxSuppressionDb,
-            float ratio,
-            float attackMs,
-            float releaseMs,
-            int hopLength,
-            int sampleRate)
+        public ResidualEchoSuppressor(float maxSuppressionDb, float ratio, float attackMs, float releaseMs, int hopLength, int sampleRate)
         {
             _minGain = maxSuppressionDb <= 0 ? 1f : DspMath.AttenuationDbToGain(maxSuppressionDb);
             _ratio = ratio;

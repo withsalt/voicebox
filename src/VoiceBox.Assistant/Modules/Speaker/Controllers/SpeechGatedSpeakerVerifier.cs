@@ -485,9 +485,7 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
         }
     }
 
-    private SpeakerVerificationResult ObserveInferenceTimeout(
-        in SpeakerEvidenceQuery query,
-        in SpeakerVerificationResult pending)
+    private SpeakerVerificationResult ObserveInferenceTimeout(in SpeakerEvidenceQuery query, in SpeakerVerificationResult pending)
     {
         SpeakerVerificationResult result = pending.WithInferenceTimeout();
         _diagnostics.RecordResult(result.Status, result.Reason);
@@ -507,11 +505,7 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
     /// remains a tie-breaker, but it is not the primary geometry because CTC token spans may be
     /// wider than the spoken keyword and can otherwise center all windows on silence.
     /// </summary>
-    private int SelectWakeupWindowEndsBySpeech(
-        in SpeakerEvidenceQuery query,
-        long segmentStart,
-        long retainedEnd,
-        Span<long> destination)
+    private int SelectWakeupWindowEndsBySpeech(in SpeakerEvidenceQuery query, long segmentStart, long retainedEnd, Span<long> destination)
     {
         long availableEnd = Math.Min(query.CandidateEndSampleExclusive, retainedEnd);
         long firstStart = SpeakerEvidenceWindowSelector.AlignUp(
@@ -601,10 +595,7 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
     private static long Distance(long value, long target)
         => value >= target ? value - target : target - value;
 
-    private readonly record struct WakeupWindowCandidate(
-        long End,
-        double SpeechRatio,
-        long FocusDistance);
+    private readonly record struct WakeupWindowCandidate(long End, double SpeechRatio, long FocusDistance);
 
     /// <summary>
     /// The newest complete windows of the candidate that are not already known to be silence,

@@ -5,9 +5,7 @@ internal abstract record TurnEvent;
 
 internal sealed record TurnThinkingDelta(string Text) : TurnEvent;
 
-internal sealed record TurnTextDelta(
-    string Text,
-    bool EndsTextSegment = false) : TurnEvent;
+internal sealed record TurnTextDelta(string Text, bool EndsTextSegment = false) : TurnEvent;
 
 /// <summary>
 /// The executor has produced its final answer. The session commits exactly once, releases the

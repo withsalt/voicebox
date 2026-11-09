@@ -51,9 +51,7 @@ namespace VoiceBox.Core.Services.AudioService.Models
         public ReadOnlyMemory<float> CaptureAfterAecValid =>
             CaptureAfterAecTimeline.Slice(CaptureAfterAec);
 
-        private CaptureSignalTimeline ResolveTimeline(
-            in CaptureSignalTimeline timeline,
-            int bufferLength)
+        private CaptureSignalTimeline ResolveTimeline(in CaptureSignalTimeline timeline, int bufferLength)
             => Timeline.HasAnyTimeline
                 ? timeline
                 : CaptureSignalTimeline.FromWholeBuffer(CaptureRange, bufferLength);

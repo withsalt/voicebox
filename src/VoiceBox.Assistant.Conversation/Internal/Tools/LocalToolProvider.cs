@@ -39,17 +39,14 @@ internal sealed class LocalToolProvider : IConversationToolProvider
         return Task.CompletedTask;
     }
 
-    public ValueTask<IReadOnlyList<ConversationToolDefinition>> GetToolsAsync(
-        CancellationToken cancellationToken = default)
+    public ValueTask<IReadOnlyList<ConversationToolDefinition>> GetToolsAsync(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         cancellationToken.ThrowIfCancellationRequested();
         return ValueTask.FromResult(_definitions);
     }
 
-    public async ValueTask<ConversationToolResult> InvokeAsync(
-        ConversationToolCall call,
-        CancellationToken cancellationToken = default)
+    public async ValueTask<ConversationToolResult> InvokeAsync(ConversationToolCall call, CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         if (!_toolsByName.TryGetValue(call.ToolId.ToolName, out IConversationTool? tool))

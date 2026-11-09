@@ -16,9 +16,7 @@ public sealed class SpeakerProfileBuilderTests
     [InlineData(SpeakerEnrollmentCondition.Clean, 40)]
     [InlineData(SpeakerEnrollmentCondition.DoubleTalk, 39)]
     [InlineData(SpeakerEnrollmentCondition.DoubleTalk, 40)]
-    public void Coverage_PrefersUnrepresentedDirectionOverDuplicateCluster(
-        SpeakerEnrollmentCondition condition,
-        double duplicateAngle)
+    public void Coverage_PrefersUnrepresentedDirectionOverDuplicateCluster(SpeakerEnrollmentCondition condition, double duplicateAngle)
     {
         // Directions stand in for recording conditions within one bank. The medoid is 0 degrees;
         // after covering -40 and +40, the fourth slot should cover +/-20, not the cluster at +40.
@@ -47,9 +45,7 @@ public sealed class SpeakerProfileBuilderTests
     [InlineData(SpeakerEnrollmentCondition.Clean, 0.05)]
     [InlineData(SpeakerEnrollmentCondition.DoubleTalk, 0)]
     [InlineData(SpeakerEnrollmentCondition.DoubleTalk, 0.05)]
-    public void DuplicateDirections_DoNotFillUnusedSlotsOrDiscardAcceptedSegments(
-        SpeakerEnrollmentCondition condition,
-        double perturbation)
+    public void DuplicateDirections_DoNotFillUnusedSlotsOrDiscardAcceptedSegments(SpeakerEnrollmentCondition condition, double perturbation)
     {
         SpeakerEnrollmentSegmentEmbedding[] segments = Segments(condition, 0, perturbation, 20, 20 + perturbation, -20, -20 + perturbation);
         var builder = new SpeakerProfileBuilder(_speaker, new SpeakerEnrollmentOptions { MaxPrototypesPerBank = 8 });

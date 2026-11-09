@@ -145,11 +145,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Models
         /// 字典查不到的字 / 词会在初始化时抛出, 此时请改用 <see cref="AddKeyword(string, string, float, float, int)"/>
         /// 显式指定 Tokens。
         /// </summary>
-        public SherpaOnnxKwsOptions AddKeyword(
-            string keyword,
-            float boostScore = 0f,
-            float threshold = 0f,
-            int debounceMs = -1)
+        public SherpaOnnxKwsOptions AddKeyword(string keyword, float boostScore = 0f, float threshold = 0f, int debounceMs = -1)
         {
             if (string.IsNullOrWhiteSpace(keyword))
                 throw new ArgumentException("Keyword must not be empty.", nameof(keyword));

@@ -22,11 +22,7 @@ namespace VoiceBox.AEC.DFSMN.Internal
             _scratch = new float[frameLength];
         }
 
-        public void Build(
-            ReadOnlySpan<float> near,
-            ReadOnlySpan<float> linear,
-            ReadOnlySpan<float> echo,
-            Span<float> destination)
+        public void Build(ReadOnlySpan<float> near, ReadOnlySpan<float> linear, ReadOnlySpan<float> echo, Span<float> destination)
         {
             if (near.Length != _frameLength || linear.Length != _frameLength || echo.Length != _frameLength)
                 throw new ArgumentException($"all input frames must have length {_frameLength}.");

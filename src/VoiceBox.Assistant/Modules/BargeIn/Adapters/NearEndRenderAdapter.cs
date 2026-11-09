@@ -19,9 +19,6 @@ internal sealed class NearEndRenderAdapter : INearEndRenderPort
     public ActiveNearEndDiagnosticSnapshot GetDiagnosticSnapshot()
         => _dataPlane.GetDiagnosticSnapshot();
 
-    public void ObserveDuplexAudio(
-        in DuplexAudioFrame frame,
-        bool playbackStartupGuardActive,
-        bool latestNearEndSpeech = false)
+    public void ObserveDuplexAudio(in DuplexAudioFrame frame, bool playbackStartupGuardActive, bool latestNearEndSpeech = false)
         => _dataPlane.ObserveDuplexAudio(in frame, playbackStartupGuardActive, latestNearEndSpeech);
 }

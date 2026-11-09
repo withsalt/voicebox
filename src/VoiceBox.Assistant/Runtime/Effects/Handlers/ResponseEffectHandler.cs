@@ -41,9 +41,7 @@ internal sealed class ResponseEffectHandler : IResponseEffectHandler
         _benchmarkProbe = benchmarkProbe;
     }
 
-    public ValueTask GenerateResponseAsync(
-        GenerateResponseEffect effect,
-        CancellationToken cancellationToken)
+    public ValueTask GenerateResponseAsync(GenerateResponseEffect effect, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         _scheduler.Schedule(
@@ -53,9 +51,7 @@ internal sealed class ResponseEffectHandler : IResponseEffectHandler
         return ValueTask.CompletedTask;
     }
 
-    public ValueTask CancelResponseAsync(
-        CancelResponseEffect effect,
-        CancellationToken cancellationToken)
+    public ValueTask CancelResponseAsync(CancelResponseEffect effect, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         _benchmarkProbe?.ObserveControlTrace("effect.cancel-response", effect.TurnId, effect.OperationId);
@@ -63,9 +59,7 @@ internal sealed class ResponseEffectHandler : IResponseEffectHandler
         return ValueTask.CompletedTask;
     }
 
-    private async Task RunAsync(
-        GenerateResponseEffect effect,
-        CancellationToken cancellationToken)
+    private async Task RunAsync(GenerateResponseEffect effect, CancellationToken cancellationToken)
     {
         _turnContexts.TryGetRecognitionMetadata(
             effect.TurnId,

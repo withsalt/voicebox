@@ -32,9 +32,7 @@ namespace VoiceBox.Speaker.WeSpeaker
         }
 
         /// <summary>向 IServiceCollection 注册 WeSpeaker 说话人验证服务 (单例)。</summary>
-        public static IServiceCollection AddWeSpeakerService(
-            this IServiceCollection services,
-            Action<WeSpeakerOptions> configure)
+        public static IServiceCollection AddWeSpeakerService(this IServiceCollection services, Action<WeSpeakerOptions> configure)
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(configure);

@@ -48,8 +48,7 @@ namespace VoiceBox.DNR.Benchmark
         /// 后对<b>语音活跃帧</b>取均值 (静音帧按能量门限剔除, 避免 −10 dB 底噪拉低均值)。
         /// estimate 先做全局最小二乘增益对齐, 使指标不受整体音量差影响。无活跃帧时返回 NaN。
         /// </summary>
-        public static double SegmentalSnr(ReadOnlySpan<float> reference, ReadOnlySpan<float> estimate,
-            int frame = 400, int hop = 160)
+        public static double SegmentalSnr(ReadOnlySpan<float> reference, ReadOnlySpan<float> estimate, int frame = 400, int hop = 160)
         {
             int n = Math.Min(reference.Length, estimate.Length);
             if (n < frame) return double.NaN;

@@ -75,9 +75,7 @@ internal sealed class ConversationSessionCore : IAsyncDisposable
         run.Dispose();
     }
 
-    public IAsyncEnumerable<ConversationEvent> StreamAsync(
-        ConversationRequest request,
-        CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ConversationEvent> StreamAsync(ConversationRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentException.ThrowIfNullOrWhiteSpace(request.Text);

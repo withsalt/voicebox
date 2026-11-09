@@ -204,9 +204,7 @@ internal sealed class AssistantRuntimeLifecycleCoordinator
             _ => throw new ArgumentOutOfRangeException(nameof(participant), participant, null),
         };
 
-    private async Task StartParticipantAsync(
-        AssistantLifecycleParticipant participant,
-        CancellationToken cancellationToken)
+    private async Task StartParticipantAsync(AssistantLifecycleParticipant participant, CancellationToken cancellationToken)
     {
         switch (participant)
         {

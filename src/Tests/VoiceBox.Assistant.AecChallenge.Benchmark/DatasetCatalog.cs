@@ -128,9 +128,7 @@ internal static class DatasetCatalog
         }
     }
 
-    private static IEnumerable<EvaluationCase> DiscoverDeviceRecordings(
-        string root,
-        EvaluationOptions options)
+    private static IEnumerable<EvaluationCase> DiscoverDeviceRecordings(string root, EvaluationOptions options)
     {
         DeviceCorpus[] corpora =
         [
@@ -197,11 +195,7 @@ internal static class DatasetCatalog
         }
     }
 
-    internal static bool TryClassifyDeviceMicrophoneName(
-        string name,
-        out string scenario,
-        out bool expectedNearEnd,
-        out string session)
+    internal static bool TryClassifyDeviceMicrophoneName(string name, out string scenario, out bool expectedNearEnd, out string session)
     {
         string stem;
         if (name.EndsWith("_mic_c.wav", StringComparison.OrdinalIgnoreCase))
@@ -243,11 +237,7 @@ internal static class DatasetCatalog
         return false;
     }
 
-    private static bool TryClassifyDeviceMicrophonePath(
-        string path,
-        out string scenario,
-        out bool expectedNearEnd,
-        out string session)
+    private static bool TryClassifyDeviceMicrophonePath(string path, out string scenario, out bool expectedNearEnd, out string session)
     {
         string name = Path.GetFileName(path);
         if (TryClassifyDeviceMicrophoneName(name, out scenario, out expectedNearEnd, out session))
@@ -472,10 +462,7 @@ internal static class DatasetCatalog
         return false;
     }
 
-    private static IReadOnlyList<EvaluationCase> SamplePerStratum(
-        IEnumerable<EvaluationCase> cases,
-        int count,
-        int seed)
+    private static IReadOnlyList<EvaluationCase> SamplePerStratum(IEnumerable<EvaluationCase> cases, int count, int seed)
     {
         return cases
             .GroupBy(c => (c.Corpus, c.Scenario, c.ExpectedNearEnd))
@@ -577,8 +564,5 @@ internal static class DatasetCatalog
         }
     }
 
-    private sealed record DeviceCorpus(
-        string Corpus,
-        string DeviceClass,
-        IReadOnlyList<string> CandidateDirectories);
+    private sealed record DeviceCorpus(string Corpus, string DeviceClass, IReadOnlyList<string> CandidateDirectories);
 }

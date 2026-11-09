@@ -4,10 +4,7 @@ namespace VoiceBox.Audio.PortAudio.Backend;
 
 internal static class RealtimeAudioChannel
 {
-    internal static BoundedChannelOptions CreateDropOldestOptions(
-        int capacity,
-        bool singleReader,
-        bool singleWriter)
+    internal static BoundedChannelOptions CreateDropOldestOptions(int capacity, bool singleReader, bool singleWriter)
         // Dedicated audio consumers block on WaitToReadAsync; synchronous continuations let a
         // producer wake them without dispatching the signal through a potentially starved pool.
         => new(capacity)
@@ -18,11 +15,7 @@ internal static class RealtimeAudioChannel
             AllowSynchronousContinuations = true,
         };
 
-    internal static Channel<T> CreateDropOldest<T>(
-        int capacity,
-        bool singleReader,
-        bool singleWriter,
-        Action<T>? itemDropped = null)
+    internal static Channel<T> CreateDropOldest<T>(int capacity, bool singleReader, bool singleWriter, Action<T>? itemDropped = null)
         => Channel.CreateBounded<T>(
             CreateDropOldestOptions(capacity, singleReader, singleWriter),
             itemDropped);

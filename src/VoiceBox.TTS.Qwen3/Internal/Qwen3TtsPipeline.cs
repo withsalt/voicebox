@@ -228,8 +228,7 @@ namespace VoiceBox.TTS.Qwen3.Internal
             return (window, ctx * _cfg.SamplesPerFrame);
         }
 
-        private (List<int[]> window, int drop) SnapshotWindowForRange(
-            IReadOnlyList<int[]> frames, int decodedFrames, int end, int leftCtx)
+        private (List<int[]> window, int drop) SnapshotWindowForRange(IReadOnlyList<int[]> frames, int decodedFrames, int end, int leftCtx)
         {
             int ctx = decodedFrames - leftCtx > 0 ? leftCtx : decodedFrames;
             int from = decodedFrames - ctx;
@@ -289,8 +288,7 @@ namespace VoiceBox.TTS.Qwen3.Internal
             return (prompt, attnLen, pad, gp, rng);
         }
 
-        private IEnumerable<int[]> GenerateFrames(
-            float[] prompt, int attnLen, float[] pad, GenParams gp, Random rng, CancellationToken ct)
+        private IEnumerable<int[]> GenerateFrames(float[] prompt, int attnLen, float[] pad, GenParams gp, Random rng, CancellationToken ct)
         {
             var swTalker = new System.Diagnostics.Stopwatch();
             var swCp = new System.Diagnostics.Stopwatch();

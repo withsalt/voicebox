@@ -29,9 +29,7 @@ internal sealed class AsrSessionManager
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
-    public async Task<SessionInfo> StartAsync(
-        Func<string, AsrSession> createSession,
-        CancellationToken ct)
+    public async Task<SessionInfo> StartAsync(Func<string, AsrSession> createSession, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(createSession);
         ct.ThrowIfCancellationRequested();

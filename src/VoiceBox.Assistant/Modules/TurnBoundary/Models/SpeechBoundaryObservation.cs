@@ -41,9 +41,7 @@ internal readonly record struct SpeechBoundaryObservation(
             null,
             default);
 
-    public static SpeechBoundaryObservation ConfirmedListening(
-        TurnSignal signal,
-        SpeakingDecision decision)
+    public static SpeechBoundaryObservation ConfirmedListening(TurnSignal signal, SpeakingDecision decision)
         => new(
             SpeechBoundaryObservationKind.ConfirmedListening,
             signal,
@@ -73,10 +71,7 @@ internal readonly record struct SpeechBoundaryObservation(
             default,
             identity);
 
-    public static SpeechBoundaryObservation BeginRecognition(
-        long turnId,
-        string sessionId,
-        TimeSpan speechDuration)
+    public static SpeechBoundaryObservation BeginRecognition(long turnId, string sessionId, TimeSpan speechDuration)
         => new(
             SpeechBoundaryObservationKind.BeginRecognition,
             null,

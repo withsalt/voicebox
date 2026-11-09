@@ -8,9 +8,7 @@ internal sealed class RuntimeOperationEffectHandler : IRuntimeEffectHandler
     private readonly IActiveResponseCancellationPort _cancellation;
     private readonly ITurnCompletionPort _completion;
 
-    public RuntimeOperationEffectHandler(
-        IActiveResponseCancellationPort cancellation,
-        ITurnCompletionPort completion)
+    public RuntimeOperationEffectHandler(IActiveResponseCancellationPort cancellation, ITurnCompletionPort completion)
     {
         _cancellation = cancellation ?? throw new ArgumentNullException(nameof(cancellation));
         _completion = completion ?? throw new ArgumentNullException(nameof(completion));

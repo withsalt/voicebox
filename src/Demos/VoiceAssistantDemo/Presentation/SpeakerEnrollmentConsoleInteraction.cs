@@ -103,9 +103,7 @@ internal sealed class SpeakerEnrollmentConsoleInteraction : ISpeakerEnrollmentPa
         }
     }
 
-    public async Task WaitForSegmentStartAsync(
-        SpeakerEnrollmentProgressEventArgs segment,
-        CancellationToken cancellationToken)
+    public async Task WaitForSegmentStartAsync(SpeakerEnrollmentProgressEventArgs segment, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var lines = new List<string> { string.Empty };

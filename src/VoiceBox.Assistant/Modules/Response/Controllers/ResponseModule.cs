@@ -428,9 +428,7 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
         return operation;
     }
 
-    private void EndOperation(
-        ResponseOperation operation,
-        IResponseTurnResourcePort? turnResources)
+    private void EndOperation(ResponseOperation operation, IResponseTurnResourcePort? turnResources)
     {
         lock (_operationLock)
         {
@@ -467,9 +465,7 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
             return ReferenceEquals(_currentOperation, operation) && _control.IsCurrentTurn(operation.TurnId);
     }
 
-    private async ValueTask<bool> TryTransitionToSpeakingAsync(
-        ResponseOperation operation,
-        CancellationToken cancellationToken)
+    private async ValueTask<bool> TryTransitionToSpeakingAsync(ResponseOperation operation, CancellationToken cancellationToken)
     {
         if (!IsCurrentOperation(operation))
             return false;
@@ -524,10 +520,7 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
         }
     }
 
-    private sealed class ResponseOperation(
-        long turnId,
-        long operationId,
-        CancellationTokenSource cancellation)
+    private sealed class ResponseOperation(long turnId, long operationId, CancellationTokenSource cancellation)
     {
         public long TurnId { get; } = turnId;
 

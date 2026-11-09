@@ -271,11 +271,7 @@ internal static class AcousticSceneRenderer
         public double ClippedSampleRatio =>
             _renderedSamples > 0 ? _clippedSamples / (double)_renderedSamples : 0;
 
-        public void Process(
-            int offset,
-            ReadOnlySpan<float> render,
-            Span<float> microphone,
-            Span<float> echo)
+        public void Process(int offset, ReadOnlySpan<float> render, Span<float> microphone, Span<float> echo)
         {
             if (render.Length != CallbackSamples ||
                 microphone.Length != CallbackSamples ||

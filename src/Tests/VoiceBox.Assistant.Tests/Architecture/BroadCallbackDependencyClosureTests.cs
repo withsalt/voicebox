@@ -112,11 +112,7 @@ public sealed class BroadCallbackDependencyClosureTests
                     parameter.ParameterType == typeof(CancellationTokenSource).MakeByRefType())));
     }
 
-    private static void CheckCallable(
-        Type type,
-        MethodBase callable,
-        string name,
-        List<string> violations)
+    private static void CheckCallable(Type type, MethodBase callable, string name, List<string> violations)
     {
         string key = MemberKey(type, name);
         if (AllowedDelegateMembers.Contains(key))

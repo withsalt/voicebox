@@ -33,9 +33,7 @@ namespace VoiceBox.Wakeup.FsmnKws
         /// <summary>
         /// 注册到通用 <see cref="IServiceCollection"/> (非 AudioServiceManager 场景)。
         /// </summary>
-        public static IServiceCollection AddFsmnKwsService(
-            this IServiceCollection services,
-            Action<FsmnKwsOptions> configure)
+        public static IServiceCollection AddFsmnKwsService(this IServiceCollection services, Action<FsmnKwsOptions> configure)
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(configure);

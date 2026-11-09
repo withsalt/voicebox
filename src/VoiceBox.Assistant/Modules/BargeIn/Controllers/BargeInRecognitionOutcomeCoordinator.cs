@@ -37,11 +37,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Controllers
             _benchmarkProbe = benchmarkProbe;
         }
 
-        public async Task RunRecognitionOutcomeAsync(
-            long turnId,
-            string asrSessionId,
-            TimeSpan speechDuration,
-            CancellationToken runToken)
+        public async Task RunRecognitionOutcomeAsync(long turnId, string asrSessionId, TimeSpan speechDuration, CancellationToken runToken)
         {
             bool completeWithoutResponse = false;
 
@@ -129,9 +125,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Controllers
             }
         }
 
-        private static void ThrowIfRecognitionFailed(
-            RecognitionOutcome outcome,
-            CancellationToken cancellationToken)
+        private static void ThrowIfRecognitionFailed(RecognitionOutcome outcome, CancellationToken cancellationToken)
         {
             if (outcome.Kind == RecognitionOutcomeKind.Cancelled)
                 throw new OperationCanceledException(cancellationToken);

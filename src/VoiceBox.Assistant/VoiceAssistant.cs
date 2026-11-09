@@ -77,9 +77,7 @@ namespace VoiceBox.Assistant
             => _runtime.EnqueueSpeechAsync(text, queuePosition, cancellationToken);
 
         /// <summary>Compatibility overload that appends to the queue.</summary>
-        public ValueTask<SpeechEnqueueResult> EnqueueSpeechAsync(
-            string text,
-            CancellationToken cancellationToken)
+        public ValueTask<SpeechEnqueueResult> EnqueueSpeechAsync(string text, CancellationToken cancellationToken)
             => EnqueueSpeechAsync(text, SpeechPlaybackQueuePosition.Tail, cancellationToken);
 
         /// <summary>

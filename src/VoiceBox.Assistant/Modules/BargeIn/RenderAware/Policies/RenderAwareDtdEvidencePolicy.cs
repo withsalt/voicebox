@@ -30,9 +30,7 @@ internal sealed class RenderAwareDtdEvidencePolicy
         _decisionThreshold = decisionThreshold;
     }
 
-    public RenderAwareDtdEvidenceDecision Evaluate(
-        in RenderAwareDtdFrameEvidence evidence,
-        in RuntimeEchoProfileSnapshot profile)
+    public RenderAwareDtdEvidenceDecision Evaluate(in RenderAwareDtdFrameEvidence evidence, in RuntimeEchoProfileSnapshot profile)
     {
         bool hasUsablePostAec = evidence.HasPostAecEvidence &&
             double.IsFinite(evidence.PostAecRms) && evidence.PostAecRms >= 0 &&

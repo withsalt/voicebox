@@ -29,11 +29,7 @@ internal sealed class VadSpeakerGateCoordinator : ISpeakerGateBoundaryPort
     // -1 when no candidate is active; otherwise the SpeakerVerificationPurpose of the candidate.
     private int _activePurpose = -1;
 
-    public VadSpeakerGateCoordinator(
-        ISpeakerModule? speaker,
-        IVadSpeakerGateHost host,
-        ISpeechTimelineLocator timeline,
-        ILogger logger)
+    public VadSpeakerGateCoordinator(ISpeakerModule? speaker, IVadSpeakerGateHost host, ISpeechTimelineLocator timeline, ILogger logger)
     {
         _speaker = speaker;
         _verificationState = speaker;
@@ -189,11 +185,7 @@ internal sealed class VadSpeakerGateCoordinator : ISpeakerGateBoundaryPort
         return default;
     }
 
-    private async Task WaitForDecisionAsync(
-        long version,
-        SpeakerVerificationPurpose purpose,
-        SpeakerEvidenceQuery query,
-        TimeSpan duration)
+    private async Task WaitForDecisionAsync(long version, SpeakerVerificationPurpose purpose, SpeakerEvidenceQuery query, TimeSpan duration)
     {
         if (_speaker is null)
             return;
@@ -211,11 +203,7 @@ internal sealed class VadSpeakerGateCoordinator : ISpeakerGateBoundaryPort
         }
     }
 
-    private void Resolve(
-        long version,
-        SpeakerVerificationPurpose purpose,
-        SpeakerVerificationResult result,
-        TimeSpan? pendingSpeechEnd)
+    private void Resolve(long version, SpeakerVerificationPurpose purpose, SpeakerVerificationResult result, TimeSpan? pendingSpeechEnd)
     {
         BargeInSpeakerGateStatus status = MapResult(result);
         if (status == BargeInSpeakerGateStatus.Pending)
@@ -233,10 +221,7 @@ internal sealed class VadSpeakerGateCoordinator : ISpeakerGateBoundaryPort
     /// once it exists the worker gets the purpose's bounded inference timeout. SingleTalk is
     /// deliberately excluded while its input is open because it verifies in parallel with ASR.
     /// </summary>
-    private SpeakerVerificationResult ApplyBoundedDeadline(
-        long version,
-        in SpeakerEvidenceQuery query,
-        SpeakerVerificationResult result)
+    private SpeakerVerificationResult ApplyBoundedDeadline(long version, in SpeakerEvidenceQuery query, SpeakerVerificationResult result)
     {
         if (result.IsFinal || result.Reason != SpeakerVerificationReason.WaitingForInference)
             return result;

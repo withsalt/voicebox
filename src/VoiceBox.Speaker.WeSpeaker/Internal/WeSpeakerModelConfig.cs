@@ -120,11 +120,7 @@ namespace VoiceBox.Speaker.WeSpeaker.Internal
         private static string GetString(Dictionary<string, string> values, string key, string fallback) =>
             values.TryGetValue(key, out string? value) ? value : fallback;
 
-        private static int GetInt(
-            Dictionary<string, string> values,
-            string key,
-            int fallback,
-            string configPath)
+        private static int GetInt(Dictionary<string, string> values, string key, int fallback, string configPath)
         {
             if (!values.TryGetValue(key, out string? value)) return fallback;
             if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed))
@@ -132,11 +128,7 @@ namespace VoiceBox.Speaker.WeSpeaker.Internal
             throw Invalid($"Invalid integer value '{value}' for {key}.", configPath);
         }
 
-        private static float GetFloat(
-            Dictionary<string, string> values,
-            string key,
-            float fallback,
-            string configPath)
+        private static float GetFloat(Dictionary<string, string> values, string key, float fallback, string configPath)
         {
             if (!values.TryGetValue(key, out string? value)) return fallback;
             if (float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsed))

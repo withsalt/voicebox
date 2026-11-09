@@ -174,10 +174,7 @@ public sealed class NearEndStateOwnershipTests
     [InlineData(5L, -3L, 2L)]
     [InlineData(long.MaxValue - 10, 10L, long.MaxValue)]
     [InlineData(long.MaxValue - 10, 11L, long.MaxValue)]
-    public void Capture_SaturatingAddOnlyClampsOnPositiveOverflow(
-        long left,
-        long right,
-        long expected)
+    public void Capture_SaturatingAddOnlyClampsOnPositiveOverflow(long left, long right, long expected)
         => Assert.Equal(expected, NearEndCaptureStateMachine.SaturatingAdd(left, right));
 
     [Fact]
@@ -317,8 +314,7 @@ public sealed class NearEndStateOwnershipTests
     [InlineData(1L, 3L, 21L, true)]
     [InlineData(1L, 3L, 20L, false)]
     [InlineData(1L, 3L, 19L, false)]
-    public void Capture_StaleOrDiscontinuousSpeechCannotReopenDrain(
-        long turnId, long epoch, long endSample, bool discontinuity)
+    public void Capture_StaleOrDiscontinuousSpeechCannotReopenDrain(long turnId, long epoch, long endSample, bool discontinuity)
     {
         NearEndCaptureStateMachine capture = NewDrainingCapture(20, 0);
 
@@ -963,12 +959,7 @@ public sealed class NearEndStateOwnershipTests
             EndSampleExclusive: end,
             LatestFrameAccepted: true);
 
-    private static DuplexAudioFrame Frame(
-        long startSample,
-        int sampleCount,
-        long streamEpoch,
-        float playbackGain = 1f,
-        int channels = 1)
+    private static DuplexAudioFrame Frame(long startSample, int sampleCount, long streamEpoch, float playbackGain = 1f, int channels = 1)
     {
         float[] audio = new float[sampleCount * channels];
         return new DuplexAudioFrame(

@@ -7,8 +7,7 @@ namespace VoiceBox.ASR.FireRedASR2.Internal
     /// </summary>
     internal static class CtcGreedyDecoder
     {
-        public static List<int> Decode(float[] ctcLogits, int frameCount, int vocabSize, int blankId = 0,
-            CancellationToken ct = default)
+        public static List<int> Decode(float[] ctcLogits, int frameCount, int vocabSize, int blankId = 0, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
             int t = frameCount;

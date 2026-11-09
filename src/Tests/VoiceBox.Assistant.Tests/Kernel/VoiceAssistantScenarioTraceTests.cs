@@ -98,8 +98,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         await AssertOrRegenerateTraceAsync("tts-fault.json", actual);
     }
 
-    private static async Task<AssistantScenarioTrace> CaptureNormalTurnTraceAsync(
-        VoiceAssistantBenchmarkProbe? benchmarkProbe = null)
+    private static async Task<AssistantScenarioTrace> CaptureNormalTurnTraceAsync(VoiceAssistantBenchmarkProbe? benchmarkProbe = null)
     {
         var services = TestServices.Create();
         services.Asr.CompleteStart("session-1");
@@ -344,9 +343,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             new ScenarioFinalState(assistant.State.ToString(), assistant.WakeMode.ToString()));
     }
 
-    private static async Task<AssistantScenarioTrace> CaptureFaultTraceAsync(
-        string scenarioId,
-        Action<TestServices> configure)
+    private static async Task<AssistantScenarioTrace> CaptureFaultTraceAsync(string scenarioId, Action<TestServices> configure)
     {
         var services = TestServices.Create();
         services.Asr.CompleteStart("fault-session");
@@ -391,9 +388,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             new ScenarioFinalState(assistant.State.ToString(), assistant.WakeMode.ToString()));
     }
 
-    private static async Task AssertOrRegenerateTraceAsync(
-        string relativePath,
-        AssistantScenarioTrace actual)
+    private static async Task AssertOrRegenerateTraceAsync(string relativePath, AssistantScenarioTrace actual)
     {
         if (string.Equals(
                 Environment.GetEnvironmentVariable("VOICEBOX_REGENERATE_GOLDENS"),
@@ -466,9 +461,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             projected.Select(ProjectKernelStep).ToArray());
     }
 
-    private static KernelSemanticStep ProjectKernelStep(
-        KernelDecisionObservation observation,
-        int index)
+    private static KernelSemanticStep ProjectKernelStep(KernelDecisionObservation observation, int index)
         => new(
             index + 1,
             SignalDiscriminant(observation.Signal.Kind),

@@ -343,8 +343,7 @@ namespace Misaki.NET.Jieba.Segmenter
             return words;
         }
 
-        internal IEnumerable<string> CutIt(string text, Func<string, IEnumerable<string>> cutMethod,
-                                           Regex reHan, Regex reSkip, bool cutAll)
+        internal IEnumerable<string> CutIt(string text, Func<string, IEnumerable<string>> cutMethod, Regex reHan, Regex reSkip, bool cutAll)
         {
             var result = new List<string>();
             var blocks = reHan.Split(text);

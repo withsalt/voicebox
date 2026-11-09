@@ -34,10 +34,7 @@ namespace VoiceBox.Wakeup.OpenWakeWord.Internal
 
         public int FeatureFrames => _featureFrames;
 
-        public WakeWordDetector(
-            WakeWordModelDefinition definition,
-            uint sampleRate,
-            OnnxExecutionOptions onnxOptions)
+        public WakeWordDetector(WakeWordModelDefinition definition, uint sampleRate, OnnxExecutionOptions onnxOptions)
         {
             Definition = definition ?? throw new ArgumentNullException(nameof(definition));
             if (string.IsNullOrWhiteSpace(definition.Keyword))

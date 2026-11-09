@@ -57,13 +57,7 @@ namespace VoiceBox.TTS.DoubaoOnline.Session
         /// <summary>字幕 (字级别时间戳) 快照。</summary>
         public IReadOnlyList<WordTimestamp> Subtitles => _subtitles;
 
-        public SeedTtsSession(
-            string sessionId,
-            string requestId,
-            string connectId,
-            int sampleRate,
-            int channels,
-            ILogger? logger = null)
+        public SeedTtsSession(string sessionId, string requestId, string connectId, int sampleRate, int channels, ILogger? logger = null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
             SessionId = sessionId;

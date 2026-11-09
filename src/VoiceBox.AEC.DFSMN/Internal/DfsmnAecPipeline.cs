@@ -56,11 +56,7 @@ namespace VoiceBox.AEC.DFSMN.Internal
         {
         }
 
-        internal DfsmnAecPipeline(
-            DfsmnAecOptions options,
-            IDfsmnMaskRunner? maskRunner,
-            MvnTransform? mvn,
-            bool requireVadOutput = false)
+        internal DfsmnAecPipeline(DfsmnAecOptions options, IDfsmnMaskRunner? maskRunner, MvnTransform? mvn, bool requireVadOutput = false)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _options.Validate();
@@ -275,9 +271,7 @@ namespace VoiceBox.AEC.DFSMN.Internal
             _maskRunner.Dispose();
         }
 
-        private void ProcessHop(
-            DfsmnPipelineHopHandler? hopHandler,
-            in CaptureRange captureRange)
+        private void ProcessHop(DfsmnPipelineHopHandler? hopHandler, in CaptureRange captureRange)
         {
             _referenceDelay.Process(_renderHop, _delayedRenderHop);
 
@@ -332,10 +326,7 @@ namespace VoiceBox.AEC.DFSMN.Internal
                 in captureRange);
         }
 
-        private static CaptureRange SliceRange(
-            in CaptureRange sourceRange,
-            int offset,
-            int length)
+        private static CaptureRange SliceRange(in CaptureRange sourceRange, int offset, int length)
         {
             if (!sourceRange.IsValid ||
                 offset < 0 ||

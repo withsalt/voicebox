@@ -830,10 +830,7 @@ public sealed class AssistantTurnObservationStoreMutationTests
             $"'{fieldName}' is not a turn-resource field; the owner that holds it must expose it explicitly.");
     }
 
-    private static void SetField<T>(
-        AssistantTurnObservationStoreHarness turns,
-        string fieldName,
-        T value)
+    private static void SetField<T>(AssistantTurnObservationStoreHarness turns, string fieldName, T value)
     {
         if (fieldName == "_responseCts")
         {

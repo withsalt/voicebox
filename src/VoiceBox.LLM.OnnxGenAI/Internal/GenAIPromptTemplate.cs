@@ -34,11 +34,7 @@ namespace VoiceBox.LLM.OnnxGenAI.Internal
         /// 把消息列表渲染为 prompt 字符串, 并返回消息中按顺序出现的音频/图像数量,
         /// 以便 InputBuilder 校验数据条数与 placeholder token 数量是否一致。
         /// </summary>
-        public RenderResult Render(
-            Tokenizer tokenizer,
-            IReadOnlyList<ChatMessage> messages,
-            bool addGenerationPrompt,
-            bool enableThinking)
+        public RenderResult Render(Tokenizer tokenizer, IReadOnlyList<ChatMessage> messages, bool addGenerationPrompt, bool enableThinking)
         {
             int audioCount = 0;
             int imageCount = 0;

@@ -164,11 +164,7 @@ public sealed class NearEndAudioReservoirTests
         Assert.Equal(105, end);
     }
 
-    private static void Add(
-        NearEndAudioReservoir reservoir,
-        float[] audio,
-        long epoch,
-        ref long position)
+    private static void Add(NearEndAudioReservoir reservoir, float[] audio, long epoch, ref long position)
     {
         long start = position;
         position += audio.Length;

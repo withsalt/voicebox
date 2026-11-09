@@ -24,7 +24,5 @@ public interface IConversationSession : IAsyncDisposable
     /// <summary>
     /// 执行一轮请求并返回输出流。返回流按单次消费设计, 不保证可重复枚举。
     /// </summary>
-    IAsyncEnumerable<ConversationEvent> StreamAsync(
-        ConversationRequest request,
-        CancellationToken cancellationToken = default);
+    IAsyncEnumerable<ConversationEvent> StreamAsync(ConversationRequest request, CancellationToken cancellationToken = default);
 }

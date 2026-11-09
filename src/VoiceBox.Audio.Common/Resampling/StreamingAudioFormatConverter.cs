@@ -24,10 +24,7 @@ namespace VoiceBox.Audio.Common.Resampling
         public int TargetSampleRate => _targetSampleRate;
         public int TargetChannels => _targetChannels;
 
-        public StreamingAudioFormatConverter(
-            int targetSampleRate,
-            int targetChannels,
-            int quality = 10)
+        public StreamingAudioFormatConverter(int targetSampleRate, int targetChannels, int quality = 10)
         {
             if (targetSampleRate <= 0) throw new ArgumentOutOfRangeException(nameof(targetSampleRate));
             if (targetChannels <= 0) throw new ArgumentOutOfRangeException(nameof(targetChannels));

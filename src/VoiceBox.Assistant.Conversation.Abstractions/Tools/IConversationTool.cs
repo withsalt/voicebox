@@ -14,7 +14,5 @@ public interface IConversationTool : IDisposable
     ConversationToolDescriptor Descriptor { get; }
 
     /// <summary>执行一次调用。输入中的参数和调用 ID 由消费方构造。</summary>
-    ValueTask<ConversationToolExecutionResult> ExecuteAsync(
-        ConversationToolInvocation invocation,
-        CancellationToken cancellationToken);
+    ValueTask<ConversationToolExecutionResult> ExecuteAsync(ConversationToolInvocation invocation, CancellationToken cancellationToken);
 }

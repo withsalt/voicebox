@@ -111,9 +111,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Internal
         /// <param name="encoderOutShape">长度 3 的 shape。</param>
         /// <param name="contextGraph">该流绑定的上下文图。</param>
         /// <param name="result">解码状态 (输入: 上一次的 hyps; 输出: 新 hyps + 可能的命中信息)。</param>
-        public void Decode(
-            float[] encoderOut, long[] encoderOutShape,
-            ContextGraph contextGraph, KeywordDecoderResult result)
+        public void Decode(float[] encoderOut, long[] encoderOutShape, ContextGraph contextGraph, KeywordDecoderResult result)
         {
             if (encoderOutShape.Length != 3)
                 throw new ArgumentException("encoder_out must be 3-D.", nameof(encoderOutShape));

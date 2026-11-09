@@ -44,10 +44,7 @@ internal sealed record KernelSemanticStep(
     string NextState,
     IReadOnlyList<KernelSemanticEffect> Effects);
 
-internal sealed record KernelSemanticEffect(
-    int EffectIndex,
-    string Type,
-    string Detail);
+internal sealed record KernelSemanticEffect(int EffectIndex, string Type, string Detail);
 
 internal sealed record ScheduleManifest(
     string Schema,
@@ -56,12 +53,7 @@ internal sealed record ScheduleManifest(
     string OracleKind,
     IReadOnlyList<ScheduleVariant> Variants);
 
-internal sealed record ScheduleVariant(
-    string ScheduleId,
-    string TraceFile,
-    string HappensBefore,
-    string Status,
-    string Sha256);
+internal sealed record ScheduleVariant(string ScheduleId, string TraceFile, string HappensBefore, string Status, string Sha256);
 
 internal static class AssistantScenarioTraceNormalizer
 {

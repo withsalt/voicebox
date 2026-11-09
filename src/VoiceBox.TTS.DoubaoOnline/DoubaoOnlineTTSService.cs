@@ -39,9 +39,7 @@ namespace VoiceBox.TTS.DoubaoOnline
         private int _activeSessionCount;
         private int _disposed;
 
-        public DoubaoOnlineTTSService(
-            IOptions<DoubaoOnlineTTSOptions> options,
-            ILogger<DoubaoOnlineTTSService>? logger = null)
+        public DoubaoOnlineTTSService(IOptions<DoubaoOnlineTTSOptions> options, ILogger<DoubaoOnlineTTSService>? logger = null)
             : this(options, channelFactory: null, logger) { }
 
         // 供测试注入 fake 传输工厂的构造。

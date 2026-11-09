@@ -173,13 +173,7 @@ internal enum GitWorktreeState
     Unavailable,
 }
 
-internal sealed record QualityGate(
-    string Name,
-    GateStatus Status,
-    double? Actual,
-    double Required,
-    string Comparison,
-    string Detail);
+internal sealed record QualityGate(string Name, GateStatus Status, double? Actual, double Required, string Comparison, string Detail);
 
 internal sealed record EvaluationReport
 {

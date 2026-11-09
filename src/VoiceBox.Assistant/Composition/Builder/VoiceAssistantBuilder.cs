@@ -122,8 +122,7 @@ public sealed class VoiceAssistantBuilder
     /// responsible for running the processor; this registration only exposes its typed metrics
     /// port to the assistant runtime.
     /// </summary>
-    public VoiceAssistantBuilder AddAcousticDiagnostics(
-        IAcousticProcessingMetricsSource diagnostics)
+    public VoiceAssistantBuilder AddAcousticDiagnostics(IAcousticProcessingMetricsSource diagnostics)
     {
         _acousticDiagnostics = SetOnce(
             _acousticDiagnostics,
@@ -136,9 +135,7 @@ public sealed class VoiceAssistantBuilder
     /// <summary>
     /// 安装播放期打断能力及其流级声学路径延迟估计器工厂。
     /// </summary>
-    public VoiceAssistantBuilder AddBargeIn(
-        VoiceAssistantBargeInOptions options,
-        IAcousticPathDelayEstimatorFactory delayEstimatorFactory)
+    public VoiceAssistantBuilder AddBargeIn(VoiceAssistantBargeInOptions options, IAcousticPathDelayEstimatorFactory delayEstimatorFactory)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(delayEstimatorFactory);
@@ -181,8 +178,7 @@ public sealed class VoiceAssistantBuilder
         VoiceAssistant Assistant,
         string ProfileId,
         string CapabilityGraphHash,
-        IReadOnlyList<string> Capabilities) BuildWithDiagnostics(
-            ILogger<VoiceAssistant>? logger = null)
+        IReadOnlyList<string> Capabilities) BuildWithDiagnostics(ILogger<VoiceAssistant>? logger = null)
     {
         AssistantComposition composition = BuildComposition(out VoiceAssistantOptions options);
         var assistant = new VoiceAssistant(composition, Options.Create(options), logger);
@@ -241,9 +237,7 @@ public sealed class VoiceAssistantBuilder
         }
     }
 
-    private AssistantComposition BuildComposition(
-        IAssistantAudioFrontend audio,
-        out VoiceAssistantOptions options)
+    private AssistantComposition BuildComposition(IAssistantAudioFrontend audio, out VoiceAssistantOptions options)
     {
         IVoiceActivityDetectService turnBoundary = Require(_turnBoundary, "VBX-COMP-001", "TurnBoundary");
         IASRService recognition = Require(_recognition, "VBX-COMP-001", "SpeechRecognition");
@@ -335,7 +329,5 @@ public sealed class VoiceAssistantBuilder
         return clone;
     }
 
-    private readonly record struct SplitAudioRegistration(
-        IAudioRecordService Record,
-        IAudioPlayService Playback);
+    private readonly record struct SplitAudioRegistration(IAudioRecordService Record, IAudioPlayService Playback);
 }

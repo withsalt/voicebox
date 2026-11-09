@@ -28,11 +28,7 @@ namespace VoiceBox.AEC.DFSMN.Internal
 
         private float _envelope;
 
-        public NearEndProtectionGate(
-            DfsmnAecNearEndProtectionOptions options,
-            float? maskFloorDb,
-            int hopLength,
-            int sampleRate)
+        public NearEndProtectionGate(DfsmnAecNearEndProtectionOptions options, float? maskFloorDb, int hopLength, int sampleRate)
         {
             ArgumentNullException.ThrowIfNull(options);
 

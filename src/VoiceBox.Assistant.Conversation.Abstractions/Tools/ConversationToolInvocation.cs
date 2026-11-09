@@ -11,10 +11,7 @@ public sealed class ConversationToolInvocation
     /// <param name="callId">调用关联 ID, 不得为空。</param>
     /// <param name="arguments">JSON 对象参数。构造时复制, 调用方可以随后释放原始 <see cref="JsonDocument"/>。</param>
     /// <param name="executionPreference">本次调用的前后台执行偏好。</param>
-    public ConversationToolInvocation(
-        string callId,
-        JsonElement arguments,
-        ConversationToolExecutionPreference executionPreference)
+    public ConversationToolInvocation(string callId, JsonElement arguments, ConversationToolExecutionPreference executionPreference)
     {
         if (string.IsNullOrWhiteSpace(callId))
             throw new ArgumentException("Tool call id cannot be empty.", nameof(callId));

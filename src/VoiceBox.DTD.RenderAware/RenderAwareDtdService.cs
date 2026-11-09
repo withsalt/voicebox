@@ -57,11 +57,7 @@ public sealed class RenderAwareDtdService : IRenderAwareDtdService
     /// Processes one synchronized microphone/render hop. Returns <see langword="null"/> when the
     /// overlap window is not ready.
     /// </summary>
-    public RenderAwareDtdObservation? Process(
-        ReadOnlySpan<float> microphone,
-        ReadOnlySpan<float> render,
-        uint channels,
-        uint sampleRate)
+    public RenderAwareDtdObservation? Process(ReadOnlySpan<float> microphone, ReadOnlySpan<float> render, uint channels, uint sampleRate)
     {
         lock (_sync)
         {
@@ -132,11 +128,7 @@ public sealed class RenderAwareDtdService : IRenderAwareDtdService
         }
     }
 
-    private static void ValidateInput(
-        ReadOnlySpan<float> microphone,
-        ReadOnlySpan<float> render,
-        uint channels,
-        uint sampleRate)
+    private static void ValidateInput(ReadOnlySpan<float> microphone, ReadOnlySpan<float> render, uint channels, uint sampleRate)
     {
         if (channels != RenderAwareDtdOptions.RequiredChannelCount)
         {

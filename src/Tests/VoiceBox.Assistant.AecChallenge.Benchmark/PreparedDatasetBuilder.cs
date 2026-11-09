@@ -178,8 +178,7 @@ internal static class PreparedDatasetBuilder
         Console.WriteLine($"Materialization  : {options.Materialization}");
     }
 
-    private static IReadOnlyList<EvaluationCase> SelectAcousticCases(
-        PreparedDatasetOptions options)
+    private static IReadOnlyList<EvaluationCase> SelectAcousticCases(PreparedDatasetOptions options)
     {
         var allOptions = new EvaluationOptions
         {
@@ -222,10 +221,7 @@ internal static class PreparedDatasetBuilder
             .ToArray();
     }
 
-    private static IEnumerable<EvaluationCase> SelectSyntheticBySer(
-        IEnumerable<EvaluationCase> source,
-        int countPerBucket,
-        int seed)
+    private static IEnumerable<EvaluationCase> SelectSyntheticBySer(IEnumerable<EvaluationCase> source, int countPerBucket, int seed)
     {
         return source
             .GroupBy(c => SerBucket(c.SignalToEchoRatioDb ?? 0))
@@ -233,10 +229,7 @@ internal static class PreparedDatasetBuilder
             .SelectMany(g => StableShuffle(g, StableSeed(seed, g.Key)).Take(countPerBucket));
     }
 
-    private static IEnumerable<EvaluationCase> SelectPerStratum(
-        IEnumerable<EvaluationCase> source,
-        int countPerStratum,
-        int seed)
+    private static IEnumerable<EvaluationCase> SelectPerStratum(IEnumerable<EvaluationCase> source, int countPerStratum, int seed)
     {
         return source
             .GroupBy(c => $"{c.Corpus}/{c.Scenario}/{c.DeviceClass}")
@@ -244,9 +237,7 @@ internal static class PreparedDatasetBuilder
             .SelectMany(g => StableShuffle(g, StableSeed(seed, g.Key)).Take(countPerStratum));
     }
 
-    private static PreparedAcousticCase MaterializeAcoustic(
-        EvaluationCase source,
-        DatasetMaterializer materializer)
+    private static PreparedAcousticCase MaterializeAcoustic(EvaluationCase source, DatasetMaterializer materializer)
     {
         string directory = $"phase1/{Safe(source.Corpus)}/{Safe(source.Id)}";
         return new PreparedAcousticCase
@@ -283,9 +274,7 @@ internal static class PreparedDatasetBuilder
         };
     }
 
-    private static PreparedSpeechSelection SelectSpeechAssets(
-        PreparedDatasetOptions options,
-        DatasetMaterializer materializer)
+    private static PreparedSpeechSelection SelectSpeechAssets(PreparedDatasetOptions options, DatasetMaterializer materializer)
     {
         var candidates = new List<SpeechCandidate>();
         candidates.AddRange(ReadAishell1(options.KwsRoot));
@@ -518,10 +507,7 @@ internal static class PreparedDatasetBuilder
         }
     }
 
-    private static IEnumerable<SpeechCandidate> ReadWenet(
-        string root,
-        int countPerTier,
-        int seed)
+    private static IEnumerable<SpeechCandidate> ReadWenet(string root, int countPerTier, int seed)
     {
         foreach (string tier in new[] { "Premium", "Standard" })
         {
@@ -574,9 +560,7 @@ internal static class PreparedDatasetBuilder
 
     private static (
         IReadOnlyList<PreparedRirAsset> Rirs,
-        IReadOnlyList<PreparedNoiseAsset> Noises) SelectButAssets(
-        PreparedDatasetOptions options,
-        DatasetMaterializer materializer)
+        IReadOnlyList<PreparedNoiseAsset> Noises) SelectButAssets(PreparedDatasetOptions options, DatasetMaterializer materializer)
     {
         var rirs = new List<PreparedRirAsset>();
         var noises = new List<PreparedNoiseAsset>();
@@ -804,11 +788,7 @@ internal static class PreparedDatasetBuilder
         return result;
     }
 
-    private static IReadOnlyList<SpeechCandidate> SelectForEndToEnd(
-        IEnumerable<SpeechCandidate> speech,
-        string corpus,
-        int count,
-        int seed)
+    private static IReadOnlyList<SpeechCandidate> SelectForEndToEnd(IEnumerable<SpeechCandidate> speech, string corpus, int count, int seed)
     {
         SpeechCandidate[] ranked = StableShuffle(
                 speech.Where(s => s.Corpus == corpus),
@@ -1083,8 +1063,7 @@ internal static class PreparedDatasetBuilder
         }
     }
 
-    internal static void ValidateSpeechAssets(
-        IReadOnlyList<PreparedSpeechAsset> speech)
+    internal static void ValidateSpeechAssets(IReadOnlyList<PreparedSpeechAsset> speech)
     {
         PreparedSpeechAsset[] wakeWordAssets = speech
             .Where(asset =>
@@ -1139,11 +1118,7 @@ internal static class PreparedDatasetBuilder
         }
     }
 
-    private static T Pick<T>(
-        IReadOnlyList<T> values,
-        int seed,
-        string caseId,
-        string factor)
+    private static T Pick<T>(IReadOnlyList<T> values, int seed, string caseId, string factor)
     {
         if (values.Count == 0)
             throw new ArgumentException("Cannot select from an empty factor.", nameof(values));
@@ -1244,8 +1219,7 @@ internal static class PreparedDatasetBuilder
             throw new DirectoryNotFoundException($"{name} root not found: {root}");
     }
 
-    private static DatasetGeneratorMetadata CreateGeneratorMetadata(
-        PreparedDatasetOptions options)
+    private static DatasetGeneratorMetadata CreateGeneratorMetadata(PreparedDatasetOptions options)
     {
         string commit = ReadGit("rev-parse", "HEAD") ?? "unknown";
         bool dirty = !string.IsNullOrWhiteSpace(
@@ -1296,10 +1270,7 @@ internal static class PreparedDatasetBuilder
         }
     }
 
-    private static void WriteDatasetReadme(
-        string root,
-        EvaluationDatasetManifest manifest,
-        DatasetMaterializer materializer)
+    private static void WriteDatasetReadme(string root, EvaluationDatasetManifest manifest, DatasetMaterializer materializer)
     {
         double negativeHours = manifest.AcousticCases
             .Where(c => !c.ExpectedNearEnd)
@@ -1425,10 +1396,7 @@ internal sealed class DatasetMaterializer
         CharSet = CharSet.Unicode,
         SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool CreateHardLinkWindows(
-        string newFileName,
-        string existingFileName,
-        IntPtr securityAttributes);
+    private static extern bool CreateHardLinkWindows(string newFileName, string existingFileName, IntPtr securityAttributes);
 
     public double TryGetWaveDurationHours(string relativePath)
     {

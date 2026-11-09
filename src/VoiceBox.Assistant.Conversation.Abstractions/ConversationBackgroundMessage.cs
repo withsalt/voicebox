@@ -7,11 +7,7 @@ namespace VoiceBox.Assistant.Conversation.Abstractions;
 /// <param name="ConversationId">产生该消息的业务会话身份。</param>
 /// <param name="OriginatingRequestId">发起该后台工作的请求关联 ID。</param>
 /// <param name="Text">可展示、可播报的完整后台文字; 不包含原始工具结果。</param>
-public sealed record ConversationBackgroundMessage(
-    Guid MessageId,
-    string ConversationId,
-    Guid OriginatingRequestId,
-    string Text)
+public sealed record ConversationBackgroundMessage(Guid MessageId, string ConversationId, Guid OriginatingRequestId, string Text)
 {
     /// <summary>消息 ID, 不得为空。</summary>
     public Guid MessageId { get; } = MessageId == Guid.Empty

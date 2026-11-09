@@ -25,11 +25,7 @@ public interface IRenderAwareDtdService : IDisposable
     /// Returns <see langword="null"/> while the overlap window is not ready; this normally occurs
     /// on the first call after construction or reset.
     /// </summary>
-    RenderAwareDtdObservation? Process(
-        ReadOnlySpan<float> microphone,
-        ReadOnlySpan<float> render,
-        uint channels,
-        uint sampleRate);
+    RenderAwareDtdObservation? Process(ReadOnlySpan<float> microphone, ReadOnlySpan<float> render, uint channels, uint sampleRate);
 
     /// <summary>Clears overlap, recurrent, smoothing, and timeline state.</summary>
     void Reset();

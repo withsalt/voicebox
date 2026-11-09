@@ -52,11 +52,7 @@ internal readonly record struct BargeInSemanticPlan(
             null,
             false);
 
-    public static BargeInSemanticPlan AuthorizationResolved(
-        TurnSignal signal,
-        long turnId,
-        long interruptedTurnId,
-        string reason)
+    public static BargeInSemanticPlan AuthorizationResolved(TurnSignal signal, long turnId, long interruptedTurnId, string reason)
         => new(
             BargeInSemanticPlanKind.AuthorizationResolved,
             signal,
@@ -91,11 +87,7 @@ internal readonly record struct BargeInSemanticPlan(
             null,
             textPresent);
 
-    public static BargeInSemanticPlan ValidationRejected(
-        TurnSignal signal,
-        long turnId,
-        string reason,
-        AssistantState restoredState)
+    public static BargeInSemanticPlan ValidationRejected(TurnSignal signal, long turnId, string reason, AssistantState restoredState)
         => new(
             BargeInSemanticPlanKind.ValidationRejected,
             signal,
@@ -110,9 +102,7 @@ internal readonly record struct BargeInSemanticPlan(
             restoredState,
             false);
 
-    public static BargeInSemanticPlan ValidationLateCompletion(
-        TurnSignal signal,
-        long turnId)
+    public static BargeInSemanticPlan ValidationLateCompletion(TurnSignal signal, long turnId)
         => new(
             BargeInSemanticPlanKind.ValidationLateCompletion,
             signal,

@@ -1,5 +1,3 @@
 namespace VoiceBox.Assistant.Runtime.Publications.Models;
 
-internal readonly record struct PublicationEnvelope(
-    long PublicationSequence,
-    AssistantPublication Publication);
+internal readonly record struct PublicationEnvelope(long PublicationSequence, AssistantPublication Publication);

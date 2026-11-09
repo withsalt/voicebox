@@ -20,9 +20,7 @@ internal sealed class OfflineRecognitionProviderAdapter : IRecognitionProviderAd
     public void FeedAudio(string sessionId, ReadOnlySpan<float> audio)
         => _service.FeedAudio(sessionId, audio);
 
-    public async Task<string?> FinishSessionAsync(
-        string sessionId,
-        CancellationToken cancellationToken)
+    public async Task<string?> FinishSessionAsync(string sessionId, CancellationToken cancellationToken)
     {
         AsrResult? result = await _service.FinishSessionAsync(
             sessionId,

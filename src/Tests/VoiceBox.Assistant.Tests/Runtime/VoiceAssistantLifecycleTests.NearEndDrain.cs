@@ -153,8 +153,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     [InlineData(false, 16)]
     [InlineData(true, 8)]
     [InlineData(false, 8)]
-    public async Task ActiveNearEndCapture_EndpointResumptionKeepsDelayedPcmPastOldDrainTarget(
-        bool speechStarted, int firstResumedSamples)
+    public async Task ActiveNearEndCapture_EndpointResumptionKeepsDelayedPcmPastOldDrainTarget(bool speechStarted, int firstResumedSamples)
     {
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();

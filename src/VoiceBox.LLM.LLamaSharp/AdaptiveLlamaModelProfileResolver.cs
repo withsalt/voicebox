@@ -38,9 +38,7 @@ namespace VoiceBox.LLM.LLamaSharp
         public static IReadOnlyList<ILlamaModelProfile> BuiltInProfiles =>
             BuiltInLlamaModelProfiles.All;
 
-        public ILlamaModelProfile Resolve(
-            LlamaModelInfo info,
-            ILlamaModelProfile? explicitProfile = null)
+        public ILlamaModelProfile Resolve(LlamaModelInfo info, ILlamaModelProfile? explicitProfile = null)
         {
             ArgumentNullException.ThrowIfNull(info);
             if (explicitProfile is not null)

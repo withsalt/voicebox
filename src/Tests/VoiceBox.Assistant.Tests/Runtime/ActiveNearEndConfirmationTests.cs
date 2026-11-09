@@ -104,9 +104,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     [InlineData(false, true)]
     [InlineData(true, false)]
     [InlineData(true, true)]
-    public async Task ActiveNearEndConfirmation_ControlRequiresCurrentOwnerAndSuccessfulCommit(
-        bool ownerMatches,
-        bool commitSucceeds)
+    public async Task ActiveNearEndConfirmation_ControlRequiresCurrentOwnerAndSuccessfulCommit(bool ownerMatches, bool commitSucceeds)
     {
         var services = TestServices.Create();
         services.Asr.CompleteStart("session-1");
@@ -155,9 +153,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         }
     }
 
-    private sealed class TestNearEndConfirmationStore(
-        NearEndConfirmationLease lease,
-        bool commitSucceeds) : INearEndConfirmationStore
+    private sealed class TestNearEndConfirmationStore(NearEndConfirmationLease lease, bool commitSucceeds) : INearEndConfirmationStore
     {
         public bool CommitAttempted { get; private set; }
 

@@ -56,10 +56,7 @@ internal sealed class TurnCompletionCoordinator : ITurnCompletionPort
     void ITurnCompletionPort.CompleteTurn(long turnId)
         => TryCompleteTurn(turnId, endConversationRequested: false, publishStateTransition: false);
 
-    public bool TryCompleteTurn(
-        long turnId,
-        bool endConversationRequested = false,
-        bool publishStateTransition = true)
+    public bool TryCompleteTurn(long turnId, bool endConversationRequested = false, bool publishStateTransition = true)
     {
         if (!_release.TryReleaseCompletedTurn(turnId, out AssistantState old, out bool changed, out bool completedInterruptedTurn))
             return false;

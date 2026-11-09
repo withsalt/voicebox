@@ -77,10 +77,7 @@ internal sealed class BargeInCorpusEvaluator : IDisposable
             .Build();
     }
 
-    public async Task<CaseResult> EvaluateAsync(
-        EvaluationCase testCase,
-        int callbackSamples,
-        CancellationToken cancellationToken)
+    public async Task<CaseResult> EvaluateAsync(EvaluationCase testCase, int callbackSamples, CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (callbackSamples <= 0)
@@ -380,9 +377,7 @@ internal sealed class BargeInCorpusEvaluator : IDisposable
             },
         };
 
-    private static async Task WaitUntilAsync(
-        Func<bool> condition,
-        CancellationToken cancellationToken)
+    private static async Task WaitUntilAsync(Func<bool> condition, CancellationToken cancellationToken)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(5));
@@ -424,9 +419,7 @@ internal sealed class BargeInCorpusEvaluator : IDisposable
         }
     }
 
-    internal static bool ShouldWaitForQueuedConfirmation(
-        VoiceAssistantBenchmarkProbe probe,
-        bool heardPublished)
+    internal static bool ShouldWaitForQueuedConfirmation(VoiceAssistantBenchmarkProbe probe, bool heardPublished)
     {
         if (heardPublished)
             return false;

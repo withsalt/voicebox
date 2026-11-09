@@ -76,10 +76,7 @@ internal sealed class PlaybackModule :
 
     public Task StopAsync() => _coordinator.StopAsync();
 
-    public async Task<string> PlayAsync(
-        long turnId,
-        IAsyncEnumerable<SpeakableTextDelta> text,
-        CancellationToken cancellationToken)
+    public async Task<string> PlayAsync(long turnId, IAsyncEnumerable<SpeakableTextDelta> text, CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         if (turnId <= 0)
@@ -136,9 +133,7 @@ internal sealed class PlaybackModule :
         _coordinator.Dispose();
     }
 
-    async Task<string> ISpeechPlaybackRequestExecutor.ExecuteAsync(
-        SpeechPlaybackRequest request,
-        CancellationToken cancellationToken)
+    async Task<string> ISpeechPlaybackRequestExecutor.ExecuteAsync(SpeechPlaybackRequest request, CancellationToken cancellationToken)
     {
         AudioResamplerPool.Lease lease = _resamplers.Acquire();
         try
@@ -179,17 +174,13 @@ internal sealed class PlaybackModule :
         await Task.CompletedTask.ConfigureAwait(false);
     }
 
-    private sealed class QueuedResponsePlaybackSession(
-        PlaybackModule owner,
-        long turnId) : IResponsePlaybackSession
+    private sealed class QueuedResponsePlaybackSession(PlaybackModule owner, long turnId) : IResponsePlaybackSession
     {
         private readonly PlaybackModule _owner = owner;
         private readonly long _turnId = turnId;
         private int _disposed;
 
-        public Task<string> PlayAsync(
-            IAsyncEnumerable<SpeakableTextDelta> text,
-            CancellationToken cancellationToken)
+        public Task<string> PlayAsync(IAsyncEnumerable<SpeakableTextDelta> text, CancellationToken cancellationToken)
         {
             ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
             return _owner.PlayAsync(_turnId, text, cancellationToken);

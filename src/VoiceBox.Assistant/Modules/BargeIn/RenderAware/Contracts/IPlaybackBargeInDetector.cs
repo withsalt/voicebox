@@ -6,11 +6,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.RenderAware.Contracts;
 
 internal interface IPlaybackBargeInDetector : IActiveNearEndDecisionSource, IDisposable
 {
-    DtdProcessBatch Push(
-        in DuplexAudioFrame frame,
-        RenderDelayHint? primaryAecDelay,
-        bool decisionEnabled,
-        bool echoLearningEnabled);
+    DtdProcessBatch Push(in DuplexAudioFrame frame, RenderDelayHint? primaryAecDelay, bool decisionEnabled, bool echoLearningEnabled);
 
     RenderAwareBargeInSnapshot GetSnapshot();
 

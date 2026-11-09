@@ -64,9 +64,7 @@ public sealed class LlmToolConversationSession :
 
     public string ConversationId => _core.ConversationId;
 
-    public IAsyncEnumerable<ConversationEvent> StreamAsync(
-        ConversationRequest request,
-        CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ConversationEvent> StreamAsync(ConversationRequest request, CancellationToken cancellationToken = default)
     {
         lock (_lifecycleLock)
         {
@@ -91,9 +89,7 @@ public sealed class LlmToolConversationSession :
         return StartCoreAsync(run, cancellationToken);
     }
 
-    private async Task StartCoreAsync(
-        SessionRun run,
-        CancellationToken cancellationToken)
+    private async Task StartCoreAsync(SessionRun run, CancellationToken cancellationToken)
     {
         try
         {
@@ -208,9 +204,7 @@ public sealed class LlmToolConversationSession :
     /// Enqueues a background message with wait backpressure. Results produced after Stop are
     /// dropped: the next start creates a new channel and never replays them.
     /// </summary>
-    async ValueTask IBackgroundResultPublisher.PublishAsync(
-        ConversationBackgroundMessage message,
-        CancellationToken cancellationToken)
+    async ValueTask IBackgroundResultPublisher.PublishAsync(ConversationBackgroundMessage message, CancellationToken cancellationToken)
     {
         Channel<ConversationBackgroundMessage>? background;
         lock (_lifecycleLock)

@@ -22,10 +22,7 @@ public sealed class ToolPolicyTests
     private static string OnlyToolName(LlmToolTurnRequest request)
         => Assert.Single(request.Tools).Name;
 
-    private static LlmTurnEvent Call(
-        string callId,
-        LlmToolTurnRequest request,
-        string arguments = "{}")
+    private static LlmTurnEvent Call(string callId, LlmToolTurnRequest request, string arguments = "{}")
         => new LlmToolCallEvent(callId, OnlyToolName(request), arguments);
 
     [Fact]
@@ -329,14 +326,11 @@ public sealed class ToolPolicyTests
         public Task StartAsync(CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
-        public ValueTask<IReadOnlyList<ConversationToolDefinition>> GetToolsAsync(
-            CancellationToken cancellationToken = default)
+        public ValueTask<IReadOnlyList<ConversationToolDefinition>> GetToolsAsync(CancellationToken cancellationToken = default)
             => ValueTask.FromResult<IReadOnlyList<ConversationToolDefinition>>(
                 Array.Empty<ConversationToolDefinition>());
 
-        public ValueTask<ConversationToolResult> InvokeAsync(
-            ConversationToolCall call,
-            CancellationToken cancellationToken = default)
+        public ValueTask<ConversationToolResult> InvokeAsync(ConversationToolCall call, CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
 
         public Task StopAsync() => Task.CompletedTask;
@@ -347,9 +341,7 @@ public sealed class ToolPolicyTests
     private static string TextOf(ChatMessage message)
         => string.Concat(message.Content.OfType<TextContent>().Select(content => content.Text));
 
-    private sealed class ProbeTool(
-        string name,
-        ConversationToolRisk risk) : IConversationTool
+    private sealed class ProbeTool(string name, ConversationToolRisk risk) : IConversationTool
     {
         public ConversationToolDescriptor Descriptor { get; } = new(
             name,
@@ -397,8 +389,7 @@ public sealed class ToolPolicyTests
         public Task StartAsync(CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
-        public ValueTask<IReadOnlyList<ConversationToolDefinition>> GetToolsAsync(
-            CancellationToken cancellationToken = default)
+        public ValueTask<IReadOnlyList<ConversationToolDefinition>> GetToolsAsync(CancellationToken cancellationToken = default)
             => ValueTask.FromResult<IReadOnlyList<ConversationToolDefinition>>(
             [
                 new ConversationToolDefinition(
@@ -419,9 +410,7 @@ public sealed class ToolPolicyTests
                         timeout: TimeSpan.FromSeconds(5))),
             ]);
 
-        public ValueTask<ConversationToolResult> InvokeAsync(
-            ConversationToolCall call,
-            CancellationToken cancellationToken = default)
+        public ValueTask<ConversationToolResult> InvokeAsync(ConversationToolCall call, CancellationToken cancellationToken = default)
         {
             Interlocked.Increment(ref _invokeCount);
             return ValueTask.FromResult(new ConversationToolResult(
@@ -447,9 +436,7 @@ public sealed class ToolPolicyTests
     {
         public int Calls { get; private set; }
 
-        public ValueTask<string> GetContextAsync(
-            ConversationContext context,
-            CancellationToken cancellationToken = default)
+        public ValueTask<string> GetContextAsync(ConversationContext context, CancellationToken cancellationToken = default)
         {
             Calls++;
             return ValueTask.FromResult("memory");

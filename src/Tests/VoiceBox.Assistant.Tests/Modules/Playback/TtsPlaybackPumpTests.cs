@@ -163,8 +163,7 @@ public sealed class TtsPlaybackPumpTests
         yield return new SpeakableTextDelta("最终回答。");
     }
 
-    private static async IAsyncEnumerable<SpeakableTextDelta> OneDeltaAsync(
-        SpeakableTextDelta delta)
+    private static async IAsyncEnumerable<SpeakableTextDelta> OneDeltaAsync(SpeakableTextDelta delta)
     {
         yield return delta;
         await Task.CompletedTask;
@@ -252,11 +251,7 @@ public sealed class TtsPlaybackPumpTests
 
         public int TargetChannels => 1;
 
-        public int Convert(
-            ReadOnlySpan<float> samples,
-            int sourceSampleRate,
-            int sourceChannels,
-            ref float[] output)
+        public int Convert(ReadOnlySpan<float> samples, int sourceSampleRate, int sourceChannels, ref float[] output)
         {
             if (output.Length < samples.Length)
                 output = new float[samples.Length];
@@ -266,10 +261,7 @@ public sealed class TtsPlaybackPumpTests
 
         public int Flush(ref float[] output) => 0;
 
-        public float[] Convert(
-            ReadOnlySpan<float> samples,
-            int sourceSampleRate,
-            int sourceChannels) => samples.ToArray();
+        public float[] Convert(ReadOnlySpan<float> samples, int sourceSampleRate, int sourceChannels) => samples.ToArray();
 
         public float[] Convert(ReadOnlySpan<float> samples) => samples.ToArray();
 

@@ -17,9 +17,7 @@ public abstract class MiniAudioServiceBase : IAudioService
 
     public abstract AudioOptionsBase Options { get; }
 
-    public IReadOnlyList<AudioDevice> ListAudioDevices(
-        AudioDeviceType? deviceType = null,
-        bool enumAllDevices = false)
+    public IReadOnlyList<AudioDevice> ListAudioDevices(AudioDeviceType? deviceType = null, bool enumAllDevices = false)
     {
         CheckDisposed();
         _catalog = MiniAudioDeviceCatalog.Enumerate(enumAllDevices);

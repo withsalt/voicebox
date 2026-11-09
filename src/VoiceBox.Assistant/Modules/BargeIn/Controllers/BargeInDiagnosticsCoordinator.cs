@@ -32,9 +32,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Controllers
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public BargeInDecisionDiagnostics RecordConfirmed(
-            SpeakingDecision decision,
-            BargeInTriggerSource source)
+        public BargeInDecisionDiagnostics RecordConfirmed(SpeakingDecision decision, BargeInTriggerSource source)
         {
             BargeInDecisionDiagnostics diagnostics = decision.ConfirmedBargeInDiagnostics;
             _journal.RememberTriggerSource(decision.TurnId, source);
@@ -81,9 +79,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Controllers
                 _listeningOptions.MinRms);
         }
 
-        public void RecordDiscardedPlaybackCandidate(
-            SpeechEndedDecision decision,
-            AssistantState currentState)
+        public void RecordDiscardedPlaybackCandidate(SpeechEndedDecision decision, AssistantState currentState)
         {
             if (!_logger.IsEnabled(LogLevel.Debug))
                 return;

@@ -34,16 +34,9 @@ internal interface IRecognitionCaptureOwner
         out bool speechAlreadyEnded,
         out TimeSpan speechDuration);
 
-    bool CanEnterCaptureRecognizing(
-        long turnId,
-        string asrSessionId,
-        AssistantState conversationState,
-        out bool isValidationTurn);
+    bool CanEnterCaptureRecognizing(long turnId, string asrSessionId, AssistantState conversationState, out bool isValidationTurn);
 
-    bool CommitEnterCaptureRecognizing(
-        long turnId,
-        string asrSessionId,
-        bool isValidationTurn);
+    bool CommitEnterCaptureRecognizing(long turnId, string asrSessionId, bool isValidationTurn);
 
     bool CanObserveCaptureStartFailure(long turnId, AssistantState conversationState);
 

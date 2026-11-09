@@ -12,9 +12,7 @@ internal static class ToolExecutionPreferenceSchema
 {
     private const string PropertyName = "__execution";
 
-    public static string AddTo(
-        string inputSchemaJson,
-        ConversationToolExecutionPolicy policy)
+    public static string AddTo(string inputSchemaJson, ConversationToolExecutionPolicy policy)
     {
         using JsonDocument document = JsonDocument.Parse(inputSchemaJson);
         using var buffer = new MemoryStream();
@@ -55,9 +53,7 @@ internal static class ToolExecutionPreferenceSchema
         return System.Text.Encoding.UTF8.GetString(buffer.ToArray());
     }
 
-    private static void WritePreferenceProperty(
-        Utf8JsonWriter writer,
-        ConversationToolExecutionPolicy policy)
+    private static void WritePreferenceProperty(Utf8JsonWriter writer, ConversationToolExecutionPolicy policy)
     {
         writer.WritePropertyName(PropertyName);
         writer.WriteStartObject();
@@ -119,8 +115,7 @@ internal static class ToolExecutionPreferenceSchema
         return (stripped, Coerce(preference, policy));
     }
 
-    private static ConversationToolExecutionPreference DefaultPreference(
-        ConversationToolExecutionPolicy policy) => policy switch
+    private static ConversationToolExecutionPreference DefaultPreference(ConversationToolExecutionPolicy policy) => policy switch
     {
         ConversationToolExecutionPolicy.BackgroundOnly => ConversationToolExecutionPreference.Background,
         _ => ConversationToolExecutionPreference.Foreground,

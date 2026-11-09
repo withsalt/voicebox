@@ -14,27 +14,13 @@ internal interface IResponseControlSignalPort
     /// </summary>
     void OpenInputForBargeIn(long turnId);
 
-    ValueTask PublishRecognitionCompletedAsync(
-        long turnId,
-        string text,
-        TimeSpan speechDuration,
-        CancellationToken cancellationToken);
+    ValueTask PublishRecognitionCompletedAsync(long turnId, string text, TimeSpan speechDuration, CancellationToken cancellationToken);
 
-    ValueTask<ResponseControlTransition> StartResponseAsync(
-        long turnId,
-        long operationId,
-        CancellationToken cancellationToken);
+    ValueTask<ResponseControlTransition> StartResponseAsync(long turnId, long operationId, CancellationToken cancellationToken);
 
-    ValueTask<ResponseControlTransition> StartSpeakableResponseAsync(
-        long turnId,
-        long operationId,
-        CancellationToken cancellationToken);
+    ValueTask<ResponseControlTransition> StartSpeakableResponseAsync(long turnId, long operationId, CancellationToken cancellationToken);
 
-    ValueTask PublishResponseCompletedAsync(
-        long turnId,
-        long operationId,
-        string text,
-        CancellationToken cancellationToken);
+    ValueTask PublishResponseCompletedAsync(long turnId, long operationId, string text, CancellationToken cancellationToken);
 
     ValueTask PublishPlaybackCompletedAsync(
         long turnId,

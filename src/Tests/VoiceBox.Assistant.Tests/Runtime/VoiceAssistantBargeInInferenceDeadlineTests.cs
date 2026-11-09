@@ -19,9 +19,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     [InlineData(2, true)]
     [InlineData(3, false)]
     [InlineData(3, true)]
-    public async Task ActiveNearEndTrigger_EachRequiredSpeakerWindowGetsItsOwnInferenceBudget(
-        int requiredMatches,
-        bool pollBetweenWindows)
+    public async Task ActiveNearEndTrigger_EachRequiredSpeakerWindowGetsItsOwnInferenceBudget(int requiredMatches, bool pollBetweenWindows)
     {
         var clock = new ManualTimerTimeProvider();
         var provider = new ScriptedSpeakerService(windowSamples: 8000, hopSamples: 3200);
@@ -134,8 +132,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         }
     }
 
-    private static SpeechGatedSpeakerVerifier CreateDeadlineVerifier(
-        ScriptedSpeakerService provider, int requiredMatches)
+    private static SpeechGatedSpeakerVerifier CreateDeadlineVerifier(ScriptedSpeakerService provider, int requiredMatches)
     {
         VoiceAssistantSpeakerOptions options = SpeakerTestProfiles.Options("unused");
         options.Confirmation.MinimumSpeechMs = 300;
@@ -150,8 +147,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         return verifier;
     }
 
-    private static NearEndTestHarness CreateInferenceDeadlineHarness(
-        ISpeakerEvidenceProvider evidence, TimeProvider clock)
+    private static NearEndTestHarness CreateInferenceDeadlineHarness(ISpeakerEvidenceProvider evidence, TimeProvider clock)
     {
         var services = TestServices.Create();
         var decision = new BargeInDecision(BargeInAction.Continue,

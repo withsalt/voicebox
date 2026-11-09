@@ -99,9 +99,7 @@ internal sealed class SpeechCandidateOwner : ICandidatePreRollSource, ISpeechCan
         }
     }
 
-    public SpeakingDecision ResolveSpeakerGate(
-        BargeInSpeakerGateStatus speakerGateStatus,
-        long proposedTurnId)
+    public SpeakingDecision ResolveSpeakerGate(BargeInSpeakerGateStatus speakerGateStatus, long proposedTurnId)
     {
         lock (_lock)
         {
@@ -268,9 +266,7 @@ internal sealed class SpeechCandidateOwner : ICandidatePreRollSource, ISpeechCan
             activeTurnId);
     }
 
-    private SpeakingDecision ResolveConfirmedLocked(
-        BargeInSpeakerGateStatus speakerGateStatus,
-        long proposedTurnId)
+    private SpeakingDecision ResolveConfirmedLocked(BargeInSpeakerGateStatus speakerGateStatus, long proposedTurnId)
     {
         long confirmedCandidateSamples = _detector.CandidateSamples;
         double confirmedCandidateRms = _detector.ComputeRms();

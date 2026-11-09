@@ -18,10 +18,7 @@ internal sealed class SpeakerModuleFactory : ISpeakerModuleFactory
     private readonly VoiceAssistantSpeakerOptions _options;
     private readonly SpeakerPurposeSet _effectivePurposes;
 
-    public SpeakerModuleFactory(
-        ISpeakerService speaker,
-        VoiceAssistantSpeakerOptions options,
-        SpeakerPurposeSet effectivePurposes)
+    public SpeakerModuleFactory(ISpeakerService speaker, VoiceAssistantSpeakerOptions options, SpeakerPurposeSet effectivePurposes)
     {
         _speaker = speaker ?? throw new ArgumentNullException(nameof(speaker));
         _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -32,11 +29,7 @@ internal sealed class SpeakerModuleFactory : ISpeakerModuleFactory
 
     public SpeakerPurposeSet EffectivePurposes => _effectivePurposes;
 
-    public ISpeakerModule Create(
-        SpeakerCaptureDescriptor descriptor,
-        int audioSampleRate,
-        int audioChannels,
-        ILogger logger)
+    public ISpeakerModule Create(SpeakerCaptureDescriptor descriptor, int audioSampleRate, int audioChannels, ILogger logger)
         => new SpeakerModule(
             _speaker,
             _options,

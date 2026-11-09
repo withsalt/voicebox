@@ -71,10 +71,7 @@ internal sealed class BargeInRuntimeOptions
 
     public int DrainTimeoutSamples { get; }
 
-    public static BargeInRuntimeOptions From(
-        VoiceAssistantBargeInOptions options,
-        AssistantAudioFormat audioFormat,
-        bool identityRequired)
+    public static BargeInRuntimeOptions From(VoiceAssistantBargeInOptions options, AssistantAudioFormat audioFormat, bool identityRequired)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(audioFormat);
@@ -105,9 +102,7 @@ internal sealed class BargeInRuntimeOptions
                 audioFormat.AudioChannels));
     }
 
-    private static int ComputeTimelineAlignedAudioLimitMs(
-        VoiceAssistantBargeInOptions options,
-        bool identityRequired)
+    private static int ComputeTimelineAlignedAudioLimitMs(VoiceAssistantBargeInOptions options, bool identityRequired)
     {
         // 两条异步处理链共享同一 capture timeline。复用已有的跨链 drain 预算作为
         // 对齐保留上限，不引入任何由当前设备实验得到的常数。

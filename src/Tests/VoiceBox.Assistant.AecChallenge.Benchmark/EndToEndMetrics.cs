@@ -7,9 +7,7 @@ namespace VoiceBox.Assistant.AecChallenge.Benchmark;
 
 internal static class ChineseTextMetrics
 {
-    public static (int Errors, int ReferenceCharacters, double? Cer, bool Exact) Compare(
-        string reference,
-        string hypothesis)
+    public static (int Errors, int ReferenceCharacters, double? Cer, bool Exact) Compare(string reference, string hypothesis)
     {
         string normalizedReference = Normalize(reference);
         string normalizedHypothesis = Normalize(hypothesis);
@@ -245,8 +243,7 @@ internal static class EndToEndMetrics
         => result.Accepted &&
            string.Equals(result.ValidationReason, "audio-confirmed", StringComparison.Ordinal);
 
-    public static IReadOnlyList<EndToEndSummarySlice> BuildSlices(
-        IReadOnlyList<EndToEndCaseResult> cases)
+    public static IReadOnlyList<EndToEndSummarySlice> BuildSlices(IReadOnlyList<EndToEndCaseResult> cases)
     {
         var slices = new List<EndToEndSummarySlice>();
         slices.AddRange(cases
@@ -399,12 +396,7 @@ internal static class EndToEndMetrics
     /// any observation is inconclusive rather than failed, because the corresponding recall gate is
     /// what reports missing events.
     /// </summary>
-    private static QualityGate ObservedLatencyGate(
-        string name,
-        double? actual,
-        int count,
-        int minimumCount,
-        double required)
+    private static QualityGate ObservedLatencyGate(string name, double? actual, int count, int minimumCount, double required)
     {
         if (count < minimumCount)
         {
@@ -435,12 +427,7 @@ internal static class EndToEndMetrics
             $"Percentile over observed clusters; misses are gated by recall, not counted here.");
     }
 
-    private static QualityGate RatioGate(
-        string name,
-        double? actual,
-        int count,
-        int minimumCount,
-        double required)
+    private static QualityGate RatioGate(string name, double? actual, int count, int minimumCount, double required)
     {
         if (!actual.HasValue || count < minimumCount)
         {
@@ -461,12 +448,7 @@ internal static class EndToEndMetrics
             $"Point estimate over {count} independent source clusters.");
     }
 
-    private static QualityGate MaximumGate(
-        string name,
-        double? actual,
-        double required,
-        int count,
-        int minimumCount)
+    private static QualityGate MaximumGate(string name, double? actual, double required, int count, int minimumCount)
     {
         if (!actual.HasValue || count < minimumCount)
         {
@@ -520,9 +502,7 @@ internal static class EndToEndMetrics
     /// Number of expected clusters that produced no observation. Reported next to every latency
     /// percentile so it stays visible that the percentile is conditional on the event happening.
     /// </summary>
-    private static int CensoredCount(
-        IReadOnlyList<ClusterObservation> expected,
-        Func<ClusterObservation, bool> observed)
+    private static int CensoredCount(IReadOnlyList<ClusterObservation> expected, Func<ClusterObservation, bool> observed)
         => expected.Count - expected.Count(observed);
 
     private static string SerBucket(double ser)
@@ -534,9 +514,7 @@ internal static class EndToEndMetrics
             _ => "(6,12]dB",
         };
 
-    private sealed record ClusterObservation(
-        string Id,
-        EndToEndCaseResult[] Cases)
+    private sealed record ClusterObservation(string Id, EndToEndCaseResult[] Cases)
     {
         public bool HasError => Cases.Any(c => c.Error is not null);
         public bool ExpectHeard => Cases.Any(c => c.ExpectHeard);
@@ -594,9 +572,7 @@ internal static class EndToEndReportWriter
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
     };
 
-    public static (string JsonPath, string CsvPath) Write(
-        EndToEndReport report,
-        string? requestedPath)
+    public static (string JsonPath, string CsvPath) Write(EndToEndReport report, string? requestedPath)
     {
         string jsonPath = string.IsNullOrWhiteSpace(requestedPath)
             ? Path.Combine(

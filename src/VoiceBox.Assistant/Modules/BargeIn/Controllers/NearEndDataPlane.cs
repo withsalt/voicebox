@@ -242,10 +242,7 @@ internal sealed class NearEndDataPlane
     // Duplex callback
     // ---------------------------------------------------------------------------------------
 
-    public void ObserveDuplexAudio(
-        in DuplexAudioFrame frame,
-        bool playbackStartupGuardActive,
-        bool latestNearEndSpeech = false)
+    public void ObserveDuplexAudio(in DuplexAudioFrame frame, bool playbackStartupGuardActive, bool latestNearEndSpeech = false)
     {
         if (playbackStartupGuardActive)
         {
@@ -319,9 +316,7 @@ internal sealed class NearEndDataPlane
         return observation;
     }
 
-    public void FeedFromRecognitionAudio(
-        ReadOnlySpan<float> audio,
-        MainAudioObservation observation)
+    public void FeedFromRecognitionAudio(ReadOnlySpan<float> audio, MainAudioObservation observation)
     {
         if (audio.IsEmpty)
             return;
@@ -394,11 +389,7 @@ internal sealed class NearEndDataPlane
             EndCapture(feed.TurnId, feed.SpeechDuration, feed.Outcome);
     }
 
-    public bool TryLocate(
-        ReadOnlySpan<float> audio,
-        out long streamEpoch,
-        out long startSample,
-        out long endSample)
+    public bool TryLocate(ReadOnlySpan<float> audio, out long streamEpoch, out long startSample, out long endSample)
     {
         lock (_lock)
             return _timeline.TryLocate(audio, out streamEpoch, out startSample, out endSample);
@@ -785,10 +776,7 @@ internal sealed class NearEndDataPlane
         }
     }
 
-    private void DenyCandidate(
-        long generation,
-        in SpeakerVerificationResult verdict,
-        in BargeInDecision decision)
+    private void DenyCandidate(long generation, in SpeakerVerificationResult verdict, in BargeInDecision decision)
     {
         string outcome = verdict.Status switch
         {
@@ -893,10 +881,7 @@ internal sealed class NearEndDataPlane
         }
     }
 
-    private bool BeginSpeakerCandidate(
-        in BargeInDecision decision,
-        in DuplexAudioFrame frame,
-        out long generation)
+    private bool BeginSpeakerCandidate(in BargeInDecision decision, in DuplexAudioFrame frame, out long generation)
     {
         generation = 0;
         if (!_authorization.RequiresSpeaker)
@@ -977,10 +962,7 @@ internal sealed class NearEndDataPlane
         return true;
     }
 
-    private bool TryGetSpeakerCandidateAnchorLocked(
-        in BargeInDecision decision,
-        out long anchorSample,
-        out string trigger)
+    private bool TryGetSpeakerCandidateAnchorLocked(in BargeInDecision decision, out long anchorSample, out string trigger)
     {
         bool dtdEvidence = _authorization.ShouldOpenCandidate(in decision);
         bool vadEvidence = !_endpoint.UnownedObserved &&
@@ -1000,10 +982,7 @@ internal sealed class NearEndDataPlane
         return dtdEvidence || vadEvidence;
     }
 
-    private BargeInSpeakerGateStatus GetSpeakerGateStatus(
-        in DuplexAudioFrame frame,
-        long generation,
-        out SpeakerVerificationResult result)
+    private BargeInSpeakerGateStatus GetSpeakerGateStatus(in DuplexAudioFrame frame, long generation, out SpeakerVerificationResult result)
     {
         result = default;
         if (!_authorization.RequiresSpeaker)
@@ -1425,9 +1404,7 @@ internal sealed class NearEndDataPlane
         return true;
     }
 
-    private long ComputeDecisionHistoryStart(
-        in BargeInDecision decision,
-        int preRollSamples)
+    private long ComputeDecisionHistoryStart(in BargeInDecision decision, int preRollSamples)
     {
         int candidateMs = Math.Max(
             _options.PlaybackMaxCandidateMs,
@@ -1519,9 +1496,7 @@ internal sealed class NearEndDataPlane
     // Confirmation tail replay
     // ---------------------------------------------------------------------------------------
 
-    private void CaptureConfirmationTail(
-        in DuplexAudioFrame frame,
-        bool latestNearEndSpeech)
+    private void CaptureConfirmationTail(in DuplexAudioFrame frame, bool latestNearEndSpeech)
     {
         bool overflow = false;
         lock (_lock)
@@ -1683,11 +1658,7 @@ internal sealed class NearEndDataPlane
     // Direct-feed facts and finalization
     // ---------------------------------------------------------------------------------------
 
-    private void ProcessActiveAudio(
-        long activeTurnId,
-        in DuplexAudioFrame frame,
-        double frameMs,
-        BargeInDecision decision)
+    private void ProcessActiveAudio(long activeTurnId, in DuplexAudioFrame frame, double frameMs, BargeInDecision decision)
     {
         ProcessActiveAudioFacts(
             activeTurnId,
@@ -1748,10 +1719,7 @@ internal sealed class NearEndDataPlane
             return _capture.IsActive(activeTurnId) && _capture.DirectFeed;
     }
 
-    private void EndCapture(
-        long turnId,
-        TimeSpan speechDuration,
-        ActiveEndDrainOutcome drainOutcome)
+    private void EndCapture(long turnId, TimeSpan speechDuration, ActiveEndDrainOutcome drainOutcome)
     {
         ActiveCaptureAudioStats stats = SnapshotActiveCaptureStats();
         if (!StopCapture(turnId, startCooldown: true))
@@ -1779,10 +1747,7 @@ internal sealed class NearEndDataPlane
         }
     }
 
-    private readonly record struct ActiveCaptureAudioStats(
-        string PreRollSource,
-        int PreRollSamples,
-        long DirectFeedSamples);
+    private readonly record struct ActiveCaptureAudioStats(string PreRollSource, int PreRollSamples, long DirectFeedSamples);
 
     private void ReportDataPlaneFault(string detail)
     {
@@ -1808,10 +1773,7 @@ internal sealed class NearEndDataPlane
             _options.MinDurationMs,
             _options.MinRms);
 
-    private void LogCommandAuthorized(
-        long generation,
-        in SpeakerVerificationResult verdict,
-        in BargeInDecision decision)
+    private void LogCommandAuthorized(long generation, in SpeakerVerificationResult verdict, in BargeInDecision decision)
     {
         long ownerTurnId;
         long streamEpoch;

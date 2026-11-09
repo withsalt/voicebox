@@ -308,11 +308,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
         /// Run greedy decoding over the given prompt + audio features. Returns the
         /// generated token id list (excluding EOS) and inference wall-clock time.
         /// </summary>
-        public DecodeResult Decode(
-            int[] inputIds,
-            AudioFeatures audioFeatures,
-            int maxNewTokens,
-            CancellationToken ct)
+        public DecodeResult Decode(int[] inputIds, AudioFeatures audioFeatures, int maxNewTokens, CancellationToken ct)
         {
             EnsureNotDisposed();
             int promptLen = inputIds.Length;
@@ -368,11 +364,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
         /// disposed only after the Run that consumed it has returned, so its GPU
         /// memory stays valid for the kernel reads.
         /// </remarks>
-        private DecodeResult DecodeWithIoBinding(
-            int[] inputIds,
-            AudioFeatures audioFeatures,
-            int maxNewTokens,
-            CancellationToken ct)
+        private DecodeResult DecodeWithIoBinding(int[] inputIds, AudioFeatures audioFeatures, int maxNewTokens, CancellationToken ct)
         {
             int promptLen = inputIds.Length;
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();

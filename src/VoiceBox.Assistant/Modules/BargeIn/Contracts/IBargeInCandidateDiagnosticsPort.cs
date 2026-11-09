@@ -11,7 +11,5 @@ internal interface IBargeInCandidateDiagnosticsPort
 {
     void LogDiscardedListeningCandidate(SpeechEndedDecision decision);
 
-    void RecordDiscardedPlaybackCandidate(
-        SpeechEndedDecision decision,
-        AssistantState currentState);
+    void RecordDiscardedPlaybackCandidate(SpeechEndedDecision decision, AssistantState currentState);
 }

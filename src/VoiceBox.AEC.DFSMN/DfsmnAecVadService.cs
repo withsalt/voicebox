@@ -81,12 +81,7 @@ namespace VoiceBox.AEC.DFSMN
             Process(capture, render, channels, sampleRate, in captureRange);
         }
 
-        public void Process(
-            Span<float> capture,
-            ReadOnlySpan<float> render,
-            uint channels,
-            uint sampleRate,
-            in CaptureRange captureRange)
+        public void Process(Span<float> capture, ReadOnlySpan<float> render, uint channels, uint sampleRate, in CaptureRange captureRange)
         {
             lock (_lock)
             {
@@ -246,9 +241,7 @@ namespace VoiceBox.AEC.DFSMN
             _observations.Enqueue(vadProbability, audio, in captureRange);
         }
 
-        private NearendVadProbabilityObservation ObserveProbability(
-            float probability,
-            in CaptureRange captureRange)
+        private NearendVadProbabilityObservation ObserveProbability(float probability, in CaptureRange captureRange)
         {
             if (!float.IsFinite(probability))
                 probability = 0f;

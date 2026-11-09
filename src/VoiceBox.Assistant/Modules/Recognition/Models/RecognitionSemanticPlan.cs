@@ -18,17 +18,9 @@ internal readonly record struct RecognitionSemanticPlan(
     string SessionId,
     TimeSpan SpeechDuration)
 {
-    public static RecognitionSemanticPlan SessionReady(
-        long turnId,
-        string sessionId,
-        TimeSpan speechDuration,
-        TurnSignal signal)
+    public static RecognitionSemanticPlan SessionReady(long turnId, string sessionId, TimeSpan speechDuration, TurnSignal signal)
         => new(RecognitionSemanticPlanKind.SessionReady, signal, turnId, sessionId, speechDuration);
 
-    public static RecognitionSemanticPlan SpeechEnded(
-        long turnId,
-        string sessionId,
-        TimeSpan speechDuration,
-        TurnSignal signal)
+    public static RecognitionSemanticPlan SpeechEnded(long turnId, string sessionId, TimeSpan speechDuration, TurnSignal signal)
         => new(RecognitionSemanticPlanKind.SpeechEnded, signal, turnId, sessionId, speechDuration);
 }

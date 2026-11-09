@@ -21,13 +21,10 @@ public interface IConversationToolProvider : IAsyncDisposable
     Task StartAsync(CancellationToken cancellationToken = default);
 
     /// <summary>读取本来源当前暴露的工具目录。</summary>
-    ValueTask<IReadOnlyList<ConversationToolDefinition>> GetToolsAsync(
-        CancellationToken cancellationToken = default);
+    ValueTask<IReadOnlyList<ConversationToolDefinition>> GetToolsAsync(CancellationToken cancellationToken = default);
 
     /// <summary>执行一次规范化工具调用。参数校验与审批由会话工具运行时负责。</summary>
-    ValueTask<ConversationToolResult> InvokeAsync(
-        ConversationToolCall call,
-        CancellationToken cancellationToken = default);
+    ValueTask<ConversationToolResult> InvokeAsync(ConversationToolCall call, CancellationToken cancellationToken = default);
 
     /// <summary>停止本次运行并断开连接。</summary>
     Task StopAsync();

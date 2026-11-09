@@ -33,11 +33,7 @@ internal sealed class ProcessedSpeechTimelineLocator : IProcessedCaptureFrameSin
             _reservoir.Add(audio, in sourceRange, frame.HasDiscontinuity);
     }
 
-    public bool TryLocate(
-        ReadOnlySpan<float> audio,
-        out long streamEpoch,
-        out long startSample,
-        out long endSample)
+    public bool TryLocate(ReadOnlySpan<float> audio, out long streamEpoch, out long startSample, out long endSample)
     {
         lock (_lock)
             return _reservoir.TryLocate(audio, out streamEpoch, out startSample, out endSample);

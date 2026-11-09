@@ -235,9 +235,7 @@ internal sealed class CompositeRenderDelayEstimator : IRenderDelayEstimator
             IsCorrelationFallback: true);
     }
 
-    private bool TryPromoteCorrelation(
-        in RenderDelayEstimate correlation,
-        out RenderDelayEstimate promoted)
+    private bool TryPromoteCorrelation(in RenderDelayEstimate correlation, out RenderDelayEstimate promoted)
     {
         if (!correlation.HasEstimate ||
             correlation.Confidence < _minimumCorrelationConfidence)
@@ -290,11 +288,7 @@ internal sealed class CompositeRenderDelayEstimator : IRenderDelayEstimator
         _correlationCandidateConfidence = 0;
     }
 
-    private double NormalizedCorrelation(
-        long captureStart,
-        int delay,
-        int length,
-        double captureEnergy)
+    private double NormalizedCorrelation(long captureStart, int delay, int length, double captureEnergy)
     {
         long renderStart = captureStart - delay;
         double renderEnergy = 0;

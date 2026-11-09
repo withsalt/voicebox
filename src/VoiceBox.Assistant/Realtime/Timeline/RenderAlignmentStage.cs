@@ -19,10 +19,7 @@ internal sealed class RenderAlignmentStage
     private RenderDelayHint? _delayHint;
     private long _lastRefinedEstimateSample = -1;
 
-    public RenderAlignmentStage(
-        TimeProvider timeProvider,
-        int delayHintMaxAgeMs,
-        long refinedEstimateHoldoverSamples)
+    public RenderAlignmentStage(TimeProvider timeProvider, int delayHintMaxAgeMs, long refinedEstimateHoldoverSamples)
     {
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
         _delayHintMaxAgeMs = delayHintMaxAgeMs;
@@ -65,9 +62,7 @@ internal sealed class RenderAlignmentStage
             samplePosition >= _lastRefinedEstimateSample &&
             samplePosition - _lastRefinedEstimateSample <= _refinedEstimateHoldoverSamples;
 
-    public RenderDelayEstimate SelectDelayEstimate(
-        in RenderDelayEstimate localEstimate,
-        long samplePosition)
+    public RenderDelayEstimate SelectDelayEstimate(in RenderDelayEstimate localEstimate, long samplePosition)
     {
         // A refined per-stream observation is authoritative.
         if (localEstimate.HasEstimate && localEstimate.IsRefined)

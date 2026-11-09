@@ -35,9 +35,7 @@ internal sealed class RecognitionEffectHandler : IRecognitionEffectHandler
         _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
     }
 
-    public ValueTask PrepareRecognitionAsync(
-        PrepareRecognitionEffect effect,
-        CancellationToken cancellationToken)
+    public ValueTask PrepareRecognitionAsync(PrepareRecognitionEffect effect, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         CancellationToken runToken = _runtime.RunToken;
@@ -53,9 +51,7 @@ internal sealed class RecognitionEffectHandler : IRecognitionEffectHandler
         return ValueTask.CompletedTask;
     }
 
-    public ValueTask FinishRecognitionAsync(
-        FinishRecognitionEffect effect,
-        CancellationToken cancellationToken)
+    public ValueTask FinishRecognitionAsync(FinishRecognitionEffect effect, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         CancellationToken runToken = _runtime.RunToken;
@@ -67,9 +63,7 @@ internal sealed class RecognitionEffectHandler : IRecognitionEffectHandler
         return ValueTask.CompletedTask;
     }
 
-    private async Task FinishAsync(
-        FinishRecognitionEffect effect,
-        CancellationToken cancellationToken)
+    private async Task FinishAsync(FinishRecognitionEffect effect, CancellationToken cancellationToken)
     {
         try
         {

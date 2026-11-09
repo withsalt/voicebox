@@ -56,9 +56,7 @@ internal static class MiniAudioServiceHelpers
         return current;
     }
 
-    internal static void InvokeDataHandlers(
-        Action<ReadOnlySpan<float>>? handlers,
-        ReadOnlySpan<float> samples)
+    internal static void InvokeDataHandlers(Action<ReadOnlySpan<float>>? handlers, ReadOnlySpan<float> samples)
     {
         if (handlers is null)
         {
@@ -78,9 +76,7 @@ internal static class MiniAudioServiceHelpers
         }
     }
 
-    internal static void InvokeDuplexFrameHandlers(
-        DuplexAudioFrameHandler? handlers,
-        in DuplexAudioFrame frame)
+    internal static void InvokeDuplexFrameHandlers(DuplexAudioFrameHandler? handlers, in DuplexAudioFrame frame)
     {
         if (handlers is null)
         {
@@ -100,9 +96,7 @@ internal static class MiniAudioServiceHelpers
         }
     }
 
-    internal static void InvokeProcessedFrameHandlers(
-        ProcessedCaptureFrameHandler? handlers,
-        in ProcessedCaptureFrame frame)
+    internal static void InvokeProcessedFrameHandlers(ProcessedCaptureFrameHandler? handlers, in ProcessedCaptureFrame frame)
     {
         if (handlers is null)
         {
@@ -142,10 +136,7 @@ internal static class MiniAudioServiceHelpers
         }
     }
 
-    internal static void InvokeEventHandlers<TEventArgs>(
-        EventHandler<TEventArgs>? handlers,
-        object sender,
-        TEventArgs eventArgs)
+    internal static void InvokeEventHandlers<TEventArgs>(EventHandler<TEventArgs>? handlers, object sender, TEventArgs eventArgs)
         where TEventArgs : EventArgs
     {
         if (handlers is null)

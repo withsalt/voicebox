@@ -31,11 +31,7 @@ internal sealed class BenchmarkTimeProvider : TimeProvider
 
     public override DateTimeOffset GetUtcNow() => _utcNow;
 
-    public override ITimer CreateTimer(
-        TimerCallback callback,
-        object? state,
-        TimeSpan dueTime,
-        TimeSpan period)
+    public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
     {
         ArgumentNullException.ThrowIfNull(callback);
         var timer = new BenchmarkTimer(this, callback, state);
@@ -68,10 +64,7 @@ internal sealed class BenchmarkTimeProvider : TimeProvider
         FireDueTimers();
     }
 
-    private bool ChangeTimer(
-        BenchmarkTimer timer,
-        TimeSpan dueTime,
-        TimeSpan period)
+    private bool ChangeTimer(BenchmarkTimer timer, TimeSpan dueTime, TimeSpan period)
     {
         long dueTicks = ToTimestampTicks(dueTime, nameof(dueTime));
         long periodTicks = period == TimeSpan.Zero
@@ -152,10 +145,7 @@ internal sealed class BenchmarkTimeProvider : TimeProvider
         private readonly TimerCallback _callback;
         private readonly object? _state;
 
-        public BenchmarkTimer(
-            BenchmarkTimeProvider owner,
-            TimerCallback callback,
-            object? state)
+        public BenchmarkTimer(BenchmarkTimeProvider owner, TimerCallback callback, object? state)
         {
             _owner = owner;
             _callback = callback;
@@ -209,11 +199,7 @@ internal sealed class BenchmarkClockedAecService :
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     }
 
-    public void Process(
-        Span<float> capture,
-        ReadOnlySpan<float> render,
-        uint channels,
-        uint sampleRate)
+    public void Process(Span<float> capture, ReadOnlySpan<float> render, uint channels, uint sampleRate)
         => _inner.Process(capture, render, channels, sampleRate);
 
     public void Reset() => _inner.Reset();
@@ -351,10 +337,7 @@ internal sealed class BenchmarkTtsService : IStreamTTSService
 
     public TtsVoice? GetDefaultVoice() => new TtsVoice { Name = "benchmark" };
 
-    public Task<TtsResult> GetAudioAsync(
-        string text,
-        TtsSynthesisOptions? options = null,
-        CancellationToken ct = default)
+    public Task<TtsResult> GetAudioAsync(string text, TtsSynthesisOptions? options = null, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
         float[] samples = new float[320];

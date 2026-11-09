@@ -414,10 +414,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         return trace with { ScheduleId = "runtime-barge-in-before-response-generated" };
     }
 
-    private static void AddPublicTurnEvents(
-        VoiceAssistant assistant,
-        List<ScenarioEvent> events,
-        TaskCompletionSource replied)
+    private static void AddPublicTurnEvents(VoiceAssistant assistant, List<ScenarioEvent> events, TaskCompletionSource replied)
     {
         assistant.StateChanged += (_, value) => AddEvent(events, new ScenarioEvent(
             0, "StateChanged", value.From.ToString(), value.To.ToString()));
@@ -468,9 +465,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             providerCalls,
             new ScenarioFinalState(assistant.State.ToString(), assistant.WakeMode.ToString()));
 
-    private static async Task AssertOrRegenerateSpecTraceAsync(
-        string relativePath,
-        AssistantScenarioTrace actual)
+    private static async Task AssertOrRegenerateSpecTraceAsync(string relativePath, AssistantScenarioTrace actual)
     {
         if (string.Equals(
                 Environment.GetEnvironmentVariable("VOICEBOX_REGENERATE_GOLDENS"),

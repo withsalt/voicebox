@@ -7,10 +7,7 @@ namespace VoiceBox.Core.Services.DNRService
         /// sample for every input sample. Zero input drives buffered real samples through the
         /// pipeline; output belonging to that zero tail is discarded.
         /// </summary>
-        public static float[] ProcessAll(
-            this IDigitalNoiseReductionService service,
-            ReadOnlySpan<float> input,
-            int chunkSize = 0)
+        public static float[] ProcessAll(this IDigitalNoiseReductionService service, ReadOnlySpan<float> input, int chunkSize = 0)
         {
             ArgumentNullException.ThrowIfNull(service);
             if (chunkSize < 0)

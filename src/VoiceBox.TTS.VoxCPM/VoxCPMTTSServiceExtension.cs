@@ -31,8 +31,7 @@ namespace VoiceBox.TTS.VoxCPM
         }
 
         /// <summary>注册 VoxCPM TTS 服务到通用 DI 容器 (同时注册 IStreamTTSService 与 ITTSService)。</summary>
-        public static IServiceCollection AddVoxCPMTTSService(
-            this IServiceCollection services, Action<VoxCPMTTSOptions> configure)
+        public static IServiceCollection AddVoxCPMTTSService(this IServiceCollection services, Action<VoxCPMTTSOptions> configure)
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(configure);

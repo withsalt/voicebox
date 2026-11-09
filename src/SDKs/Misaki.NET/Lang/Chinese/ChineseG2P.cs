@@ -288,8 +288,7 @@ public sealed class ChineseG2P : IG2P
     /// <summary>
     /// Frontend pipeline: segmentation → pinyin → tone sandhi → erhua → Zhuyin encoding.
     /// </summary>
-    private (string phonemes, List<MToken> tokens) ProcessFrontend(
-        string text, IReadOnlyDictionary<string, string>? overrides)
+    private (string phonemes, List<MToken> tokens) ProcessFrontend(string text, IReadOnlyDictionary<string, string>? overrides)
     {
         var tokens = new List<MToken>();
 
@@ -421,8 +420,7 @@ public sealed class ChineseG2P : IG2P
         return sb.ToString();
     }
 
-    private (List<string> initials, List<string> finals) MergeErhua(
-        List<string> initials, List<string> finals, string word, string pos)
+    private (List<string> initials, List<string> finals) MergeErhua(List<string> initials, List<string> finals, string word, string pos)
     {
         // Fix er1 -> er2 for final 儿
         for (int i = 0; i < finals.Count; i++)

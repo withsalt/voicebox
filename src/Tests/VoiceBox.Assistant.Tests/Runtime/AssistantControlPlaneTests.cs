@@ -421,8 +421,7 @@ public sealed class AssistantControlPlaneTests
     [InlineData(160)]
     [InlineData(256)]
     [InlineData(320)]
-    public void CriticalProducer_P99AndMaxStayInsideCallbackPeriodBudgets(
-        int callbackSamples)
+    public void CriticalProducer_P99AndMaxStayInsideCallbackPeriodBudgets(int callbackSamples)
     {
         const int SampleRate = 16_000;
         const int Iterations = 1_000;
@@ -472,9 +471,7 @@ public sealed class AssistantControlPlaneTests
     [InlineData(160, 0.0104)]
     [InlineData(256, 0.0171)]
     [InlineData(320, 0.0063)]
-    public async Task InterruptionSourceToEffectLatency_AddsNoMoreThanOneCallbackPeriod(
-        int callbackSamples,
-        double maxBudgetMilliseconds)
+    public async Task InterruptionSourceToEffectLatency_AddsNoMoreThanOneCallbackPeriod(int callbackSamples, double maxBudgetMilliseconds)
     {
         const int SampleRate = 16_000;
         const int Iterations = 100;
@@ -698,28 +695,19 @@ public sealed class AssistantControlPlaneTests
         public ConcurrentQueue<AssistantFailure> Faults { get; } = new();
         public Task ExpectedHandled => _handled.Task;
 
-        public ValueTask HandleRuntimeCommandAsync(
-            RuntimeCommand command,
-            ControlEnvelope envelope,
-            CancellationToken cancellationToken)
+        public ValueTask HandleRuntimeCommandAsync(RuntimeCommand command, ControlEnvelope envelope, CancellationToken cancellationToken)
         {
             Record(envelope.IngressSequence);
             return ValueTask.CompletedTask;
         }
 
-        public ValueTask HandleAssistantSignalAsync(
-            AssistantSignal signal,
-            ControlEnvelope envelope,
-            CancellationToken cancellationToken)
+        public ValueTask HandleAssistantSignalAsync(AssistantSignal signal, ControlEnvelope envelope, CancellationToken cancellationToken)
         {
             Record(envelope.IngressSequence);
             return ValueTask.CompletedTask;
         }
 
-        public ValueTask HandleTerminalFaultAsync(
-            AssistantFailure failure,
-            ControlEnvelope envelope,
-            CancellationToken cancellationToken)
+        public ValueTask HandleTerminalFaultAsync(AssistantFailure failure, ControlEnvelope envelope, CancellationToken cancellationToken)
         {
             Faults.Enqueue(failure);
             if (Sequences.Count + Faults.Count >= _expectedHandled)
@@ -727,9 +715,7 @@ public sealed class AssistantControlPlaneTests
             return ValueTask.CompletedTask;
         }
 
-        public ValueTask HandleAbandonedAfterBarrierAsync(
-            ControlEnvelope envelope,
-            CancellationToken cancellationToken)
+        public ValueTask HandleAbandonedAfterBarrierAsync(ControlEnvelope envelope, CancellationToken cancellationToken)
             => ValueTask.CompletedTask;
 
         private void Record(long sequence)
@@ -751,27 +737,16 @@ public sealed class AssistantControlPlaneTests
                 await _handled.WaitAsync(cancellationToken);
         }
 
-        public ValueTask HandleRuntimeCommandAsync(
-            RuntimeCommand command,
-            ControlEnvelope envelope,
-            CancellationToken cancellationToken)
+        public ValueTask HandleRuntimeCommandAsync(RuntimeCommand command, ControlEnvelope envelope, CancellationToken cancellationToken)
             => Record(envelope.IngressSequence);
 
-        public ValueTask HandleAssistantSignalAsync(
-            AssistantSignal signal,
-            ControlEnvelope envelope,
-            CancellationToken cancellationToken)
+        public ValueTask HandleAssistantSignalAsync(AssistantSignal signal, ControlEnvelope envelope, CancellationToken cancellationToken)
             => Record(envelope.IngressSequence);
 
-        public ValueTask HandleTerminalFaultAsync(
-            AssistantFailure failure,
-            ControlEnvelope envelope,
-            CancellationToken cancellationToken)
+        public ValueTask HandleTerminalFaultAsync(AssistantFailure failure, ControlEnvelope envelope, CancellationToken cancellationToken)
             => Record(envelope.IngressSequence);
 
-        public ValueTask HandleAbandonedAfterBarrierAsync(
-            ControlEnvelope envelope,
-            CancellationToken cancellationToken)
+        public ValueTask HandleAbandonedAfterBarrierAsync(ControlEnvelope envelope, CancellationToken cancellationToken)
             => Record(envelope.IngressSequence);
 
         public void Dispose() => _handled.Dispose();
@@ -799,27 +774,16 @@ public sealed class AssistantControlPlaneTests
                 await _handled.WaitAsync(cancellationToken);
         }
 
-        public ValueTask HandleRuntimeCommandAsync(
-            RuntimeCommand command,
-            ControlEnvelope envelope,
-            CancellationToken cancellationToken)
+        public ValueTask HandleRuntimeCommandAsync(RuntimeCommand command, ControlEnvelope envelope, CancellationToken cancellationToken)
             => Record(envelope.IngressSequence);
 
-        public ValueTask HandleAssistantSignalAsync(
-            AssistantSignal signal,
-            ControlEnvelope envelope,
-            CancellationToken cancellationToken)
+        public ValueTask HandleAssistantSignalAsync(AssistantSignal signal, ControlEnvelope envelope, CancellationToken cancellationToken)
             => Record(envelope.IngressSequence);
 
-        public ValueTask HandleTerminalFaultAsync(
-            AssistantFailure failure,
-            ControlEnvelope envelope,
-            CancellationToken cancellationToken)
+        public ValueTask HandleTerminalFaultAsync(AssistantFailure failure, ControlEnvelope envelope, CancellationToken cancellationToken)
             => Record(envelope.IngressSequence);
 
-        public ValueTask HandleAbandonedAfterBarrierAsync(
-            ControlEnvelope envelope,
-            CancellationToken cancellationToken)
+        public ValueTask HandleAbandonedAfterBarrierAsync(ControlEnvelope envelope, CancellationToken cancellationToken)
             => Record(envelope.IngressSequence);
 
         public void Dispose() => _handled.Dispose();
@@ -865,10 +829,7 @@ public sealed class AssistantControlPlaneTests
         private readonly TimeSpan _wakeDelay;
         private int _wakeCount;
 
-        public DelayedWakeIngressReader(
-            TimeSpan wakeDelay,
-            int wakeCount,
-            params ControlEnvelope[] items)
+        public DelayedWakeIngressReader(TimeSpan wakeDelay, int wakeCount, params ControlEnvelope[] items)
         {
             _items = new Queue<ControlEnvelope>(items);
             _wakeDelay = wakeDelay;
@@ -926,16 +887,10 @@ public sealed class AssistantControlPlaneTests
 
         public ConcurrentQueue<AssistantFailure> Faults { get; } = new();
 
-        public ValueTask HandleRuntimeCommandAsync(
-            RuntimeCommand command,
-            ControlEnvelope envelope,
-            CancellationToken cancellationToken)
+        public ValueTask HandleRuntimeCommandAsync(RuntimeCommand command, ControlEnvelope envelope, CancellationToken cancellationToken)
             => ValueTask.CompletedTask;
 
-        public ValueTask HandleAssistantSignalAsync(
-            AssistantSignal signal,
-            ControlEnvelope envelope,
-            CancellationToken cancellationToken)
+        public ValueTask HandleAssistantSignalAsync(AssistantSignal signal, ControlEnvelope envelope, CancellationToken cancellationToken)
         {
             if (_throwCancellation)
             {
@@ -946,18 +901,13 @@ public sealed class AssistantControlPlaneTests
             throw new InvalidOperationException("handler-test-fault");
         }
 
-        public ValueTask HandleTerminalFaultAsync(
-            AssistantFailure failure,
-            ControlEnvelope envelope,
-            CancellationToken cancellationToken)
+        public ValueTask HandleTerminalFaultAsync(AssistantFailure failure, ControlEnvelope envelope, CancellationToken cancellationToken)
         {
             Faults.Enqueue(failure);
             return ValueTask.CompletedTask;
         }
 
-        public ValueTask HandleAbandonedAfterBarrierAsync(
-            ControlEnvelope envelope,
-            CancellationToken cancellationToken)
+        public ValueTask HandleAbandonedAfterBarrierAsync(ControlEnvelope envelope, CancellationToken cancellationToken)
             => ValueTask.CompletedTask;
     }
 }

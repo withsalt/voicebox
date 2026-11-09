@@ -39,9 +39,7 @@ internal sealed class SpeakableSentenceQueue
         _sentences.Writer.TryComplete();
     }
 
-    public async ValueTask FlushAsync(
-        TaskCompletionSource? completion,
-        CancellationToken cancellationToken)
+    public async ValueTask FlushAsync(TaskCompletionSource? completion, CancellationToken cancellationToken)
     {
         string? tail = _splitter.Flush();
         if (!string.IsNullOrWhiteSpace(tail))
@@ -62,7 +60,5 @@ internal sealed class SpeakableSentenceQueue
 
     public void Fail(Exception exception) => _sentences.Writer.TryComplete(exception);
 
-    internal readonly record struct SentenceItem(
-        string? Text,
-        TaskCompletionSource? Completion);
+    internal readonly record struct SentenceItem(string? Text, TaskCompletionSource? Completion);
 }

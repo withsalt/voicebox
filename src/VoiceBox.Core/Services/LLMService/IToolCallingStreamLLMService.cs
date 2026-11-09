@@ -8,7 +8,5 @@ namespace VoiceBox.Core.Services.LLMService;
 /// </summary>
 public interface IToolCallingStreamLLMService : IStreamLLMService
 {
-    IAsyncEnumerable<LlmTurnEvent> StreamTurnAsync(
-        LlmToolTurnRequest request,
-        CancellationToken cancellationToken = default);
+    IAsyncEnumerable<LlmTurnEvent> StreamTurnAsync(LlmToolTurnRequest request, CancellationToken cancellationToken = default);
 }

@@ -36,9 +36,7 @@ public sealed class LlmConversationSession : IConversationSession
 
     public string ConversationId => _core.ConversationId;
 
-    public IAsyncEnumerable<ConversationEvent> StreamAsync(
-        ConversationRequest request,
-        CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ConversationEvent> StreamAsync(ConversationRequest request, CancellationToken cancellationToken = default)
         => _core.StreamAsync(request, cancellationToken);
 
     public ValueTask DisposeAsync() => _core.DisposeAsync();

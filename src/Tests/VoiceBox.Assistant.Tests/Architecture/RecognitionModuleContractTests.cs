@@ -1054,9 +1054,7 @@ public sealed class RecognitionModuleContractTests
             OnFeed?.Invoke(audio.ToArray());
         }
 
-        public Task<string?> FinishSessionAsync(
-            string sessionId,
-            CancellationToken cancellationToken)
+        public Task<string?> FinishSessionAsync(string sessionId, CancellationToken cancellationToken)
         {
             FinishCount++;
             OnFinish?.Invoke();
@@ -1090,9 +1088,7 @@ public sealed class RecognitionModuleContractTests
                 ?? ValueTask.FromResult(true);
         }
 
-        public ValueTask PublishRecognitionFailedAsync(
-            RecognitionOutcome outcome,
-            CancellationToken cancellationToken)
+        public ValueTask PublishRecognitionFailedAsync(RecognitionOutcome outcome, CancellationToken cancellationToken)
         {
             Failed.Add(outcome);
             OnRecognitionFailed?.Invoke(outcome);

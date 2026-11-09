@@ -32,9 +32,7 @@ internal sealed class SpeechPlaybackCoordinator : IDisposable
     private bool _stopping;
     private bool _disposed;
 
-    public SpeechPlaybackCoordinator(
-        ISpeechPlaybackRequestExecutor executor,
-        IPlaybackDeviceQueuePort deviceQueue)
+    public SpeechPlaybackCoordinator(ISpeechPlaybackRequestExecutor executor, IPlaybackDeviceQueuePort deviceQueue)
     {
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
         _deviceQueue = deviceQueue ?? throw new ArgumentNullException(nameof(deviceQueue));

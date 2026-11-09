@@ -346,8 +346,7 @@ public sealed class ControlLoopContractTests
     [InlineData("OnSpeechStarted")]
     [InlineData("OnSpeaking")]
     [InlineData("OnSpeechEnded")]
-    public void VadCallbacks_OnlyCaptureAndEnqueueFactsWithoutDirectTurnStateMachineAccess(
-        string callbackName)
+    public void VadCallbacks_OnlyCaptureAndEnqueueFactsWithoutDirectTurnStateMachineAccess(string callbackName)
     {
         // The callbacks moved off the facade onto the turn-boundary ingress, and still only
         // normalise, stamp and admit: none of them reaches a turn-observation owner.
@@ -397,11 +396,7 @@ public sealed class ControlLoopContractTests
             method => method.DeclaringType == calleeType && method.Name == calleeMethodName);
     }
 
-    private static void AssertDoesNotCall(
-        Type ownerType,
-        string ownerMethodName,
-        Type calleeType,
-        string calleeMethodName)
+    private static void AssertDoesNotCall(Type ownerType, string ownerMethodName, Type calleeType, string calleeMethodName)
     {
         MethodInfo ownerMethod = ownerType.GetMethod(
             ownerMethodName,

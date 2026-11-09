@@ -47,9 +47,7 @@ public static class MiniAudioServiceExtension
         return services;
     }
 
-    public static IServiceCollection AddMiniAudioRecordService(
-        this IServiceCollection services,
-        Action<MiniAudioRecordOptions> configure)
+    public static IServiceCollection AddMiniAudioRecordService(this IServiceCollection services, Action<MiniAudioRecordOptions> configure)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configure);
@@ -58,9 +56,7 @@ public static class MiniAudioServiceExtension
         return services;
     }
 
-    public static IServiceCollection AddMiniAudioPlayService(
-        this IServiceCollection services,
-        Action<MiniAudioPlayOptions> configure)
+    public static IServiceCollection AddMiniAudioPlayService(this IServiceCollection services, Action<MiniAudioPlayOptions> configure)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configure);

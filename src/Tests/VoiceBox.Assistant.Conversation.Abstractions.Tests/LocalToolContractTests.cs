@@ -146,8 +146,7 @@ public sealed class LocalToolContractTests
             return Task.CompletedTask;
         }
 
-        public ValueTask<IReadOnlyList<ConversationToolDefinition>> GetToolsAsync(
-            CancellationToken cancellationToken = default)
+        public ValueTask<IReadOnlyList<ConversationToolDefinition>> GetToolsAsync(CancellationToken cancellationToken = default)
         {
             Assert.True(_started);
             return ValueTask.FromResult<IReadOnlyList<ConversationToolDefinition>>(
@@ -169,9 +168,7 @@ public sealed class LocalToolContractTests
             ]);
         }
 
-        public ValueTask<ConversationToolResult> InvokeAsync(
-            ConversationToolCall call,
-            CancellationToken cancellationToken = default)
+        public ValueTask<ConversationToolResult> InvokeAsync(ConversationToolCall call, CancellationToken cancellationToken = default)
             => ValueTask.FromResult(new ConversationToolResult(
                 call.CallId,
                 ConversationToolResultKind.Success,

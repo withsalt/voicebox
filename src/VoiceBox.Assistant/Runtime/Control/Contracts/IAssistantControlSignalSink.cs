@@ -8,8 +8,5 @@ namespace VoiceBox.Assistant.Runtime.Control.Contracts;
 /// </summary>
 internal interface IAssistantControlSignalSink
 {
-    ValueTask SubmitAsync(
-        AssistantSignal signal,
-        AssistantSignalSource source,
-        CancellationToken cancellationToken);
+    ValueTask SubmitAsync(AssistantSignal signal, AssistantSignalSource source, CancellationToken cancellationToken);
 }

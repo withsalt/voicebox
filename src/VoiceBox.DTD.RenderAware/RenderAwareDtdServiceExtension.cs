@@ -11,9 +11,7 @@ public static class RenderAwareDtdServiceExtension
     /// Registers one singleton detector. A singleton is appropriate for one audio stream; register
     /// separate keyed instances when an application processes multiple streams.
     /// </summary>
-    public static IServiceCollection AddRenderAwareDtdService(
-        this IServiceCollection services,
-        Action<RenderAwareDtdOptions> configure)
+    public static IServiceCollection AddRenderAwareDtdService(this IServiceCollection services, Action<RenderAwareDtdOptions> configure)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configure);

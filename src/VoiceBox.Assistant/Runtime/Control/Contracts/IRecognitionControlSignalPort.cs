@@ -4,13 +4,7 @@ namespace VoiceBox.Assistant.Runtime.Control.Contracts;
 
 internal interface IRecognitionControlSignalPort
 {
-    ValueTask<bool> PublishRecognitionStartedAsync(
-        long turnId,
-        long operationId,
-        string sessionId,
-        CancellationToken cancellationToken);
+    ValueTask<bool> PublishRecognitionStartedAsync(long turnId, long operationId, string sessionId, CancellationToken cancellationToken);
 
-    ValueTask PublishRecognitionFailedAsync(
-        RecognitionOutcome outcome,
-        CancellationToken cancellationToken);
+    ValueTask PublishRecognitionFailedAsync(RecognitionOutcome outcome, CancellationToken cancellationToken);
 }

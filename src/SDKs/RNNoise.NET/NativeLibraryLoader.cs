@@ -43,10 +43,7 @@ namespace RNNoise.NET
             }
         }
 
-        private static IntPtr Resolve(
-            string libraryName,
-            Assembly assembly,
-            DllImportSearchPath? searchPath)
+        private static IntPtr Resolve(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
         {
             if (libraryName != LibraryName)
             {

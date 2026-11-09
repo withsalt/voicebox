@@ -51,10 +51,7 @@ namespace VoiceBox.Wakeup.OpenWakeWord.Internal
 
         public int EmbeddingFrames => _featureBufferFrames;
 
-        public AudioFeatureExtractor(
-            string melModelPath,
-            string embeddingModelPath,
-            OnnxExecutionOptions onnxOptions)
+        public AudioFeatureExtractor(string melModelPath, string embeddingModelPath, OnnxExecutionOptions onnxOptions)
         {
             if (!File.Exists(melModelPath))
                 throw new FileNotFoundException($"Melspectrogram model not found: {melModelPath}", melModelPath);

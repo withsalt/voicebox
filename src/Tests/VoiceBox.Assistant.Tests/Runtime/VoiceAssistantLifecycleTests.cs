@@ -2219,9 +2219,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     /// Confirmation.Enable also opens SingleTalk, so the first command after wake-up must be
     /// locatable owner audio — dummy VAD samples are denied and never start a reply.
     /// </summary>
-    private static async Task SpeakOwnerCommandUntilSpeakingAsync(
-        TestServices services,
-        VoiceAssistant assistant)
+    private static async Task SpeakOwnerCommandUntilSpeakingAsync(TestServices services, VoiceAssistant assistant)
     {
         SpeakLocatedUtterance(services, FakeSpeakerService.OwnerAudio(16000));
         await WaitUntilAsync(() => assistant.State == AssistantState.Speaking && services.Audio.AcceptedSamples > 0);
@@ -2793,10 +2791,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             [1f, 2f, 3f, 4f],
             services.Asr.FedAudio["validation-1"].SelectMany(static chunk => chunk));
 
-        static void FeedRecognitionAudio(
-            NearEndTestHarness coordinator,
-            long startSample,
-            float[] samples)
+        static void FeedRecognitionAudio(NearEndTestHarness coordinator, long startSample, float[] samples)
         {
             var range = new CaptureRange(
                 StreamEpoch: 1,
@@ -2979,10 +2974,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             ControlEnvelope envelope,
             CancellationToken cancellationToken) => ValueTask.CompletedTask;
 
-        public ValueTask HandleAssistantSignalAsync(
-            AssistantSignal signal,
-            ControlEnvelope envelope,
-            CancellationToken cancellationToken)
+        public ValueTask HandleAssistantSignalAsync(AssistantSignal signal, ControlEnvelope envelope, CancellationToken cancellationToken)
         {
             SignalObserved.TrySetResult();
             return ValueTask.CompletedTask;
@@ -3090,10 +3082,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Equal("VBX-CTRL-018", failure.Code);
         Assert.Equal("asr-feed-queue-overflow", failure.MessageKey);
 
-        static void FeedRecognitionAudio(
-            NearEndTestHarness coordinator,
-            long startSample,
-            float[] samples)
+        static void FeedRecognitionAudio(NearEndTestHarness coordinator, long startSample, float[] samples)
         {
             var range = new CaptureRange(
                 StreamEpoch: 1,
@@ -3242,10 +3231,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             Enumerable.Range(1, 20).Select(static value => (float)value).ToArray(),
             services.Asr.FedAudio["validation-1"].SelectMany(static chunk => chunk));
 
-        static void FeedRecognitionAudio(
-            NearEndTestHarness coordinator,
-            long startSample,
-            float[] samples)
+        static void FeedRecognitionAudio(NearEndTestHarness coordinator, long startSample, float[] samples)
         {
             var range = new CaptureRange(
                 StreamEpoch: 1,
@@ -3373,10 +3359,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             [5f, 6f, 7f, 8f, 9f, 10f, 11f, 12f, 13f, 14f, 15f, 16f],
             services.Asr.FedAudio["validation-1"].SelectMany(static chunk => chunk));
 
-        static void FeedRecognitionAudio(
-            NearEndTestHarness coordinator,
-            long startSample,
-            float[] samples)
+        static void FeedRecognitionAudio(NearEndTestHarness coordinator, long startSample, float[] samples)
         {
             var range = new CaptureRange(
                 StreamEpoch: 1,
@@ -3674,8 +3657,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void ActiveNearEndCapture_ConfirmationTailRejectsEitherTimelineIdentityMismatch(
-        bool generationMismatch)
+    public void ActiveNearEndCapture_ConfirmationTailRejectsEitherTimelineIdentityMismatch(bool generationMismatch)
     {
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
@@ -3701,8 +3683,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task ActiveNearEndCapture_DiscontinuityRetiresConfirmationTailWithoutFault(
-        bool explicitDiscontinuity)
+    public async Task ActiveNearEndCapture_DiscontinuityRetiresConfirmationTailWithoutFault(bool explicitDiscontinuity)
     {
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
@@ -5406,10 +5387,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     private static void EmitCorrelatedPlaybackInput(TestServices services, float[] audio)
         => services.Audio.EmitFrame(audio, audio, audio, audio);
 
-    private static DuplexAudioFrame CreateDuplexFrame(
-        long sequence,
-        long startSample,
-        int sampleCount)
+    private static DuplexAudioFrame CreateDuplexFrame(long sequence, long startSample, int sampleCount)
     {
         float[] audio = ConstantSamples(0.1f, sampleCount);
         return new DuplexAudioFrame(
@@ -5691,8 +5669,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         }
     }
 
-    private static NearEndConfirmationLease CreateConfirmationLease(
-        long selectedEndSample)
+    private static NearEndConfirmationLease CreateConfirmationLease(long selectedEndSample)
         => new(
             OperationId: 1,
             CandidateId: default,
@@ -5730,11 +5707,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             ConfirmationInitialSuppressionMs: 0,
             ConfirmedBargeInDiagnostics: default);
 
-    private static void FeedRecognitionAudio(
-        NearEndTestHarness coordinator,
-        long startSample,
-        float[] samples,
-        long streamEpoch = 1)
+    private static void FeedRecognitionAudio(NearEndTestHarness coordinator, long startSample, float[] samples, long streamEpoch = 1)
     {
         MainAudioObservation observation =
             ObserveRecognitionAudio(coordinator, startSample, samples, streamEpoch);
@@ -5781,12 +5754,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             : throw new Xunit.Sdk.XunitException($"Field '{name}' was not found in the runtime graph.");
     }
 
-    private static bool TryFindInGraph<T>(
-        object instance,
-        string name,
-        HashSet<object> visited,
-        int depth,
-        out T value)
+    private static bool TryFindInGraph<T>(object instance, string name, HashSet<object> visited, int depth, out T value)
     {
         value = default!;
         if (depth > 4 || !visited.Add(instance))
@@ -6074,8 +6042,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         }
     }
 
-    private sealed class FakePlaybackBargeInDetectorFactory(
-        FakePlaybackBargeInDetector detector) : IPlaybackBargeInDetectorFactory
+    private sealed class FakePlaybackBargeInDetectorFactory(FakePlaybackBargeInDetector detector) : IPlaybackBargeInDetectorFactory
     {
         public IPlaybackBargeInDetector Create() => detector;
     }
@@ -6195,10 +6162,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             }
         }
 
-        public BargeInDecision GetRecentDecision(
-            TimeSpan window,
-            int minDurationMs,
-            float minRms)
+        public BargeInDecision GetRecentDecision(TimeSpan window, int minDurationMs, float minRms)
         {
             lock (_lock)
             {
@@ -6565,10 +6529,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             OnDuplexAudioFrame?.Invoke(in frame);
         }
 
-        public void EmitProcessedCapture(
-            in CaptureRange range,
-            float[] processedCapture,
-            bool hasDiscontinuity = false)
+        public void EmitProcessedCapture(in CaptureRange range, float[] processedCapture, bool hasDiscontinuity = false)
         {
             Assert.Equal(range.Length, processedCapture.LongLength);
             var processedFrame = new ProcessedCaptureFrame(
@@ -6655,8 +6616,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         }
     }
 
-    private sealed class SequencedSpeakerEvidenceProvider(
-        params SpeakerVerificationStatus[] statuses) : ISpeakerEvidenceProvider
+    private sealed class SequencedSpeakerEvidenceProvider(params SpeakerVerificationStatus[] statuses) : ISpeakerEvidenceProvider
     {
         private int _evaluateCount;
         private long _candidates;

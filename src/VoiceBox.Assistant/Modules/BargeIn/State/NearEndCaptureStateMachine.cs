@@ -28,11 +28,7 @@ internal sealed class NearEndCaptureStateMachine
         public static FeedDecision NotHandled => default;
     }
 
-    public readonly record struct Finalization(
-        bool Claimed,
-        long TurnId,
-        TimeSpan SpeechDuration,
-        ActiveEndDrainOutcome Outcome)
+    public readonly record struct Finalization(bool Claimed, long TurnId, TimeSpan SpeechDuration, ActiveEndDrainOutcome Outcome)
     {
         public static Finalization None => default;
     }
@@ -93,12 +89,7 @@ internal sealed class NearEndCaptureStateMachine
     public long ReadActiveTurnIdVolatile() => Volatile.Read(ref _activeTurnId);
 
     /// <summary>Starts the capture for a committed turn. In-flight feeds and observations stay counted.</summary>
-    public void Start(
-        long turnId,
-        long firstFeedSample,
-        double speechDurationMs,
-        string preRollSource,
-        int preRollSamples)
+    public void Start(long turnId, long firstFeedSample, double speechDurationMs, string preRollSource, int preRollSamples)
     {
         _activeTurnId = turnId;
         ResetDrainFields();
@@ -142,10 +133,7 @@ internal sealed class NearEndCaptureStateMachine
     /// Reserves the still-unfed part of one observation. Returns <see cref="FeedDecision.Handled"/>
     /// false when the observation belongs to another turn or timeline epoch.
     /// </summary>
-    public FeedDecision ReserveFeed(
-        in MainAudioObservation observation,
-        long currentGeneration,
-        long currentStreamEpoch)
+    public FeedDecision ReserveFeed(in MainAudioObservation observation, long currentGeneration, long currentStreamEpoch)
     {
         if (_activeTurnId == 0 ||
             State == Status.Idle ||
@@ -293,11 +281,7 @@ internal sealed class NearEndCaptureStateMachine
         return true;
     }
 
-    public void BeginDrain(
-        long streamEpoch,
-        long endSampleExclusive,
-        bool hasDiscontinuity,
-        long timeoutSamples)
+    public void BeginDrain(long streamEpoch, long endSampleExclusive, bool hasDiscontinuity, long timeoutSamples)
     {
         if (_activeTurnId == 0 || State != Status.DirectFeed)
             return;
@@ -330,9 +314,7 @@ internal sealed class NearEndCaptureStateMachine
     /// Claims the single terminal finalization for this drain. It requires that no direct feed or
     /// endpoint observation is in flight and the watermark reached the target unless forced.
     /// </summary>
-    public bool TryClaimEndFinalization(
-        out TimeSpan speechDuration,
-        out ActiveEndDrainOutcome outcome)
+    public bool TryClaimEndFinalization(out TimeSpan speechDuration, out ActiveEndDrainOutcome outcome)
     {
         speechDuration = TimeSpan.Zero;
         outcome = default;

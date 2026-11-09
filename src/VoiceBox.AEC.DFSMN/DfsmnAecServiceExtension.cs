@@ -31,9 +31,7 @@ namespace VoiceBox.AEC.DFSMN
             return services;
         }
 
-        public static IServiceCollection AddDfsmnAecService(
-            this IServiceCollection services,
-            Action<DfsmnAecOptions> configure)
+        public static IServiceCollection AddDfsmnAecService(this IServiceCollection services, Action<DfsmnAecOptions> configure)
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(configure);
@@ -64,9 +62,7 @@ namespace VoiceBox.AEC.DFSMN
             return services;
         }
 
-        public static IServiceCollection AddDfsmnAecVadService(
-            this IServiceCollection services,
-            Action<DfsmnAecVadOptions> configure)
+        public static IServiceCollection AddDfsmnAecVadService(this IServiceCollection services, Action<DfsmnAecVadOptions> configure)
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(configure);

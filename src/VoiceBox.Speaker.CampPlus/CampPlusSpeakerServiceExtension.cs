@@ -32,9 +32,7 @@ namespace VoiceBox.Speaker.CampPlus
         }
 
         /// <summary>向 IServiceCollection 注册 CAM++ 说话人验证服务 (单例)。</summary>
-        public static IServiceCollection AddCampPlusSpeakerService(
-            this IServiceCollection services,
-            Action<CampPlusOptions> configure)
+        public static IServiceCollection AddCampPlusSpeakerService(this IServiceCollection services, Action<CampPlusOptions> configure)
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(configure);

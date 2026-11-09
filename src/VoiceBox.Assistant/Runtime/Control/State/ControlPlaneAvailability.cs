@@ -14,10 +14,7 @@ internal sealed class ControlPlaneAvailability
     private readonly AssistantControlIngress _ingress;
     private readonly AssistantControlLoopHost _loopHost;
 
-    public ControlPlaneAvailability(
-        RuntimeRunScope runScope,
-        AssistantControlIngress ingress,
-        AssistantControlLoopHost loopHost)
+    public ControlPlaneAvailability(RuntimeRunScope runScope, AssistantControlIngress ingress, AssistantControlLoopHost loopHost)
     {
         _runScope = runScope ?? throw new ArgumentNullException(nameof(runScope));
         _ingress = ingress ?? throw new ArgumentNullException(nameof(ingress));

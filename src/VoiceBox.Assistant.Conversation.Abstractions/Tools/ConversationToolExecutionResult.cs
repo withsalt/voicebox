@@ -3,11 +3,7 @@
 /// <summary>工具执行返回给消费方的规范化结果。</summary>
 public sealed class ConversationToolExecutionResult
 {
-    private ConversationToolExecutionResult(
-        bool isSuccess,
-        string content,
-        string? structuredContentJson,
-        string? errorCode)
+    private ConversationToolExecutionResult(bool isSuccess, string content, string? structuredContentJson, string? errorCode)
     {
         IsSuccess = isSuccess;
         Content = content ?? string.Empty;
@@ -23,13 +19,9 @@ public sealed class ConversationToolExecutionResult
 
     public string? ErrorCode { get; }
 
-    public static ConversationToolExecutionResult Success(
-        string content,
-        string? structuredContentJson = null) =>
+    public static ConversationToolExecutionResult Success(string content, string? structuredContentJson = null) =>
         new(true, content, structuredContentJson, null);
 
-    public static ConversationToolExecutionResult Error(
-        string errorCode,
-        string content) =>
+    public static ConversationToolExecutionResult Error(string errorCode, string content) =>
         new(false, content, null, errorCode);
 }

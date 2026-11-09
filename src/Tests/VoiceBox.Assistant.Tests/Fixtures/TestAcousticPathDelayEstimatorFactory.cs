@@ -23,10 +23,7 @@ internal sealed class TestAcousticPathDelayEstimatorFactory
     private sealed class NoEstimateAcousticPathDelayEstimator
         : IAcousticPathDelayEstimator
     {
-        public bool TryEstimate(
-            ReadOnlySpan<float> render,
-            ReadOnlySpan<float> capture,
-            out AcousticPathDelayEstimate estimate)
+        public bool TryEstimate(ReadOnlySpan<float> render, ReadOnlySpan<float> capture, out AcousticPathDelayEstimate estimate)
         {
             if (render.Length != capture.Length)
                 throw new ArgumentException("Render and capture sample counts must match.");

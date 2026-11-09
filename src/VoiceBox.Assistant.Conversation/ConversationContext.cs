@@ -9,7 +9,4 @@ namespace VoiceBox.Assistant.Conversation;
 /// <param name="ConversationId">业务会话身份。</param>
 /// <param name="Request">本轮请求。</param>
 /// <param name="CommittedHistory">已提交的模型历史快照 (不含 system 消息)。每次调用都是复制数据。</param>
-public sealed record ConversationContext(
-    string ConversationId,
-    ConversationRequest Request,
-    IReadOnlyList<ChatMessage> CommittedHistory);
+public sealed record ConversationContext(string ConversationId, ConversationRequest Request, IReadOnlyList<ChatMessage> CommittedHistory);

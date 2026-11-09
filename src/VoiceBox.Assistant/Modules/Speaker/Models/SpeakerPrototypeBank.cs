@@ -1,9 +1,7 @@
 namespace VoiceBox.Assistant.Modules.Speaker.Models;
 
 /// <summary>Robust centroid plus a bounded set of representative prototypes for one condition.</summary>
-internal sealed record SpeakerPrototypeBank(
-    float[] Centroid,
-    IReadOnlyList<SpeakerPrototype> Prototypes)
+internal sealed record SpeakerPrototypeBank(float[] Centroid, IReadOnlyList<SpeakerPrototype> Prototypes)
 {
     public const int MinPrototypes = 2;
 

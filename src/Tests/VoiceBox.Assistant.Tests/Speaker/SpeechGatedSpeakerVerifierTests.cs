@@ -575,11 +575,7 @@ public sealed class SpeechGatedSpeakerVerifierTests : IDisposable
             InputComplete: inputComplete,
             CandidateId: new SpeakerCandidateId(candidateId));
 
-    private static SpeakerEvidenceQuery SingleTalkQuery(
-        long candidateId,
-        long start,
-        long end,
-        bool inputComplete = false)
+    private static SpeakerEvidenceQuery SingleTalkQuery(long candidateId, long start, long end, bool inputComplete = false)
         => new(
             SpeakerVerificationPurpose.SingleTalk,
             1,

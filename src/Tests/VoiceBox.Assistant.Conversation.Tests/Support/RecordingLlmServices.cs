@@ -134,8 +134,7 @@ internal sealed class ConversationalRecordingLlmService : IConversationalLLMServ
         CancellationToken ct = default)
         => StreamChunks(ct);
 
-    private static async IAsyncEnumerable<LlmTextChunk> StreamChunks(
-        [EnumeratorCancellation] CancellationToken ct)
+    private static async IAsyncEnumerable<LlmTextChunk> StreamChunks([EnumeratorCancellation] CancellationToken ct)
     {
         await Task.Yield();
         ct.ThrowIfCancellationRequested();
@@ -176,8 +175,7 @@ internal sealed class ConversationalRecordingLlmService : IConversationalLLMServ
             CancellationToken ct = default)
             => Task.FromResult(new LlmCompletionResult { Text = "ok" });
 
-        private static async IAsyncEnumerable<LlmTextChunk> StreamChunks(
-            [EnumeratorCancellation] CancellationToken ct)
+        private static async IAsyncEnumerable<LlmTextChunk> StreamChunks([EnumeratorCancellation] CancellationToken ct)
         {
             await Task.Yield();
             ct.ThrowIfCancellationRequested();

@@ -73,10 +73,7 @@ namespace VoiceBox.APM.WebRtc
         /// 送入等长、时间对齐的 render/capture 样本。原生估计器仍在预热时返回
         /// <see langword="false"/>；原生处理失败时抛出异常，不会折叠为“无估计”。
         /// </summary>
-        public bool TryEstimate(
-            ReadOnlySpan<float> render,
-            ReadOnlySpan<float> capture,
-            out AcousticPathDelayEstimate estimate)
+        public bool TryEstimate(ReadOnlySpan<float> render, ReadOnlySpan<float> capture, out AcousticPathDelayEstimate estimate)
         {
             ObjectDisposedException.ThrowIf(_disposed || _handle == nint.Zero, this);
             if (render.Length != capture.Length)

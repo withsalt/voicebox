@@ -10,13 +10,10 @@ namespace VoiceBox.Assistant.Tests;
 
 public sealed class SpeechPlaybackCoordinatorTests
 {
-    private sealed class DelegateRequestExecutor(
-        Func<SpeechPlaybackRequest, CancellationToken, Task<string>> execute) :
+    private sealed class DelegateRequestExecutor(Func<SpeechPlaybackRequest, CancellationToken, Task<string>> execute) :
         ISpeechPlaybackRequestExecutor
     {
-        public Task<string> ExecuteAsync(
-            SpeechPlaybackRequest request,
-            CancellationToken cancellationToken)
+        public Task<string> ExecuteAsync(SpeechPlaybackRequest request, CancellationToken cancellationToken)
             => execute(request, cancellationToken);
     }
 
@@ -639,9 +636,7 @@ public sealed class SpeechPlaybackCoordinatorTests
         public void SetGain(float gain) { }
     }
 
-    private static async Task<string> ReadTextAsync(
-        IAsyncEnumerable<SpeakableTextDelta> text,
-        CancellationToken cancellationToken)
+    private static async Task<string> ReadTextAsync(IAsyncEnumerable<SpeakableTextDelta> text, CancellationToken cancellationToken)
     {
         await foreach (SpeakableTextDelta delta in text.WithCancellation(cancellationToken))
             return delta.Text;

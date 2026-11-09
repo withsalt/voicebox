@@ -38,10 +38,7 @@ internal sealed class NullActiveNearEnd :
 
     public void ObserveEndpointSpeechEnded(bool captureCommittedAfterEndpoint = false) { }
 
-    public void ObserveDuplexAudio(
-        in DuplexAudioFrame frame,
-        bool playbackStartupGuardActive,
-        bool latestNearEndSpeech = false) { }
+    public void ObserveDuplexAudio(in DuplexAudioFrame frame, bool playbackStartupGuardActive, bool latestNearEndSpeech = false) { }
 
     public void BeginEndpointObservation() { }
 
@@ -51,11 +48,7 @@ internal sealed class NullActiveNearEnd :
 
     public void FeedFromRecognitionAudio(ReadOnlySpan<float> audio, MainAudioObservation observation) { }
 
-    public bool TryLocate(
-        ReadOnlySpan<float> audio,
-        out long streamEpoch,
-        out long startSample,
-        out long endSample)
+    public bool TryLocate(ReadOnlySpan<float> audio, out long streamEpoch, out long startSample, out long endSample)
     {
         streamEpoch = 0;
         startSample = 0;
@@ -75,9 +68,7 @@ internal sealed class NullActiveNearEnd :
         return false;
     }
 
-    public bool TryCommit(
-        in NearEndConfirmationLease lease,
-        in SpeakingDecision confirmed) => false;
+    public bool TryCommit(in NearEndConfirmationLease lease, in SpeakingDecision confirmed) => false;
 
     public void Abort(in NearEndConfirmationLease lease) { }
 

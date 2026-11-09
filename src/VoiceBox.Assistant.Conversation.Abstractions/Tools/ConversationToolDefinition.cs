@@ -5,9 +5,7 @@
 /// </summary>
 /// <param name="Id">工具在会话内的稳定身份。</param>
 /// <param name="Descriptor">宿主受信任元数据与模型可见 schema。</param>
-public sealed record ConversationToolDefinition(
-    ConversationToolId Id,
-    ConversationToolDescriptor Descriptor)
+public sealed record ConversationToolDefinition(ConversationToolId Id, ConversationToolDescriptor Descriptor)
 {
     public ConversationToolId Id { get; } = ValidateId(Id);
 

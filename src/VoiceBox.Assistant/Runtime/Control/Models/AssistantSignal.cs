@@ -109,9 +109,7 @@ internal readonly record struct AssistantSignal
     public static AssistantSignal SpeechStarted(bool enableBargeIn)
         => new(AssistantSignalKind.SpeechStarted, 0, 0, 0, false, default, null, null, default);
 
-    public static AssistantSignal SpeechStartedWithEndpointObservation(
-        bool endpointObservationApplied,
-        long admissionEpoch = 0)
+    public static AssistantSignal SpeechStartedWithEndpointObservation(bool endpointObservationApplied, long admissionEpoch = 0)
         => new(
             AssistantSignalKind.SpeechStarted,
             0,
@@ -156,10 +154,7 @@ internal readonly record struct AssistantSignal
     public static AssistantSignal WakeupObserved(long operationId)
         => new(AssistantSignalKind.WakeupObserved, 0, operationId, 0, false, default, null, null, default, default);
 
-    public static AssistantSignal WakeupModeChanged(
-        long operationId,
-        AssistantWakeMode fromMode,
-        AssistantWakeMode toMode)
+    public static AssistantSignal WakeupModeChanged(long operationId, AssistantWakeMode fromMode, AssistantWakeMode toMode)
         => new(
             AssistantSignalKind.WakeupModeChanged,
             0,
@@ -178,11 +173,7 @@ internal readonly record struct AssistantSignal
     public static AssistantSignal BackgroundResponseStarted(long turnId, long operationId)
         => new(AssistantSignalKind.BackgroundResponseStarted, turnId, operationId, 0, false, default, null, null, default);
 
-    public static AssistantSignal RecognitionCompleted(
-        long turnId,
-        long operationId,
-        string text,
-        TimeSpan speechDuration = default)
+    public static AssistantSignal RecognitionCompleted(long turnId, long operationId, string text, TimeSpan speechDuration = default)
         => new(
             AssistantSignalKind.RecognitionCompleted,
             turnId,
@@ -218,9 +209,7 @@ internal readonly record struct AssistantSignal
             null,
             default);
 
-    public static AssistantSignal ActiveNearEndSpeechDrainCompleted(
-        long turnId,
-        TimeSpan duration)
+    public static AssistantSignal ActiveNearEndSpeechDrainCompleted(long turnId, TimeSpan duration)
         => new(
             AssistantSignalKind.ActiveNearEndSpeechDrainCompleted,
             turnId,
@@ -257,10 +246,7 @@ internal readonly record struct AssistantSignal
             null,
             default);
 
-    public static AssistantSignal RecognitionStarted(
-        long turnId,
-        long operationId,
-        string sessionId)
+    public static AssistantSignal RecognitionStarted(long turnId, long operationId, string sessionId)
         => new(
             AssistantSignalKind.RecognitionStarted,
             turnId,
@@ -308,11 +294,7 @@ internal readonly record struct AssistantSignal
             null,
             default);
 
-    public static AssistantSignal PlaybackCompleted(
-        long turnId,
-        long operationId,
-        string text,
-        TimeSpan elapsed)
+    public static AssistantSignal PlaybackCompleted(long turnId, long operationId, string text, TimeSpan elapsed)
         => new(
             AssistantSignalKind.PlaybackCompleted,
             turnId,
@@ -336,12 +318,7 @@ internal readonly record struct AssistantSignal
             null,
             default);
 
-    public static AssistantSignal ValidationResolved(
-        long turnId,
-        long operationId,
-        string? text,
-        string reason,
-        bool meaningful)
+    public static AssistantSignal ValidationResolved(long turnId, long operationId, string? text, string reason, bool meaningful)
         => new(
             AssistantSignalKind.InterruptionResolved,
             turnId,
@@ -353,10 +330,7 @@ internal readonly record struct AssistantSignal
             reason,
             default);
 
-    public static AssistantSignal ValidationTurnCompleted(
-        long turnId,
-        long operationId,
-        bool endConversationRequested)
+    public static AssistantSignal ValidationTurnCompleted(long turnId, long operationId, bool endConversationRequested)
         => new(
             AssistantSignalKind.TurnCompleted,
             turnId,
@@ -380,11 +354,7 @@ internal readonly record struct AssistantSignal
             null,
             default);
 
-    public static AssistantSignal OperationFailed(
-        AssistantSignalKind kind,
-        long turnId,
-        long operationId,
-        AssistantFailure failure)
+    public static AssistantSignal OperationFailed(AssistantSignalKind kind, long turnId, long operationId, AssistantFailure failure)
     {
         if (kind is not (AssistantSignalKind.RecognitionFailed or
             AssistantSignalKind.ResponseFailed or

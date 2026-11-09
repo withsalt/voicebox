@@ -8,7 +8,5 @@ internal interface ISpeechSynthesisStreamPort
 
     int OutputChannels { get; }
 
-    IAsyncEnumerable<SynthesizedAudioChunk> SynthesizeAsync(
-        string text,
-        CancellationToken cancellationToken);
+    IAsyncEnumerable<SynthesizedAudioChunk> SynthesizeAsync(string text, CancellationToken cancellationToken);
 }

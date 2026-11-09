@@ -19,11 +19,7 @@ internal sealed class AlwaysOwnerSpeakerModuleFactory : ISpeakerModuleFactory
 {
     public AlwaysOwnerSpeakerModule? Last { get; private set; }
 
-    public ISpeakerModule Create(
-        SpeakerCaptureDescriptor descriptor,
-        int audioSampleRate,
-        int audioChannels,
-        ILogger logger)
+    public ISpeakerModule Create(SpeakerCaptureDescriptor descriptor, int audioSampleRate, int audioChannels, ILogger logger)
         => Last = new AlwaysOwnerSpeakerModule(descriptor, audioSampleRate);
 }
 

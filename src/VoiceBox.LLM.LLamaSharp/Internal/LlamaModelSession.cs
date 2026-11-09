@@ -22,9 +22,7 @@ namespace VoiceBox.LLM.LLamaSharp.Internal
         private readonly ModelParams _modelParams;
         private int _disposed;
 
-        public LlamaModelSession(
-            LLamaSharpLLMOptions options,
-            IEnumerable<ILlamaModelProfile>? injectedProfiles = null)
+        public LlamaModelSession(LLamaSharpLLMOptions options, IEnumerable<ILlamaModelProfile>? injectedProfiles = null)
         {
             ValidateModelFile(options.ModelPath);
 

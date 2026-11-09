@@ -6,9 +6,5 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Contracts;
 /// </summary>
 internal interface IBargeInRecognitionOutcomePort
 {
-    Task RunRecognitionOutcomeAsync(
-        long turnId,
-        string asrSessionId,
-        TimeSpan speechDuration,
-        CancellationToken runToken);
+    Task RunRecognitionOutcomeAsync(long turnId, string asrSessionId, TimeSpan speechDuration, CancellationToken runToken);
 }

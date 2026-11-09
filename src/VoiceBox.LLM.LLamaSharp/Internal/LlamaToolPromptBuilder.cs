@@ -5,9 +5,7 @@ namespace VoiceBox.LLM.LLamaSharp.Internal;
 
 internal static class LlamaToolPromptBuilder
 {
-    public static IReadOnlyList<ChatMessage> AddToolInstructions(
-        IReadOnlyList<ChatMessage> messages,
-        LlamaToolCallCatalog catalog)
+    public static IReadOnlyList<ChatMessage> AddToolInstructions(IReadOnlyList<ChatMessage> messages, LlamaToolCallCatalog catalog)
     {
         ArgumentNullException.ThrowIfNull(messages);
         ArgumentNullException.ThrowIfNull(catalog);

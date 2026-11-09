@@ -24,11 +24,7 @@ namespace VoiceBox.ASR.DoubaoOnline
         public long BufferedSamples { get; }
         public int RejectedSamples { get; }
 
-        public SeedAsrAudioBufferOverflowException(
-            string sessionId,
-            long capacitySamples,
-            long bufferedSamples,
-            int rejectedSamples)
+        public SeedAsrAudioBufferOverflowException(string sessionId, long capacitySamples, long bufferedSamples, int rejectedSamples)
             : base(
                 $"SeedASR session {sessionId} audio buffer overflow: " +
                 $"buffered={bufferedSamples}, rejected={rejectedSamples}, " +

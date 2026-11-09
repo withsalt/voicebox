@@ -118,9 +118,7 @@ internal static class Program
     {
         private string? _name;
 
-        public ValueTask<string> GetContextAsync(
-            ConversationContext context,
-            CancellationToken cancellationToken = default)
+        public ValueTask<string> GetContextAsync(ConversationContext context, CancellationToken cancellationToken = default)
         {
             foreach (ChatMessage message in context.CommittedHistory)
             {

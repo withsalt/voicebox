@@ -26,9 +26,7 @@ namespace VoiceBox.LLM.LLamaSharp.Internal
             return linked;
         }
 
-        public static CancellationTokenSource CreateLinkedSource(
-            CancellationToken requestToken,
-            CancellationToken shutdownToken)
+        public static CancellationTokenSource CreateLinkedSource(CancellationToken requestToken, CancellationToken shutdownToken)
         {
             if (requestToken.CanBeCanceled && shutdownToken.CanBeCanceled)
                 return CancellationTokenSource.CreateLinkedTokenSource(requestToken, shutdownToken);

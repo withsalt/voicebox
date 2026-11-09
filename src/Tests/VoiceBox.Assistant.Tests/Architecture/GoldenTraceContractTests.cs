@@ -85,10 +85,7 @@ public sealed class GoldenTraceContractTests
     [InlineData("Schedules/speech-end-vs-asr-start/manifest.json", "speech-end-first.json", "CR-003")]
     [InlineData("Schedules/speech-end-vs-asr-start/manifest.json", "asr-ready-first.json", "CR-003")]
     [InlineData("Schedules/response-complete-vs-barge-in/manifest.json", "response-generated-first.json", "CR-006")]
-    public void ScheduleVariantTraces_AreManifestedWithAnExactOracle(
-        string manifestPath,
-        string traceFile,
-        string scenarioId)
+    public void ScheduleVariantTraces_AreManifestedWithAnExactOracle(string manifestPath, string traceFile, string scenarioId)
     {
         ScheduleManifest manifest = GoldenTraceStore.Read<ScheduleManifest>(manifestPath);
         ScheduleVariant variant = Assert.Single(
@@ -115,10 +112,7 @@ public sealed class GoldenTraceContractTests
         "Schedules/response-complete-vs-barge-in/manifest.json",
         "runtime-barge-in-before-response-generated.json",
         "runtime-barge-in-before-response-generated")]
-    public void RuntimeScheduleTraces_AreManifestedAndSelfIdentifying(
-        string manifestPath,
-        string traceFile,
-        string scheduleId)
+    public void RuntimeScheduleTraces_AreManifestedAndSelfIdentifying(string manifestPath, string traceFile, string scheduleId)
     {
         ScheduleManifest manifest = GoldenTraceStore.Read<ScheduleManifest>(manifestPath);
         ScheduleVariant variant = Assert.Single(
@@ -138,9 +132,7 @@ public sealed class GoldenTraceContractTests
     [InlineData("barge-in-timeout.json", "CR-013")]
     [InlineData("speaker-pending-match.json", "CR-005")]
     [InlineData("stop-during-response.json", "CR-009")]
-    public void ScenarioTraces_DeclareTheirIdAndExactOracle(
-        string fileName,
-        string scenarioId)
+    public void ScenarioTraces_DeclareTheirIdAndExactOracle(string fileName, string scenarioId)
     {
         AssistantScenarioTrace trace = GoldenTraceStore.Read<AssistantScenarioTrace>(fileName);
         Assert.Equal(scenarioId, trace.ScenarioId);

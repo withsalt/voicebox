@@ -154,14 +154,12 @@ public sealed class ToolConversationLifecycleTests
             }
         }
 
-        public ValueTask<IReadOnlyList<ConversationToolDefinition>> GetToolsAsync(
-            CancellationToken cancellationToken = default)
+        public ValueTask<IReadOnlyList<ConversationToolDefinition>> GetToolsAsync(CancellationToken cancellationToken = default)
             => ValueTask.FromResult<IReadOnlyList<ConversationToolDefinition>>(
                 [new(new("external", "probe"), new ConversationToolDescriptor(
                     "probe", "Probe", "Probe tool", "{\"type\":\"object\"}"))]);
 
-        public ValueTask<ConversationToolResult> InvokeAsync(
-            ConversationToolCall call, CancellationToken cancellationToken = default)
+        public ValueTask<ConversationToolResult> InvokeAsync(ConversationToolCall call, CancellationToken cancellationToken = default)
             => ValueTask.FromResult(new ConversationToolResult(call.CallId, ConversationToolResultKind.Success, "{}"));
 
         public Task StopAsync()

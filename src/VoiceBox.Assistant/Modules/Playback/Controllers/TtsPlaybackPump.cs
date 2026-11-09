@@ -57,9 +57,7 @@ namespace VoiceBox.Assistant.Modules.Playback.Controllers
         /// 在进入本边界前已经被隔离。
         /// </summary>
         /// <returns>本轮 assistant 完整可见回复 (原文, 不含 thinking, 不清洗)。</returns>
-        public async Task<string> RunAsync(
-            IAsyncEnumerable<SpeakableTextDelta> textStream,
-            CancellationToken ct)
+        public async Task<string> RunAsync(IAsyncEnumerable<SpeakableTextDelta> textStream, CancellationToken ct)
         {
             using var pipelineCancellation = CancellationTokenSource.CreateLinkedTokenSource(ct);
             CancellationToken pipelineToken = pipelineCancellation.Token;
@@ -253,10 +251,7 @@ namespace VoiceBox.Assistant.Modules.Playback.Controllers
             return sampleCount;
         }
 
-        private static async Task AwaitSpeechBoundaryAsync(
-            Task boundary,
-            Task synthesisTask,
-            CancellationToken cancellationToken)
+        private static async Task AwaitSpeechBoundaryAsync(Task boundary, Task synthesisTask, CancellationToken cancellationToken)
         {
             Task completed = await Task.WhenAny(boundary, synthesisTask).ConfigureAwait(false);
             if (ReferenceEquals(completed, synthesisTask))

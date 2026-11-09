@@ -24,11 +24,7 @@ internal sealed class SpeakerEvidenceWindowSelector
     /// complete windows by speech coverage; this method supplies the candidate/required-end
     /// metadata used while that ranking is still waiting for audio to arrive.
     /// </summary>
-    public EvidenceWindowSelection SelectWakeupWindows(
-        in SpeakerEvidenceQuery query,
-        int windowCount,
-        long segmentOrigin,
-        long retainedEnd)
+    public EvidenceWindowSelection SelectWakeupWindows(in SpeakerEvidenceQuery query, int windowCount, long segmentOrigin, long retainedEnd)
     {
         long desiredStart = query.CandidateStartSample;
         if (query.HasFocusInterval)
@@ -54,11 +50,7 @@ internal sealed class SpeakerEvidenceWindowSelector
     }
 
     /// <summary>The most recent complete windows inside the candidate; the selection slides as audio arrives.</summary>
-    public EvidenceWindowSelection SelectRecentWindows(
-        in SpeakerEvidenceQuery query,
-        int windowCount,
-        long segmentOrigin,
-        long retainedEnd)
+    public EvidenceWindowSelection SelectRecentWindows(in SpeakerEvidenceQuery query, int windowCount, long segmentOrigin, long retainedEnd)
     {
         long earliestWindowStart = AlignUp(query.CandidateStartSample, segmentOrigin, _policy.HopSamples);
         long earliestWindowEnd = checked(earliestWindowStart + _policy.WindowSamples);
@@ -84,11 +76,7 @@ internal sealed class SpeakerEvidenceWindowSelector
     }
 
     /// <summary>All complete hop-aligned windows whose end lies in <c>(afterEnd, retainedEnd]</c>, newest last.</summary>
-    public int EnumerateCompleteWindowEnds(
-        long segmentOrigin,
-        long afterEnd,
-        long retainedEnd,
-        Span<long> destination)
+    public int EnumerateCompleteWindowEnds(long segmentOrigin, long afterEnd, long retainedEnd, Span<long> destination)
     {
         long firstEnd = checked(segmentOrigin + _policy.WindowSamples);
         if (retainedEnd < firstEnd)

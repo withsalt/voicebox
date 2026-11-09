@@ -144,9 +144,7 @@ internal sealed class OrderedPublicationBoundary : IAssistantPublicEventSink, IA
         await WaitUntilDeliveredAsync(target, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task WaitUntilDeliveredAsync(
-        long publicationSequence,
-        CancellationToken cancellationToken = default)
+    public async Task WaitUntilDeliveredAsync(long publicationSequence, CancellationToken cancellationToken = default)
     {
         if (publicationSequence < 0 || publicationSequence > Volatile.Read(ref _reservedSequence))
             throw new ArgumentOutOfRangeException(nameof(publicationSequence));

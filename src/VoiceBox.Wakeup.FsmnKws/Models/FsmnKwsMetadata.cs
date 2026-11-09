@@ -35,8 +35,7 @@ namespace VoiceBox.Wakeup.FsmnKws.Models
         /// <summary>CMVN 逆标准差，固定 400 维。</summary>
         public IReadOnlyList<float> CmvnRescale { get; }
 
-        private FsmnKwsMetadata(string keyword, int[] tokenIds, string[] oovChars,
-            float[] addShift, float[] rescale)
+        private FsmnKwsMetadata(string keyword, int[] tokenIds, string[] oovChars, float[] addShift, float[] rescale)
         {
             Keyword = keyword;
             KeywordTokenIds = tokenIds;

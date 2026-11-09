@@ -119,9 +119,7 @@ internal sealed class AssistantControlLoop
         }
     }
 
-    private void HandleGapFault(
-        TimeSpan elapsed,
-        CancellationToken cancellationToken)
+    private void HandleGapFault(TimeSpan elapsed, CancellationToken cancellationToken)
     {
         var failure = new AssistantFailure(
             "VBX-CTRL-005",
@@ -169,9 +167,7 @@ internal sealed class AssistantControlLoop
         };
     }
 
-    private bool TryDispatch(
-        ControlEnvelope envelope,
-        CancellationToken cancellationToken)
+    private bool TryDispatch(ControlEnvelope envelope, CancellationToken cancellationToken)
     {
         try
         {

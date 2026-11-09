@@ -11,10 +11,6 @@ internal sealed class NearEndTimelineAdapter : ISpeechTimelineLocator
     public NearEndTimelineAdapter(NearEndDataPlane dataPlane)
         => _dataPlane = dataPlane ?? throw new ArgumentNullException(nameof(dataPlane));
 
-    public bool TryLocate(
-        ReadOnlySpan<float> audio,
-        out long streamEpoch,
-        out long startSample,
-        out long endSample)
+    public bool TryLocate(ReadOnlySpan<float> audio, out long streamEpoch, out long startSample, out long endSample)
         => _dataPlane.TryLocate(audio, out streamEpoch, out startSample, out endSample);
 }

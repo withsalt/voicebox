@@ -202,8 +202,7 @@ public class PinyinLookup
     /// whole word is preferred over the embedded character/phrase dictionaries. Useful for
     /// user-provided phrase pronunciations (e.g. polyphone disambiguation).
     /// </summary>
-    public (List<string> Initials, List<string> Finals) GetInitialsAndFinals(
-        string word, IReadOnlyDictionary<string, string>? overrides)
+    public (List<string> Initials, List<string> Finals) GetInitialsAndFinals(string word, IReadOnlyDictionary<string, string>? overrides)
     {
         var tone3List = GetTone3(word, overrides);
         int n = tone3List.Count;

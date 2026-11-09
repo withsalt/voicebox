@@ -179,9 +179,7 @@ public sealed class ToolConversationSessionTests
     [InlineData("null", false)]
     [InlineData("42", false)]
     [InlineData("\"city\"", false)]
-    public async Task InvalidArgumentsAreCorrectedBeforeApprovalAndExecution(
-        string arguments,
-        bool validateSchema)
+    public async Task InvalidArgumentsAreCorrectedBeforeApprovalAndExecution(string arguments, bool validateSchema)
     {
         var llm = new RecordingLlmService();
         var tool = new EchoTool(requireCity: true);

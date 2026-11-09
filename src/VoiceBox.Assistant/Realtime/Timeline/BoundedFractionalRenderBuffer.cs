@@ -113,10 +113,7 @@ internal sealed class BoundedFractionalRenderBuffer
     public bool TryRead(double startSample, Span<float> destination)
         => TryRead(startSample, destination, out _);
 
-    public bool TryRead(
-        double startSample,
-        Span<float> destination,
-        out bool intersectsInvalidSamples)
+    public bool TryRead(double startSample, Span<float> destination, out bool intersectsInvalidSamples)
     {
         intersectsInvalidSamples = false;
         if (!double.IsFinite(startSample) || destination.IsEmpty || _count == 0)

@@ -29,9 +29,7 @@ namespace VoiceBox.ASR.DoubaoOnline
         private readonly DoubaoOnlineASROptions _options;
         private readonly ILogger<DoubaoOnlineASRService> _logger;
         private readonly IWebSocketChannelFactory _channelFactory;
-        public DoubaoOnlineASRService(
-            IOptions<DoubaoOnlineASROptions> options,
-            ILogger<DoubaoOnlineASRService>? logger = null)
+        public DoubaoOnlineASRService(IOptions<DoubaoOnlineASROptions> options, ILogger<DoubaoOnlineASRService>? logger = null)
             : this(options, channelFactory: null, logger) { }
 
         // 供测试注入 fake 传输工厂的构造。

@@ -19,9 +19,7 @@ internal static class EndToEndProgram
         return false;
     }
 
-    public static async Task<int> RunAsync(
-        string[] args,
-        CancellationToken cancellationToken = default)
+    public static async Task<int> RunAsync(string[] args, CancellationToken cancellationToken = default)
     {
         EndToEndOptions options = Parse(args);
         EvaluationDatasetManifest manifest = EvaluationDatasetManifest.Load(options.DatasetRoot);
@@ -266,10 +264,7 @@ internal static class EndToEndProgram
             $"reason={result.Error ?? result.ValidationReason ?? "-"}");
     }
 
-    private static void PrintSummary(
-        EndToEndReport report,
-        string jsonPath,
-        string csvPath)
+    private static void PrintSummary(EndToEndReport report, string jsonPath, string csvPath)
     {
         EndToEndSummary s = report.Overall;
         Console.WriteLine();

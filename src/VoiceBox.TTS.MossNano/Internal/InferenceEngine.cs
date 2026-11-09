@@ -211,10 +211,7 @@ namespace VoiceBox.TTS.MossNano.Internal
         /// 调用方传入复用的 <paramref name="seenMask"/> (shape [1, nVq, codebookSize]) 与 <paramref name="nVq"/>;
         /// engine 内部不再每帧 new mask, 由调用方在拿到结果后增量写入。
         /// </summary>
-        public (bool shouldContinue, int[] frame) RunLocalFixedSampledFrame(
-            float[] globalHidden,
-            int[] seenMask,
-            int nVq)
+        public (bool shouldContinue, int[] frame) RunLocalFixedSampledFrame(float[] globalHidden, int[] seenMask, int nVq)
         {
             if (_bundle.LocalFixedSampledFrame is null)
                 throw new InvalidOperationException("local_fixed_sampled_frame session 不存在。");
@@ -306,9 +303,7 @@ namespace VoiceBox.TTS.MossNano.Internal
         /// 把 outputs 与对应的 output-name 数组合成一个 name->OrtValue 字典, 便于按名称取值。
         /// 注意: 返回的字典在 outputs 生命周期内有效, 不要持有到 outputs Dispose 之后。
         /// </summary>
-        internal static Dictionary<string, OrtValue> ToNameMap(
-            string[] names,
-            IDisposableReadOnlyCollection<OrtValue> outputs)
+        internal static Dictionary<string, OrtValue> ToNameMap(string[] names, IDisposableReadOnlyCollection<OrtValue> outputs)
         {
             var d = new Dictionary<string, OrtValue>(names.Length, StringComparer.Ordinal);
             for (int i = 0; i < names.Length; i++) d[names[i]] = outputs[i];

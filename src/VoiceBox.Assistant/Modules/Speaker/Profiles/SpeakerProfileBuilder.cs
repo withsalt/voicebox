@@ -29,9 +29,7 @@ internal sealed class SpeakerProfileBuilder
     /// <summary>
     /// Returns null when fewer than <paramref name="minRetained"/> segments survive the outlier rule.
     /// </summary>
-    public SpeakerBankBuildResult? TryBuildBank(
-        IReadOnlyList<SpeakerEnrollmentSegmentEmbedding> segments,
-        int minRetained)
+    public SpeakerBankBuildResult? TryBuildBank(IReadOnlyList<SpeakerEnrollmentSegmentEmbedding> segments, int minRetained)
     {
         ArgumentNullException.ThrowIfNull(segments);
         if (segments.Count == 0)

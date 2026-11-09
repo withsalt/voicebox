@@ -17,9 +17,7 @@ internal sealed class DuplexAssistantAudioFrontend :
     private readonly DuplexOutputPort _output;
     private readonly SpeakerCaptureDescriptor _speakerCapture;
 
-    public DuplexAssistantAudioFrontend(
-        IAudioDuplexService audio,
-        IAcousticProcessingMetricsSource? acousticDiagnostics = null)
+    public DuplexAssistantAudioFrontend(IAudioDuplexService audio, IAcousticProcessingMetricsSource? acousticDiagnostics = null)
     {
         _audio = audio ?? throw new ArgumentNullException(nameof(audio));
         _input = new DuplexInputPort(_audio);

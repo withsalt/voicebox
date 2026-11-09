@@ -70,13 +70,7 @@ internal sealed class TimelinePairResampler
         _hasPrevious = false;
     }
 
-    private static float Read(
-        ReadOnlySpan<float> samples,
-        long position,
-        long inputStart,
-        uint channels,
-        float previous,
-        bool hasPrevious)
+    private static float Read(ReadOnlySpan<float> samples, long position, long inputStart, uint channels, float previous, bool hasPrevious)
     {
         if (position == inputStart - 1 && hasPrevious)
         {

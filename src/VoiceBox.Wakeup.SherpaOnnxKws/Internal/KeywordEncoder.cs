@@ -135,8 +135,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Internal
         /// 解析关键词文件的一行: "tok1 tok2 ... [:score] [#threshold] [@phrase]"。
         /// 空行 / 无 token 行返回 false。
         /// </summary>
-        private static bool TryEncodeLine(
-            string line, SymbolTable symbols, SherpaOnnxKwsOptions opts, out EncodedKeyword encoded)
+        private static bool TryEncodeLine(string line, SymbolTable symbols, SherpaOnnxKwsOptions opts, out EncodedKeyword encoded)
         {
             encoded = default;
             if (string.IsNullOrWhiteSpace(line)) return false;

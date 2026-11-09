@@ -173,9 +173,7 @@ internal sealed class BargeInTurnCoordinator :
             decision.ConfirmedBargeInDiagnostics);
     }
 
-    public BargeInSemanticPlan CommitInterruptionRequested(
-        BargeInSemanticPlan plan,
-        KernelCommitResult kernel)
+    public BargeInSemanticPlan CommitInterruptionRequested(BargeInSemanticPlan plan, KernelCommitResult kernel)
     {
         if (!kernel.Accepted)
             return default;
@@ -239,9 +237,7 @@ internal sealed class BargeInTurnCoordinator :
             operationId: _controlSignals.NextOperationId());
     }
 
-    public BargeInSemanticPlan CommitAuthorizationResolved(
-        BargeInSemanticPlan plan,
-        KernelCommitResult kernel)
+    public BargeInSemanticPlan CommitAuthorizationResolved(BargeInSemanticPlan plan, KernelCommitResult kernel)
     {
         if (!kernel.Accepted)
         {
@@ -404,9 +400,7 @@ internal sealed class BargeInTurnCoordinator :
             restored);
     }
 
-    public AssistantControlSignalResult CommitValidationPlan(
-        BargeInSemanticPlan plan,
-        KernelCommitResult kernel)
+    public AssistantControlSignalResult CommitValidationPlan(BargeInSemanticPlan plan, KernelCommitResult kernel)
     {
         if (plan.Kind == BargeInSemanticPlanKind.ValidationLateCompletion)
         {

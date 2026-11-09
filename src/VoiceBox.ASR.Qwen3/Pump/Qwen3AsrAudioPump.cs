@@ -44,11 +44,7 @@ namespace VoiceBox.ASR.Qwen3.Pump
         private double _firstResultElapsedSeconds;
         private double _firstResultAudioSeconds;
 
-        public Qwen3AsrAudioPump(
-            Qwen3AsrSession session,
-            IQwen3AsrRuntime runtime,
-            SemaphoreSlim recognitionGate,
-            ILogger? logger = null)
+        public Qwen3AsrAudioPump(Qwen3AsrSession session, IQwen3AsrRuntime runtime, SemaphoreSlim recognitionGate, ILogger? logger = null)
         {
             ArgumentNullException.ThrowIfNull(session);
             ArgumentNullException.ThrowIfNull(runtime);

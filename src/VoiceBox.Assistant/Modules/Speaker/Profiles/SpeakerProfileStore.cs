@@ -61,11 +61,7 @@ internal static class SpeakerProfileStore
         await SaveAsync(service, options.ResolveProfilePath(), profile, ct).ConfigureAwait(false);
     }
 
-    public static async Task SaveAsync(
-        ISpeakerService service,
-        string path,
-        OwnerSpeakerProfile profile,
-        CancellationToken ct = default)
+    public static async Task SaveAsync(ISpeakerService service, string path, OwnerSpeakerProfile profile, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(service);
         ArgumentException.ThrowIfNullOrWhiteSpace(path);

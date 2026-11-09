@@ -33,9 +33,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws
         /// <summary>
         /// 注册到通用 <see cref="IServiceCollection"/> (非 AudioServiceManager 场景)。
         /// </summary>
-        public static IServiceCollection AddSherpaOnnxKwsService(
-            this IServiceCollection services,
-            Action<SherpaOnnxKwsOptions> configure)
+        public static IServiceCollection AddSherpaOnnxKwsService(this IServiceCollection services, Action<SherpaOnnxKwsOptions> configure)
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(configure);

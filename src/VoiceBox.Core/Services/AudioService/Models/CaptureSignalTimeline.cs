@@ -4,10 +4,7 @@ namespace VoiceBox.Core.Services.AudioService.Models
     /// Maps the valid portion of one signal buffer to its source capture interval.
     /// Buffer offsets and sample counts refer to interleaved samples.
     /// </summary>
-    public readonly record struct CaptureSignalTimeline(
-        CaptureRange SourceRange,
-        int BufferOffset,
-        int SampleCount)
+    public readonly record struct CaptureSignalTimeline(CaptureRange SourceRange, int BufferOffset, int SampleCount)
     {
         public bool IsValid =>
             SourceRange.IsValid &&
@@ -23,9 +20,7 @@ namespace VoiceBox.Core.Services.AudioService.Models
                 ? buffer.Slice(BufferOffset, SampleCount)
                 : ReadOnlyMemory<float>.Empty;
 
-        public static CaptureSignalTimeline FromWholeBuffer(
-            in CaptureRange sourceRange,
-            int bufferLength)
+        public static CaptureSignalTimeline FromWholeBuffer(in CaptureRange sourceRange, int bufferLength)
             => sourceRange.IsValid &&
                bufferLength > 0 &&
                sourceRange.Length == bufferLength

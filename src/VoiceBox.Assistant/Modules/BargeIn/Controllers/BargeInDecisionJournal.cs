@@ -37,9 +37,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Controllers
                 _triggerSources.Remove(turnId);
         }
 
-        public void RememberContext(
-            long turnId,
-            BargeInDecisionDiagnostics diagnostics)
+        public void RememberContext(long turnId, BargeInDecisionDiagnostics diagnostics)
         {
             if (turnId == 0)
                 return;

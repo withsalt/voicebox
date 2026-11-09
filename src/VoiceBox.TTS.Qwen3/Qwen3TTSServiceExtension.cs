@@ -31,8 +31,7 @@ namespace VoiceBox.TTS.Qwen3
         }
 
         /// <summary>注册 Qwen3-TTS 服务到通用 DI 容器 (同时注册 IStreamTTSService 与 ITTSService)。</summary>
-        public static IServiceCollection AddQwen3TTSService(
-            this IServiceCollection services, Action<Qwen3TTSOptions> configure)
+        public static IServiceCollection AddQwen3TTSService(this IServiceCollection services, Action<Qwen3TTSOptions> configure)
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(configure);

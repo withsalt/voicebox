@@ -41,11 +41,7 @@ namespace VoiceBox.TTS.MossNano.Internal
         /// <summary>
         /// 调用方负责传入 generation 参数 (manifest 默认 + TtsSynthesisOptions 覆盖)。
         /// </summary>
-        public List<int[]> Generate(
-            VoiceCloneRequestRows requestRows,
-            GenerationParams gen,
-            OnFrameCallback? onFrame,
-            CancellationToken ct)
+        public List<int[]> Generate(VoiceCloneRequestRows requestRows, GenerationParams gen, OnFrameCallback? onFrame, CancellationToken ct)
         {
             int nVq = _bundle.Manifest.TtsConfig.NVq;
             int rowWidth = nVq + 1;

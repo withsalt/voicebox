@@ -10,8 +10,5 @@ internal interface INearEndRenderPort
 
     ActiveNearEndDiagnosticSnapshot GetDiagnosticSnapshot();
 
-    void ObserveDuplexAudio(
-        in DuplexAudioFrame frame,
-        bool playbackStartupGuardActive,
-        bool latestNearEndSpeech = false);
+    void ObserveDuplexAudio(in DuplexAudioFrame frame, bool playbackStartupGuardActive, bool latestNearEndSpeech = false);
 }

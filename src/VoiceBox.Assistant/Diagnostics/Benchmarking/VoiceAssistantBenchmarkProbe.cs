@@ -45,11 +45,7 @@ internal sealed class VoiceAssistantBenchmarkProbe
     public void AttachCapturePosition(ICapturePositionView capturePosition)
         => _capturePosition = capturePosition ?? throw new ArgumentNullException(nameof(capturePosition));
 
-    public void ObserveControlTrace(
-        string stage,
-        long turnId = 0,
-        long operationId = 0,
-        string? detail = null)
+    public void ObserveControlTrace(string stage, long turnId = 0, long operationId = 0, string? detail = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(stage);
         long capturePosition;
@@ -73,10 +69,7 @@ internal sealed class VoiceAssistantBenchmarkProbe
             return _controlTrace.ToArray();
     }
 
-    public void ObserveKernelDecision(
-        TurnSignal signal,
-        TurnSnapshot previous,
-        TurnDecision decision)
+    public void ObserveKernelDecision(TurnSignal signal, TurnSnapshot previous, TurnDecision decision)
     {
         lock (_lock)
         {

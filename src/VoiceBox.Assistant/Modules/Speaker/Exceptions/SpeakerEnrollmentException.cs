@@ -10,11 +10,7 @@ public sealed class SpeakerEnrollmentException : InvalidOperationException
     {
     }
 
-    public SpeakerEnrollmentException(
-        SpeakerEnrollmentReasonCode reason,
-        string message,
-        SpeakerEnrollmentStage stage,
-        int segmentIndex)
+    public SpeakerEnrollmentException(SpeakerEnrollmentReasonCode reason, string message, SpeakerEnrollmentStage stage, int segmentIndex)
         : base(message)
     {
         Reason = reason;

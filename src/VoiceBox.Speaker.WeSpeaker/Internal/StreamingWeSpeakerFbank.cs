@@ -263,11 +263,7 @@ namespace VoiceBox.Speaker.WeSpeaker.Internal
             _frameCount++;
         }
 
-        private void ProduceFrameCore(
-            ReadOnlySpan<float> samples,
-            Span<float> mel,
-            out float rms,
-            bool samplesAlreadyScaled = true)
+        private void ProduceFrameCore(ReadOnlySpan<float> samples, Span<float> mel, out float rms, bool samplesAlreadyScaled = true)
         {
             // re 同时充当时域帧和 FFT 实部，省去一个 512 点栈缓冲及一次完整复制。
             Span<float> re = stackalloc float[FftSize];
@@ -457,12 +453,7 @@ namespace VoiceBox.Speaker.WeSpeaker.Internal
             return bitReverse;
         }
 
-        private static void Fft(
-            Span<float> re,
-            Span<float> im,
-            float[] twiddleRe,
-            float[] twiddleIm,
-            int[] bitReverse)
+        private static void Fft(Span<float> re, Span<float> im, float[] twiddleRe, float[] twiddleIm, int[] bitReverse)
         {
             int n = re.Length;
 

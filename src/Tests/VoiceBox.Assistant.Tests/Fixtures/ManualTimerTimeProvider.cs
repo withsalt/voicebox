@@ -15,11 +15,7 @@ internal sealed class ManualTimerTimeProvider : TimeProvider
 
     public override long GetTimestamp() => Volatile.Read(ref _timestamp);
 
-    public override ITimer CreateTimer(
-        TimerCallback callback,
-        object? state,
-        TimeSpan dueTime,
-        TimeSpan period)
+    public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
     {
         var timer = new ManualTimer(this, callback, state, dueTime, period);
         TaskCompletionSource added;
@@ -33,9 +29,7 @@ internal sealed class ManualTimerTimeProvider : TimeProvider
         return timer;
     }
 
-    public async Task WaitForTimerCountAsync(
-        int expected,
-        CancellationToken cancellationToken = default)
+    public async Task WaitForTimerCountAsync(int expected, CancellationToken cancellationToken = default)
     {
         while (true)
         {

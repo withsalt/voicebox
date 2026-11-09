@@ -124,9 +124,7 @@ internal static class MetricAggregator
         return slices;
     }
 
-    public static IReadOnlyList<QualityGate> EvaluateGates(
-        IReadOnlyList<CaseResult> cases,
-        EvaluationOptions options)
+    public static IReadOnlyList<QualityGate> EvaluateGates(IReadOnlyList<CaseResult> cases, EvaluationOptions options)
     {
         var gates = new List<QualityGate>
         {
@@ -239,10 +237,7 @@ internal static class MetricAggregator
         }
     }
 
-    private static QualityGate RecallGate(
-        string name,
-        MetricSlice metrics,
-        EvaluationOptions options)
+    private static QualityGate RecallGate(string name, MetricSlice metrics, EvaluationOptions options)
     {
         if (!metrics.Recall.HasValue || metrics.Positive < options.MinimumGatePositiveCount)
         {
@@ -282,10 +277,7 @@ internal static class MetricAggregator
             $"n={metrics.Positive}, clusters={metrics.ClusterCount}.");
     }
 
-    private static QualityGate FalseTriggerRateGate(
-        string name,
-        MetricSlice metrics,
-        EvaluationOptions options)
+    private static QualityGate FalseTriggerRateGate(string name, MetricSlice metrics, EvaluationOptions options)
     {
         if (!metrics.FalseTriggersPerHour.HasValue ||
             !metrics.FalseTriggersPerHourUpper95.HasValue ||
@@ -326,10 +318,7 @@ internal static class MetricAggregator
             $"{metrics.FalseTriggersPerHourUpper95:F3}/h, exposure={metrics.NegativeExposureHours:F3}h.");
     }
 
-    private static QualityGate LatencyGate(
-        string name,
-        MetricSlice metrics,
-        EvaluationOptions options)
+    private static QualityGate LatencyGate(string name, MetricSlice metrics, EvaluationOptions options)
     {
         if (metrics.OraclePositive < options.MinimumGateLatencyCount)
         {
@@ -464,9 +453,7 @@ internal static class MetricAggregator
                 : bootstrapUpper);
     }
 
-    private static double? ClusteredRateUpper95(
-        IReadOnlyList<CaseResult> negatives,
-        string seedKey)
+    private static double? ClusteredRateUpper95(IReadOnlyList<CaseResult> negatives, string seedKey)
     {
         IGrouping<string, CaseResult>[] clusters = negatives
             .GroupBy(c => c.ClusterId, StringComparer.Ordinal)
@@ -564,10 +551,7 @@ internal static class MetricAggregator
         return maximum + Math.Log(Math.Exp(left - maximum) + Math.Exp(right - maximum));
     }
 
-    private static double? CensoredPercentile(
-        double[] sortedObserved,
-        int totalIncludingCensored,
-        double percentile)
+    private static double? CensoredPercentile(double[] sortedObserved, int totalIncludingCensored, double percentile)
     {
         if (sortedObserved.Length == 0 || totalIncludingCensored <= 0)
             return null;

@@ -111,10 +111,7 @@ internal readonly record struct SpeakerVerificationResult(
             InvalidWindows: invalidWindows,
             CandidateId: query.CandidateId);
 
-    public static SpeakerVerificationResult Cancelled(
-        float threshold,
-        in SpeakerEvidenceQuery query,
-        SpeakerVerificationReason reason)
+    public static SpeakerVerificationResult Cancelled(float threshold, in SpeakerEvidenceQuery query, SpeakerVerificationReason reason)
         => new(
             SpeakerVerificationStatus.Cancelled,
             0,

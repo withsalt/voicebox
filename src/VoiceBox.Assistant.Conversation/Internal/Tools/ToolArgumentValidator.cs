@@ -103,10 +103,7 @@ internal sealed class ToolArgumentValidator(bool validateSchema = true)
         }
     }
 
-    private sealed record ValidationFailure(
-        string Error,
-        string Message,
-        IReadOnlyList<Violation> Violations);
+    private sealed record ValidationFailure(string Error, string Message, IReadOnlyList<Violation> Violations);
 
     private sealed record Violation(string Path, string Reason);
 }

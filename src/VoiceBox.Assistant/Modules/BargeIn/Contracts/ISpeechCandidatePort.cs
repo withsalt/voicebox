@@ -28,9 +28,7 @@ internal interface ISpeechCandidatePort
         long proposedTurnId,
         out SpeakingDecision decision);
 
-    SpeakingDecision ResolveSpeakerGate(
-        BargeInSpeakerGateStatus speakerGateStatus,
-        long proposedTurnId);
+    SpeakingDecision ResolveSpeakerGate(BargeInSpeakerGateStatus speakerGateStatus, long proposedTurnId);
 
     bool TryDiscardOnSpeechEnded(TimeSpan duration, out SpeechEndedDecision decision);
 

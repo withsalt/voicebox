@@ -88,19 +88,13 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
         _runScope = runScope ?? throw new ArgumentNullException(nameof(runScope));
     }
 
-    public ValueTask HandleRuntimeCommandAsync(
-        RuntimeCommand command,
-        ControlEnvelope envelope,
-        CancellationToken cancellationToken)
+    public ValueTask HandleRuntimeCommandAsync(RuntimeCommand command, ControlEnvelope envelope, CancellationToken cancellationToken)
     {
         _operations.CompleteCommand(command.OperationId);
         return ValueTask.CompletedTask;
     }
 
-    public async ValueTask HandleAssistantSignalAsync(
-        AssistantSignal signal,
-        ControlEnvelope envelope,
-        CancellationToken cancellationToken)
+    public async ValueTask HandleAssistantSignalAsync(AssistantSignal signal, ControlEnvelope envelope, CancellationToken cancellationToken)
     {
         _loopHost.BeginMutation("semantic work");
         try
@@ -339,10 +333,7 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
         }
     }
 
-    public ValueTask HandleTerminalFaultAsync(
-        AssistantFailure failure,
-        ControlEnvelope envelope,
-        CancellationToken cancellationToken)
+    public ValueTask HandleTerminalFaultAsync(AssistantFailure failure, ControlEnvelope envelope, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         _loopHost.BeginMutation("terminal fault work");
@@ -360,9 +351,7 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
         }
     }
 
-    public ValueTask HandleAbandonedAfterBarrierAsync(
-        ControlEnvelope envelope,
-        CancellationToken cancellationToken)
+    public ValueTask HandleAbandonedAfterBarrierAsync(ControlEnvelope envelope, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (envelope.Kind == ControlEnvelopeKind.RuntimeCommand)
@@ -380,9 +369,7 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
         return ValueTask.CompletedTask;
     }
 
-    private KernelCommitResult ProjectAndCommit(
-        AssistantSignal signal,
-        ControlEnvelope envelope)
+    private KernelCommitResult ProjectAndCommit(AssistantSignal signal, ControlEnvelope envelope)
     {
         TurnSignal? projected = AssistantSignalKernelProjection.Project(
             signal,
@@ -527,9 +514,7 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
         }
     }
 
-    private BargeInSemanticPlan CommitValidationPlanAndFinish(
-        BargeInSemanticPlan plan,
-        KernelCommitResult kernel)
+    private BargeInSemanticPlan CommitValidationPlanAndFinish(BargeInSemanticPlan plan, KernelCommitResult kernel)
     {
         _bargeInTurns.CommitValidationPlan(plan, kernel);
         if (kernel.Accepted && plan.Kind == BargeInSemanticPlanKind.ValidationRejected)
@@ -554,9 +539,7 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
         }
     }
 
-    private WakeupSemanticPlan CommitWakeupInterruptAndFinish(
-        WakeupSemanticPlan plan,
-        KernelCommitResult kernel)
+    private WakeupSemanticPlan CommitWakeupInterruptAndFinish(WakeupSemanticPlan plan, KernelCommitResult kernel)
     {
         _wakeup.CommitInterrupt(plan, kernel);
         return default;

@@ -190,9 +190,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         await session.DisposeAsync();
     }
 
-    private static VoiceAssistant CreateAssistantWith(
-        TestServices services,
-        IConversationSession session)
+    private static VoiceAssistant CreateAssistantWith(TestServices services, IConversationSession session)
     {
         var options = new VoiceAssistantOptions
         {
@@ -254,9 +252,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         public Func<ConversationRequest, CancellationToken, IAsyncEnumerable<ConversationEvent>> Script
             { get; set; } = (_, _) => SingleTurnAsync("默认");
 
-        public IAsyncEnumerable<ConversationEvent> StreamAsync(
-            ConversationRequest request,
-            CancellationToken cancellationToken = default)
+        public IAsyncEnumerable<ConversationEvent> StreamAsync(ConversationRequest request, CancellationToken cancellationToken = default)
             => Script(request, cancellationToken);
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
@@ -288,9 +284,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             return Task.CompletedTask;
         }
 
-        public IAsyncEnumerable<ConversationEvent> StreamAsync(
-            ConversationRequest request,
-            CancellationToken cancellationToken = default)
+        public IAsyncEnumerable<ConversationEvent> StreamAsync(ConversationRequest request, CancellationToken cancellationToken = default)
             => SingleTurnAsync("生命周期回答");
 
         public ValueTask DisposeAsync()
@@ -421,9 +415,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             }
         }
 
-        public IAsyncEnumerable<ConversationEvent> StreamAsync(
-            ConversationRequest request,
-            CancellationToken cancellationToken = default)
+        public IAsyncEnumerable<ConversationEvent> StreamAsync(ConversationRequest request, CancellationToken cancellationToken = default)
         {
             lock (_lock)
                 Requests.Add(request);

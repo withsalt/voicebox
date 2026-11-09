@@ -44,10 +44,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Policies
         public void BeginCandidate(long interruptedTurnId, CancellationTokenSource? responseCts)
             => BeginCandidate(interruptedTurnId, responseCts, _defaultSettings);
 
-        public void BeginCandidate(
-            long interruptedTurnId,
-            CancellationTokenSource? responseCts,
-            BargeInConfirmationSettings settings)
+        public void BeginCandidate(long interruptedTurnId, CancellationTokenSource? responseCts, BargeInConfirmationSettings settings)
         {
             Clear();
             ApplySettings(settings);

@@ -44,10 +44,7 @@ internal sealed class AssistantControlIngress :
 
     public bool HasTerminalFault => Volatile.Read(ref _hasTerminalFault) != 0;
 
-    public bool TryTerminate(
-        AssistantFailure failure,
-        long sourceTimestamp,
-        out long ingressSequence)
+    public bool TryTerminate(AssistantFailure failure, long sourceTimestamp, out long ingressSequence)
     {
         ingressSequence = 0;
         if (Volatile.Read(ref _disposed) != 0 || Volatile.Read(ref _hasTerminalFault) != 0)
@@ -64,11 +61,7 @@ internal sealed class AssistantControlIngress :
     void IPublicationFaultSink.Report(AssistantFailure failure)
         => TryTerminate(failure, System.Diagnostics.Stopwatch.GetTimestamp(), out _);
 
-    public bool TryEnqueueCritical(
-        AssistantSignal signal,
-        long sourceTimestamp,
-        AssistantSignalSource source,
-        out long ingressSequence)
+    public bool TryEnqueueCritical(AssistantSignal signal, long sourceTimestamp, AssistantSignalSource source, out long ingressSequence)
     {
         ingressSequence = 0;
         if (Volatile.Read(ref _disposed) != 0 || Volatile.Read(ref _hasTerminalFault) != 0)
@@ -137,10 +130,7 @@ internal sealed class AssistantControlIngress :
         return true;
     }
 
-    public async ValueTask<long> EnqueueAsync(
-        RuntimeCommand command,
-        long sourceTimestamp,
-        CancellationToken cancellationToken = default)
+    public async ValueTask<long> EnqueueAsync(RuntimeCommand command, long sourceTimestamp, CancellationToken cancellationToken = default)
     {
         ThrowIfUnavailable();
         EnsureSourceTimestamp(AssistantSignalSource.HostLifecycle, sourceTimestamp);

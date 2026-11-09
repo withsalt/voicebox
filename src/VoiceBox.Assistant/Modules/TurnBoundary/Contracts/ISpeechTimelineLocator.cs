@@ -9,9 +9,5 @@ namespace VoiceBox.Assistant.Modules.TurnBoundary.Contracts;
 /// </summary>
 internal interface ISpeechTimelineLocator
 {
-    bool TryLocate(
-        ReadOnlySpan<float> audio,
-        out long streamEpoch,
-        out long startSample,
-        out long endSample);
+    bool TryLocate(ReadOnlySpan<float> audio, out long streamEpoch, out long startSample, out long endSample);
 }

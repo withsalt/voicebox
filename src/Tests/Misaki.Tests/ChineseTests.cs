@@ -91,8 +91,7 @@ public class ChineseG2PTests
     [InlineData("军人", "云", "❓")]       // jun1: must contain 云 (via vn)
     [InlineData("全国", "元", "❓")]       // quan2: must contain 元 (via van)
     [InlineData("学生", "月", "❓")]       // xue2: must contain 月
-    public void Process_ZeroConsonantCases_DoesNotProduceUnk(
-        string text, string mustContain, string mustNotContain)
+    public void Process_ZeroConsonantCases_DoesNotProduceUnk(string text, string mustContain, string mustNotContain)
     {
         var result = _g2p.Process(text);
         Assert.Contains(mustContain, result.Phonemes);
@@ -321,8 +320,7 @@ public class PinyinLookupTests
     // Control cases: real initials should not be affected.
     [InlineData("时", "sh", "i2")]
     [InlineData("候", "h", "ou4")]
-    public void GetInitialsAndFinals_ZeroConsonantAndUv_MatchesPypinyinStrict(
-        string ch, string expectedInitial, string expectedFinal)
+    public void GetInitialsAndFinals_ZeroConsonantAndUv_MatchesPypinyinStrict(string ch, string expectedInitial, string expectedFinal)
     {
         var lookup = PinyinLookup.Instance;
         var (initials, finals) = lookup.GetInitialsAndFinals(ch);

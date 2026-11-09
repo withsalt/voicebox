@@ -119,11 +119,7 @@ internal sealed class NearEndEndpointTracker
     /// records that a location attempt already happened, which distinguishes "not yet observed"
     /// from "observed but unmatched".
     /// </summary>
-    public bool TryLocate(
-        ReadOnlySpan<float> audio,
-        out long streamEpoch,
-        out long startSample,
-        out long endSample)
+    public bool TryLocate(ReadOnlySpan<float> audio, out long streamEpoch, out long startSample, out long endSample)
     {
         CandidateLocationAttempted = true;
         return _timeline.TryLocate(audio, out streamEpoch, out startSample, out endSample);

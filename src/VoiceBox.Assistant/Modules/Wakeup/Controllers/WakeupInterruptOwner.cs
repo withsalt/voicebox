@@ -121,9 +121,7 @@ internal sealed class WakeupInterruptOwner : IWakeupDecisionSink
             default);
     }
 
-    public WakeupSemanticPlan CommitObservation(
-        WakeupSemanticPlan plan,
-        KernelCommitResult kernel)
+    public WakeupSemanticPlan CommitObservation(WakeupSemanticPlan plan, KernelCommitResult kernel)
     {
         if (!kernel.Accepted || plan.Kind != WakeupSemanticPlanKind.Observed)
             return default;

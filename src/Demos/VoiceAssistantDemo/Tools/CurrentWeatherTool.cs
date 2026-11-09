@@ -25,9 +25,7 @@ internal sealed partial class CurrentWeatherTool : IConversationTool
     {
     }
 
-    internal CurrentWeatherTool(
-        BaiduWeatherClient client,
-        WeatherDistrictCatalog districts)
+    internal CurrentWeatherTool(BaiduWeatherClient client, WeatherDistrictCatalog districts)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _districts = districts ?? throw new ArgumentNullException(nameof(districts));
@@ -151,9 +149,7 @@ internal sealed partial class CurrentWeatherTool : IConversationTool
         }
     }
 
-    private async Task<WeatherPosition> ResolvePositionAsync(
-        WeatherToolArguments arguments,
-        CancellationToken cancellationToken)
+    private async Task<WeatherPosition> ResolvePositionAsync(WeatherToolArguments arguments, CancellationToken cancellationToken)
     {
         string? location = arguments.Location;
         if (string.IsNullOrWhiteSpace(location))
@@ -233,9 +229,5 @@ internal sealed partial class CurrentWeatherTool : IConversationTool
 
     public void Dispose() { }
 
-    private sealed record WeatherToolArguments(
-        string? Location,
-        string? Province,
-        string? City,
-        string? CoordinateType);
+    private sealed record WeatherToolArguments(string? Location, string? Province, string? City, string? CoordinateType);
 }

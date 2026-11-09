@@ -24,10 +24,7 @@ internal sealed class SpeakerAudioTimelineBuffer
     private int _gapGeneration;
     private bool _hasStream;
 
-    public SpeakerAudioTimelineBuffer(
-        int capacitySamples,
-        int sampleRate,
-        SpeakerVerificationDiagnostics? diagnostics = null)
+    public SpeakerAudioTimelineBuffer(int capacitySamples, int sampleRate, SpeakerVerificationDiagnostics? diagnostics = null)
     {
         if (capacitySamples <= 0)
             throw new ArgumentOutOfRangeException(nameof(capacitySamples));
@@ -129,12 +126,7 @@ internal sealed class SpeakerAudioTimelineBuffer
     /// Copies <c>[start, end)</c> of <paramref name="streamEpoch"/> into <paramref name="destination"/>.
     /// Succeeds only when the interval lies entirely inside the current contiguous segment.
     /// </summary>
-    public bool TrySnapshot(
-        long streamEpoch,
-        long start,
-        long end,
-        Span<float> destination,
-        out SpeakerTimelineFailure failure)
+    public bool TrySnapshot(long streamEpoch, long start, long end, Span<float> destination, out SpeakerTimelineFailure failure)
     {
         if (end <= start || destination.Length < end - start)
         {

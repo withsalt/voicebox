@@ -163,10 +163,7 @@ internal sealed class TurnContextStore : IDisposable, ITurnResourcePort
         }
     }
 
-    public bool TrySetRecognitionMetadata(
-        long turnId,
-        string? rawText,
-        TimeSpan speechDuration)
+    public bool TrySetRecognitionMetadata(long turnId, string? rawText, TimeSpan speechDuration)
     {
         lock (_lock)
         {
@@ -180,10 +177,7 @@ internal sealed class TurnContextStore : IDisposable, ITurnResourcePort
         }
     }
 
-    public bool TryGetRecognitionMetadata(
-        long turnId,
-        out string? rawText,
-        out TimeSpan speechDuration)
+    public bool TryGetRecognitionMetadata(long turnId, out string? rawText, out TimeSpan speechDuration)
     {
         lock (_lock)
         {

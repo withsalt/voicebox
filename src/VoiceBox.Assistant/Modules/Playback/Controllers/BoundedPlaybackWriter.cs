@@ -15,11 +15,7 @@ internal sealed class BoundedPlaybackWriter
     private readonly IPlaybackStartedSink _playbackStarted;
     private int _playbackStartedNotified;
 
-    public BoundedPlaybackWriter(
-        IBoundedPlaybackPort playback,
-        ILogger logger,
-        long? ownerTurnId,
-        IPlaybackStartedSink playbackStarted)
+    public BoundedPlaybackWriter(IBoundedPlaybackPort playback, ILogger logger, long? ownerTurnId, IPlaybackStartedSink playbackStarted)
     {
         _playback = playback ?? throw new ArgumentNullException(nameof(playback));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

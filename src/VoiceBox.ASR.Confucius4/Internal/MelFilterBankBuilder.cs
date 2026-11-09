@@ -17,12 +17,7 @@ namespace VoiceBox.ASR.Confucius4.Internal
     /// </remarks>
     internal static class MelFilterBankBuilder
     {
-        public static float[][] Build(
-            int numFrequencyBins,
-            int numMelFilters,
-            double minFrequency,
-            double maxFrequency,
-            int samplingRate)
+        public static float[][] Build(int numFrequencyBins, int numMelFilters, double minFrequency, double maxFrequency, int samplingRate)
         {
             if (numFrequencyBins <= 1) throw new ArgumentOutOfRangeException(nameof(numFrequencyBins));
             if (numMelFilters <= 0) throw new ArgumentOutOfRangeException(nameof(numMelFilters));

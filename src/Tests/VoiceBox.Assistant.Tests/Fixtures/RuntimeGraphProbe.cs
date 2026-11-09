@@ -45,12 +45,7 @@ internal static class RuntimeGraphProbe
         return result![0];
     }
 
-    private static bool Visit(
-        object node,
-        HashSet<object> visited,
-        int depth,
-        Func<object, object?[]?> probe,
-        out object?[]? result)
+    private static bool Visit(object node, HashSet<object> visited, int depth, Func<object, object?[]?> probe, out object?[]? result)
     {
         result = null;
         if (depth > MaxDepth || !visited.Add(node))

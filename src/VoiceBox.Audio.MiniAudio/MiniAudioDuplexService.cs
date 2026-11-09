@@ -132,10 +132,7 @@ public sealed class MiniAudioDuplexService : MiniAudioServiceBase, IAudioDuplexS
 
     public int GetDefaultOutputDevice() => GetDefaultDeviceIndex(AudioDeviceType.Output);
 
-    public async Task StartAsync(
-        int inputDeviceIndex = -1,
-        int outputDeviceIndex = -1,
-        CancellationToken cancellationToken = default)
+    public async Task StartAsync(int inputDeviceIndex = -1, int outputDeviceIndex = -1, CancellationToken cancellationToken = default)
     {
         CheckDisposed();
         await _asyncLock.WaitAsync(cancellationToken).ConfigureAwait(false);

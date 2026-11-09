@@ -82,9 +82,7 @@ internal sealed class BootstrapThenRealAsrService : IASRService
             _inner.FeedAudio(sessionId, audioData);
     }
 
-    public Task<AsrResult?> FinishSessionAsync(
-        string sessionId,
-        CancellationToken ct = default)
+    public Task<AsrResult?> FinishSessionAsync(string sessionId, CancellationToken ct = default)
     {
         if (_bootstrapSessions.TryRemove(sessionId, out _))
         {
@@ -149,10 +147,7 @@ internal sealed class PreparedTtsService : IStreamTTSService
     public TtsVoice? GetDefaultVoice()
         => new() { Name = _prepared?.Voice ?? "prepared-voxcpm" };
 
-    public Task<TtsResult> GetAudioAsync(
-        string text,
-        TtsSynthesisOptions? options = null,
-        CancellationToken ct = default)
+    public Task<TtsResult> GetAudioAsync(string text, TtsSynthesisOptions? options = null, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
         return Task.FromResult(

@@ -16,6 +16,4 @@ using VoiceBox.Core.Services.WakeupService;
 
 namespace VoiceBox.Assistant.Hosting.Models;
 
-internal sealed record VoiceAssistantHostInstance(
-    VoiceAssistant Assistant,
-    VoiceAssistantDiagnostics Diagnostics);
+internal sealed record VoiceAssistantHostInstance(VoiceAssistant Assistant, VoiceAssistantDiagnostics Diagnostics);

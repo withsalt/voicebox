@@ -23,10 +23,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Buffering
             => _buffer = capacitySamples <= 0 ? Array.Empty<float>() : new float[capacitySamples];
 
         /// <summary>Returns true when an existing timeline had to be discarded.</summary>
-        public bool Add(
-            ReadOnlySpan<float> audio,
-            in CaptureRange sourceRange,
-            bool hasDiscontinuity = false)
+        public bool Add(ReadOnlySpan<float> audio, in CaptureRange sourceRange, bool hasDiscontinuity = false)
         {
             if (audio.Length != sourceRange.Length || !sourceRange.IsValid)
                 throw new ArgumentException("Audio and capture source range must describe the same valid interval.");
@@ -81,11 +78,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Buffering
         /// so assuming every notification is the current reservoir tail is not aligned.
         /// The newest exact occurrence wins when repeated samples are ambiguous.
         /// </summary>
-        public bool TryLocate(
-            ReadOnlySpan<float> audio,
-            out long streamEpoch,
-            out long startSample,
-            out long endSample)
+        public bool TryLocate(ReadOnlySpan<float> audio, out long streamEpoch, out long startSample, out long endSample)
         {
             streamEpoch = 0;
             startSample = 0;
@@ -132,11 +125,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Buffering
             return SnapshotLocked(_endSample - Math.Min(maxSamples, _count));
         }
 
-        public bool TrySnapshotFrom(
-            long streamEpoch,
-            long startSample,
-            int maxSamples,
-            out IReadOnlyList<float[]> audio)
+        public bool TrySnapshotFrom(long streamEpoch, long startSample, int maxSamples, out IReadOnlyList<float[]> audio)
         {
             audio = [];
             if (startSample < 0 || maxSamples <= 0)
@@ -158,11 +147,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Buffering
         /// Copies one exact capture-timeline interval. Unlike <see cref="TrySnapshotFrom"/>,
         /// later retained samples do not make a bounded interval unavailable.
         /// </summary>
-        public bool TrySnapshotRange(
-            long streamEpoch,
-            long startSample,
-            long endSampleExclusive,
-            out float[] audio)
+        public bool TrySnapshotRange(long streamEpoch, long startSample, long endSampleExclusive, out float[] audio)
         {
             audio = [];
             if (startSample < 0 || endSampleExclusive <= startSample)

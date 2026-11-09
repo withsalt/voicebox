@@ -135,8 +135,7 @@ namespace VoiceBox.DNR.DPDFNet.Internal
         /// <summary>
         /// 在两个张量中按秩区分谱 (4 维) 与状态 (1 维)。返回 (specName, stateName)。
         /// </summary>
-        private static (string spec, string state) IdentifySpecAndState(
-            IReadOnlyDictionary<string, NodeMetadata> metadata, string kind)
+        private static (string spec, string state) IdentifySpecAndState(IReadOnlyDictionary<string, NodeMetadata> metadata, string kind)
         {
             string? spec = null;
             string? state = null;

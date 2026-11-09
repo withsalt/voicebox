@@ -171,8 +171,7 @@ public sealed class AsrProviderFailureTests
         finally { File.Delete(cmvn); }
     }
 
-    private static Qwen3AsrSession CreateQwen(TestQwenRuntime runtime, SemaphoreSlim gate,
-        int chunkSize = 160, ILogger? logger = null)
+    private static Qwen3AsrSession CreateQwen(TestQwenRuntime runtime, SemaphoreSlim gate, int chunkSize = 160, ILogger? logger = null)
         => new("qwen-failure", "", null, chunkSize, 2, 5, 16, 8, runtime, gate, 5, logger);
 
     private sealed class FailingConfuciusRuntime(Exception error) : IConfucius4Runtime

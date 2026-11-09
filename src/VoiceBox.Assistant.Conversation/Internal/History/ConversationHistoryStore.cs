@@ -106,10 +106,7 @@ internal sealed class ConversationHistoryStore
         }
     }
 
-    private bool CommitGeneratedResponseLocked(
-        long turnId,
-        ChatMessage userMessage,
-        string assistantText)
+    private bool CommitGeneratedResponseLocked(long turnId, ChatMessage userMessage, string assistantText)
     {
         if (!_committedResponseTurnIds.Add(turnId))
             return false;
@@ -182,10 +179,7 @@ internal sealed class ConversationHistoryStore
         }
     }
 
-    public void RecordToolActivity(
-        long turnId,
-        ToolCall call,
-        ToolResult result)
+    public void RecordToolActivity(long turnId, ToolCall call, ToolResult result)
     {
         ArgumentNullException.ThrowIfNull(call);
         ArgumentNullException.ThrowIfNull(result);
@@ -247,10 +241,7 @@ internal sealed class ConversationHistoryStore
     /// Background execution is admitted only after the foreground acknowledgement commits.
     /// Results for canceled or expired turns do not recreate those turns.
     /// </summary>
-    public bool RecordBackgroundResult(
-        long turnId,
-        string assistantText,
-        IReadOnlyList<ChatMessage> toolMessages)
+    public bool RecordBackgroundResult(long turnId, string assistantText, IReadOnlyList<ChatMessage> toolMessages)
     {
         ArgumentNullException.ThrowIfNull(toolMessages);
         if (string.IsNullOrWhiteSpace(assistantText))
@@ -490,10 +481,7 @@ internal sealed class ConversationHistoryStore
         }
     }
 
-    private void UpsertToolCallAndResultLocked(
-        int recordIndex,
-        ToolCall call,
-        ToolResult result)
+    private void UpsertToolCallAndResultLocked(int recordIndex, ToolCall call, ToolResult result)
     {
         UpsertToolCallLocked(recordIndex, call);
         UpsertToolResultLocked(recordIndex, result);

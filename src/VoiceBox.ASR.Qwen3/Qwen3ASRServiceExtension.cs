@@ -31,9 +31,7 @@ namespace VoiceBox.ASR.Qwen3
             return services;
         }
 
-        public static IServiceCollection AddQwen3ASRService(
-            this IServiceCollection services,
-            Action<Qwen3ASROptions> configure)
+        public static IServiceCollection AddQwen3ASRService(this IServiceCollection services, Action<Qwen3ASROptions> configure)
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(configure);

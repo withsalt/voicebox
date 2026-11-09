@@ -70,11 +70,7 @@ internal sealed class RecognitionTurnOwner : IRecognitionBoundaryPort
     /// Attaches a provider session after its RecognitionStarted signal is admitted. Validation
     /// pre-roll crosses this boundary exactly once and is then owned by RecognitionModule.
     /// </summary>
-    public bool TryAttachStartedSession(
-        long turnId,
-        string sessionId,
-        out bool speechAlreadyEnded,
-        out TimeSpan speechDuration)
+    public bool TryAttachStartedSession(long turnId, string sessionId, out bool speechAlreadyEnded, out TimeSpan speechDuration)
     {
         speechAlreadyEnded = false;
         speechDuration = TimeSpan.Zero;
@@ -117,10 +113,7 @@ internal sealed class RecognitionTurnOwner : IRecognitionBoundaryPort
             out isValidationTurn);
     }
 
-    public bool CommitEnterRecognizing(
-        long turnId,
-        string asrSessionId,
-        bool isValidationTurn)
+    public bool CommitEnterRecognizing(long turnId, string asrSessionId, bool isValidationTurn)
         => _capture.CommitEnterCaptureRecognizing(turnId, asrSessionId, isValidationTurn);
 
     public bool CanObserveActiveAsrStartFailure(long turnId)

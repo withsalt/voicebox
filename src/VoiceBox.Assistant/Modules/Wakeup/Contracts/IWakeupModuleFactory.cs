@@ -13,9 +13,6 @@ namespace VoiceBox.Assistant.Modules.Wakeup.Contracts
     internal interface IWakeupModuleFactory
     {
         /// <summary>Creates the gate and supplies the host logger for wake-word diagnostics.</summary>
-        IWakeupModule Create(
-            ISpeakerEvidenceProvider? speakerEvidence,
-            TimeProvider timeProvider,
-            ILogger? logger = null);
+        IWakeupModule Create(ISpeakerEvidenceProvider? speakerEvidence, TimeProvider timeProvider, ILogger? logger = null);
     }
 }

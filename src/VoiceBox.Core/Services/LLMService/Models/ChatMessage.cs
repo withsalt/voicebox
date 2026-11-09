@@ -25,10 +25,7 @@ namespace VoiceBox.Core.Services.LLMService.Models
         public static ChatMessage AssistantToolCalls(params ToolCallContent[] calls) =>
             new(ChatRole.Assistant, calls);
 
-        public static ChatMessage ToolResult(
-            string callId,
-            string resultJson,
-            bool isError = false) =>
+        public static ChatMessage ToolResult(string callId, string resultJson, bool isError = false) =>
             new(ChatRole.Tool, [new ToolResultContent(callId, resultJson, isError)]);
     }
 }

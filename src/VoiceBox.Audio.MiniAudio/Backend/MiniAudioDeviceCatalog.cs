@@ -83,10 +83,7 @@ internal sealed unsafe class MiniAudioDeviceCatalog
             _ => HostApiType.Other,
         };
 
-    private static ma_backend? EnumerateContext(
-        ma_backend? requestedBackend,
-        bool isDefaultContext,
-        List<DeviceBuilder> builders)
+    private static ma_backend? EnumerateContext(ma_backend? requestedBackend, bool isDefaultContext, List<DeviceBuilder> builders)
     {
         ma_context_ptr context = new(true);
         if (context.pointer == IntPtr.Zero)
@@ -250,10 +247,7 @@ internal sealed unsafe class MiniAudioDeviceCatalog
         }
     }
 
-    private static unsafe ma_device_info GetDetailedDeviceInfo(
-        ma_context_ptr context,
-        ma_device_info basicInfo,
-        bool isCapture)
+    private static unsafe ma_device_info GetDetailedDeviceInfo(ma_context_ptr context, ma_device_info basicInfo, bool isCapture)
     {
         ma_device_id_ptr id = new(true);
         if (id.pointer == IntPtr.Zero)

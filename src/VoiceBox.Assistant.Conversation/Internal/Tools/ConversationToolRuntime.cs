@@ -93,9 +93,7 @@ internal sealed class ConversationToolRuntime : IAsyncDisposable
             ?? throw new InvalidOperationException("The conversation tool runtime is not started."));
     }
 
-    public async ValueTask<ToolApprovalDecision> AuthorizeAsync(
-        ToolCall call,
-        CancellationToken cancellationToken)
+    public async ValueTask<ToolApprovalDecision> AuthorizeAsync(ToolCall call, CancellationToken cancellationToken)
     {
         ToolDefinition definition = FindDefinition(call.ToolId);
         if (_approvalPolicy is null)
@@ -136,9 +134,7 @@ internal sealed class ConversationToolRuntime : IAsyncDisposable
         return null;
     }
 
-    public async ValueTask<ToolResult> ExecuteAsync(
-        ToolCall call,
-        CancellationToken cancellationToken)
+    public async ValueTask<ToolResult> ExecuteAsync(ToolCall call, CancellationToken cancellationToken)
     {
         if (!_providersByAlias.TryGetValue(call.ToolId.ServerAlias, out IConversationToolProvider? provider))
         {

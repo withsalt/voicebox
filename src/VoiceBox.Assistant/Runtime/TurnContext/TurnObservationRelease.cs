@@ -35,11 +35,7 @@ internal sealed class TurnObservationRelease
         _resources = resources ?? throw new ArgumentNullException(nameof(resources));
     }
 
-    public bool TryReleaseCompletedTurn(
-        long turnId,
-        out AssistantState oldState,
-        out bool changed,
-        out bool completedInterruptedTurn)
+    public bool TryReleaseCompletedTurn(long turnId, out AssistantState oldState, out bool changed, out bool completedInterruptedTurn)
     {
         oldState = _turnState.ConversationState;
         changed = false;

@@ -23,10 +23,7 @@ internal static class ActiveNearEndTestExtensions
 {
     private static readonly ConcurrentDictionary<NearEndTestHarness, PumpState> Pumps = new();
 
-    public static ValueTask AttachAsrSessionAsync(
-        this NearEndTestHarness harness,
-        long turnId,
-        string sessionId)
+    public static ValueTask AttachAsrSessionAsync(this NearEndTestHarness harness, long turnId, string sessionId)
         => TestDriver(harness).AttachSessionAsync(turnId, sessionId);
 
     public static bool HasPendingAsrFeedAudio(this NearEndTestHarness harness)
@@ -35,9 +32,7 @@ internal static class ActiveNearEndTestExtensions
     public static ValueTask DrainAsrFeedQueueAsync(this NearEndTestHarness harness)
         => harness.RecognitionAudio.DrainAudioAsync();
 
-    public static Task StartAsrFeedPump(
-        this NearEndTestHarness harness,
-        CancellationToken cancellationToken)
+    public static Task StartAsrFeedPump(this NearEndTestHarness harness, CancellationToken cancellationToken)
     {
         PumpState state = Pumps.GetOrAdd(harness, static _ => new PumpState());
         if (Interlocked.Exchange(ref state.Started, 1) != 0)

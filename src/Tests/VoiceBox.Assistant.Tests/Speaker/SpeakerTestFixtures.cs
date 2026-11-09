@@ -137,9 +137,7 @@ internal static class SpeakerTestProfiles
             [new SpeakerPrototype("p1", ScriptedSpeakerService.OwnerAxis(), 1f), new SpeakerPrototype("p2", second, 0.99f)]);
     }
 
-    public static OwnerSpeakerProfileVariant Variant(
-        SpeakerCaptureDescriptor descriptor,
-        bool includeDoubleTalk = true)
+    public static OwnerSpeakerProfileVariant Variant(SpeakerCaptureDescriptor descriptor, bool includeDoubleTalk = true)
     {
         var banks = new Dictionary<SpeakerPurposeBank, SpeakerPrototypeBank>
         {
@@ -156,10 +154,7 @@ internal static class SpeakerTestProfiles
             OwnerSpeakerProfileQuality.Empty);
     }
 
-    public static OwnerSpeakerProfile Profile(
-        ISpeakerService speaker,
-        SpeakerCaptureDescriptor descriptor,
-        bool includeDoubleTalk = true)
+    public static OwnerSpeakerProfile Profile(ISpeakerService speaker, SpeakerCaptureDescriptor descriptor, bool includeDoubleTalk = true)
         => new(
             OwnerSpeakerProfile.OwnerSpeakerId,
             DateTimeOffset.UtcNow,

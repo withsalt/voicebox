@@ -111,9 +111,7 @@ internal sealed class OperationCorrelationGate
         }
     }
 
-    private static HashSet<TValue> GetOrCreate<TValue>(
-        Dictionary<long, HashSet<TValue>> entries,
-        long turnId)
+    private static HashSet<TValue> GetOrCreate<TValue>(Dictionary<long, HashSet<TValue>> entries, long turnId)
         where TValue : notnull
     {
         if (!entries.TryGetValue(turnId, out HashSet<TValue>? values))
@@ -125,8 +123,5 @@ internal sealed class OperationCorrelationGate
         return values;
     }
 
-    private readonly record struct OperationIdentity(
-        long TurnId,
-        long OperationId,
-        AssistantSignalKind SignalKind);
+    private readonly record struct OperationIdentity(long TurnId, long OperationId, AssistantSignalKind SignalKind);
 }

@@ -548,10 +548,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
         throw new InvalidOperationException("The background model loop exceeded its round limit.");
     }
 
-    private ToolResult? ResolveBlockedReplay(
-        long turnId,
-        ToolCall call,
-        UnknownOutcomeBlocklist retryBlockedAfterUnknownOutcome)
+    private ToolResult? ResolveBlockedReplay(long turnId, ToolCall call, UnknownOutcomeBlocklist retryBlockedAfterUnknownOutcome)
     {
         if (!retryBlockedAfterUnknownOutcome.Contains(
             new ToolInvocationFingerprint(call.ToolId, call.ArgumentsHash)))
@@ -703,10 +700,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
         _ => false,
     };
 
-    private ToolResult RecordToolResult(
-        long turnId,
-        ToolCall call,
-        ToolResult result)
+    private ToolResult RecordToolResult(long turnId, ToolCall call, ToolResult result)
     {
         _history.RecordToolActivity(turnId, call, result);
         return result;
@@ -749,9 +743,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
         return string.Concat(fragments);
     }
 
-    private static ToolCall ResolveCall(
-        ModelTurnToolCall requested,
-        ToolCatalogSnapshot catalog)
+    private static ToolCall ResolveCall(ModelTurnToolCall requested, ToolCatalogSnapshot catalog)
     {
         ToolDefinition definition = FindDefinition(requested.ToolId, catalog);
         (OwnedJsonValue arguments, ConversationToolExecutionPreference preference) =
@@ -763,24 +755,18 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
             preference);
     }
 
-    private static ToolDefinition FindDefinition(
-        ConversationToolId id,
-        ToolCatalogSnapshot catalog)
+    private static ToolDefinition FindDefinition(ConversationToolId id, ToolCatalogSnapshot catalog)
         => catalog.Definitions.FirstOrDefault(definition => definition.Id == id)
             ?? throw new InvalidOperationException($"Unknown tool '{id}'.");
 
-    private static string? FindCustomBackgroundExecutionPrompt(
-        IEnumerable<ToolCall> calls,
-        ToolCatalogSnapshot catalog)
+    private static string? FindCustomBackgroundExecutionPrompt(IEnumerable<ToolCall> calls, ToolCatalogSnapshot catalog)
         => calls
             .Where(static call =>
                 call.ExecutionPreference == ConversationToolExecutionPreference.Background)
             .Select(call => FindDefinition(call.ToolId, catalog).ExecutionPrompt)
             .FirstOrDefault(static prompt => !string.IsNullOrWhiteSpace(prompt));
 
-    private static string CreateStandardBackgroundExecutionPrompt(
-        IEnumerable<ToolCall> calls,
-        ToolCatalogSnapshot catalog)
+    private static string CreateStandardBackgroundExecutionPrompt(IEnumerable<ToolCall> calls, ToolCatalogSnapshot catalog)
     {
         string names = string.Join("、", calls
             .Select(call => FindDefinition(call.ToolId, catalog).Title)
@@ -788,9 +774,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
         return $"我正在后台执行{names}任务，等会给你结果。";
     }
 
-    private static ChatMessage CreateAssistantToolCallMessage(
-        IEnumerable<ToolCall> calls,
-        ToolCatalogSnapshot catalog)
+    private static ChatMessage CreateAssistantToolCallMessage(IEnumerable<ToolCall> calls, ToolCatalogSnapshot catalog)
         => ChatMessage.AssistantToolCalls(calls.Select(call => new ToolCallContent(
             call.CallId,
             catalog.ExposedNames[call.ToolId],
@@ -814,9 +798,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
         _history.RecordToolExchange(turnId, messages);
     }
 
-    private readonly record struct ToolInvocationFingerprint(
-        ConversationToolId ToolId,
-        string ArgumentsHash);
+    private readonly record struct ToolInvocationFingerprint(ConversationToolId ToolId, string ArgumentsHash);
 
     /// <summary>
     /// Invocations whose outcome could not be determined and must not be replayed for the rest of

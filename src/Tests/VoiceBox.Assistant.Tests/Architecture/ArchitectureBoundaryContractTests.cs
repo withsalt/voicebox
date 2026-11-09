@@ -316,10 +316,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     [InlineData(true, false, true)]
     [InlineData(true, true, false)]
     [InlineData(true, true, true)]
-    public void OptionalModuleMatrixUsesOnlyTypedRegistrations(
-        bool wakeup,
-        bool speaker,
-        bool bargeIn)
+    public void OptionalModuleMatrixUsesOnlyTypedRegistrations(bool wakeup, bool speaker, bool bargeIn)
     {
         var services = TestServices.Create();
         var options = new VoiceAssistantOptions();

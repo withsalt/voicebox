@@ -36,9 +36,7 @@ namespace VoiceBox.APM.WebRtc
         }
 
         /// <summary>注册 WebRTC APM 统一处理器到通用 <see cref="IServiceCollection"/>。</summary>
-        public static IServiceCollection AddWebRtcApmService(
-            this IServiceCollection services,
-            Action<WebRtcApmOptions> configure)
+        public static IServiceCollection AddWebRtcApmService(this IServiceCollection services, Action<WebRtcApmOptions> configure)
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(configure);
@@ -60,8 +58,7 @@ namespace VoiceBox.APM.WebRtc
         /// <summary>
         /// 仅注册 WebRTC AEC3 声学路径延迟估计器工厂，不注册完整 APM 处理器。
         /// </summary>
-        public static IServiceCollection AddWebRtcAec3DelayEstimator(
-            this IServiceCollection services)
+        public static IServiceCollection AddWebRtcAec3DelayEstimator(this IServiceCollection services)
         {
             ArgumentNullException.ThrowIfNull(services);
             services.TryAddSingleton<

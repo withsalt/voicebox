@@ -41,18 +41,14 @@ internal sealed class AssistantRuntimePublicEventEffectHandler : IPublicEventEff
 
     public long LastPublicationSequence => Volatile.Read(ref _lastPublicationSequence);
 
-    public ValueTask PublishWakeModeChangedAsync(
-        PublishWakeModeChangedEffect effect,
-        CancellationToken cancellationToken)
+    public ValueTask PublishWakeModeChangedAsync(PublishWakeModeChangedEffect effect, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         Publish(_publications.RaiseWakeModeChanged(effect.From, effect.To));
         return ValueTask.CompletedTask;
     }
 
-    public ValueTask PublishWakeupDetectedAsync(
-        PublishWakeupDetectedEffect effect,
-        CancellationToken cancellationToken)
+    public ValueTask PublishWakeupDetectedAsync(PublishWakeupDetectedEffect effect, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         KernelWakeupObservation value = effect.Observation;
@@ -68,9 +64,7 @@ internal sealed class AssistantRuntimePublicEventEffectHandler : IPublicEventEff
         return ValueTask.CompletedTask;
     }
 
-    public ValueTask PublishStateChangedAsync(
-        PublishStateChangedEffect effect,
-        CancellationToken cancellationToken)
+    public ValueTask PublishStateChangedAsync(PublishStateChangedEffect effect, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         _stateProjection.Publish(effect.To);
@@ -83,9 +77,7 @@ internal sealed class AssistantRuntimePublicEventEffectHandler : IPublicEventEff
         return ValueTask.CompletedTask;
     }
 
-    public ValueTask PublishBargeInValidationAsync(
-        PublishBargeInValidationEffect effect,
-        CancellationToken cancellationToken)
+    public ValueTask PublishBargeInValidationAsync(PublishBargeInValidationEffect effect, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         // Heard carries the immutable acoustic observation in the effect because it is published
@@ -115,9 +107,7 @@ internal sealed class AssistantRuntimePublicEventEffectHandler : IPublicEventEff
         return ValueTask.CompletedTask;
     }
 
-    public ValueTask PublishUserSpokeAsync(
-        PublishUserSpokeEffect effect,
-        CancellationToken cancellationToken)
+    public ValueTask PublishUserSpokeAsync(PublishUserSpokeEffect effect, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         Publish(_publications.RaiseUserSpoke(new UserSpokeEventArgs
@@ -138,9 +128,7 @@ internal sealed class AssistantRuntimePublicEventEffectHandler : IPublicEventEff
         return ValueTask.CompletedTask;
     }
 
-    public ValueTask PublishAssistantRepliedAsync(
-        PublishAssistantRepliedEffect effect,
-        CancellationToken cancellationToken)
+    public ValueTask PublishAssistantRepliedAsync(PublishAssistantRepliedEffect effect, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         Publish(_publications.RaiseAssistantReplied(new AssistantReplyEventArgs
@@ -151,9 +139,7 @@ internal sealed class AssistantRuntimePublicEventEffectHandler : IPublicEventEff
         return ValueTask.CompletedTask;
     }
 
-    public ValueTask PublishFaultedAsync(
-        PublishFaultedEffect effect,
-        CancellationToken cancellationToken)
+    public ValueTask PublishFaultedAsync(PublishFaultedEffect effect, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (_publications.IsFaulted)

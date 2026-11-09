@@ -56,11 +56,7 @@ namespace VoiceBox.LLM.LLamaSharp
         /// 由 profile 决定如何落实 (默认实现忽略: llama.cpp 内置模板引擎不支持该开关,
         /// 模型自发的 thinking 输出仍会被标记路由到 Thinking 块)。
         /// </summary>
-        string BuildPrompt(
-            LLamaWeights weights,
-            IReadOnlyList<LlamaChatMessage> messages,
-            bool addGenerationPrompt,
-            bool enableThinking);
+        string BuildPrompt(LLamaWeights weights, IReadOnlyList<LlamaChatMessage> messages, bool addGenerationPrompt, bool enableThinking);
 
         /// <summary>
         /// 生成开始时是否已经处于 thinking 块内。部分模型会把 thinking 起始标记预填进

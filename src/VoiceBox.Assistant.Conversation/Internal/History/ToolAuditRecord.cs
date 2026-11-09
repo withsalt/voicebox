@@ -2,8 +2,4 @@
 
 namespace VoiceBox.Assistant.Conversation.Internal.History;
 
-internal sealed record ToolAuditRecord(
-    long TurnId,
-    string CallId,
-    ConversationToolId ToolId,
-    ConversationToolResultKind ResultKind);
+internal sealed record ToolAuditRecord(long TurnId, string CallId, ConversationToolId ToolId, ConversationToolResultKind ResultKind);

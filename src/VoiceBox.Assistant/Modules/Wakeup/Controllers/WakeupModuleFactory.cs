@@ -14,20 +14,14 @@ internal sealed class WakeupModuleFactory : IWakeupModuleFactory
     private readonly AssistantAudioFormat _audioFormat;
     private readonly VoiceAssistantOptions _options;
 
-    public WakeupModuleFactory(
-        IWakeupService wakeup,
-        AssistantAudioFormat audioFormat,
-        VoiceAssistantOptions options)
+    public WakeupModuleFactory(IWakeupService wakeup, AssistantAudioFormat audioFormat, VoiceAssistantOptions options)
     {
         _wakeup = wakeup ?? throw new ArgumentNullException(nameof(wakeup));
         _audioFormat = audioFormat ?? throw new ArgumentNullException(nameof(audioFormat));
         _options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
-    public IWakeupModule Create(
-        ISpeakerEvidenceProvider? speakerEvidence,
-        TimeProvider timeProvider,
-        ILogger? logger = null)
+    public IWakeupModule Create(ISpeakerEvidenceProvider? speakerEvidence, TimeProvider timeProvider, ILogger? logger = null)
     {
         ArgumentNullException.ThrowIfNull(timeProvider);
         return new WakeupModule(

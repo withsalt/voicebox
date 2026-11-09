@@ -4,5 +4,4 @@ using VoiceBox.Assistant.Api.State;
 
 namespace VoiceBox.Assistant.Hosting.Models;
 
-public sealed record VoiceAssistantModuleHealthSnapshot(
-    IReadOnlyDictionary<string, string> Statuses);
+public sealed record VoiceAssistantModuleHealthSnapshot(IReadOnlyDictionary<string, string> Statuses);

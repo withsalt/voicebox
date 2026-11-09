@@ -33,9 +33,7 @@ namespace VoiceBox.Wakeup.OpenWakeWord
         /// <summary>
         /// 注册 OpenWakeWord 到通用 <see cref="IServiceCollection"/> (非 AudioServiceManager 场景)。
         /// </summary>
-        public static IServiceCollection AddOpenWakeWordService(
-            this IServiceCollection services,
-            Action<OpenWakeWordOptions> configure)
+        public static IServiceCollection AddOpenWakeWordService(this IServiceCollection services, Action<OpenWakeWordOptions> configure)
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(configure);

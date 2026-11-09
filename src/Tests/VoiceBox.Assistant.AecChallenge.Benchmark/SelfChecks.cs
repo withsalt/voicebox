@@ -652,11 +652,7 @@ internal static partial class SelfChecks
     {
         public int DelaySamples => 0;
 
-        public void Process(
-            Span<float> capture,
-            ReadOnlySpan<float> render,
-            uint channels,
-            uint sampleRate)
+        public void Process(Span<float> capture, ReadOnlySpan<float> render, uint channels, uint sampleRate)
         {
         }
 

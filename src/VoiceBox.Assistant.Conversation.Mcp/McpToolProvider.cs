@@ -43,9 +43,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
     }
 
     /// <summary>创建 stdio MCP 工具来源。</summary>
-    public static McpToolProvider CreateStdio(
-        string alias,
-        Action<StdioMcpServerOptions> configure)
+    public static McpToolProvider CreateStdio(string alias, Action<StdioMcpServerOptions> configure)
     {
         ArgumentNullException.ThrowIfNull(configure);
         var options = new StdioMcpServerOptions();
@@ -54,9 +52,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
     }
 
     /// <summary>创建 Streamable HTTP MCP 工具来源。</summary>
-    public static McpToolProvider CreateStreamableHttp(
-        string alias,
-        Action<StreamableHttpMcpServerOptions> configure)
+    public static McpToolProvider CreateStreamableHttp(string alias, Action<StreamableHttpMcpServerOptions> configure)
     {
         ArgumentNullException.ThrowIfNull(configure);
         var options = new StreamableHttpMcpServerOptions();
@@ -92,8 +88,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
         }
     }
 
-    public ValueTask<IReadOnlyList<ConversationToolDefinition>> GetToolsAsync(
-        CancellationToken cancellationToken = default)
+    public ValueTask<IReadOnlyList<ConversationToolDefinition>> GetToolsAsync(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         cancellationToken.ThrowIfCancellationRequested();
@@ -102,9 +97,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
         return ValueTask.FromResult(_catalog);
     }
 
-    public async ValueTask<ConversationToolResult> InvokeAsync(
-        ConversationToolCall call,
-        CancellationToken cancellationToken = default)
+    public async ValueTask<ConversationToolResult> InvokeAsync(ConversationToolCall call, CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         if (!_started)
@@ -145,9 +138,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
         DisposeServerGates();
     }
 
-    private async Task AddServerAsync(
-        McpServerRegistration registration,
-        CancellationToken cancellationToken)
+    private async Task AddServerAsync(McpServerRegistration registration, CancellationToken cancellationToken)
     {
         IClientTransport transport = CreateTransport(registration);
         using var connect = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);

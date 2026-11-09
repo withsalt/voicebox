@@ -10,10 +10,7 @@ internal sealed class SpeechSynthesisStreamAdapter : ISpeechSynthesisStreamPort
     private readonly IStreamTTSService _service;
     private readonly TtsSynthesisOptions? _options;
 
-    public SpeechSynthesisStreamAdapter(
-        IStreamTTSService service,
-        string? voice,
-        float? speed)
+    public SpeechSynthesisStreamAdapter(IStreamTTSService service, string? voice, float? speed)
     {
         _service = service ?? throw new ArgumentNullException(nameof(service));
         _options = voice is null && speed is null

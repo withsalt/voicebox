@@ -18,9 +18,7 @@ internal interface INearEndConfirmationStore
     /// Starts capture only while the lease still owns the reply being interrupted. Returns false
     /// when reset, a playback boundary or an owner change invalidated the transaction.
     /// </summary>
-    bool TryCommit(
-        in NearEndConfirmationLease lease,
-        in SpeakingDecision confirmed);
+    bool TryCommit(in NearEndConfirmationLease lease, in SpeakingDecision confirmed);
 
     void Abort(in NearEndConfirmationLease lease);
 }

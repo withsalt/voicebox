@@ -47,12 +47,7 @@ public class OpusStreamReader : IAudioStreamReader
     {
     }
 
-    public OpusStreamReader(
-        Stream stream,
-        bool leaveOpen = true,
-        int sampleRate = 48000,
-        int channels = 1,
-        int frameSizeMs = 20)
+    public OpusStreamReader(Stream stream, bool leaveOpen = true, int sampleRate = 48000, int channels = 1, int frameSizeMs = 20)
     {
         ArgumentNullException.ThrowIfNull(stream);
         ValidateParameters(sampleRate, channels, frameSizeMs);

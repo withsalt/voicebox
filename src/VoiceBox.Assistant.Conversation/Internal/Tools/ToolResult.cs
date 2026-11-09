@@ -5,11 +5,7 @@ namespace VoiceBox.Assistant.Conversation.Internal.Tools;
 
 internal sealed record ToolResult
 {
-    public ToolResult(
-        string callId,
-        ConversationToolResultKind kind,
-        OwnedJsonValue? value,
-        string? errorCode = null)
+    public ToolResult(string callId, ConversationToolResultKind kind, OwnedJsonValue? value, string? errorCode = null)
     {
         if (string.IsNullOrWhiteSpace(callId))
             throw new ArgumentException("Tool result call id cannot be empty.", nameof(callId));

@@ -24,11 +24,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
         private readonly int _maxNewTokens;
         private int _disposed;
 
-        public string? BuildStreamingPrefix(
-            int chunkId,
-            string accumulatedRaw,
-            int unfixedChunkNum,
-            int unfixedTokenNum)
+        public string? BuildStreamingPrefix(int chunkId, string accumulatedRaw, int unfixedChunkNum, int unfixedTokenNum)
             => StreamingPromptPlanner.BuildPrefix(
                 chunkId,
                 accumulatedRaw,

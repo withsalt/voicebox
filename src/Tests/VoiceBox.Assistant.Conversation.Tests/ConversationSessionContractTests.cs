@@ -389,9 +389,7 @@ public sealed class ConversationSessionContractTests
 
         public List<ConversationContext> Snapshots { get; } = [];
 
-        public ValueTask<string> GetContextAsync(
-            ConversationContext context,
-            CancellationToken cancellationToken = default)
+        public ValueTask<string> GetContextAsync(ConversationContext context, CancellationToken cancellationToken = default)
         {
             Calls++;
             Snapshots.Add(context);
@@ -403,9 +401,7 @@ public sealed class ConversationSessionContractTests
     {
         public bool Enabled { get; set; } = true;
 
-        public ValueTask<string> GetContextAsync(
-            ConversationContext context,
-            CancellationToken cancellationToken = default)
+        public ValueTask<string> GetContextAsync(ConversationContext context, CancellationToken cancellationToken = default)
             => Enabled
                 ? throw new InvalidOperationException("memory unavailable")
                 : ValueTask.FromResult(string.Empty);

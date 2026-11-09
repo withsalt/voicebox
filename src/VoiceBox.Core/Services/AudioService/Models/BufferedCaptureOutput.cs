@@ -12,10 +12,7 @@ namespace VoiceBox.Core.Services.AudioService.Models
     /// True only on the input callback that reset mapper state. Duplex publishers use this
     /// immediate signal; processed-output publishers use <paramref name="HasDiscontinuity"/>.
     /// </param>
-    public readonly record struct BufferedCaptureOutput(
-        CaptureSignalTimeline Timeline,
-        bool HasDiscontinuity,
-        bool MappingReset = false)
+    public readonly record struct BufferedCaptureOutput(CaptureSignalTimeline Timeline, bool HasDiscontinuity, bool MappingReset = false)
     {
         public int BufferOffset => Timeline.BufferOffset;
         public int SampleCount => Timeline.SampleCount;

@@ -15,9 +15,7 @@ internal static class ReportWriter
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
     };
 
-    public static (string JsonPath, string CsvPath) Write(
-        EvaluationReport report,
-        string? requestedPath)
+    public static (string JsonPath, string CsvPath) Write(EvaluationReport report, string? requestedPath)
     {
         string jsonPath = ResolveOutputPath(requestedPath);
         string directory = Path.GetDirectoryName(jsonPath)

@@ -730,10 +730,7 @@ public sealed class AssistantTurnObservationStoreTests
         return new AssistantTurnObservationStoreHarness(bargeIn, policy);
     }
 
-    private static AssistantTurnObservationStoreHarness CreateTurnsWithListeningGate(
-        int minDurationMs,
-        float minRms,
-        int sampleRate)
+    private static AssistantTurnObservationStoreHarness CreateTurnsWithListeningGate(int minDurationMs, float minRms, int sampleRate)
     {
         var bargeIn = new BargeInDetector(minDurationMs: 0, minRms: 0, sampleRate: sampleRate, channels: 1);
         return new AssistantTurnObservationStoreHarness(
@@ -748,9 +745,7 @@ public sealed class AssistantTurnObservationStoreTests
         return samples;
     }
 
-    private static SpeakingDecision ConfirmSpeakingBargeIn(
-        AssistantTurnObservationStoreHarness turns,
-        params float[][] initialAudio)
+    private static SpeakingDecision ConfirmSpeakingBargeIn(AssistantTurnObservationStoreHarness turns, params float[][] initialAudio)
     {
         Assert.True(turns.TryConfirmBargeInFromNearEndWindow(
             initialAudio,

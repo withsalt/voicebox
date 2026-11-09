@@ -10,7 +10,4 @@ internal sealed record VisibleTextDelta(string Text) : ModelTurnEvent;
 
 internal sealed record ModelTurnCompleted : ModelTurnEvent;
 
-internal sealed record ModelTurnToolCall(
-    string CallId,
-    ConversationToolId ToolId,
-    OwnedJsonValue Arguments) : ModelTurnEvent;
+internal sealed record ModelTurnToolCall(string CallId, ConversationToolId ToolId, OwnedJsonValue Arguments) : ModelTurnEvent;

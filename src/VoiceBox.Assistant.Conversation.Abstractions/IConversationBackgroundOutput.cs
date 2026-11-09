@@ -12,6 +12,5 @@ public interface IConversationBackgroundOutput : IConversationLifecycle
     /// <summary>
     /// 读取本次运行的后台输出。消费者必须使用 Start/Stop 之外的运行取消令牌结束阻塞读取。
     /// </summary>
-    IAsyncEnumerable<ConversationBackgroundMessage> ReadBackgroundMessagesAsync(
-        CancellationToken cancellationToken = default);
+    IAsyncEnumerable<ConversationBackgroundMessage> ReadBackgroundMessagesAsync(CancellationToken cancellationToken = default);
 }

@@ -7,8 +7,7 @@ namespace VoiceBox.ASR.Confucius4;
 
 public static class Confucius4ASRServiceExtension
 {
-    public static IServiceCollection AddConfucius4ASRService(this IServiceCollection services,
-        Action<Confucius4AsrOptions> configure)
+    public static IServiceCollection AddConfucius4ASRService(this IServiceCollection services, Action<Confucius4AsrOptions> configure)
     {
         ArgumentNullException.ThrowIfNull(configure);
         services.Configure(configure);

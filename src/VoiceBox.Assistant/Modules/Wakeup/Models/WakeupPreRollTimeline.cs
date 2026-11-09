@@ -95,10 +95,7 @@ internal sealed class WakeupPreRollTimeline
 
     public void Clear() => _preRoll.Clear();
 
-    public float[] TakeReplayAudio(
-        ReadOnlySpan<float> trailingAudio,
-        WakeupEventArgs wakeup,
-        WakeupTriggerKind triggerKind)
+    public float[] TakeReplayAudio(ReadOnlySpan<float> trailingAudio, WakeupEventArgs wakeup, WakeupTriggerKind triggerKind)
         => SliceReplayAudio(
             AppendTrailingAudio(_preRoll.SnapshotAndClear(), trailingAudio),
             wakeup,

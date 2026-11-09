@@ -376,9 +376,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             history);
     }
 
-    private static async Task WaitForAssistantStateAsync(
-        VoiceAssistant assistant,
-        AssistantState expected)
+    private static async Task WaitForAssistantStateAsync(VoiceAssistant assistant, AssistantState expected)
     {
         if (assistant.State == expected)
             return;

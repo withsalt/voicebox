@@ -232,10 +232,7 @@ internal static class ComparisonProgram
         };
     }
 
-    internal static (string Status, string Detail) CompareScalarForSelfTest(
-        double? baseline,
-        double? candidate,
-        bool higherIsBetter)
+    internal static (string Status, string Detail) CompareScalarForSelfTest(double? baseline, double? candidate, bool higherIsBetter)
     {
         ComparisonValue result = CompareValue(baseline, candidate, higherIsBetter);
         return (result.Status, result.Detail);
@@ -362,10 +359,7 @@ internal static class ComparisonProgram
             NormalizePath(candidateE2e.TtsModelPath), "TTS model path differs.", findings);
     }
 
-    private static void CompareAcousticCases(
-        EvaluationReport baseline,
-        EvaluationReport candidate,
-        ICollection<ComparisonFinding> findings)
+    private static void CompareAcousticCases(EvaluationReport baseline, EvaluationReport candidate, ICollection<ComparisonFinding> findings)
     {
         Dictionary<string, JsonElement> before = LoadCaseElements(baseline.Cases);
         Dictionary<string, JsonElement> after = LoadCaseElements(candidate.Cases);
@@ -395,10 +389,7 @@ internal static class ComparisonProgram
         }
     }
 
-    private static void CompareE2eCases(
-        EndToEndReport baseline,
-        EndToEndReport candidate,
-        ICollection<ComparisonFinding> findings)
+    private static void CompareE2eCases(EndToEndReport baseline, EndToEndReport candidate, ICollection<ComparisonFinding> findings)
     {
         Dictionary<string, JsonElement> before = LoadCaseElements(baseline.Cases);
         Dictionary<string, JsonElement> after = LoadCaseElements(candidate.Cases);
@@ -1225,10 +1216,7 @@ internal static class ComparisonProgram
         private static string NormalizeText(string value)
             => value.Replace("\r\n", "\n", StringComparison.Ordinal).Trim();
 
-        internal static string NormalizeCommandText(
-            string value,
-            string evidenceRoot,
-            bool includeE2e)
+        internal static string NormalizeCommandText(string value, string evidenceRoot, bool includeE2e)
         {
             string normalized = NormalizeText(value).Replace(evidenceRoot, "<evidence>", StringComparison.OrdinalIgnoreCase);
             normalized = normalized.Replace(evidenceRoot.Replace('\\', '/'), "<evidence>", StringComparison.OrdinalIgnoreCase);

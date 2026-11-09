@@ -206,10 +206,7 @@ internal sealed class SpeechBoundaryCoordinator : ITurnBoundaryEndpointSink
     /// resolved: the verdict stays in the evidence cache and is re-read on the next chunk or at
     /// the endpoint.
     /// </summary>
-    private SpeechBoundaryObservation TryResolveSingleTalkVerdict(
-        BargeInSpeakerGateStatus status,
-        long operationId,
-        bool resetGate)
+    private SpeechBoundaryObservation TryResolveSingleTalkVerdict(BargeInSpeakerGateStatus status, long operationId, bool resetGate)
     {
         if (status == BargeInSpeakerGateStatus.Pending)
             return default;
@@ -525,9 +522,7 @@ internal sealed class SpeechBoundaryCoordinator : ITurnBoundaryEndpointSink
             ? discarded
             : _recognitionTurn.ObserveSpeechEnded(duration);
 
-    public void CommitListeningObservation(
-        SpeechBoundaryObservation observation,
-        KernelCommitResult kernel)
+    public void CommitListeningObservation(SpeechBoundaryObservation observation, KernelCommitResult kernel)
     {
         if (!kernel.Accepted)
             return;

@@ -9,10 +9,7 @@ internal sealed class PlaybackDrainWaiter
     private readonly ILogger _logger;
     private readonly int _tailBufferMs;
 
-    public PlaybackDrainWaiter(
-        IBoundedPlaybackPort playback,
-        ILogger logger,
-        int tailBufferMs)
+    public PlaybackDrainWaiter(IBoundedPlaybackPort playback, ILogger logger, int tailBufferMs)
     {
         _playback = playback ?? throw new ArgumentNullException(nameof(playback));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

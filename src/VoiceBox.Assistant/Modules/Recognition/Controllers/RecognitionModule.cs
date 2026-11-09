@@ -39,20 +39,14 @@ internal sealed class RecognitionModule :
     private int _audioWakeupPending;
     private int _audioPumpStarted;
 
-    public RecognitionModule(
-        IRecognitionProviderAdapter provider,
-        IRecognitionControlSignalPort control,
-        ILogger logger)
+    public RecognitionModule(IRecognitionProviderAdapter provider, IRecognitionControlSignalPort control, ILogger logger)
     {
         _provider = provider ?? throw new ArgumentNullException(nameof(provider));
         _control = control ?? throw new ArgumentNullException(nameof(control));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task PrepareAsync(
-        long turnId,
-        long operationId,
-        CancellationToken cancellationToken)
+    public async Task PrepareAsync(long turnId, long operationId, CancellationToken cancellationToken)
     {
         if (operationId <= 0)
             throw new ArgumentOutOfRangeException(nameof(operationId));
@@ -245,10 +239,7 @@ internal sealed class RecognitionModule :
     }
 
     /// <summary>Returns the provider session identity owned by this module for a turn.</summary>
-    public bool TryGetProviderSession(
-        long turnId,
-        out long operationId,
-        out string? sessionId)
+    public bool TryGetProviderSession(long turnId, out long operationId, out string? sessionId)
     {
         lock (_lock)
         {
@@ -477,11 +468,7 @@ internal sealed class RecognitionModule :
         return true;
     }
 
-    public bool CanEnterCaptureRecognizing(
-        long turnId,
-        string asrSessionId,
-        AssistantState conversationState,
-        out bool isValidationTurn)
+    public bool CanEnterCaptureRecognizing(long turnId, string asrSessionId, AssistantState conversationState, out bool isValidationTurn)
     {
         lock (_lock)
         {
@@ -503,10 +490,7 @@ internal sealed class RecognitionModule :
         }
     }
 
-    public bool CommitEnterCaptureRecognizing(
-        long turnId,
-        string asrSessionId,
-        bool isValidationTurn)
+    public bool CommitEnterCaptureRecognizing(long turnId, string asrSessionId, bool isValidationTurn)
     {
         lock (_lock)
         {
@@ -654,11 +638,7 @@ internal sealed class RecognitionModule :
         public TimeSpan PendingSpeechDuration { get; set; }
     }
 
-    public Task<RecognitionOutcome> FinishAsync(
-        long turnId,
-        string sessionId,
-        TimeSpan speechDuration,
-        CancellationToken cancellationToken)
+    public Task<RecognitionOutcome> FinishAsync(long turnId, string sessionId, TimeSpan speechDuration, CancellationToken cancellationToken)
     {
         var operationKey = new TerminalOperationKey(turnId, sessionId);
         RecognitionSession session;
@@ -709,8 +689,7 @@ internal sealed class RecognitionModule :
             cancellationToken);
     }
 
-    private TaskCompletionSource<RecognitionOutcome> RegisterTerminalOperationLocked(
-        TerminalOperationKey operationKey)
+    private TaskCompletionSource<RecognitionOutcome> RegisterTerminalOperationLocked(TerminalOperationKey operationKey)
     {
         var owner = new TaskCompletionSource<RecognitionOutcome>(
             TaskCreationOptions.RunContinuationsAsynchronously);
@@ -938,9 +917,7 @@ internal sealed class RecognitionModule :
         }
     }
 
-    private async Task CleanupProviderSessionAsync(
-        RecognitionSession session,
-        string sessionId)
+    private async Task CleanupProviderSessionAsync(RecognitionSession session, string sessionId)
     {
         try
         {
@@ -1023,9 +1000,7 @@ internal sealed class RecognitionModule :
         }
     }
 
-    private async Task DrainSessionAudioFullyAsync(
-        RecognitionSession session,
-        CancellationToken cancellationToken)
+    private async Task DrainSessionAudioFullyAsync(RecognitionSession session, CancellationToken cancellationToken)
     {
         while (true)
         {

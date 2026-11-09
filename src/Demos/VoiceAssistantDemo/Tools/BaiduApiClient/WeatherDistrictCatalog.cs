@@ -185,12 +185,6 @@ internal sealed class WeatherDistrictCatalog
     }
 }
 
-internal sealed record DistrictRecord(
-    string DistrictId,
-    string Province,
-    string City,
-    string District,
-    string Longitude,
-    string Latitude);
+internal sealed record DistrictRecord(string DistrictId, string Province, string City, string District, string Longitude, string Latitude);
 
 internal sealed class WeatherLocationException(string message) : Exception(message);

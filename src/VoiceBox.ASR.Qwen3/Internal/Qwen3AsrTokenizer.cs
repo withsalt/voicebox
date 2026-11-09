@@ -68,12 +68,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
         /// <paramref name="audioFeatureRows"/> copies so the encoder hidden states
         /// align 1:1 with prompt positions. We reproduce the same expansion here.
         /// </summary>
-        public int[] BuildPromptTokens(
-            string audioToken,
-            int audioFeatureRows,
-            string context,
-            string? language,
-            string? prefixText)
+        public int[] BuildPromptTokens(string audioToken, int audioFeatureRows, string context, string? language, string? prefixText)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(audioToken);
 

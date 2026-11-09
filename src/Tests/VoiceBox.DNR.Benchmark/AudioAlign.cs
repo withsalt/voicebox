@@ -15,8 +15,7 @@ namespace VoiceBox.DNR.Benchmark
         /// 粗粒度标称滞后: 归一化互相关在 ±<paramref name="maxLag"/> 内取峰。返回正数表示 estimate 落后
         /// reference 若干样本 (estimate[i+lag] ≈ reference[i])。每后端一次, 作逐对细化的搜索中心。
         /// </summary>
-        public static int EstimateNominalLag(ReadOnlySpan<float> reference, ReadOnlySpan<float> estimate,
-            int maxLag, int window = 24000)
+        public static int EstimateNominalLag(ReadOnlySpan<float> reference, ReadOnlySpan<float> estimate, int maxLag, int window = 24000)
         {
             if (!SafeWindow(reference.Length, estimate.Length, PeakIndex(reference), window, maxLag,
                     out int start, out int w))
@@ -81,8 +80,7 @@ namespace VoiceBox.DNR.Benchmark
         /// 选一个两侧各留 <paramref name="margin"/> 余量的相关窗, 保证所有 ±margin 的位移访问都在界内。
         /// 信号过短 (不足 2·margin) 时返回 false。
         /// </summary>
-        private static bool SafeWindow(int refLen, int estLen, int peak, int window, int margin,
-            out int start, out int w)
+        private static bool SafeWindow(int refLen, int estLen, int peak, int window, int margin, out int start, out int w)
         {
             start = 0; w = 0;
             int limit = Math.Min(refLen, estLen);
@@ -93,8 +91,7 @@ namespace VoiceBox.DNR.Benchmark
         }
 
         /// <summary>归一化互相关在 [lo,hi] 内取峰 (reference 窗能量对各 lag 恒定, 故只需按 estimate 能量归一)。</summary>
-        private static int ArgmaxNormXcorr(ReadOnlySpan<float> reference, ReadOnlySpan<float> estimate,
-            int start, int w, int lo, int hi)
+        private static int ArgmaxNormXcorr(ReadOnlySpan<float> reference, ReadOnlySpan<float> estimate, int start, int w, int lo, int hi)
         {
             int bestLag = 0;
             double bestScore = double.NegativeInfinity;
@@ -114,8 +111,7 @@ namespace VoiceBox.DNR.Benchmark
         }
 
         /// <summary>在相关窗上按位移 d 算 SI-SDR (dB), 供细化取峰; reference[start+i] vs estimate[start+i+d]。</summary>
-        private static double WindowSiSdr(ReadOnlySpan<float> reference, ReadOnlySpan<float> estimate,
-            int start, int w, int d)
+        private static double WindowSiSdr(ReadOnlySpan<float> reference, ReadOnlySpan<float> estimate, int start, int w, int d)
         {
             double dot = 0.0, refE = 0.0;
             for (int i = 0; i < w; i++)

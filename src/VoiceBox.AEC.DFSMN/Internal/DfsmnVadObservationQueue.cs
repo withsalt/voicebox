@@ -52,9 +52,7 @@ namespace VoiceBox.AEC.DFSMN.Internal
             audioHop.CopyTo(_audio.AsSpan(slot * _hopSamples, _hopSamples));
         }
 
-        public void EnqueueProbability(
-            float probability,
-            in VoiceBox.Core.Services.AudioService.Models.CaptureRange captureRange)
+        public void EnqueueProbability(float probability, in VoiceBox.Core.Services.AudioService.Models.CaptureRange captureRange)
         {
             int slot;
             if (_count == _capacityHops)

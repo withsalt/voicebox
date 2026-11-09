@@ -22,7 +22,5 @@ internal interface IBargeInValidationControlSignalPort
         TimeSpan speechDuration,
         CancellationToken cancellationToken);
 
-    ValueTask PublishValidationCancelledAsync(
-        long turnId,
-        CancellationToken cancellationToken);
+    ValueTask PublishValidationCancelledAsync(long turnId, CancellationToken cancellationToken);
 }

@@ -56,10 +56,7 @@ namespace VoiceBox.LLM.OpenAI
         /// 允许调用方传入已构造好的 <see cref="ChatClient"/> (例如带自定义传输/重试策略, 或用于单测)。
         /// 传 <c>null</c> 时由本服务依据 <see cref="OpenAILLMOptions"/> 自行构造。
         /// </summary>
-        public OpenAILLMService(
-            IOptions<OpenAILLMOptions> options,
-            ChatClient? chatClient,
-            ILogger<OpenAILLMService>? logger = null)
+        public OpenAILLMService(IOptions<OpenAILLMOptions> options, ChatClient? chatClient, ILogger<OpenAILLMService>? logger = null)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? NullLogger<OpenAILLMService>.Instance;

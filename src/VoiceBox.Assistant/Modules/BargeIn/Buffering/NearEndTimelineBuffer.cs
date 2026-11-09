@@ -32,10 +32,7 @@ internal sealed class NearEndTimelineBuffer
     /// Appends one processed frame. Returns true when the timeline had to advance its generation
     /// because the frame declared a discontinuity or the source range was not contiguous.
     /// </summary>
-    public bool Add(
-        ReadOnlySpan<float> audio,
-        in CaptureRange sourceRange,
-        bool hasDiscontinuity)
+    public bool Add(ReadOnlySpan<float> audio, in CaptureRange sourceRange, bool hasDiscontinuity)
     {
         bool resetExisting = _reservoir.Add(audio, in sourceRange, hasDiscontinuity);
         bool discontinuity = hasDiscontinuity || resetExisting;
@@ -59,30 +56,15 @@ internal sealed class NearEndTimelineBuffer
         _generation = checked(_generation + 1);
     }
 
-    public bool TryLocate(
-        ReadOnlySpan<float> audio,
-        out long streamEpoch,
-        out long startSample,
-        out long endSample)
+    public bool TryLocate(ReadOnlySpan<float> audio, out long streamEpoch, out long startSample, out long endSample)
         => _reservoir.TryLocate(audio, out streamEpoch, out startSample, out endSample);
 
-    public bool TryGetBounds(
-        out long streamEpoch,
-        out long retainedStartSample,
-        out long endSample)
+    public bool TryGetBounds(out long streamEpoch, out long retainedStartSample, out long endSample)
         => _reservoir.TryGetBounds(out streamEpoch, out retainedStartSample, out endSample);
 
-    public bool TrySnapshotFrom(
-        long streamEpoch,
-        long startSample,
-        int maxSamples,
-        out IReadOnlyList<float[]> audio)
+    public bool TrySnapshotFrom(long streamEpoch, long startSample, int maxSamples, out IReadOnlyList<float[]> audio)
         => _reservoir.TrySnapshotFrom(streamEpoch, startSample, maxSamples, out audio);
 
-    public bool TrySnapshotRange(
-        long streamEpoch,
-        long startSample,
-        long endSampleExclusive,
-        out float[] audio)
+    public bool TrySnapshotRange(long streamEpoch, long startSample, long endSampleExclusive, out float[] audio)
         => _reservoir.TrySnapshotRange(streamEpoch, startSample, endSampleExclusive, out audio);
 }

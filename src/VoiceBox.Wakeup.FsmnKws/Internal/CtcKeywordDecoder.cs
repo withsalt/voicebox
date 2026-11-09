@@ -12,8 +12,7 @@ namespace VoiceBox.Wakeup.FsmnKws.Internal
     /// </summary>
     internal sealed class CtcKeywordDecoder
     {
-        internal readonly record struct Detection(
-            string Keyword, float Score, float Threshold, long StartFrame, long EndFrame);
+        internal readonly record struct Detection(string Keyword, float Score, float Threshold, long StartFrame, long EndFrame);
 
         internal readonly record struct KeywordEntry(string Keyword, int[] TokenIds, float Threshold);
 

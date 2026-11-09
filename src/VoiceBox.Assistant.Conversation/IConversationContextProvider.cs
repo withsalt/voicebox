@@ -9,7 +9,5 @@ namespace VoiceBox.Assistant.Conversation;
 /// </remarks>
 public interface IConversationContextProvider
 {
-    ValueTask<string> GetContextAsync(
-        ConversationContext context,
-        CancellationToken cancellationToken = default);
+    ValueTask<string> GetContextAsync(ConversationContext context, CancellationToken cancellationToken = default);
 }

@@ -76,12 +76,7 @@ internal static class OracleActivityAnalyzer
     private const double AbsoluteFloorRms = 0.0005;
     private const double RelativeFloor = 0.03;
 
-    public static OracleActivity Analyze(
-        ReadOnlySpan<float> samples,
-        double scale,
-        int sampleRate,
-        int startupGuardMs,
-        int minimumSpeechMs)
+    public static OracleActivity Analyze(ReadOnlySpan<float> samples, double scale, int sampleRate, int startupGuardMs, int minimumSpeechMs)
     {
         if (samples.IsEmpty || sampleRate <= 0 || !double.IsFinite(scale) || scale <= 0)
             return OracleActivity.Unavailable;

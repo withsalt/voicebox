@@ -62,10 +62,7 @@ internal readonly record struct ControlEnvelope
             signal.WithIngressMetadata(ingressSequence, sourceTimestamp),
             default);
 
-    public static ControlEnvelope FromTerminalFault(
-        long ingressSequence,
-        long sourceTimestamp,
-        AssistantFailure failure)
+    public static ControlEnvelope FromTerminalFault(long ingressSequence, long sourceTimestamp, AssistantFailure failure)
         => new(
             ingressSequence,
             sourceTimestamp,

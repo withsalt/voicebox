@@ -49,9 +49,7 @@ namespace VoiceBox.ASR.Qwen3
         private readonly IQwen3AsrRuntime _runtime;
         private readonly SemaphoreSlim _recognitionGate;
 
-        public Qwen3ASRService(
-            IOptions<Qwen3ASROptions> options,
-            ILogger<Qwen3ASRService>? logger = null)
+        public Qwen3ASRService(IOptions<Qwen3ASROptions> options, ILogger<Qwen3ASRService>? logger = null)
             : base(options?.Value?.MaxConcurrentSessions ?? 8)
         {
             ArgumentNullException.ThrowIfNull(options);
@@ -64,10 +62,7 @@ namespace VoiceBox.ASR.Qwen3
             _runtime.Warmup();
         }
 
-        internal Qwen3ASRService(
-            Qwen3ASROptions options,
-            IQwen3AsrRuntime runtime,
-            ILogger<Qwen3ASRService>? logger = null)
+        internal Qwen3ASRService(Qwen3ASROptions options, IQwen3AsrRuntime runtime, ILogger<Qwen3ASRService>? logger = null)
             : base(options?.MaxConcurrentSessions ?? 8)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));

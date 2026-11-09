@@ -22,9 +22,7 @@ namespace VoiceBox.Assistant.Hosting;
 
 public static class VoiceAssistantServiceCollectionExtensions
 {
-    public static IServiceCollection AddVoiceBoxAssistant(
-        this IServiceCollection services,
-        Action<VoiceAssistantOptions>? configure = null)
+    public static IServiceCollection AddVoiceBoxAssistant(this IServiceCollection services, Action<VoiceAssistantOptions>? configure = null)
     {
         ArgumentNullException.ThrowIfNull(services);
 
@@ -52,8 +50,7 @@ public static class VoiceAssistantServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddVoiceBoxAssistantHostedLifecycle(
-        this IServiceCollection services)
+    public static IServiceCollection AddVoiceBoxAssistantHostedLifecycle(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
         services.TryAddEnumerable(

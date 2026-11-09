@@ -693,11 +693,7 @@ public sealed class WakeupSessionGateTests
             }
         }
 
-        public void EmitWakeup(
-            long startTimeMs = 0,
-            long durationMs = 0,
-            int score = 90,
-            int threshold = 20)
+        public void EmitWakeup(long startTimeMs = 0, long durationMs = 0, int score = 90, int threshold = 20)
             => OnWakeup?.Invoke(
                 this,
                 new WakeupEventArgs("小爱同学", score, threshold, durationMs, startTimeMs));

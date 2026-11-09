@@ -170,9 +170,7 @@ internal sealed record DatasetGeneratorMetadata
     public required IReadOnlyDictionary<string, string> Options { get; init; }
 }
 
-internal readonly record struct OracleSpeechInterval(
-    double StartMs,
-    double EndMs);
+internal readonly record struct OracleSpeechInterval(double StartMs, double EndMs);
 
 internal sealed record PreparedAcousticCase
 {

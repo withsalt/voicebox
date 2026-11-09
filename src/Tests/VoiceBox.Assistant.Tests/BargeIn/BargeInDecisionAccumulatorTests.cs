@@ -14,11 +14,7 @@ public sealed class BargeInDecisionAccumulatorTests
     private const double WindowMs = 360.0;
     private const double RequiredMs = 180.0;
 
-    private static NearEndFrameDecision Frame(
-        bool accepted,
-        bool echoLike = false,
-        double rejectDecay = 0.35,
-        double captureRms = 0.2) =>
+    private static NearEndFrameDecision Frame(bool accepted, bool echoLike = false, double rejectDecay = 0.35, double captureRms = 0.2) =>
         new(
             TimestampTicks: 0L,
             DurationMs: FrameMs,

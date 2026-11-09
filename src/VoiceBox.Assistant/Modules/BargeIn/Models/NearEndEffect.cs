@@ -11,17 +11,9 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Models;
 /// </summary>
 internal abstract record NearEndEffect
 {
-    public sealed record DuckPlayback(
-        long OwnerTurnId,
-        long StreamEpoch,
-        float Gain,
-        float OriginalGain,
-        long Sequence) : NearEndEffect;
+    public sealed record DuckPlayback(long OwnerTurnId, long StreamEpoch, float Gain, float OriginalGain, long Sequence) : NearEndEffect;
 
-    public sealed record RestorePlayback(
-        long OwnerTurnId,
-        long StreamEpoch,
-        long Sequence) : NearEndEffect;
+    public sealed record RestorePlayback(long OwnerTurnId, long StreamEpoch, long Sequence) : NearEndEffect;
 
     public sealed record QueueConfirmation(long OperationId) : NearEndEffect;
 

@@ -9,11 +9,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
     {
         void Warmup(double audioSeconds = 1.0, int maxNewTokens = 4, CancellationToken ct = default);
 
-        string? BuildStreamingPrefix(
-            int chunkId,
-            string accumulatedRaw,
-            int unfixedChunkNum,
-            int unfixedTokenNum);
+        string? BuildStreamingPrefix(int chunkId, string accumulatedRaw, int unfixedChunkNum, int unfixedTokenNum);
 
         Qwen3AsrTranscription Transcribe(
             ReadOnlySpan<float> waveform,

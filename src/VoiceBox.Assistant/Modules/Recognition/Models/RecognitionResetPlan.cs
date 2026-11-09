@@ -21,16 +21,9 @@ internal readonly record struct RecognitionResetPlan(
 {
     public bool HasSemanticSignal => Signal is not null;
 
-    public static RecognitionResetPlan ValidationRejected(
-        long turnId,
-        AssistantState restoredState,
-        TurnSignal signal)
+    public static RecognitionResetPlan ValidationRejected(long turnId, AssistantState restoredState, TurnSignal signal)
         => new(true, true, false, turnId, restoredState, signal);
 
-    public static RecognitionResetPlan FinalizeOnly(
-        long turnId,
-        bool isValidationTurn,
-        bool alreadyAccepted,
-        AssistantState restoredState)
+    public static RecognitionResetPlan FinalizeOnly(long turnId, bool isValidationTurn, bool alreadyAccepted, AssistantState restoredState)
         => new(true, isValidationTurn, alreadyAccepted, turnId, restoredState, null);
 }

@@ -4,8 +4,7 @@ namespace VoiceBox.Assistant.Conversation.Internal;
 /// Enforces the public one-shot stream contract: a returned stream may be enumerated once. A
 /// second enumeration fails instead of replaying the turn or producing a second partial result.
 /// </summary>
-internal sealed class SingleUseAsyncEnumerable<T>(
-    Func<CancellationToken, IAsyncEnumerable<T>> factory) : IAsyncEnumerable<T>
+internal sealed class SingleUseAsyncEnumerable<T>(Func<CancellationToken, IAsyncEnumerable<T>> factory) : IAsyncEnumerable<T>
 {
     private readonly Func<CancellationToken, IAsyncEnumerable<T>> _factory = factory
         ?? throw new ArgumentNullException(nameof(factory));

@@ -280,10 +280,7 @@ internal sealed class AssistantRuntimeLifecycle : IRuntimeStopPort
         _modules.MarkDisposed();
     }
 
-    private Task PrepareStopLocked(
-        out Task startupTask,
-        out CancellationTokenSource? runCts,
-        out TaskCompletionSource? stopCompletion)
+    private Task PrepareStopLocked(out Task startupTask, out CancellationTokenSource? runCts, out TaskCompletionSource? stopCompletion)
     {
         startupTask = _startupTask;
         runCts = null;
@@ -303,11 +300,7 @@ internal sealed class AssistantRuntimeLifecycle : IRuntimeStopPort
         return _stopTask;
     }
 
-    private Task StartPreparedStop(
-        Task stopTask,
-        Task startupTask,
-        CancellationTokenSource? runCts,
-        TaskCompletionSource? stopCompletion)
+    private Task StartPreparedStop(Task stopTask, Task startupTask, CancellationTokenSource? runCts, TaskCompletionSource? stopCompletion)
     {
         if (stopCompletion is null)
             return stopTask;
@@ -323,10 +316,7 @@ internal sealed class AssistantRuntimeLifecycle : IRuntimeStopPort
         return stopTask;
     }
 
-    private async Task CompleteStopAfterStartupAsync(
-        Task startupTask,
-        CancellationTokenSource? runCts,
-        TaskCompletionSource stopCompletion)
+    private async Task CompleteStopAfterStartupAsync(Task startupTask, CancellationTokenSource? runCts, TaskCompletionSource stopCompletion)
     {
         try
         {

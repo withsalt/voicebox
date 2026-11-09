@@ -51,10 +51,7 @@ internal sealed class AssistantControlSignalGateway :
         _runScope = runScope ?? throw new ArgumentNullException(nameof(runScope));
     }
 
-    public async ValueTask SubmitAsync(
-        AssistantSignal signal,
-        AssistantSignalSource source,
-        CancellationToken cancellationToken)
+    public async ValueTask SubmitAsync(AssistantSignal signal, AssistantSignalSource source, CancellationToken cancellationToken)
         => await EnqueueAsync(signal, source, cancellationToken).ConfigureAwait(false);
 
     /// <summary>Allocates an identity for a semantic decision already on the control consumer.</summary>
@@ -63,9 +60,7 @@ internal sealed class AssistantControlSignalGateway :
     /// <summary>
     /// Admits a lifecycle command as an ordered barrier and waits for the consumer to reach it.
     /// </summary>
-    public async Task EnqueueCommandAsync(
-        RuntimeCommandKind kind,
-        CancellationToken cancellationToken = default)
+    public async Task EnqueueCommandAsync(RuntimeCommandKind kind, CancellationToken cancellationToken = default)
     {
         long operationId = _operations.NextOperationId();
         TaskCompletionSource completion = _operations.RegisterCommand(operationId);
@@ -153,10 +148,7 @@ internal sealed class AssistantControlSignalGateway :
             cancellationToken).ConfigureAwait(false);
     }
 
-    public async ValueTask<ResponseControlTransition> StartResponseAsync(
-        long turnId,
-        long operationId,
-        CancellationToken cancellationToken)
+    public async ValueTask<ResponseControlTransition> StartResponseAsync(long turnId, long operationId, CancellationToken cancellationToken)
     {
         AssistantControlSignalResult result = await EnqueueAsync(
             AssistantSignal.ResponseStarted(turnId, operationId),
@@ -177,11 +169,7 @@ internal sealed class AssistantControlSignalGateway :
         return new ResponseControlTransition(result.Accepted, result.Changed, result.PublicationSequence);
     }
 
-    public async ValueTask PublishResponseCompletedAsync(
-        long turnId,
-        long operationId,
-        string text,
-        CancellationToken cancellationToken)
+    public async ValueTask PublishResponseCompletedAsync(long turnId, long operationId, string text, CancellationToken cancellationToken)
         => await EnqueueAsync(
             AssistantSignal.ResponseCompleted(turnId, operationId, text),
             AssistantSignalSource.Response,
@@ -232,9 +220,7 @@ internal sealed class AssistantControlSignalGateway :
         return result.Accepted;
     }
 
-    public async ValueTask PublishRecognitionFailedAsync(
-        RecognitionOutcome outcome,
-        CancellationToken cancellationToken)
+    public async ValueTask PublishRecognitionFailedAsync(RecognitionOutcome outcome, CancellationToken cancellationToken)
         => await EnqueueAsync(
             AssistantSignal.OperationFailed(
                 AssistantSignalKind.RecognitionFailed,
@@ -275,9 +261,7 @@ internal sealed class AssistantControlSignalGateway :
             cancellationToken).ConfigureAwait(false);
     }
 
-    public async ValueTask PublishValidationCancelledAsync(
-        long turnId,
-        CancellationToken cancellationToken)
+    public async ValueTask PublishValidationCancelledAsync(long turnId, CancellationToken cancellationToken)
     {
         long operationId = _operations.NextOperationId();
         await EnqueueAsync(

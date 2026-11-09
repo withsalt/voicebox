@@ -20,8 +20,6 @@ internal sealed class NearEndCaptureAdapter : INearEndCapturePort
     public MainAudioObservation ObserveRecognitionAudio(in ProcessedCaptureFrame frame)
         => _dataPlane.ObserveRecognitionAudio(in frame);
 
-    public void FeedFromRecognitionAudio(
-        ReadOnlySpan<float> audio,
-        MainAudioObservation observation)
+    public void FeedFromRecognitionAudio(ReadOnlySpan<float> audio, MainAudioObservation observation)
         => _dataPlane.FeedFromRecognitionAudio(audio, observation);
 }

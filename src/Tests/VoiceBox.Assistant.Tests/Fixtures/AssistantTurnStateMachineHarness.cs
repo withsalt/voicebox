@@ -35,9 +35,7 @@ internal sealed class AssistantTurnObservationStoreHarness
     private long _nextTurnId = 1;
     private long _currentTurnId;
 
-    public AssistantTurnObservationStoreHarness(
-        BargeInDetector bargeIn,
-        BargeInConfirmationSettings? listeningGate = null)
+    public AssistantTurnObservationStoreHarness(BargeInDetector bargeIn, BargeInConfirmationSettings? listeningGate = null)
         : this(bargeIn, CreateUniformPolicy(bargeIn), listeningGate)
     {
     }
@@ -154,10 +152,7 @@ internal sealed class AssistantTurnObservationStoreHarness
         return OnSpeechStarted(enableBargeIn);
     }
 
-    public SpeakingDecision OnSpeaking(
-        ReadOnlySpan<float> audio,
-        BargeInSpeakerGateStatus speakerGateStatus,
-        long proposedTurnId)
+    public SpeakingDecision OnSpeaking(ReadOnlySpan<float> audio, BargeInSpeakerGateStatus speakerGateStatus, long proposedTurnId)
     {
         _nextTurnId = proposedTurnId;
         _turnState.PublishNextOrdinal(proposedTurnId);
@@ -237,9 +232,7 @@ internal sealed class AssistantTurnObservationStoreHarness
         bool identityAuthorized = false)
         => _applier.TryConfirmFromNearEndWindow(initialAudio, decision, identityAuthorized, out confirmed);
 
-    public bool CommitConfirmedBargeIn(
-        SpeakingDecision decision,
-        IReadOnlyList<float[]>? initialAudio = null)
+    public bool CommitConfirmedBargeIn(SpeakingDecision decision, IReadOnlyList<float[]>? initialAudio = null)
         => _applier.Apply(decision, initialAudio);
 
     public bool TryConfirmBargeInFromNearEndWindow(
@@ -302,11 +295,7 @@ internal sealed class AssistantTurnObservationStoreHarness
         }
     }
 
-    public bool TryEnterRecognizing(
-        long turnId,
-        string sessionId,
-        out AssistantState oldState,
-        out bool isValidationTurn)
+    public bool TryEnterRecognizing(long turnId, string sessionId, out AssistantState oldState, out bool isValidationTurn)
     {
         oldState = State;
         bool accepted = _recognitionTurn.CanEnterRecognizing(
@@ -433,11 +422,7 @@ internal sealed class AssistantTurnObservationStoreHarness
 
     public bool IsValidatingBargeInTurn(long turnId) => _validation.IsValidating(turnId);
 
-    public bool TryTransitionForTurn(
-        long turnId,
-        AssistantState to,
-        out AssistantState oldState,
-        out bool changed)
+    public bool TryTransitionForTurn(long turnId, AssistantState to, out AssistantState oldState, out bool changed)
     {
         oldState = State;
         changed = false;
@@ -451,11 +436,7 @@ internal sealed class AssistantTurnObservationStoreHarness
         return true;
     }
 
-    public bool TryCompleteTurn(
-        long turnId,
-        out AssistantState oldState,
-        out bool changed,
-        out bool completedInterruptedTurn)
+    public bool TryCompleteTurn(long turnId, out AssistantState oldState, out bool changed, out bool completedInterruptedTurn)
     {
         bool accepted = _release.TryReleaseCompletedTurn(
             turnId,
@@ -508,10 +489,7 @@ internal sealed class AssistantTurnObservationStoreHarness
         return accepted;
     }
 
-    public bool TryObserveValidatedBargeInRejection(
-        long turnId,
-        out AssistantState oldState,
-        out AssistantState restoredState)
+    public bool TryObserveValidatedBargeInRejection(long turnId, out AssistantState oldState, out AssistantState restoredState)
         => _validation.TryObserveRejection(turnId, out oldState, out restoredState);
 
     public bool CommitValidatedBargeInRejected(long turnId)
@@ -523,10 +501,7 @@ internal sealed class AssistantTurnObservationStoreHarness
         return true;
     }
 
-    public bool TryRejectValidatedBargeIn(
-        long turnId,
-        out AssistantState oldState,
-        out AssistantState restoredState)
+    public bool TryRejectValidatedBargeIn(long turnId, out AssistantState oldState, out AssistantState restoredState)
     {
         bool accepted = TryObserveValidatedBargeInRejection(turnId, out oldState, out restoredState) &&
             CommitValidatedBargeInRejected(turnId);
@@ -754,10 +729,7 @@ internal sealed class AssistantTurnObservationStoreHarness
             return true;
         }
 
-        public bool CommitEnterCaptureRecognizing(
-            long turnId,
-            string asrSessionId,
-            bool isValidationTurn)
+        public bool CommitEnterCaptureRecognizing(long turnId, string asrSessionId, bool isValidationTurn)
         {
             CaptureState? state = GetOrNull(turnId);
             if (state is null ||
@@ -838,10 +810,7 @@ internal sealed class AssistantTurnObservationStoreHarness
             state.BootstrapAudio.Clear();
         }
 
-        public object? GetTestField(
-            string fieldName,
-            BargeInValidationTurnOwner validation,
-            long activeTurnId)
+        public object? GetTestField(string fieldName, BargeInValidationTurnOwner validation, long activeTurnId)
         {
             if (fieldName == "_validatingBargeInAsrSessionId")
                 return GetOrNull(validation.ValidationTurnId)?.SessionId;
@@ -860,11 +829,7 @@ internal sealed class AssistantTurnObservationStoreHarness
             };
         }
 
-        public void SetTestField(
-            string fieldName,
-            object? value,
-            BargeInValidationTurnOwner validation,
-            long activeTurnId)
+        public void SetTestField(string fieldName, object? value, BargeInValidationTurnOwner validation, long activeTurnId)
         {
             if (fieldName == "_validatingBargeInAsrSessionId")
             {

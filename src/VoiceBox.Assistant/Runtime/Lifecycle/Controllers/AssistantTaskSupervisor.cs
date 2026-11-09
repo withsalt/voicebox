@@ -29,12 +29,7 @@ internal sealed class AssistantTaskSupervisor : IEffectBackgroundScheduler
         }
     }
 
-    public Task Track(
-        Task task,
-        string taskName,
-        long? ownerTurnId,
-        AssistantTaskFaultPolicy faultPolicy,
-        bool awaitOnStop = true)
+    public Task Track(Task task, string taskName, long? ownerTurnId, AssistantTaskFaultPolicy faultPolicy, bool awaitOnStop = true)
     {
         ArgumentNullException.ThrowIfNull(task);
         ArgumentException.ThrowIfNullOrWhiteSpace(taskName);

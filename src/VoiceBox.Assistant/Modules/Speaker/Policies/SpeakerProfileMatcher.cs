@@ -11,10 +11,7 @@ namespace VoiceBox.Assistant.Modules.Speaker.Policies;
 /// </summary>
 internal static class SpeakerProfileMatcher
 {
-    public static SpeakerWindowScore Score(
-        ISpeakerService speaker,
-        SpeakerPrototypeBank bank,
-        ReadOnlySpan<float> embedding)
+    public static SpeakerWindowScore Score(ISpeakerService speaker, SpeakerPrototypeBank bank, ReadOnlySpan<float> embedding)
     {
         ArgumentNullException.ThrowIfNull(speaker);
         ArgumentNullException.ThrowIfNull(bank);

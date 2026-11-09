@@ -8,9 +8,7 @@ namespace VoiceAssistantDemo.Logging;
 
 internal static class DemoLogging
 {
-    public static ILoggerFactory CreateLoggerFactory(
-        LoggingOptions options,
-        Action<DateTimeOffset, LogLevel, string>? writeConsole = null)
+    public static ILoggerFactory CreateLoggerFactory(LoggingOptions options, Action<DateTimeOffset, LogLevel, string>? writeConsole = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         if (!Enum.IsDefined(options.ConsoleMinimumLevel) || !Enum.IsDefined(options.FileMinimumLevel))

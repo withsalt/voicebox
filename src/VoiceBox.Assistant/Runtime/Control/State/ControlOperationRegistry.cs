@@ -103,9 +103,7 @@ internal sealed class ControlOperationRegistry : IInterruptionAdmissionProgressV
         return completion;
     }
 
-    public void ForgetSignal(
-        AssistantSignal signal,
-        TaskCompletionSource<AssistantControlSignalResult> completion)
+    public void ForgetSignal(AssistantSignal signal, TaskCompletionSource<AssistantControlSignalResult> completion)
     {
         var key = new SignalCompletionKey(signal.OperationId, signal.Kind);
         lock (_lock)
@@ -154,7 +152,5 @@ internal sealed class ControlOperationRegistry : IInterruptionAdmissionProgressV
         }
     }
 
-    private readonly record struct SignalCompletionKey(
-        long OperationId,
-        AssistantSignalKind SignalKind);
+    private readonly record struct SignalCompletionKey(long OperationId, AssistantSignalKind SignalKind);
 }
