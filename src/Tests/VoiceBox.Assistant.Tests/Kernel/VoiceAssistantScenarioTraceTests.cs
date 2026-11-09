@@ -190,7 +190,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio((IAudioRecordService)record, (IAudioPlayService)playback)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .Build();
 
@@ -503,7 +503,6 @@ public sealed partial class VoiceAssistantLifecycleTests
                 index,
                 "effect.response.generate.v1",
                 "turnId=T1;operationId=O2"),
-            CommitHistoryEffect => new(index, "effect.history.commit.v1", "turnId=T1"),
             CompleteTurnEffect => new(index, "effect.turn.complete.v1", "turnId=T1"),
             _ => throw new Xunit.Sdk.XunitException(
                 $"Unexpected effect in canonical normal-turn projection: {effect.GetType().Name}"),

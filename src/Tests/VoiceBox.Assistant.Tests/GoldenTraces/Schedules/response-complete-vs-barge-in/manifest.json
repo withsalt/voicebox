@@ -1,4 +1,4 @@
-{
+﻿{
   "schema": "voicebox.assistant/schedule-manifest/v1",
   "catalogVersion": "v1",
   "scenarioId": "response-complete-vs-barge-in",
@@ -9,7 +9,7 @@
       "traceFile": "response-generated-first.json",
       "happensBefore": "response-generated -> playback-drain barrier -> barge-in",
       "status": "frozen",
-      "sha256": "abbeef5adeb23efd2fbfb44209bb53a71ba0dc9e8de8d4067b86941506ecce30"
+      "sha256": "403853a6ab2ea859aed150e0689d0307105cbfbccb6efcbacf7239bbf44221c7"
     },
     {
       "scheduleId": "runtime-barge-in-before-response-generated",

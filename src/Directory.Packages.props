@@ -35,6 +35,7 @@
   </ItemGroup>
   <ItemGroup Label="Integrations">
     <PackageVersion Include="JsonSchema.Net" Version="9.6.0" />
+    <PackageVersion Include="ModelContextProtocol" Version="2.4.0" />
     <PackageVersion Include="ModelContextProtocol.Core" Version="2.4.0" />
     <PackageVersion Include="ModelContextProtocol.Extensions.Tasks" Version="2.4.0" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />

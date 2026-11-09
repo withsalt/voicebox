@@ -6,6 +6,7 @@ using VoiceBox.Assistant.Modules.BargeIn.Contracts;
 using VoiceBox.Assistant.Modules.BargeIn.Controllers;
 using VoiceBox.Assistant.Modules.Playback.Controllers;
 using VoiceBox.Assistant.Modules.Recognition.Controllers;
+using VoiceBox.Assistant.Modules.Response.Adapters;
 using VoiceBox.Assistant.Modules.Response.Controllers;
 using VoiceBox.Assistant.Modules.Speaker.Controllers;
 using VoiceBox.Assistant.Realtime.Resampling;
@@ -53,6 +54,7 @@ internal sealed class AssistantRuntimeLifecycle : IRuntimeStopPort
     private readonly PlaybackModule _playback;
     private readonly InputGate _gate;
     private readonly bool _wakeupInstalled;
+    private readonly ConversationBackgroundBridge? _backgroundBridge;
     private readonly ILogger _logger;
     private object _disposalOwner;
     private Task _startupTask = Task.CompletedTask;
@@ -83,6 +85,7 @@ internal sealed class AssistantRuntimeLifecycle : IRuntimeStopPort
         PlaybackModule playback,
         InputGate gate,
         bool wakeupInstalled,
+        ConversationBackgroundBridge? backgroundBridge,
         ILogger logger)
     {
         _lifecycleLock = lifecycleLock ?? throw new ArgumentNullException(nameof(lifecycleLock));
@@ -109,6 +112,7 @@ internal sealed class AssistantRuntimeLifecycle : IRuntimeStopPort
         _playback = playback ?? throw new ArgumentNullException(nameof(playback));
         _gate = gate ?? throw new ArgumentNullException(nameof(gate));
         _wakeupInstalled = wakeupInstalled;
+        _backgroundBridge = backgroundBridge;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _disposalOwner = this;
     }
@@ -149,6 +153,14 @@ internal sealed class AssistantRuntimeLifecycle : IRuntimeStopPort
             _subscriptions.Attach();
             using var startupCts = CancellationTokenSource.CreateLinkedTokenSource(ct, runCts.Token);
             await _modules.StartAsync(startupCts.Token).ConfigureAwait(false);
+            if (_backgroundBridge is not null)
+            {
+                _ = _tasks.Track(
+                    _backgroundBridge.RunAsync(runCts.Token),
+                    "conversation.background-output",
+                    ownerTurnId: null,
+                    AssistantTaskFaultPolicy.ObserveAndLog);
+            }
             _ = _tasks.Track(
                 _playback.Start(runCts.Token),
                 "playback.logical-queue",
@@ -353,7 +365,6 @@ internal sealed class AssistantRuntimeLifecycle : IRuntimeStopPort
         _bargeInDataPlane.ResetAll();
         _nearEndReset.Reset();
         _runScope.Cancel();
-        _responses.CancelBackgroundOperations();
         _recognition.ClearDeferred();
         CancelActiveResponse();
         Exception? playbackFailure = null;

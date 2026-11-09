@@ -7,8 +7,9 @@ using VoiceAssistantDemo.Tools;
 using VoiceBox.Assistant;
 using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Composition.Builder;
+using VoiceBox.Assistant.Conversation;
+using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Assistant.Diagnostics.Recording;
-using VoiceBox.Assistant.Integrations.Mcp;
 using VoiceBox.Assistant.Modules.Speaker.Configuration;
 using VoiceBox.Assistant.Modules.Speaker.Enrollment;
 using VoiceBox.APM.WebRtc;
@@ -82,10 +83,8 @@ namespace VoiceAssistantDemo
             {
                 TtsVoice = ttsVoiceName,
                 TtsSpeed = AudioDefaults.TtsSpeed,
-                SystemPrompt = AudioDefaults.DefaultAssistantPrompt,
                 Conversation = new VoiceAssistantConversationOptions
                 {
-                    EnableThinking = AudioDefaults.IsEnableThinking,
                     ContinuousConversationEnabled = AudioDefaults.IsContinuousConversationEnabled,
                     ContinuousConversationIdleTimeout = TimeSpan.FromMinutes(1),
                 },
@@ -125,17 +124,27 @@ namespace VoiceAssistantDemo
                     AudioDefaults.ChannelCount,
                     loggerFactory.CreateLogger<RecognitionAudioRecordingService>());
 
+            // 语音助手自己的会话配置: 朗读/ASR 纠错等语音策略属于 Demo 的业务提示词, 不注入通用会话。
+            await using IConversationSession conversation = new ConversationBuilder(services.Llm)
+                .UseOptions(new LlmConversationOptions
+                {
+                    SystemPrompt = AudioDefaults.DefaultAssistantPrompt,
+                    MaxHistoryTurns = 20,
+                    EnableThinking = AudioDefaults.IsEnableThinking,
+                })
+                .UseTools(tools =>
+                {
+                    tools.AddTool(new CurrentDateTimeTool());
+                    tools.AddTool(new CurrentWeatherTool());
+                })
+                .Build();
+
             VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
                 .UseOptions(options)
                 .UseAudio(services.Audio)
                 .UseTurnBoundary(services.Vad)
                 .UseSpeechRecognition(asrRecording ?? services.Asr)
-                .UseResponseGeneration(services.Llm)
-                .UseMcpTools(mcp =>
-                {
-                    mcp.AddTool(new CurrentDateTimeTool());
-                    mcp.AddTool(new CurrentWeatherTool());
-                })
+                .UseConversation(conversation)
                 .UseSpeechSynthesis(services.Tts)
                 .AddWakeup(services.Wakeup)
                 .AddSpeakerVerification(services.Speaker)

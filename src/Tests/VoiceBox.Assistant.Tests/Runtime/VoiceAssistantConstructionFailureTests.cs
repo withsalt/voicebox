@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using VoiceBox.Assistant.Api.Configuration;
@@ -88,7 +88,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .BuildComposition();
         AssistantRuntimePlan original = composition.RuntimePlan;
@@ -99,7 +99,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             original.SpeechSynthesis, original.Wakeup, original.Speaker,
             original.AcousticDiagnostics, original.PlaybackBargeInDetectorFactory);
         var installed = new AssistantInstalledModules(
-            null, null, null, plan.Recognition, plan.ResponseGeneration.Create());
+            null, null, null, plan.Recognition, plan.ResponseGeneration);
         var eventSender = new object();
         var weakSender = new WeakReference(eventSender);
         Assert.Same(failure, Assert.Throws<InvalidOperationException>(() =>

@@ -1,4 +1,4 @@
-using VoiceBox.Assistant.Api.Configuration;
+﻿using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Composition.Builder;
 using VoiceBox.Assistant.Composition.Exceptions;
 using VoiceBox.Assistant.Composition.Graph;
@@ -58,12 +58,12 @@ public sealed partial class VoiceAssistantLifecycleTests
     {
         var rng = new Random(seed);
         var services = TestServices.Create();
-        int kind = rng.Next(7);
+        int kind = rng.Next(6);
         VoiceAssistantBuilder builder;
         string expectedCode;
         switch (kind)
         {
-            case 6:
+            case 5:
                 // Confirmation.Enable without a speaker provider is never legal.
                 builder = CreateMinimalLegalBuilder(services)
                     .UseOptions(new VoiceAssistantOptions { Speaker = { Confirmation = { Enable = true } } })
@@ -74,7 +74,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 builder = VoiceAssistant.CreateBuilder()
                     .UseTurnBoundary(services.Vad)
                     .UseSpeechRecognition(services.Asr)
-                    .UseResponseGeneration(services.Llm)
+                    .UseConversation(TestConversation.Create(services.Llm))
                     .UseSpeechSynthesis(services.Tts);
                 expectedCode = "VBX-COMP-001";
                 break;
@@ -82,7 +82,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 builder = VoiceAssistant.CreateBuilder()
                     .UseAudio(services.Audio)
                     .UseSpeechRecognition(services.Asr)
-                    .UseResponseGeneration(services.Llm)
+                    .UseConversation(TestConversation.Create(services.Llm))
                     .UseSpeechSynthesis(services.Tts);
                 expectedCode = "VBX-COMP-001";
                 break;
@@ -90,7 +90,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 builder = VoiceAssistant.CreateBuilder()
                     .UseAudio(services.Audio)
                     .UseTurnBoundary(services.Vad)
-                    .UseResponseGeneration(services.Llm)
+                    .UseConversation(TestConversation.Create(services.Llm))
                     .UseSpeechSynthesis(services.Tts);
                 expectedCode = "VBX-COMP-001";
                 break;
@@ -108,7 +108,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                     .UseAudio((IAudioRecordService)record, (IAudioPlayService)playback)
                     .UseTurnBoundary(services.Vad)
                     .UseSpeechRecognition(services.Asr)
-                    .UseResponseGeneration(services.Llm)
+                    .UseConversation(TestConversation.Create(services.Llm))
                     .UseSpeechSynthesis(services.Tts)
                     .AddBargeIn(
                         new VoiceAssistantBargeInOptions(),
@@ -121,10 +121,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 Assert.Equal(0, playback.StartCount);
                 return;
             default:
-                builder = CreateMinimalLegalBuilder(services);
-                builder.RequireCapability(AssistantCapability.StructuredToolUse);
-                expectedCode = "VBX-COMP-011";
-                break;
+                throw new InvalidOperationException($"Unexpected failure kind {kind}.");
         }
 
         AssistantCompositionException failure =
@@ -138,7 +135,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts);
 
     private static VoiceAssistantBuilder CreateLegalBuilder(TestServices services, Random rng)

@@ -9,7 +9,6 @@ using VoiceBox.Assistant.Hosting.Diagnostics;
 using VoiceBox.Core.Services.AcousticProcessing;
 using VoiceBox.Core.Services.ASRService;
 using VoiceBox.Core.Services.AudioService;
-using VoiceBox.Core.Services.LLMService;
 using VoiceBox.Core.Services.SpeakerService;
 using VoiceBox.Core.Services.TTSService;
 using VoiceBox.Core.Services.VadService;

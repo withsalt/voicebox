@@ -7,7 +7,6 @@ using VoiceBox.Assistant.Kernel.Models;
 using VoiceBox.Assistant.Kernel.Signals;
 using VoiceBox.Assistant.Modules.BargeIn.Contracts;
 using VoiceBox.Assistant.Modules.BargeIn.Models;
-using VoiceBox.Assistant.Modules.Conversation.Contracts;
 using VoiceBox.Assistant.Modules.Playback.Contracts;
 using VoiceBox.Assistant.Modules.Recognition.Contracts;
 using VoiceBox.Assistant.Modules.TurnBoundary.Models;
@@ -40,7 +39,6 @@ internal sealed class BargeInTurnCoordinator :
     private readonly BargeInDiagnosticsCoordinator _diagnostics;
     private readonly BargeInDecisionJournal _journal;
     private readonly IPlaybackInterruptionPort _playbackInterruption;
-    private readonly IConversationRollbackPort _history;
     private readonly TurnContextStore _turnContexts;
     private readonly ITurnResourcePort _resources;
     // Bound by composition once the recognition owner exists; see BindRecognition.
@@ -69,7 +67,6 @@ internal sealed class BargeInTurnCoordinator :
         BargeInDiagnosticsCoordinator diagnostics,
         BargeInDecisionJournal journal,
         IPlaybackInterruptionPort playbackInterruption,
-        IConversationRollbackPort history,
         TurnContextStore turnContexts,
         ITurnResourcePort resources,
         AssistantControlSignalGateway controlSignals,
@@ -89,7 +86,6 @@ internal sealed class BargeInTurnCoordinator :
         _diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
         _journal = journal ?? throw new ArgumentNullException(nameof(journal));
         _playbackInterruption = playbackInterruption ?? throw new ArgumentNullException(nameof(playbackInterruption));
-        _history = history ?? throw new ArgumentNullException(nameof(history));
         _turnContexts = turnContexts ?? throw new ArgumentNullException(nameof(turnContexts));
         _resources = resources ?? throw new ArgumentNullException(nameof(resources));
         _controlSignals = controlSignals ?? throw new ArgumentNullException(nameof(controlSignals));
@@ -200,7 +196,6 @@ internal sealed class BargeInTurnCoordinator :
         if (decision.OldState == AssistantState.Thinking)
         {
             _playbackInterruption.InterruptActiveResponse(decision.InterruptedTurnId, decision.ResponseToCancel);
-            _history.RemoveUnansweredUserMessage(decision.InterruptedTurnId);
             _recognitionPreparation.PrepareRecognitionSession(decision.TurnId);
             return default;
         }
@@ -444,7 +439,6 @@ internal sealed class BargeInTurnCoordinator :
                 plan.InterruptedTurnId,
                 plan.Reason,
                 plan.TextPresent);
-            _history.RemoveUnansweredUserMessage(plan.InterruptedTurnId);
             _turnContexts.TryCreate(plan.TurnId);
             if (!_validation.CommitAccepted(plan.TurnId, responseCts: null, clearValidationContext: false))
             {
@@ -503,7 +497,6 @@ internal sealed class BargeInTurnCoordinator :
             _gate.Open();
         }
 
-        _history.ForgetCommittedResponseTurn(turnId);
         ForgetDecisionContext(turnId);
         if (responseCts is null)
             _turnContexts.Release(turnId);

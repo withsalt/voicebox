@@ -1,6 +1,6 @@
+using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Assistant.Modules.BargeIn.RenderAware.Contracts;
 using VoiceBox.Assistant.Modules.Recognition.Contracts;
-using VoiceBox.Assistant.Modules.Response.Contracts;
 using VoiceBox.Assistant.Modules.Speaker.Contracts;
 using VoiceBox.Assistant.Modules.Wakeup.Contracts;
 
@@ -17,13 +17,13 @@ internal sealed class AssistantInstalledModules
         IWakeupModule? wakeup,
         IPlaybackBargeInDetector? bargeInDetector,
         IRecognitionProviderAdapter recognition,
-        IResponseGenerator responseGenerator)
+        IConversationSession conversation)
     {
         Speaker = speaker;
         Wakeup = wakeup;
         BargeInDetector = bargeInDetector;
         Recognition = recognition ?? throw new ArgumentNullException(nameof(recognition));
-        ResponseGenerator = responseGenerator ?? throw new ArgumentNullException(nameof(responseGenerator));
+        Conversation = conversation ?? throw new ArgumentNullException(nameof(conversation));
     }
 
     public ISpeakerModule? Speaker { get; }
@@ -34,5 +34,5 @@ internal sealed class AssistantInstalledModules
 
     public IRecognitionProviderAdapter Recognition { get; }
 
-    public IResponseGenerator ResponseGenerator { get; }
+    public IConversationSession Conversation { get; }
 }

@@ -1,8 +1,8 @@
+using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Assistant.Modules.AudioFrontend.Contracts;
 using VoiceBox.Assistant.Modules.BargeIn.RenderAware.Contracts;
 using VoiceBox.Assistant.Modules.Playback.Contracts;
 using VoiceBox.Assistant.Modules.Recognition.Contracts;
-using VoiceBox.Assistant.Modules.Response.Contracts;
 using VoiceBox.Assistant.Modules.Speaker.Contracts;
 using VoiceBox.Assistant.Modules.TurnBoundary.Contracts;
 using VoiceBox.Assistant.Modules.Wakeup.Contracts;
@@ -15,7 +15,7 @@ internal sealed class AssistantRuntimePlan
         IAssistantAudioFrontend audio,
         ITurnBoundarySource turnBoundary,
         IRecognitionProviderAdapter recognition,
-        IResponseGeneratorFactory responseGeneration,
+        IConversationSession responseGeneration,
         ISpeechSynthesisStreamPort speechSynthesis,
         IWakeupModuleFactory? wakeup,
         ISpeakerModuleFactory? speaker,
@@ -39,7 +39,7 @@ internal sealed class AssistantRuntimePlan
 
     public IRecognitionProviderAdapter Recognition { get; }
 
-    public IResponseGeneratorFactory ResponseGeneration { get; }
+    public IConversationSession ResponseGeneration { get; }
 
     public ISpeechSynthesisStreamPort SpeechSynthesis { get; }
 

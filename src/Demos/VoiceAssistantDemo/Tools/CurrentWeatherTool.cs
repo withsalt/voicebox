@@ -1,8 +1,7 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.RegularExpressions;
 using VoiceAssistantDemo.Tools.BaiduApiClient;
-using VoiceBox.Assistant.Api.Tools.Contracts;
-using VoiceBox.Assistant.Api.Tools.Models;
+using VoiceBox.Assistant.Conversation.Abstractions.Tools;
 
 namespace VoiceAssistantDemo.Tools;
 
@@ -10,7 +9,7 @@ namespace VoiceAssistantDemo.Tools;
 /// Gets current weather from Baidu Maps. A supplied administrative name is resolved through the
 /// embedded district catalog; an omitted location falls back to public-IP geolocation.
 /// </summary>
-internal sealed partial class CurrentWeatherTool : IAssistantTool
+internal sealed partial class CurrentWeatherTool : IConversationTool
 {
     private static readonly HttpClient SharedHttpClient = new()
     {
@@ -34,7 +33,7 @@ internal sealed partial class CurrentWeatherTool : IAssistantTool
         _districts = districts ?? throw new ArgumentNullException(nameof(districts));
     }
 
-    public AssistantToolDescriptor Descriptor { get; } = new(
+    public ConversationToolDescriptor Descriptor { get; } = new(
         name: "get_current_weather",
         displayName: "获取当前天气",
         description:
@@ -105,13 +104,13 @@ internal sealed partial class CurrentWeatherTool : IAssistantTool
               "additionalProperties": false
             }
             """,
-        risk: AssistantToolRisk.ReadOnly,
-        executionPolicy: AssistantToolExecutionPolicy.BackgroundOnly,
+        risk: ConversationToolRisk.ReadOnly,
+        executionPolicy: ConversationToolExecutionPolicy.BackgroundOnly,
         executionPrompt: "正在查询，请稍后",
         timeout: TimeSpan.FromSeconds(20));
 
-    public async ValueTask<AssistantToolExecutionResult> ExecuteAsync(
-        AssistantToolInvocation invocation,
+    public async ValueTask<ConversationToolExecutionResult> ExecuteAsync(
+        ConversationToolInvocation invocation,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(invocation);
@@ -123,30 +122,30 @@ internal sealed partial class CurrentWeatherTool : IAssistantTool
             CurrentWeatherReport report = await _client.QueryCurrentWeatherAsync(
                 position,
                 cancellationToken).ConfigureAwait(false);
-            return AssistantToolExecutionResult.Success(
+            return ConversationToolExecutionResult.Success(
                 CreateSpokenSummary(report),
                 JsonSerializer.Serialize(report, JsonOptions));
         }
         catch (WeatherLocationException exception)
         {
-            return AssistantToolExecutionResult.Error("weather_location_invalid", exception.Message);
+            return ConversationToolExecutionResult.Error("weather_location_invalid", exception.Message);
         }
         catch (BaiduWeatherApiException exception)
         {
             string message = exception.IsIpLocationRequest
                 ? "无法通过公网 IP 确定当前位置，请让用户明确提供城市或区县。"
                 : $"天气服务暂时不可用（状态码 {exception.Status}）。";
-            return AssistantToolExecutionResult.Error("weather_api_error", message);
+            return ConversationToolExecutionResult.Error("weather_api_error", message);
         }
         catch (HttpRequestException)
         {
-            return AssistantToolExecutionResult.Error(
+            return ConversationToolExecutionResult.Error(
                 "weather_network_error",
                 "天气服务网络请求失败，请稍后重试。");
         }
         catch (JsonException)
         {
-            return AssistantToolExecutionResult.Error(
+            return ConversationToolExecutionResult.Error(
                 "weather_response_invalid",
                 "天气服务返回了无法识别的数据。");
         }

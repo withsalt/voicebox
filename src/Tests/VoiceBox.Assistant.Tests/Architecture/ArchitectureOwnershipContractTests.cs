@@ -30,7 +30,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .BuildComposition();
 
@@ -38,7 +38,8 @@ public sealed partial class VoiceAssistantLifecycleTests
             edge => edge == "AudioFrontend:Provides:AudioCapture:0");
         Assert.Contains(composition.Snapshot.CapabilityEdges,
             edge => edge == "Recognition:Requires:TurnBoundary:0");
-        Assert.Contains("StructuredToolUse", Enum.GetNames<AssistantCapability>());
+        Assert.DoesNotContain("StructuredToolUse", Enum.GetNames<AssistantCapability>());
+        Assert.Contains("ResponseGeneration", Enum.GetNames<AssistantCapability>());
         Assert.Contains(composition.Snapshot.Ownership,
             value => value.ModuleId == "AudioFrontend.Record" &&
                 value.Ownership == ResourceOwnership.Borrowed);
@@ -51,7 +52,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(record, playback)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .BuildComposition();
         Assert.Contains(split.RuntimePlan.Ownership,
@@ -67,7 +68,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .Build();
 
@@ -85,7 +86,6 @@ public sealed partial class VoiceAssistantLifecycleTests
             handlers.Recognition,
             handlers.ResponseGeneration,
             handlers.Playback,
-            handlers.Conversation,
             handlers.Events,
             handlers.RuntimeEffects,
         ];
@@ -162,7 +162,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .BuildComposition();
         Assert.Null(withoutBargeIn.RuntimePlan.PlaybackBargeInDetectorFactory);
@@ -171,7 +171,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .AddBargeIn(
                 new VoiceAssistantBargeInOptions(),
@@ -362,24 +362,6 @@ public sealed partial class VoiceAssistantLifecycleTests
     }
 
     [Fact]
-    public void StructuredToolUse_IsAValidatedCapabilityThatNoProfileProvides()
-    {
-        var services = TestServices.Create();
-        VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
-            .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
-            .UseSpeechSynthesis(services.Tts);
-        builder.RequireCapability(AssistantCapability.StructuredToolUse);
-
-        AssistantCompositionException failure =
-            Assert.Throws<AssistantCompositionException>(builder.Build);
-        Assert.Equal("VBX-COMP-011", failure.Code);
-        Assert.Equal(0, services.Audio.StartCount);
-    }
-
-    [Fact]
     public void BuilderWithoutBargeIn_DoesNotConstructNearEndDataPlane()
     {
         var services = TestServices.Create();
@@ -387,7 +369,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .Build();
 
@@ -520,7 +502,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         builder
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts);
 
         if (wakeup)

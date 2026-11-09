@@ -1,4 +1,4 @@
-using Microsoft.ML.OnnxRuntime;
+﻿using Microsoft.ML.OnnxRuntime;
 using System.Reflection;
 using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Composition.Builder;
@@ -158,7 +158,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         string plan = ReadSource("src", "VoiceBox.Assistant", "Composition", "Plans", "AssistantRuntimePlan.cs");
         Assert.DoesNotContain("VoiceBox.Core.Services", plan, StringComparison.Ordinal);
         Assert.Contains("IRecognitionProviderAdapter", plan, StringComparison.Ordinal);
-        Assert.Contains("IResponseGeneratorFactory", plan, StringComparison.Ordinal);
+        Assert.Contains("IConversationSession", plan, StringComparison.Ordinal);
         Assert.Contains("ISpeechSynthesisStreamPort", plan, StringComparison.Ordinal);
     }
 
@@ -222,27 +222,27 @@ public sealed partial class VoiceAssistantLifecycleTests
     }
 
     [Fact]
-    public void KernelEffectsUseClosedPayloadTypesAndOwnHistoryCommit()
+    public void KernelEffectsUseClosedPayloadTypesAndLeaveHistoryToTheSession()
     {
         string kernel = ReadSource("src", "VoiceBox.Assistant", "Kernel", "TurnKernel.cs");
         string effects = ReadSource("src", "VoiceBox.Assistant", "Runtime", "Effects", "Execution", "AssistantEffectRunner.cs");
         string runtime = ReadSource("src", "VoiceBox.Assistant", "Runtime", "AssistantRuntime.cs");
-        string handlers = ReadSource("src", "VoiceBox.Assistant", "Runtime", "Effects", "Handlers", "ConversationEffectHandler.cs");
         string response = ReadSource("src", "VoiceBox.Assistant", "Modules", "Response", "Controllers", "ResponseModule.cs");
 
         Assert.DoesNotContain("string EventName", kernel, StringComparison.Ordinal);
         Assert.DoesNotContain("TryParseStateTransition", runtime, StringComparison.Ordinal);
-        Assert.DoesNotContain("_history.CommitGeneratedResponse", response, StringComparison.Ordinal);
-        // History commit belongs to the Conversation effect handler family, not to the shell.
-        Assert.DoesNotContain("_history.CommitGeneratedResponse", runtime, StringComparison.Ordinal);
-        Assert.Contains("_history.CommitGeneratedResponse(effect.TurnId, effect.Text)", handlers, StringComparison.Ordinal);
+        Assert.DoesNotContain("CommitHistory", kernel, StringComparison.Ordinal);
+        Assert.DoesNotContain("RollbackHistory", kernel, StringComparison.Ordinal);
+        Assert.DoesNotContain("CommitGeneratedResponse", response, StringComparison.Ordinal);
+        Assert.DoesNotContain("CommitGeneratedResponse", runtime, StringComparison.Ordinal);
+        Assert.DoesNotContain("IConversationPromptPort", response, StringComparison.Ordinal);
         Assert.Contains("PublishStateChangedEffect value =>", effects, StringComparison.Ordinal);
         Assert.Contains("PublishFaultedEffect value =>", effects, StringComparison.Ordinal);
         Assert.Contains("PublishBargeInValidationEffect value =>", effects, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void EffectProtocolHasOneCanonicalKindEnumAndStructuredToolCapabilityIsGraphOnly()
+    public void EffectProtocolHasOneCanonicalKindEnumAndNoStructuredToolCapability()
     {
         Assembly assistant = typeof(VoiceAssistant).Assembly;
         Type[] effectKindEnums = assistant.GetTypes()
@@ -250,7 +250,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .ToArray();
 
         Assert.Equal(typeof(KernelEffectKind), Assert.Single(effectKindEnums));
-        Assert.Contains(
+        Assert.DoesNotContain(
             "StructuredToolUse",
             Enum.GetNames<AssistantCapability>());
     }
@@ -286,7 +286,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .AddBargeIn(options.BargeIn, TestAcousticPathDelayEstimatorFactory.Instance);
 
@@ -328,7 +328,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts);
         if (wakeup)
             builder.AddWakeup(services.Wakeup);
@@ -387,7 +387,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         foreach (string entryPoint in new[]
         {
             "VoiceAssistant.CreateBuilder()", ".UseAudio(", ".UseTurnBoundary(",
-            ".UseSpeechRecognition(", ".UseResponseGeneration(", ".UseSpeechSynthesis(",
+            ".UseSpeechRecognition(", ".UseConversation(", ".UseSpeechSynthesis(",
             ".AddWakeup(", ".AddSpeakerVerification(", ".AddBargeIn(",
         })
         {

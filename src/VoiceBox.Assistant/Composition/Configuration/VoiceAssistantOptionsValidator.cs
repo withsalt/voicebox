@@ -12,10 +12,6 @@ namespace VoiceBox.Assistant.Composition.Configuration
 
             if (options.MinSentenceChars < 1)
                 throw new ArgumentException("MinSentenceChars must be >= 1.", optionsParameterName);
-            if (options.MaxHistoryTurns < 1)
-                throw new ArgumentException("MaxHistoryTurns must be >= 1.", optionsParameterName);
-            if (options.MaxResponseTokens is <= 0)
-                throw new ArgumentException("MaxResponseTokens must be null or > 0.", optionsParameterName);
             if (options.PlaybackTailBufferMs < 0)
                 throw new ArgumentException("PlaybackTailBufferMs must be >= 0.", optionsParameterName);
             if (options.PlaybackPrerollMs < 0)
@@ -139,21 +135,6 @@ namespace VoiceBox.Assistant.Composition.Configuration
                 throw new ArgumentException("BargeIn.RenderAlignment.MaximumDelaySlewPerSecond must be finite and within (0, 16000].", optionsParameterName);
             if (!double.IsFinite(alignment.MinimumAlignmentConfidence) || alignment.MinimumAlignmentConfidence < 0 || alignment.MinimumAlignmentConfidence > 1)
                 throw new ArgumentException("BargeIn.RenderAlignment.MinimumAlignmentConfidence must be finite and within [0, 1].", optionsParameterName);
-
-            if (options.Tools is not { } tools)
-                throw new ArgumentException("Tools must not be null.", optionsParameterName);
-            if (tools.ToolTranscriptRetentionTurns < 0)
-                throw new ArgumentException("Tools.ToolTranscriptRetentionTurns must be >= 0.", optionsParameterName);
-            if (tools.MaxPersistedToolResultBytes < 256)
-                throw new ArgumentException("Tools.MaxPersistedToolResultBytes must be >= 256.", optionsParameterName);
-            if (tools.MaxParallelToolCalls is < 1 or > 64)
-                throw new ArgumentException("Tools.MaxParallelToolCalls must be within [1, 64].", optionsParameterName);
-            if (tools.MaxToolRetryAttempts is < 0 or > 8)
-                throw new ArgumentException("Tools.MaxToolRetryAttempts must be within [0, 8].", optionsParameterName);
-            if (tools.ToolRetryBaseDelayMs is < 0 or > 60000)
-                throw new ArgumentException("Tools.ToolRetryBaseDelayMs must be within [0, 60000].", optionsParameterName);
-            if (tools.MaxToolRetryBudgetMs < 1)
-                throw new ArgumentException("Tools.MaxToolRetryBudgetMs must be >= 1.", optionsParameterName);
         }
 
         private static void ValidateConfirmation(

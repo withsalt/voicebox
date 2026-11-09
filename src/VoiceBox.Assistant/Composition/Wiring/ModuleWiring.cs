@@ -16,8 +16,6 @@ internal sealed class ModuleWiring
         new(AssistantEffectKind.CancelResponse, AssistantEffectHandlerFamily.ResponseGeneration),
         new(AssistantEffectKind.ClearPlaybackQueue, AssistantEffectHandlerFamily.Playback),
         new(AssistantEffectKind.StopPlayback, AssistantEffectHandlerFamily.Playback),
-        new(AssistantEffectKind.CommitHistory, AssistantEffectHandlerFamily.Conversation),
-        new(AssistantEffectKind.RollbackHistory, AssistantEffectHandlerFamily.Conversation),
         new(AssistantEffectKind.PublishStatefulEvent, AssistantEffectHandlerFamily.PublicEventPublisher),
         new(AssistantEffectKind.CancelOperation, AssistantEffectHandlerFamily.Runtime),
         new(AssistantEffectKind.CompleteTurn, AssistantEffectHandlerFamily.Runtime),

@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/Demos/">
+    <Project Path="Demos/ConversationTextDemo/ConversationTextDemo.csproj" />
     <Project Path="Demos/VoiceAssistantDemo/VoiceAssistantDemo.csproj" />
   </Folder>
   <Folder Name="/Demos/ASR/">
@@ -53,6 +54,9 @@
     <Project Path="Tests/Misaki.Tests/Misaki.Tests.csproj" />
     <Project Path="Tests/VoiceBox.ASR.Qwen3.Benchmark/VoiceBox.ASR.Qwen3.Benchmark.csproj" />
     <Project Path="Tests/VoiceBox.Assistant.AecChallenge.Benchmark/VoiceBox.Assistant.AecChallenge.Benchmark.csproj" />
+    <Project Path="Tests/VoiceBox.Assistant.Conversation.Abstractions.Tests/VoiceBox.Assistant.Conversation.Abstractions.Tests.csproj" />
+    <Project Path="Tests/VoiceBox.Assistant.Conversation.Mcp.Tests/VoiceBox.Assistant.Conversation.Mcp.Tests.csproj" />
+    <Project Path="Tests/VoiceBox.Assistant.Conversation.Tests/VoiceBox.Assistant.Conversation.Tests.csproj" />
     <Project Path="Tests/VoiceBox.Assistant.Tests/VoiceBox.Assistant.Tests.csproj" />
     <Project Path="Tests/VoiceBox.DNR.Benchmark/VoiceBox.DNR.Benchmark.csproj" />
     <Project Path="Tests/VoiceBox.Wakeup.FsmnKws.Tests/VoiceBox.Wakeup.FsmnKws.Tests.csproj" />
@@ -65,7 +69,9 @@
   <Project Path="VoiceBox.ASR.DoubaoOnline/VoiceBox.ASR.DoubaoOnline.csproj" />
   <Project Path="VoiceBox.ASR.FireRedASR2/VoiceBox.ASR.FireRedASR2.csproj" Id="fce5fef5-4bfd-437d-98cc-5d2cb381b540" />
   <Project Path="VoiceBox.ASR.Qwen3/VoiceBox.ASR.Qwen3.csproj" Id="e8b6cb2b-c0d9-40f5-af20-9693b200189a" />
-  <Project Path="VoiceBox.Assistant.Integrations.Mcp/VoiceBox.Assistant.Integrations.Mcp.csproj" />
+  <Project Path="VoiceBox.Assistant.Conversation.Abstractions/VoiceBox.Assistant.Conversation.Abstractions.csproj" />
+  <Project Path="VoiceBox.Assistant.Conversation.Mcp/VoiceBox.Assistant.Conversation.Mcp.csproj" />
+  <Project Path="VoiceBox.Assistant.Conversation/VoiceBox.Assistant.Conversation.csproj" />
   <Project Path="VoiceBox.Assistant/VoiceBox.Assistant.csproj" />
   <Project Path="VoiceBox.Audio.Common/VoiceBox.Audio.Common.csproj" />
   <Project Path="VoiceBox.Audio.MiniAudio/VoiceBox.Audio.MiniAudio.csproj" />

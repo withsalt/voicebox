@@ -236,7 +236,6 @@ internal static class TurnKernel
 
         return Accepted(
             current with { ResponseLifecycle = ResponseLifecycle.Generated },
-            new CommitHistoryEffect(signal.TurnId, signal.Text ?? string.Empty, signal.OperationId),
             new PublishAssistantResponseGeneratedEffect(
                 signal.TurnId,
                 signal.Text ?? string.Empty,
@@ -321,7 +320,6 @@ internal static class TurnKernel
                     PhysicalStopTrigger = PhysicalStopTrigger.None,
                 },
                 new CancelResponseEffect(current.TurnId, signal.OperationId),
-                new RollbackHistoryEffect(current.TurnId, signal.OperationId),
                 new PublishStateChangedEffect(
                     signal.OperationId,
                     AssistantState.Thinking,
@@ -553,7 +551,6 @@ internal static class TurnKernel
                 Authorization = current.ValidationTurnId == 0 ? TurnAuthorizationStatus.NotRequired : current.Authorization,
                 CandidateId = current.ValidationTurnId == 0 ? 0 : current.CandidateId,
             },
-            new RollbackHistoryEffect(signal.TurnId, signal.OperationId),
             new PublishStateChangedEffect(
                 signal.TurnId,
                 current.ConversationState,
@@ -568,7 +565,6 @@ internal static class TurnKernel
 
         return Accepted(
             current with { ConversationState = AssistantState.Idle, ResponseLifecycle = ResponseLifecycle.Failed },
-            new RollbackHistoryEffect(signal.TurnId, signal.OperationId),
             new CancelOperationEffect(signal.TurnId, signal.OperationId),
             new PublishStateChangedEffect(
                 signal.TurnId,
@@ -627,7 +623,6 @@ internal static class TurnKernel
             cancelled.Add(new StopPlaybackEffect(signal.TurnId, signal.OperationId));
             cancelled.Add(new ClearPlaybackQueueEffect(signal.TurnId, signal.OperationId));
         }
-        cancelled.Add(new RollbackHistoryEffect(signal.TurnId, signal.OperationId));
         cancelled.Add(new CompleteTurnEffect(signal.TurnId, signal.OperationId));
         cancelled.Add(new PublishStateChangedEffect(
             signal.TurnId,
@@ -655,7 +650,6 @@ internal static class TurnKernel
     private static TurnDecision ReduceRuntimeFault(TurnSnapshot current, TurnSignal signal)
         => Accepted(
             current with { ResponseLifecycle = ResponseLifecycle.Failed },
-            new RollbackHistoryEffect(current.TurnId, signal.OperationId),
             new PublishFaultedEffect(current.TurnId, signal.Failure, signal.OperationId));
 
     private static bool IsCurrent(TurnSnapshot current, TurnSignal signal)

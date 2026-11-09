@@ -1,4 +1,4 @@
-# VoiceBox
+﻿# VoiceBox
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
@@ -72,14 +72,18 @@ VoiceBox 是基于 **.NET** 开发的模块化语音交互框架，**基本覆�
 | TTS（语音合成） | `VoiceBox.TTS.VoxCPM` | VoxCPM 流式合成，支持参考音频与文本进行音色克隆 |
 | TTS（语音合成） | `VoiceBox.TTS.DoubaoOnline` | 在线流式语音合成，使用火山引擎豆包语音服务 |
 | 助手 | `VoiceBox.Assistant` | 按需编排最小问答或多轮语音助理，支持唤醒、说话人验证与播放打断 |
-| 助手 | `VoiceBox.Assistant.Integrations.Mcp` | 助手工具调用，进程内工具、MCP stdio、Streamable HTTP 与 MCP Tasks |
+| 会话 | `VoiceBox.Assistant.Conversation.Abstractions` | 业务会话契约，仅依赖 BCL；调用方自行实现对话逻辑 |
+| 会话 | `VoiceBox.Assistant.Conversation` | 默认 LLM 会话、内存历史、上下文扩展与工具运行时 |
+| 会话 | `VoiceBox.Assistant.Conversation.Mcp` | MCP 工具来源：stdio、Streamable HTTP 与 MCP Tasks |
 
 ## VoiceBox.Assistant（语音助理）
 
-`VoiceBox.Assistant` 是可按需组装的语音助理组件，负责对话编排，并管理对话历史、播放队列、取消与生命周期。同一套组件可用于两种组合：
+`VoiceBox.Assistant` 是可按需组装的语音助理组件，负责语音交互编排、播放队列、取消与生命周期；对话理解、回答生成和会话历史由调用方提供的 `IConversationSession` 负责。
 
-- **最小一问一答**：只接入录音、播放、VAD、ASR、LLM 和 TTS，完成“用户说一句，助手答一句”。
-- **自由多轮对话**：在基础链路上按需加入唤醒、说话人验证、语音打断与工具调用，结合对话历史和连续对话，让用户连续提问、追问，也能在回复播放期间开口打断。
+接入会话有两条独立路径：只引用 `VoiceBox.Assistant.Conversation.Abstractions`，直接实现自己的 `IConversationSession`、本地工具和工具来源；或使用可选的 `VoiceBox.Assistant.Conversation` 默认实现，再按需组合上下文、本地工具与 MCP 工具来源。同一套 Assistant 组件可用于两种组合：
+
+- **最小一问一答**：只接入录音、播放、VAD、ASR、会话和 TTS，完成“用户说一句，助手答一句”。
+- **自由多轮对话**：在基础链路上按需加入唤醒、说话人验证、语音打断与工具会话，结合会话历史和连续对话，让用户连续提问、追问，也能在回复播放期间开口打断。
 
 模型配置：  
 
@@ -101,12 +105,14 @@ VoiceBox 是基于 **.NET** 开发的模块化语音交互框架，**基本覆�
 | 唤醒与连续对话 | `AddWakeup(wakeup)` | 唤醒后开始对话；可连续多轮交流，通过空闲超时或结束词回到待唤醒状态 |
 | 说话人验证 | `AddSpeakerVerification(speaker)` | 配合 `Speaker.Confirmation.Enable = true` 启用本人确认；首次使用需注册声纹 |
 | 播放期间打断 | `AddBargeIn(options, delayEstimatorFactory)` | 用户开口时可停止当前回复；要求同时采播、播放参考与处理后采集时间线 |
-| 工具调用 | `UseMcpTools(...)` | 接入本地工具或 MCP 服务；内置支持的后端为 `VoiceBox.LLM.OpenAI` 与 `VoiceBox.LLM.LLamaSharp` |
+| 业务会话 | `UseConversation(session)` | Assistant 只消费统一输出流；会话可以完全自定义，也可以使用默认 LLM 会话并逐步加入上下文、本地工具或 MCP |
 
 使用已创建的服务实例装配最小问答助手：
 
 ```csharp
 using VoiceBox.Assistant;
+using VoiceBox.Assistant.Conversation;
+using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Core.Services.ASRService;
 using VoiceBox.Core.Services.AudioService;
 using VoiceBox.Core.Services.LLMService;
@@ -120,11 +126,15 @@ static async Task RunAssistantAsync(
     IStreamLLMService llm,
     IStreamTTSService tts)
 {
+    await using IConversationSession conversation = new ConversationBuilder(llm)
+        .UseOptions(new LlmConversationOptions { SystemPrompt = "请用简洁的中文回答。" })
+        .Build();
+
     using var assistant = VoiceAssistant.CreateBuilder()
         .UseAudio(audio)
         .UseTurnBoundary(vad)
         .UseSpeechRecognition(asr)
-        .UseResponseGeneration(llm)
+        .UseConversation(conversation)
         .UseSpeechSynthesis(tts)
         .Build();
 
@@ -213,7 +223,7 @@ Demo 还提供以下组合，在 `Program.cs` 中切换 `Plan*.Buid(...)`：
 | [Plan03：GPU 本地](src/Demos/VoiceAssistantDemo/Plan03_GPU_16GVRAM_ALL_LOCAL.cs) | Confucius4 | LLamaSharp | VoxCPM |  使用GPU推理（CUDA），完全本地化运行，至少需要16G显存，体验非常好  |
 | [Plan04：本地与在线混合（默认）](src/Demos/VoiceAssistantDemo/Plan04_MIX_8GVRAM_ASR_GPU_TTS_CPU_LLM_ONLINE.cs) | Confucius4 / CUDA | OpenAI 兼容服务 | VoxCPM / CPU |  ASR使用GPU推理，TTS使用CPU，至少需要8G显存，体验也很棒 |
 
-使用`VoiceBox.LLM.OnnxGenAI`进行本地推理时，因为不支持工具调用，需移除 `Program.cs` 中的 `UseMcpTools(...)`；`VoiceBox.LLM.LLamaSharp`支持基于 llama.cpp grammar 的结构化调用。两者都需配置对应的模型及原生推理包；
+使用`VoiceBox.LLM.OnnxGenAI`进行本地推理时，因为它不实现 `IToolCallingStreamLLMService`，会话构造时不要调用 `UseTools(...)`；`VoiceBox.LLM.LLamaSharp` 支持基于 llama.cpp grammar 的结构化调用。两者都需配置对应的模型及原生推理包；
 
 LLM本地推理建议使用ollama或llama.cpp等本地部署模型，然后通过`VoiceBox.LLM.OpenAI`接入。  
 
@@ -234,12 +244,13 @@ Plan02 需要 `VOLC_ASR_API_KEY`、`OPENAI_API_KEY`、`VOLC_TTS_API_KEY`，音�
 | 语言模型 | [OpenAILLMDemo](src/Demos/OpenAILLMDemo)、[LLamaSharpLLMDemo](src/Demos/LLamaSharpLLMDemo)、[OnnxGenAILLMDemo](src/Demos/OnnxGenAILLMDemo) | 在线或本地文本生成、多轮对话 |
 | 本地语音合成 | [Qwen3TtsDemo](src/Demos/Qwen3TtsDemo)、[KokoroTtsDemo](src/Demos/KokoroTtsDemo)、[MossNanoTtsDemo](src/Demos/MossNanoTtsDemo)、[VoxCPMTtsDemo](src/Demos/VoxCPMTtsDemo) | 不同 TTS 模型的合成与播放 |
 | 在线语音合成 | [DoubaoOnlineTtsDemo](src/Demos/DoubaoOnlineTtsDemo) | 豆包在线语音合成 |
+| 独立文字会话 | [ConversationTextDemo](src/Demos/ConversationTextDemo) | 不创建音频设备, 直接消费会话输出流; 多轮历史与上下文记忆 |
 | 完整助手 | [VoiceAssistantDemo](src/Demos/VoiceAssistantDemo) | 唤醒、语音问答、说话人验证、打断与工具调用 |
 
 ## 相关文档
 
 - [助手架构与能力组合](docs/voicebox-assistant-architecture.md)
-- [MCP 与工具接入](src/VoiceBox.Assistant.Integrations.Mcp/README.md)
+- [会话模块](src/VoiceBox.Assistant.Conversation/README.md) · [MCP 工具来源](src/VoiceBox.Assistant.Conversation.Mcp/README.md)
 - [OpenAI 兼容 LLM](src/VoiceBox.LLM.OpenAI/README.md) · [ONNX Runtime GenAI](src/VoiceBox.LLM.OnnxGenAI/README.md)
 - [Confucius4 ASR](src/VoiceBox.ASR.Confucius4/README.md) · [VoxCPM TTS](src/VoiceBox.TTS.VoxCPM/README.md) · [WeSpeaker 声纹](src/VoiceBox.Speaker.WeSpeaker/README.md)
 - [双讲检测](src/VoiceBox.DTD.RenderAware/README.md) · [AEC / 打断评测](src/Tests/VoiceBox.Assistant.AecChallenge.Benchmark/README.md) · [降噪评测](src/Tests/VoiceBox.DNR.Benchmark/README.md)

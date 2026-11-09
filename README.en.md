@@ -1,4 +1,4 @@
-# VoiceBox
+﻿# VoiceBox
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
@@ -72,14 +72,18 @@ The names below correspond to projects under `src`. Reference the ones you need.
 | TTS (speech synthesis) | `VoiceBox.TTS.VoxCPM` | VoxCPM streaming synthesis with voice cloning from reference audio and text |
 | TTS (speech synthesis) | `VoiceBox.TTS.DoubaoOnline` | Online streaming speech synthesis through Volcengine Doubao speech services |
 | Assistant | `VoiceBox.Assistant` | Composable orchestration for minimal question-and-answer or multi-turn voice assistants, with wake word detection, speaker verification, and playback interruption |
-| Assistant | `VoiceBox.Assistant.Integrations.Mcp` | Assistant tool calling with in-process tools, MCP stdio, Streamable HTTP, and MCP Tasks |
+| Conversation | `VoiceBox.Assistant.Conversation.Abstractions` | Business conversation contract; BCL-only so callers can own their dialogue logic |
+| Conversation | `VoiceBox.Assistant.Conversation` | Default LLM conversation with bounded history, context providers, and a tool runtime |
+| Conversation | `VoiceBox.Assistant.Conversation.Mcp` | MCP tool source: stdio, Streamable HTTP, and MCP Tasks |
 
 ## VoiceBox.Assistant (Voice Assistant)
 
-`VoiceBox.Assistant` is a composable voice assistant component that orchestrates conversations and manages conversation history, the playback queue, cancellation, and lifecycle. The same components support two configurations:
+`VoiceBox.Assistant` is a composable voice assistant component that orchestrates voice interaction, the playback queue, cancellation, and lifecycle. Dialogue understanding, answer generation, and conversation history belong to the `IConversationSession` supplied by the caller.
+
+There are two independent integration paths: reference only `VoiceBox.Assistant.Conversation.Abstractions` and implement your own `IConversationSession`, local tools, and tool sources; or use the optional `VoiceBox.Assistant.Conversation` default implementation and compose context, local tools, and MCP tool sources as needed. The same components support two configurations:
 
 - **Minimal question-and-answer loop**: Connect only recording, playback, VAD, ASR, LLM, and TTS to let the user speak and receive a spoken response.
-- **Natural multi-turn conversation**: Add wake word detection, speaker verification, voice interruption, and tool calling as needed. Conversation history and continuous conversation allow follow-up questions, and users can interrupt while a response is playing.
+- **Natural multi-turn conversation**: Add wake word detection, speaker verification, voice interruption, and tool-enabled conversations as needed. Conversation history and continuous conversation allow follow-up questions, and users can interrupt while a response is playing.
 
 Model configuration:
 
@@ -100,12 +104,14 @@ Register optional capabilities through the builder:
 | Wake word detection and continuous conversation | `AddWakeup(wakeup)` | Starts a conversation after wake-up; supports multiple consecutive turns and returns to waiting for a wake word after an idle timeout or an end phrase |
 | Speaker verification | `AddSpeakerVerification(speaker)` | Set `Speaker.Confirmation.Enable = true` to enable owner verification; speaker enrollment is required on first use |
 | Interruption during playback | `AddBargeIn(options, delayEstimatorFactory)` | Can stop the current response when the user starts speaking; requires simultaneous capture and playback, a playback reference, and a processed capture timeline |
-| Tool calling | `UseMcpTools(...)` | Connects local tools or MCP services; built-in backend support is provided by `VoiceBox.LLM.OpenAI` and `VoiceBox.LLM.LLamaSharp` |
+| Business conversation | `UseConversation(session)` | The assistant consumes one uniform output stream; the session may be fully custom or the default LLM conversation extended with context, local tools, or MCP |
 
 Assemble a minimal question-and-answer assistant using existing service instances:
 
 ```csharp
 using VoiceBox.Assistant;
+using VoiceBox.Assistant.Conversation;
+using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Core.Services.ASRService;
 using VoiceBox.Core.Services.AudioService;
 using VoiceBox.Core.Services.LLMService;
@@ -119,11 +125,15 @@ static async Task RunAssistantAsync(
     IStreamLLMService llm,
     IStreamTTSService tts)
 {
+    await using IConversationSession conversation = new ConversationBuilder(llm)
+        .UseOptions(new LlmConversationOptions { SystemPrompt = "Answer concisely in English." })
+        .Build();
+
     using var assistant = VoiceAssistant.CreateBuilder()
         .UseAudio(audio)
         .UseTurnBoundary(vad)
         .UseSpeechRecognition(asr)
-        .UseResponseGeneration(llm)
+        .UseConversation(conversation)
         .UseSpeechSynthesis(tts)
         .Build();
 
@@ -212,7 +222,7 @@ The demo also provides the following configurations. Switch between them using `
 | [Plan03: Local GPU](src/Demos/VoiceAssistantDemo/Plan03_GPU_16GVRAM_ALL_LOCAL.cs) | Confucius4 | LLamaSharp | VoxCPM | Fully local GPU inference (CUDA); requires at least 16 GB of VRAM and provides a very good user experience |
 | [Plan04: Hybrid local and online (default)](src/Demos/VoiceAssistantDemo/Plan04_MIX_8GVRAM_ASR_GPU_TTS_CPU_LLM_ONLINE.cs) | Confucius4 / CUDA | OpenAI-compatible service | VoxCPM / CPU | GPU inference for ASR and CPU inference for TTS; requires at least 8 GB of VRAM and also provides a good user experience |
 
-When using `VoiceBox.LLM.OnnxGenAI` for local inference, remove `UseMcpTools(...)` from `Program.cs` because tool calling is not supported. `VoiceBox.LLM.LLamaSharp` supports structured tool calling through llama.cpp grammars. Both require the appropriate models and native inference packages.
+When using `VoiceBox.LLM.OnnxGenAI` for local inference, do not call `UseTools(...)` when building the conversation because it does not implement `IToolCallingStreamLLMService`. `VoiceBox.LLM.LLamaSharp` supports structured tool calling through llama.cpp grammars. Both require the appropriate models and native inference packages.
 
 For local LLM inference, the recommended approach is to serve a model with ollama or llama.cpp and connect to it through `VoiceBox.LLM.OpenAI`.
 
@@ -233,6 +243,7 @@ Examples are located in [src/Demos](src/Demos). In addition to the recording and
 | Language models | [OpenAILLMDemo](src/Demos/OpenAILLMDemo), [LLamaSharpLLMDemo](src/Demos/LLamaSharpLLMDemo), [OnnxGenAILLMDemo](src/Demos/OnnxGenAILLMDemo) | Online or local text generation and multi-turn conversations |
 | Local speech synthesis | [Qwen3TtsDemo](src/Demos/Qwen3TtsDemo), [KokoroTtsDemo](src/Demos/KokoroTtsDemo), [MossNanoTtsDemo](src/Demos/MossNanoTtsDemo), [VoxCPMTtsDemo](src/Demos/VoxCPMTtsDemo) | Synthesis and playback with different TTS models |
 | Online speech synthesis | [DoubaoOnlineTtsDemo](src/Demos/DoubaoOnlineTtsDemo) | Doubao online speech synthesis |
+| Text-only conversation | [ConversationTextDemo](src/Demos/ConversationTextDemo) | Consumes the conversation stream without audio devices; multi-turn history and context memory |
 | Complete assistant | [VoiceAssistantDemo](src/Demos/VoiceAssistantDemo) | Wake word detection, voice question-and-answer, speaker verification, interruption, and tool calling |
 
 ## Related Documentation
@@ -240,7 +251,7 @@ Examples are located in [src/Demos](src/Demos). In addition to the recording and
 Some linked documents are in Chinese.
 
 - [Assistant architecture and capability combinations](docs/voicebox-assistant-architecture.md)
-- [MCP and tool integration](src/VoiceBox.Assistant.Integrations.Mcp/README.md)
+- [Conversation module](src/VoiceBox.Assistant.Conversation/README.md) · [MCP tool source](src/VoiceBox.Assistant.Conversation.Mcp/README.md)
 - [OpenAI-compatible LLM](src/VoiceBox.LLM.OpenAI/README.md) · [ONNX Runtime GenAI](src/VoiceBox.LLM.OnnxGenAI/README.md)
 - [Confucius4 ASR](src/VoiceBox.ASR.Confucius4/README.md) · [VoxCPM TTS](src/VoiceBox.TTS.VoxCPM/README.md) · [WeSpeaker speaker verification](src/VoiceBox.Speaker.WeSpeaker/README.md)
 - [Double-talk detection](src/VoiceBox.DTD.RenderAware/README.md) · [AEC / interruption benchmarks](src/Tests/VoiceBox.Assistant.AecChallenge.Benchmark/README.md) · [Noise reduction benchmarks](src/Tests/VoiceBox.DNR.Benchmark/README.md)

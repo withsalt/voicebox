@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
 using VoiceBox.Assistant.Composition.Plans;
+using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Assistant.Modules.AudioFrontend.Contracts;
 using VoiceBox.Assistant.Modules.Speaker.Contracts;
 using VoiceBox.Assistant.Modules.Wakeup.Contracts;
-using VoiceBox.Assistant.Modules.Response.Contracts;
 using VoiceBox.Assistant.Runtime.Lifecycle.Models;
 using VoiceBox.Assistant.Modules.BargeIn.RenderAware.Contracts;
 
@@ -24,7 +24,7 @@ internal sealed class AssistantRuntimeLifecycleCoordinator
     private readonly IPlaybackBargeInDetector? _bargeIn;
     private readonly AssistantTaskSupervisor _tasks;
     private readonly ILogger _logger;
-    private readonly IResponseGenerator? _responseGeneration;
+    private readonly IConversationSession? _conversation;
     private readonly List<AssistantLifecycleParticipant> _started = [];
     private int _assistantOwnedDisposed;
 
@@ -37,7 +37,7 @@ internal sealed class AssistantRuntimeLifecycleCoordinator
         IPlaybackBargeInDetector? bargeIn,
         AssistantTaskSupervisor tasks,
         ILogger logger,
-        IResponseGenerator? responseGeneration = null)
+        IConversationSession? conversation = null)
     {
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
         _ownership = ownership ?? throw new ArgumentNullException(nameof(ownership));
@@ -47,7 +47,7 @@ internal sealed class AssistantRuntimeLifecycleCoordinator
         _bargeIn = bargeIn;
         _tasks = tasks ?? throw new ArgumentNullException(nameof(tasks));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _responseGeneration = responseGeneration;
+        _conversation = conversation;
     }
 
     /// <summary>
@@ -151,22 +151,22 @@ internal sealed class AssistantRuntimeLifecycleCoordinator
                 case AssistantLifecycleParticipant.BargeIn:
                     TryDispose(_bargeIn);
                     break;
-                case AssistantLifecycleParticipant.ResponseGeneration:
-                    TryDispose(_responseGeneration as IDisposable);
-                    break;
             }
         }
     }
 
     private bool IsAssistantOwned(AssistantLifecycleParticipant participant)
     {
+        // The conversation instance is borrowed; its owner disposes it after the Assistant stops.
+        if (participant == AssistantLifecycleParticipant.ResponseGeneration)
+            return false;
+
         string moduleId = participant switch
         {
             AssistantLifecycleParticipant.AudioFrontend => "AudioFrontend.Adapter",
             AssistantLifecycleParticipant.WakeupGate => "Wakeup.Module",
             AssistantLifecycleParticipant.SpeakerEvidence => "Speaker.Module",
             AssistantLifecycleParticipant.BargeIn => "BargeIn.Module",
-            AssistantLifecycleParticipant.ResponseGeneration => "StructuredToolUse.Runtime",
             _ => throw new ArgumentOutOfRangeException(nameof(participant), participant, null),
         };
 
@@ -199,8 +199,8 @@ internal sealed class AssistantRuntimeLifecycleCoordinator
                 ?? throw new InvalidOperationException("Lifecycle plan includes SpeakerEvidence without a speaker module."),
             AssistantLifecycleParticipant.BargeIn => _bargeIn
                 ?? throw new InvalidOperationException("Lifecycle plan includes BargeIn without a barge-in module."),
-            AssistantLifecycleParticipant.ResponseGeneration => _responseGeneration
-                ?? throw new InvalidOperationException("Lifecycle plan includes ResponseGeneration without a response generator."),
+            AssistantLifecycleParticipant.ResponseGeneration => _conversation
+                ?? throw new InvalidOperationException("Lifecycle plan includes Conversation without a session."),
             _ => throw new ArgumentOutOfRangeException(nameof(participant), participant, null),
         };
 
@@ -223,12 +223,12 @@ internal sealed class AssistantRuntimeLifecycleCoordinator
                 _bargeIn!.ResetStream();
                 break;
             case AssistantLifecycleParticipant.ResponseGeneration:
-                if (_responseGeneration is not IResponseGeneratorLifecycle lifecycle)
+                if (_conversation is not IConversationLifecycle conversationLifecycle)
                 {
                     throw new InvalidOperationException(
-                        "Structured response generator does not implement its lifecycle contract.");
+                        "The conversation session does not implement its lifecycle contract.");
                 }
-                await lifecycle.StartAsync(cancellationToken).ConfigureAwait(false);
+                await conversationLifecycle.StartAsync(cancellationToken).ConfigureAwait(false);
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(participant), participant, null);
@@ -254,8 +254,8 @@ internal sealed class AssistantRuntimeLifecycleCoordinator
                     _bargeIn!.ResetStream();
                     break;
                 case AssistantLifecycleParticipant.ResponseGeneration:
-                    if (_responseGeneration is IResponseGeneratorLifecycle lifecycle)
-                        await lifecycle.StopAsync().ConfigureAwait(false);
+                    if (_conversation is IConversationLifecycle conversationLifecycle)
+                        await conversationLifecycle.StopAsync().ConfigureAwait(false);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(participant), participant, null);

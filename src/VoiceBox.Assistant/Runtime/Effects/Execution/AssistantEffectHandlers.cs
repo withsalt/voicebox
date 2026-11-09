@@ -14,7 +14,6 @@ internal sealed class AssistantEffectHandlers
         IRecognitionEffectHandler recognition,
         IResponseEffectHandler responseGeneration,
         IPlaybackEffectHandler playback,
-        IConversationEffectHandler conversation,
         IPublicEventEffectHandler events,
         IRuntimeEffectHandler runtimeEffects)
     {
@@ -22,7 +21,6 @@ internal sealed class AssistantEffectHandlers
         Recognition = recognition ?? throw new ArgumentNullException(nameof(recognition));
         ResponseGeneration = responseGeneration ?? throw new ArgumentNullException(nameof(responseGeneration));
         Playback = playback ?? throw new ArgumentNullException(nameof(playback));
-        Conversation = conversation ?? throw new ArgumentNullException(nameof(conversation));
         Events = events ?? throw new ArgumentNullException(nameof(events));
         RuntimeEffects = runtimeEffects ?? throw new ArgumentNullException(nameof(runtimeEffects));
     }
@@ -31,7 +29,6 @@ internal sealed class AssistantEffectHandlers
     public IRecognitionEffectHandler Recognition { get; }
     public IResponseEffectHandler ResponseGeneration { get; }
     public IPlaybackEffectHandler Playback { get; }
-    public IConversationEffectHandler Conversation { get; }
     public IPublicEventEffectHandler Events { get; }
     public IRuntimeEffectHandler RuntimeEffects { get; }
 }

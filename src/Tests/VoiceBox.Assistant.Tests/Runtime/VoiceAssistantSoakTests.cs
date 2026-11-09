@@ -42,10 +42,10 @@ public sealed partial class VoiceAssistantLifecycleTests
             if (validationFailure)
             {
                 var services = TestServices.Create();
-                builder.UseOptions(new() { MaxHistoryTurns = 0 })
+                builder.UseOptions(new() { MinSentenceChars = 0 })
                     .UseTurnBoundary(services.Vad)
                     .UseSpeechRecognition(services.Asr)
-                    .UseResponseGeneration(services.Llm)
+                    .UseConversation(TestConversation.Create(services.Llm))
                     .UseSpeechSynthesis(services.Tts);
                 Assert.Throws<ArgumentException>(() => builder.Build());
             }

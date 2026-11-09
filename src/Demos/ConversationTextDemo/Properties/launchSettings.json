@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "ConversationTextDemo": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "OPENAI_API_KEY": "sk-3330cb0cd88b43f883732b01860c4fc0"
+      }
+    }
+  }
+}

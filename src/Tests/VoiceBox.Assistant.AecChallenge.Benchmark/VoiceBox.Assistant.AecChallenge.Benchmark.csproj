@@ -16,6 +16,7 @@
     <ProjectReference Include="..\..\VoiceBox.APM.WebRtc\VoiceBox.APM.WebRtc.csproj" />
     <ProjectReference Include="..\..\VoiceBox.ASR.Qwen3\VoiceBox.ASR.Qwen3.csproj" />
     <ProjectReference Include="..\..\VoiceBox.Assistant\VoiceBox.Assistant.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.Assistant.Conversation\VoiceBox.Assistant.Conversation.csproj" />
     <ProjectReference Include="..\..\VoiceBox.Audio.Common\VoiceBox.Audio.Common.csproj" />
     <ProjectReference Include="..\..\VoiceBox.Core\VoiceBox.Core.csproj" />
     <ProjectReference Include="..\..\VoiceBox.TTS.VoxCPM\VoiceBox.TTS.VoxCPM.csproj" />

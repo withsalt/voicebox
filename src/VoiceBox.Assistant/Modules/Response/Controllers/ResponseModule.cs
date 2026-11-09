@@ -1,34 +1,32 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Api.Events;
 using VoiceBox.Assistant.Modules.BargeIn.Contracts;
-using VoiceBox.Assistant.Modules.Conversation.Contracts;
-using VoiceBox.Assistant.Modules.ModelInteraction.Models;
 using VoiceBox.Assistant.Modules.Playback.Controllers;
 using VoiceBox.Assistant.Modules.Recognition.Formatting;
+using VoiceBox.Assistant.Modules.Response.Adapters;
 using VoiceBox.Assistant.Modules.Response.Contracts;
 using VoiceBox.Assistant.Modules.Response.Models;
 using VoiceBox.Assistant.Runtime.Control.Contracts;
 using VoiceBox.Assistant.Runtime.Control.Models;
 using VoiceBox.Assistant.Runtime.Effects.Contracts;
 using VoiceBox.Assistant.Runtime.Publications.Contracts;
-using VoiceBox.Core.Services.LLMService.Models;
 
 namespace VoiceBox.Assistant.Modules.Response.Controllers;
 
 /// <summary>
-/// Owns one semantic response operation and coordinates protocol-neutral generation with playback.
+/// Owns one semantic response operation and coordinates the conversation stream with playback.
+/// It does not read or write conversation history, build prompts or choose model parameters.
 /// </summary>
 internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationPort
 {
     private readonly VoiceAssistantOptions _options;
     private readonly bool _bargeInInstalled;
-    private readonly IResponseGenerator _responseGenerator;
+    private readonly ConversationResponseAdapter _conversation;
     private readonly IResponsePlaybackSessionFactory _playbackSessions;
-    private readonly IConversationPromptPort _history;
     private readonly IResponseControlSignalPort _control;
     private readonly IAssistantTextStreamSink _textStream;
     private readonly PlaybackStartupGuard _playbackStartupGuard;
@@ -43,9 +41,8 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
     public ResponseModule(
         VoiceAssistantOptions options,
         bool bargeInInstalled,
-        IResponseGenerator responseGenerator,
+        ConversationResponseAdapter conversation,
         IResponsePlaybackSessionFactory playbackSessions,
-        IConversationPromptPort history,
         IResponseControlSignalPort control,
         IAssistantTextStreamSink textStream,
         PlaybackStartupGuard playbackStartupGuard,
@@ -55,9 +52,8 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _bargeInInstalled = bargeInInstalled;
-        _responseGenerator = responseGenerator ?? throw new ArgumentNullException(nameof(responseGenerator));
+        _conversation = conversation ?? throw new ArgumentNullException(nameof(conversation));
         _playbackSessions = playbackSessions ?? throw new ArgumentNullException(nameof(playbackSessions));
-        _history = history ?? throw new ArgumentNullException(nameof(history));
         _control = control ?? throw new ArgumentNullException(nameof(control));
         _textStream = textStream ?? throw new ArgumentNullException(nameof(textStream));
         _playbackStartupGuard = playbackStartupGuard ?? throw new ArgumentNullException(nameof(playbackStartupGuard));
@@ -99,7 +95,7 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
                     _logger.LogDebug("ASR returned unusable text; skipping response generation.");
                 if (operation is not null)
                     EndOperation(operation, turnResources);
-                return new ResponseTurnResult(null, false);
+                return new ResponseTurnResult(false);
             }
 
             if (!recognitionAlreadyPublished)
@@ -118,7 +114,7 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
                 _logger.LogInformation("Detected continuous-conversation termination phrase; returning to wake-word mode.");
                 if (operation is not null)
                     EndOperation(operation, turnResources);
-                return new ResponseTurnResult(null, true);
+                return new ResponseTurnResult(true);
             }
         }
         catch
@@ -135,18 +131,6 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
             runtimeCancellationToken,
             turnResources);
 
-        ChatMessage userMessage;
-        ChatMessage[] prompt;
-        try
-        {
-            userMessage = _history.AddUserMessage(turnId, userText, out prompt);
-        }
-        catch
-        {
-            EndOperation(operation, turnResources);
-            throw;
-        }
-
         CancellationToken ct = operation.Cancellation.Token;
         try
         {
@@ -161,17 +145,11 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
             _playbackStartupGuard.Clear();
             OpenInputForBargeInIfEnabled(turnId);
 
-            var request = new ModelTurnRequest(
-                prompt,
-                new ModelGenerationOptions(
-                    MaxTokens: _options.MaxResponseTokens,
-                    EnableThinking: _options.Conversation.EnableThinking),
-                ToolCatalogSnapshot.Empty,
-                turnId);
             var roundSw = Stopwatch.StartNew();
             var visible = new StringBuilder();
             bool transitionedToSpeaking = false;
             bool responseGenerated = false;
+            bool completed = false;
 
             async ValueTask NotifyResponseGeneratedAsync()
             {
@@ -192,25 +170,24 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
             async IAsyncEnumerable<SpeakableTextDelta> ReadSpeakableTextAsync(
                 [EnumeratorCancellation] CancellationToken streamCancellation = default)
             {
-                await foreach (ModelTurnEvent modelEvent in _responseGenerator
-                    .GenerateAsync(request, streamCancellation)
+                await foreach (ConversationTurnEvent update in _conversation
+                    .StreamAsync(userText, streamCancellation)
                     .WithCancellation(streamCancellation)
                     .ConfigureAwait(false))
                 {
-                    switch (modelEvent)
+                    switch (update)
                     {
-                        case ThinkingDelta thinkingDelta when
-                            _options.Conversation.EnableThinking &&
-                            !string.IsNullOrEmpty(thinkingDelta.Text):
+                        case ConversationTurnThinking thinkingDelta
+                            when !string.IsNullOrEmpty(thinkingDelta.Text):
                             _textStream.RaiseAssistantText(new AssistantTextEventArgs
                             {
                                 Delta = thinkingDelta.Text,
                                 IsThinking = true,
                             });
                             break;
-                        case ThinkingDelta:
+                        case ConversationTurnThinking:
                             break;
-                        case VisibleTextDelta visibleDelta when !string.IsNullOrEmpty(visibleDelta.Text):
+                        case ConversationTurnText textDelta when !string.IsNullOrEmpty(textDelta.Text):
                             if (!transitionedToSpeaking)
                             {
                                 transitionedToSpeaking = true;
@@ -221,32 +198,43 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
                                 }
                             }
 
-                            visible.Append(visibleDelta.Text);
+                            visible.Append(textDelta.Text);
                             _textStream.RaiseAssistantText(new AssistantTextEventArgs
                             {
-                                Delta = visibleDelta.Text,
+                                Delta = textDelta.Text,
                                 IsThinking = false,
                             });
                             yield return new SpeakableTextDelta(
-                                visibleDelta.Text,
-                                visibleDelta.ForceSpeechBoundary,
-                                visibleDelta.SpeechBoundaryCompletion);
+                                textDelta.Text,
+                                textDelta.EndsTextSegment,
+                                textDelta.EndsTextSegment
+                                    ? new TaskCompletionSource(
+                                        TaskCreationOptions.RunContinuationsAsynchronously)
+                                    : null);
                             break;
-                        case VisibleTextDelta:
+                        case ConversationTurnText:
                             break;
-                        case ModelTurnCompleted:
+                        case ConversationTurnCompleted completion:
+                            if (completed)
+                            {
+                                throw new ConversationProtocolException(
+                                    "The conversation completed the turn more than once.");
+                            }
+                            completed = true;
                             await NotifyResponseGeneratedAsync().ConfigureAwait(false);
+                            _conversation.ReleaseForegroundBoundary(completion.RequestId);
                             break;
-                        case ToolCallRequested toolCall:
-                            throw new InvalidOperationException(
-                                $"Structured tool call '{toolCall.CallId}' was received without tool capability.");
                         default:
-                            throw new InvalidOperationException(
-                                $"Unsupported model turn event '{modelEvent.GetType().Name}'.");
+                            throw new ConversationProtocolException(
+                                $"Unsupported conversation update '{update.GetType().Name}'.");
                     }
                 }
 
-                await NotifyResponseGeneratedAsync().ConfigureAwait(false);
+                if (!completed)
+                {
+                    throw new ConversationProtocolException(
+                        "The conversation ended without a completed update.");
+                }
             }
 
             string assistantText = await _playbackSessions.PlayAsync(
@@ -265,7 +253,7 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
                     ct).ConfigureAwait(false);
             }
 
-            return new ResponseTurnResult(userMessage, false);
+            return new ResponseTurnResult(false);
         }
         catch (OperationCanceledException)
         {
@@ -389,12 +377,6 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
             Cancel(operation.TurnId, operation.OperationId);
     }
 
-    internal void CancelBackgroundOperations()
-    {
-        if (_responseGenerator is IResponseGeneratorLifecycle lifecycle)
-            lifecycle.CancelBackgroundOperations();
-    }
-
     public void Dispose()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
@@ -415,8 +397,6 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
         {
             try { ReleaseOperation(resource); } catch { }
         }
-        if (_responseGenerator is IDisposable disposable)
-            disposable.Dispose();
     }
 
     private ResponseOperation BeginOperation(

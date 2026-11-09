@@ -247,7 +247,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .AddWakeup(services.Wakeup)
             .AddSpeakerVerification(services.Speaker)

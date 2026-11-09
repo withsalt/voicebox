@@ -18,5 +18,4 @@ internal enum AssistantCapability
     WakeupGate,
     SpeakerEvidence,
     BargeIn,
-    StructuredToolUse,
 }

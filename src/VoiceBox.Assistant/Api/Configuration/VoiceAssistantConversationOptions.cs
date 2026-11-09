@@ -1,4 +1,3 @@
-using VoiceBox.Assistant.Api.Events;
 
 namespace VoiceBox.Assistant.Api.Configuration
 {
@@ -37,11 +36,5 @@ namespace VoiceBox.Assistant.Api.Configuration
             "停一下",
             "停下来",
         };
-
-        /// <summary>
-        /// LLM 是否启用 thinking 输出。启用后, thinking 块会通过
-        /// <see cref="AssistantTextEventArgs.IsThinking"/> 对外展示, 但不会进入 TTS 或对话历史。
-        /// </summary>
-        public bool EnableThinking { get; set; } = false;
     }
 }

@@ -3,7 +3,6 @@ using System.Diagnostics;
 using VoiceBox.Assistant.Kernel.Models;
 using VoiceBox.Assistant.Kernel.Signals;
 using VoiceBox.Assistant.Modules.BargeIn.Contracts;
-using VoiceBox.Assistant.Modules.Conversation.Contracts;
 using VoiceBox.Assistant.Modules.Playback.Contracts;
 using VoiceBox.Assistant.Modules.Recognition.Contracts;
 using VoiceBox.Assistant.Modules.TurnBoundary.Contracts;
@@ -37,7 +36,6 @@ internal sealed class WakeupInterruptOwner : IWakeupDecisionSink
     private readonly TurnCompletionCoordinator _turns;
     private readonly IBargeInDataPlaneResetPort _bargeInDataPlane;
     private readonly INearEndResetPort _nearEndReset;
-    private readonly IConversationRollbackPort _history;
     private readonly IPlaybackInterruptionPort _playbackInterruption;
     private readonly IRecognitionSessionCleanupPort _recognition;
     private readonly AssistantTaskSupervisor _tasks;
@@ -54,7 +52,6 @@ internal sealed class WakeupInterruptOwner : IWakeupDecisionSink
         TurnCompletionCoordinator turns,
         IBargeInDataPlaneResetPort bargeInDataPlane,
         INearEndResetPort nearEndReset,
-        IConversationRollbackPort history,
         IPlaybackInterruptionPort playbackInterruption,
         IRecognitionSessionCleanupPort recognition,
         AssistantTaskSupervisor tasks,
@@ -68,7 +65,6 @@ internal sealed class WakeupInterruptOwner : IWakeupDecisionSink
         _turns = turns ?? throw new ArgumentNullException(nameof(turns));
         _bargeInDataPlane = bargeInDataPlane ?? throw new ArgumentNullException(nameof(bargeInDataPlane));
         _nearEndReset = nearEndReset ?? throw new ArgumentNullException(nameof(nearEndReset));
-        _history = history ?? throw new ArgumentNullException(nameof(history));
         _playbackInterruption = playbackInterruption ?? throw new ArgumentNullException(nameof(playbackInterruption));
         _recognition = recognition ?? throw new ArgumentNullException(nameof(recognition));
         _tasks = tasks ?? throw new ArgumentNullException(nameof(tasks));
@@ -191,7 +187,6 @@ internal sealed class WakeupInterruptOwner : IWakeupDecisionSink
         // response source is cancelled here so the response pipeline unwinds promptly.
         try { interrupt.ResponseToCancel?.Cancel(); }
         catch (ObjectDisposedException) { }
-        _history.RemoveUnansweredUserMessage(interrupt.InterruptedTurnId);
         if (interrupt.AsrSessionIdToCleanup is not null)
         {
             _tasks.Track(

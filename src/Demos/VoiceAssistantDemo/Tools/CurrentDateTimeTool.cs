@@ -1,15 +1,14 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.Json;
-using VoiceBox.Assistant.Api.Tools.Contracts;
-using VoiceBox.Assistant.Api.Tools.Models;
+using VoiceBox.Assistant.Conversation.Abstractions.Tools;
 
 namespace VoiceAssistantDemo.Tools;
 
 /// <summary>
-/// Demonstrates the smallest in-process MCP tool integration: implement IAssistantTool and
-/// register the instance with UseMcpTools/AddTool.
+/// Demonstrates the smallest in-process conversation tool: implement IConversationTool and
+/// register the instance with ConversationBuilder.UseTools/AddTool.
 /// </summary>
-internal sealed class CurrentDateTimeTool : IAssistantTool
+internal sealed class CurrentDateTimeTool : IConversationTool
 {
     private static readonly ChineseLunisolarCalendar LunarCalendar = new();
     private readonly TimeProvider _timeProvider;
@@ -17,7 +16,7 @@ internal sealed class CurrentDateTimeTool : IAssistantTool
     public CurrentDateTimeTool(TimeProvider? timeProvider = null)
         => _timeProvider = timeProvider ?? TimeProvider.System;
 
-    public AssistantToolDescriptor Descriptor { get; } = new(
+    public ConversationToolDescriptor Descriptor { get; } = new(
         name: "get_current_date_time",
         displayName: "获取当前日期和时间",
         description: "获取运行 VoiceAssistant 的设备当前本地公历日期、农历日期、时间、星期和时区。",
@@ -56,12 +55,12 @@ internal sealed class CurrentDateTimeTool : IAssistantTool
               "additionalProperties": false
             }
             """,
-        risk: AssistantToolRisk.ReadOnly,
-        executionPolicy: AssistantToolExecutionPolicy.ForegroundOnly,
+        risk: ConversationToolRisk.ReadOnly,
+        executionPolicy: ConversationToolExecutionPolicy.ForegroundOnly,
         timeout: TimeSpan.FromSeconds(2));
 
-    public ValueTask<AssistantToolExecutionResult> ExecuteAsync(
-        AssistantToolInvocation invocation,
+    public ValueTask<ConversationToolExecutionResult> ExecuteAsync(
+        ConversationToolInvocation invocation,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(invocation);
@@ -94,7 +93,7 @@ internal sealed class CurrentDateTimeTool : IAssistantTool
             $"时区为 {_timeProvider.LocalTimeZone.Id}（UTC{utcOffset}）。";
 
         return ValueTask.FromResult(
-            AssistantToolExecutionResult.Success(content, structuredContent));
+            ConversationToolExecutionResult.Success(content, structuredContent));
     }
 
     private static string FormatUtcOffset(TimeSpan offset)

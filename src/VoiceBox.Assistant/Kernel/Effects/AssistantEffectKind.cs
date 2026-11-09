@@ -9,8 +9,6 @@ internal enum AssistantEffectKind
     CancelResponse,
     ClearPlaybackQueue,
     StopPlayback,
-    CommitHistory,
-    RollbackHistory,
     PublishStatefulEvent,
     CancelOperation,
     CompleteTurn,

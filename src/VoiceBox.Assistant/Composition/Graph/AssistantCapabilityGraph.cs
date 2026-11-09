@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Security.Cryptography;
 using System.Text;
@@ -13,15 +13,13 @@ using VoiceBox.Assistant.Modules.AudioFrontend.Models;
 using VoiceBox.Assistant.Modules.BargeIn.RenderAware;
 using VoiceBox.Assistant.Modules.Playback;
 using VoiceBox.Assistant.Modules.Recognition.Adapters;
-using VoiceBox.Assistant.Modules.Response.Adapters;
-using VoiceBox.Assistant.Modules.ModelInteraction.Contracts;
+using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Assistant.Modules.Speaker;
 using VoiceBox.Assistant.Modules.Speaker.Models;
 using VoiceBox.Assistant.Modules.TurnBoundary;
 using VoiceBox.Assistant.Modules.Wakeup;
 using VoiceBox.Core.Services.AcousticProcessing;
 using VoiceBox.Core.Services.ASRService;
-using VoiceBox.Core.Services.LLMService;
 using VoiceBox.Core.Services.SpeakerService;
 using VoiceBox.Core.Services.TTSService;
 using VoiceBox.Core.Services.VadService;
@@ -45,15 +43,13 @@ internal sealed class AssistantCapabilityGraph
     private readonly IAssistantAudioFrontend _audio;
     private readonly IVoiceActivityDetectService _turnBoundary;
     private readonly IASRService _recognition;
-    private readonly IStreamLLMService _responseGeneration;
+    private readonly IConversationSession _responseGeneration;
     private readonly IStreamTTSService _speechSynthesis;
     private readonly IWakeupService? _wakeup;
     private readonly ISpeakerService? _speaker;
     private readonly IAcousticProcessingMetricsSource? _acousticDiagnostics;
     private readonly IAcousticPathDelayEstimatorFactory? _acousticPathDelayEstimatorFactory;
-    private readonly IAssistantToolRuntimeFactory? _toolRuntimeFactory;
     private readonly VoiceAssistantOptions _options;
-    private readonly IReadOnlySet<AssistantCapability> _requestedCapabilities;
     private readonly ILogger _detectorLogger;
     private readonly TimeProvider? _timeProvider;
 
@@ -62,19 +58,16 @@ internal sealed class AssistantCapabilityGraph
         IAssistantAudioFrontend audio,
         IVoiceActivityDetectService turnBoundary,
         IASRService recognition,
-        IStreamLLMService responseGeneration,
+        IConversationSession responseGeneration,
         IStreamTTSService speechSynthesis,
         IWakeupService? wakeup,
         ISpeakerService? speaker,
         IAcousticProcessingMetricsSource? acousticDiagnostics,
         VoiceAssistantOptions options,
-        IAssistantToolRuntimeFactory? toolRuntimeFactory = null,
-        IReadOnlySet<AssistantCapability>? requestedCapabilities = null,
         ILogger? detectorLogger = null,
         TimeProvider? timeProvider = null,
         IAcousticPathDelayEstimatorFactory? acousticPathDelayEstimatorFactory = null)
     {
-        _requestedCapabilities = requestedCapabilities ?? new HashSet<AssistantCapability>();
         _detectorLogger = detectorLogger ?? NullLogger.Instance;
         _timeProvider = timeProvider;
         _profile = profile;
@@ -87,7 +80,6 @@ internal sealed class AssistantCapabilityGraph
         _speaker = speaker;
         _acousticDiagnostics = acousticDiagnostics;
         _acousticPathDelayEstimatorFactory = acousticPathDelayEstimatorFactory;
-        _toolRuntimeFactory = toolRuntimeFactory;
         _options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
@@ -130,12 +122,7 @@ internal sealed class AssistantCapabilityGraph
             _audio,
             new VadTurnBoundaryAdapter(_turnBoundary),
             new OfflineRecognitionProviderAdapter(_recognition),
-            _toolRuntimeFactory is null
-                ? new TextOnlyResponseGeneratorFactory(_responseGeneration)
-                : new ToolEnabledResponseGeneratorFactory(
-                    (IToolCallingStreamLLMService)_responseGeneration,
-                    _toolRuntimeFactory,
-                    _options.Tools),
+            _responseGeneration,
             speechSynthesis,
             _wakeup is null
                 ? null
@@ -241,22 +228,6 @@ internal sealed class AssistantCapabilityGraph
                 "VBX-COMP-009",
                 "Wakeup requires the declared processed capture timeline.");
         }
-
-        if (_requestedCapabilities.Contains(AssistantCapability.StructuredToolUse) &&
-            _toolRuntimeFactory is null)
-        {
-            throw new AssistantCompositionException(
-                "VBX-COMP-011",
-                "StructuredToolUse was requested but UseMcpTools did not install a tool runtime.");
-        }
-
-        if (_toolRuntimeFactory is not null && _responseGeneration is not IToolCallingStreamLLMService)
-        {
-            throw new AssistantCompositionException(
-                "VBX-COMP-011",
-                "UseMcpTools requires a response provider that implements " +
-                "IToolCallingStreamLLMService.");
-        }
     }
 
     /// <summary>
@@ -267,7 +238,7 @@ internal sealed class AssistantCapabilityGraph
     private IReadOnlyList<AssistantLifecycleParticipant> CreateLifecyclePlan()
     {
         var participants = new List<AssistantLifecycleParticipant>();
-        if (_toolRuntimeFactory is not null)
+        if (_responseGeneration is IConversationLifecycle)
             participants.Add(AssistantLifecycleParticipant.ResponseGeneration);
         if (OnlineSpeakerInstalled)
             participants.Add(AssistantLifecycleParticipant.SpeakerEvidence);
@@ -309,8 +280,6 @@ internal sealed class AssistantCapabilityGraph
             capabilities.Add(AssistantCapability.SpeakerEvidence);
         if (_options.BargeIn.Enable)
             capabilities.Add(AssistantCapability.BargeIn);
-        if (_toolRuntimeFactory is not null)
-            capabilities.Add(AssistantCapability.StructuredToolUse);
 
         var edges = CreateCapabilityEdges();
 
@@ -399,12 +368,6 @@ internal sealed class AssistantCapabilityGraph
             edges.Add(new("Speaker", AssistantCapability.SpeakerCaptureTimeline, CapabilityEdgeKind.Requires));
             edges.Add(new("Speaker", AssistantCapability.SpeakerEvidence, CapabilityEdgeKind.Provides));
         }
-        if (_toolRuntimeFactory is not null)
-        {
-            edges.Add(new("StructuredToolUse", AssistantCapability.ResponseGeneration, CapabilityEdgeKind.Requires));
-            edges.Add(new("StructuredToolUse", AssistantCapability.StructuredToolUse, CapabilityEdgeKind.Provides));
-            edges.Add(new("SpeechSynthesis", AssistantCapability.StructuredToolUse, CapabilityEdgeKind.Requires));
-        }
         return Array.AsReadOnly(edges.ToArray());
     }
 
@@ -433,7 +396,6 @@ internal sealed class AssistantCapabilityGraph
             AssistantCapability.WakeupGate,
             AssistantCapability.SpeakerEvidence,
             AssistantCapability.BargeIn,
-            AssistantCapability.StructuredToolUse,
         ];
         foreach (AssistantCapability capability in uniqueCapabilities)
         {
@@ -521,8 +483,6 @@ internal sealed class AssistantCapabilityGraph
         }
         if (_options.BargeIn.Enable)
             ownership.Add(new ModuleOwnership("BargeIn.Module", ResourceOwnership.AssistantOwned));
-        if (_toolRuntimeFactory is not null)
-            ownership.Add(new ModuleOwnership("StructuredToolUse.Runtime", ResourceOwnership.AssistantOwned));
         return Array.AsReadOnly(ownership.ToArray());
     }
 
@@ -545,7 +505,6 @@ internal sealed class AssistantCapabilityGraph
             AssistantCapability.WakeupGate => "WakeupGate",
             AssistantCapability.SpeakerEvidence => "SpeakerEvidence",
             AssistantCapability.BargeIn => "BargeIn",
-            AssistantCapability.StructuredToolUse => "StructuredToolUse",
             _ => throw new ArgumentOutOfRangeException(nameof(capability), capability, null),
         };
 }

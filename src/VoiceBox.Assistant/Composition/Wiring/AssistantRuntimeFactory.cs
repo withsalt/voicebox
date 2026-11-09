@@ -7,7 +7,6 @@ using VoiceBox.Assistant.Composition.Plans;
 using VoiceBox.Assistant.Diagnostics.Benchmarking;
 using VoiceBox.Assistant.Modules.AudioFrontend.Models;
 using VoiceBox.Assistant.Modules.AudioFrontend.Adapters;
-using VoiceBox.Assistant.Modules.Response.Contracts;
 using VoiceBox.Assistant.Modules.Speaker.Contracts;
 using VoiceBox.Assistant.Modules.Wakeup.Contracts;
 using VoiceBox.Assistant.Runtime;
@@ -50,7 +49,6 @@ internal static class AssistantRuntimeFactory
         IPlaybackBargeInDetector? detector = null;
         ISpeakerModule? speaker = null;
         IWakeupModule? wakeup = null;
-        IResponseGenerator? responseGenerator = null;
         try
         {
             IPlaybackBargeInDetectorFactory? detectorFactory =
@@ -80,8 +78,6 @@ internal static class AssistantRuntimeFactory
                     : plan.Speaker.Create(identityTap, audioFormat.AudioSampleRate, audioFormat.AudioChannels, resolvedLogger);
             }
 
-            responseGenerator = plan.ResponseGeneration.Create();
-
             if (plan.Wakeup is not null)
                 wakeup = plan.Wakeup.Create(speaker, resolvedTime, resolvedLogger);
 
@@ -90,7 +86,7 @@ internal static class AssistantRuntimeFactory
                 wakeup,
                 detector,
                 plan.Recognition,
-                responseGenerator);
+                plan.ResponseGeneration);
 
             AssistantRuntimeCompositionServices services = AssistantRuntimeCompositionFactory.Create(
                 eventSender ?? placeholderSender,
@@ -108,7 +104,6 @@ internal static class AssistantRuntimeFactory
         }
         catch
         {
-            try { (responseGenerator as IDisposable)?.Dispose(); } catch { }
             try { wakeup?.Dispose(); } catch { }
             try { speaker?.Dispose(); } catch { }
             try { detector?.Dispose(); } catch { }

@@ -7,9 +7,9 @@ using VoiceBox.Assistant.Diagnostics.Benchmarking;
 using VoiceBox.Assistant.Diagnostics.Metrics;
 using VoiceBox.Assistant.Modules.AudioFrontend.Contracts;
 using VoiceBox.Assistant.Modules.AudioFrontend.Models;
+using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Assistant.Modules.BargeIn.Contracts;
 using VoiceBox.Assistant.Modules.BargeIn.Policies;
-using VoiceBox.Assistant.Modules.ModelInteraction.Contracts;
 using VoiceBox.Assistant.Modules.Recognition.Controllers;
 using VoiceBox.Assistant.Modules.Response.Controllers;
 using VoiceBox.Assistant.Modules.Response.Adapters;
@@ -30,7 +30,6 @@ using VoiceBox.Assistant.Modules.BargeIn.Controllers;
 using VoiceBox.Assistant.Runtime.Control.Adapters;
 using VoiceBox.Assistant.Modules.Playback.Controllers;
 using VoiceBox.Assistant.Modules.BargeIn.Models;
-using VoiceBox.Assistant.Modules.Conversation.Stores;
 using VoiceBox.Assistant.Modules.TurnBoundary.Contracts;
 using VoiceBox.Assistant.Modules.Wakeup.Controllers;
 using VoiceBox.Assistant.Runtime.Publications.Dispatching;
@@ -136,14 +135,7 @@ internal static class AssistantRuntimeCompositionFactory
         BargeInDiagnosticsCoordinator diagnostics = new(listeningOptions, audioFormat, journal, logger);
         AecMetricsSampler aecMetrics = new(runtimePlan.AcousticDiagnostics, logger, timeProvider);
         AudioResamplerPool resamplers = new(audioFormat.AudioSampleRate, audioFormat.AudioChannels);
-        // Tool retention only applies when a tool runtime is installed; a text-only composition
-        // keeps the message-based trim path and its byte-identical prompts.
-        bool toolsInstalled = installed.ResponseGenerator is IToolHistorySource;
-        ConversationHistoryStore history = new(
-            snapshot.SystemPrompt,
-            snapshot.MaxHistoryTurns,
-            toolsInstalled ? snapshot.Tools.ToolTranscriptRetentionTurns : 0,
-            snapshot.Tools.MaxPersistedToolResultBytes);
+        var conversation = new ConversationResponseAdapter(installed.Conversation);
 
         BargeInDataPlaneController bargeInDataPlane = new(
             detector,
@@ -241,8 +233,6 @@ internal static class AssistantRuntimeCompositionFactory
             resamplers,
             playbackStartedIngress,
             echoGuard);
-        if (installed.ResponseGenerator is IToolHistorySource toolHistory)
-            toolHistory.BindToolHistorySink(history);
         PlaybackInterruptionController playbackInterruption = new(
             audioOutput,
             startupGuard,
@@ -251,9 +241,8 @@ internal static class AssistantRuntimeCompositionFactory
         ResponseModule responses = new(
             snapshot,
             bargeInInstalled,
-            installed.ResponseGenerator,
+            conversation,
             playbackSessions,
-            history,
             controlSignals,
             publications,
             startupGuard,
@@ -261,13 +250,15 @@ internal static class AssistantRuntimeCompositionFactory
             bargeInDataPlane,
             echoGuard);
 
-        if (installed.ResponseGenerator is IBackgroundToolResultSource backgroundResults)
-        {
-            backgroundResults.BindBackgroundResultSink(new PlaybackBackgroundToolResultSink(
-                new BackgroundResponsePlayback(snapshots, controlSignals, responses, responseResources),
-                publications,
-                history));
-        }
+        ConversationBackgroundBridge? backgroundBridge =
+            installed.Conversation is IConversationBackgroundOutput backgroundOutput
+                ? new ConversationBackgroundBridge(
+                    backgroundOutput,
+                    conversation,
+                    new BackgroundResponsePlayback(snapshots, controlSignals, responses, responseResources),
+                    publications,
+                    logger)
+                : null;
 
         BargeInTurnCoordinator bargeInTurns = new(
             snapshots,
@@ -278,7 +269,6 @@ internal static class AssistantRuntimeCompositionFactory
             diagnostics,
             journal,
             playbackInterruption,
-            history,
             turnContexts,
             turnContexts,
             controlSignals,
@@ -437,7 +427,6 @@ internal static class AssistantRuntimeCompositionFactory
                 new PlaybackEffectHandler(
                     playbackInterruption,
                     benchmarkProbe),
-                new ConversationEffectHandler(history),
                 publicEventEffects,
                 new RuntimeOperationEffectHandler(responses, turnCompletion)));
         turnWriter.BindEffects(effectRunner);
@@ -467,7 +456,6 @@ internal static class AssistantRuntimeCompositionFactory
             turnCompletion,
             bargeInDataPlane,
             nearEndReset,
-            history,
             playbackInterruption,
             recognitionTurns,
             tasks,
@@ -523,7 +511,7 @@ internal static class AssistantRuntimeCompositionFactory
             detector,
             tasks,
             logger,
-            installed.ResponseGenerator);
+            installed.Conversation);
 
         AssistantRuntimeLifecycle runtimeLifecycle = new(
             lifecycleLock,
@@ -550,6 +538,7 @@ internal static class AssistantRuntimeCompositionFactory
             playbackSessions,
             inputGate,
             wakeupInstalled,
+            backgroundBridge,
             logger);
 
         AssistantFaultConverger faults = new(

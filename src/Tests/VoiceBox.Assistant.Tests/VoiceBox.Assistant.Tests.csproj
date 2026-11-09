@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -21,7 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\VoiceBox.Assistant\VoiceBox.Assistant.csproj" />
-    <ProjectReference Include="..\..\VoiceBox.Assistant.Integrations.Mcp\VoiceBox.Assistant.Integrations.Mcp.csproj" />
+    <ProjectReference Include="..\..\VoiceBox.Assistant.Conversation\VoiceBox.Assistant.Conversation.csproj" />
     <ProjectReference Include="..\..\VoiceBox.LLM.OpenAI\VoiceBox.LLM.OpenAI.csproj" />
     <ProjectReference Include="..\..\VoiceBox.LLM.LLamaSharp\VoiceBox.LLM.LLamaSharp.csproj" />
     <ProjectReference Include="..\..\VoiceBox.ASR.Qwen3\VoiceBox.ASR.Qwen3.csproj" />

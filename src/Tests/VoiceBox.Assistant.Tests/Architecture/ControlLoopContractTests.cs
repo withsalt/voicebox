@@ -4,8 +4,6 @@ using System.Runtime.CompilerServices;
 using VoiceBox.Assistant.Composition.Wiring;
 using VoiceBox.Assistant.Modules.BargeIn.Contracts;
 using VoiceBox.Assistant.Modules.BargeIn.Controllers;
-using VoiceBox.Assistant.Modules.Conversation;
-using VoiceBox.Assistant.Modules.Conversation.Contracts;
 using VoiceBox.Assistant.Modules.Recognition.Controllers;
 using VoiceBox.Assistant.Modules.Response.Controllers;
 using VoiceBox.Assistant.Modules.TurnBoundary.Controllers;
@@ -233,18 +231,8 @@ public sealed class ControlLoopContractTests
         AssertDoesNotCall(
             typeof(BargeInTurnCoordinator),
             "ObserveValidatedBargeIn",
-            typeof(IConversationRollbackPort),
-            "RemoveUnansweredUserMessage");
-        AssertDoesNotCall(
-            typeof(BargeInTurnCoordinator),
-            "ObserveValidatedBargeIn",
             typeof(TurnContextStore),
             "TryCreate");
-        AssertCalls(
-            typeof(BargeInTurnCoordinator),
-            "CommitValidationPlan",
-            typeof(IConversationRollbackPort),
-            "RemoveUnansweredUserMessage");
         AssertCalls(
             typeof(BargeInTurnCoordinator),
             "CommitValidationPlan",
@@ -350,7 +338,6 @@ public sealed class ControlLoopContractTests
                 type == typeof(IRecognitionEffectHandler) ||
                 type == typeof(IResponseEffectHandler) ||
                 type == typeof(IPlaybackEffectHandler) ||
-                type == typeof(IConversationEffectHandler) ||
                 type == typeof(IRuntimeEffectHandler) ||
                 type == typeof(IPublicEventEffectHandler));
     }

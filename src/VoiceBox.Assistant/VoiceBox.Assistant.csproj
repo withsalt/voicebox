@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\VoiceBox.Assistant.Conversation.Abstractions\VoiceBox.Assistant.Conversation.Abstractions.csproj" />
     <ProjectReference Include="..\VoiceBox.Audio.Common\VoiceBox.Audio.Common.csproj" />
     <ProjectReference Include="..\VoiceBox.Core\VoiceBox.Core.csproj" />
     <ProjectReference Include="..\VoiceBox.DTD.RenderAware\VoiceBox.DTD.RenderAware.csproj" />
@@ -21,7 +22,6 @@
   <ItemGroup>
     <InternalsVisibleTo Include="VoiceBox.Assistant.Tests" />
     <InternalsVisibleTo Include="VoiceBox.Assistant.AecChallenge.Benchmark" />
-    <InternalsVisibleTo Include="VoiceBox.Assistant.Integrations.Mcp" />
   </ItemGroup>
 
 </Project>

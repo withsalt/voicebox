@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging.Abstractions;
+﻿using Microsoft.Extensions.Logging.Abstractions;
 using VoiceBox.Assistant.Api.Events;
 using VoiceBox.Assistant.Api.State;
 using VoiceBox.Assistant.Kernel.Effects;
@@ -113,8 +113,6 @@ public sealed partial class VoiceAssistantLifecycleTests
             new CancelResponseEffect(1),
             new ClearPlaybackQueueEffect(1),
             new StopPlaybackEffect(1),
-            new CommitHistoryEffect(1, "text"),
-            new RollbackHistoryEffect(1),
             new PublishStateChangedEffect(1, AssistantState.Idle, AssistantState.Listening),
             new PublishUserSpokeEffect(1, "user", TimeSpan.Zero),
             new PublishAssistantResponseGeneratedEffect(1, "assistant"),
@@ -132,7 +130,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             [
                 "SetInputGate", "PrepareRecognition", "FinishRecognition", "GenerateResponse",
                 "CancelResponse", "ClearPlaybackQueue",
-                "StopPlayback", "CommitHistory", "RollbackHistory", "PublishStateChanged",
+                "StopPlayback", "PublishStateChanged",
                 "PublishUserSpoke", "PublishAssistantResponseGenerated", "PublishAssistantReplied",
                 "PublishFaulted", "PublishBargeInValidation",
                 "CancelOperation", "CompleteTurn",
@@ -196,7 +194,6 @@ public sealed partial class VoiceAssistantLifecycleTests
         IRecognitionEffectHandler,
         IResponseEffectHandler,
         IPlaybackEffectHandler,
-        IConversationEffectHandler,
         IPublicEventEffectHandler,
         IRuntimeEffectHandler
     {
@@ -206,7 +203,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         public Action? CancelOperationObserved { get; set; }
 
         public AssistantEffectHandlers ToHandlers()
-            => new(this, this, this, this, this, this, this);
+            => new(this, this, this, this, this, this);
 
         public ValueTask SetInputGateAsync(SetInputGateEffect effect, CancellationToken cancellationToken)
             => AsyncInputGate
@@ -218,8 +215,6 @@ public sealed partial class VoiceAssistantLifecycleTests
         public ValueTask CancelResponseAsync(CancelResponseEffect effect, CancellationToken cancellationToken) => Record("CancelResponse");
         public ValueTask ClearPlaybackQueueAsync(ClearPlaybackQueueEffect effect, CancellationToken cancellationToken) => Record("ClearPlaybackQueue");
         public ValueTask StopPlaybackAsync(StopPlaybackEffect effect, CancellationToken cancellationToken) => Record("StopPlayback");
-        public ValueTask CommitHistoryAsync(CommitHistoryEffect effect, CancellationToken cancellationToken) => Record("CommitHistory");
-        public ValueTask RollbackHistoryAsync(RollbackHistoryEffect effect, CancellationToken cancellationToken) => Record("RollbackHistory");
         public ValueTask PublishWakeModeChangedAsync(PublishWakeModeChangedEffect effect, CancellationToken cancellationToken)
             => PublicEvents?.PublishWakeModeChangedAsync(effect, cancellationToken) ?? Record("PublishWakeModeChanged");
         public ValueTask PublishWakeupDetectedAsync(PublishWakeupDetectedEffect effect, CancellationToken cancellationToken)

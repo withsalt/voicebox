@@ -23,8 +23,6 @@ internal sealed class AssistantEffectRunner
             CancelResponseEffect value => _handlers.ResponseGeneration.CancelResponseAsync(value, cancellationToken),
             ClearPlaybackQueueEffect value => _handlers.Playback.ClearPlaybackQueueAsync(value, cancellationToken),
             StopPlaybackEffect value => _handlers.Playback.StopPlaybackAsync(value, cancellationToken),
-            CommitHistoryEffect value => _handlers.Conversation.CommitHistoryAsync(value, cancellationToken),
-            RollbackHistoryEffect value => _handlers.Conversation.RollbackHistoryAsync(value, cancellationToken),
             PublishStateChangedEffect value => _handlers.Events.PublishStateChangedAsync(value, cancellationToken),
             PublishBargeInValidationEffect value => _handlers.Events.PublishBargeInValidationAsync(value, cancellationToken),
             PublishUserSpokeEffect value => _handlers.Events.PublishUserSpokeAsync(value, cancellationToken),

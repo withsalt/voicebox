@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Reflection;
 using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Composition.Builder;
+using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Assistant.Composition.Exceptions;
 using VoiceBox.Assistant.Composition.Graph;
 using VoiceBox.Assistant.Composition.Plans;
@@ -41,7 +42,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .BuildComposition();
 
@@ -90,7 +91,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .BuildWithDiagnostics();
         using (direct.Assistant)
@@ -176,7 +177,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .AddWakeup(services.Wakeup)
             .AddSpeakerVerification(services.Speaker)
@@ -219,7 +220,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         registrations.AddSingleton<IAudioDuplexService>(services.Audio);
         registrations.AddSingleton<IVoiceActivityDetectService>(services.Vad);
         registrations.AddSingleton<IASRService>(services.Asr);
-        registrations.AddSingleton<IStreamLLMService>(services.Llm);
+        registrations.AddSingleton<IConversationSession>(TestConversation.Create(services.Llm));
         registrations.AddVoiceBoxAssistant();
         using ServiceProvider provider = registrations.BuildServiceProvider();
 
@@ -242,7 +243,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         registrations.AddSingleton<IAudioPlayService>(playback);
         registrations.AddSingleton<IVoiceActivityDetectService>(services.Vad);
         registrations.AddSingleton<IASRService>(services.Asr);
-        registrations.AddSingleton<IStreamLLMService>(services.Llm);
+        registrations.AddSingleton<IConversationSession>(TestConversation.Create(services.Llm));
         registrations.AddSingleton<IStreamTTSService>(services.Tts);
         registrations.AddVoiceBoxAssistant();
         using ServiceProvider provider = registrations.BuildServiceProvider();
@@ -263,7 +264,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .Build();
 
@@ -271,7 +272,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         AssistantRuntime runtime = (AssistantRuntime)typeof(VoiceAssistant)
             .GetField("_runtime", BindingFlags.Instance | BindingFlags.NonPublic)!
             .GetValue(assistant)!;
-        var snapshot = RuntimeGraphProbe.RequireField<VoiceAssistantOptions>(runtime, "_options");
+        object responses = RuntimeGraphProbe.RequireField(runtime, "_responses");
+        var snapshot = (VoiceAssistantOptions)responses.GetType()
+            .GetField("_options", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .GetValue(responses)!;
 
         Assert.NotSame(options, snapshot);
         Assert.Equal(9, snapshot.MinSentenceChars);
@@ -353,7 +357,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     public void DiagnosticsContainOnlySanitizedIdentityAndStatus()
     {
         var services = TestServices.Create();
-        var options = new VoiceAssistantOptions { SystemPrompt = "sensitive-prompt" };
+        var options = new VoiceAssistantOptions { TtsVoice = "sensitive-prompt" };
         using ServiceProvider provider = CreateProvider(services, options, hosted: false);
         VoiceAssistantDiagnostics diagnostics = provider.GetRequiredService<VoiceAssistantDiagnostics>();
 
@@ -363,7 +367,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             diagnostics.Turn,
             diagnostics.Modules,
         });
-        Assert.DoesNotContain(options.SystemPrompt, serialized, StringComparison.Ordinal);
+        Assert.DoesNotContain(options.TtsVoice!, serialized, StringComparison.Ordinal);
         Assert.DoesNotContain(services.Audio.GetType().FullName!, serialized, StringComparison.Ordinal);
         Assert.DoesNotContain("IServiceProvider", serialized, StringComparison.Ordinal);
     }
@@ -444,7 +448,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         registrations.AddSingleton<IAudioPlayService>(services.Audio);
         registrations.AddSingleton<IVoiceActivityDetectService>(services.Vad);
         registrations.AddSingleton<IASRService>(services.Asr);
-        registrations.AddSingleton<IStreamLLMService>(services.Llm);
+        registrations.AddSingleton<IConversationSession>(TestConversation.Create(services.Llm));
         registrations.AddSingleton<IStreamTTSService>(services.Tts);
         if (wakeupRegistered)
             registrations.AddSingleton<IWakeupService>(services.Wakeup);
@@ -453,7 +457,6 @@ public sealed partial class VoiceAssistantLifecycleTests
         registrations.AddVoiceBoxAssistant(target =>
         {
             target.MinSentenceChars = options.MinSentenceChars;
-            target.SystemPrompt = options.SystemPrompt;
             target.Speaker.ProfilePath = options.Speaker.ProfilePath;
             target.Speaker.Confirmation.Enable = options.Speaker.Confirmation.Enable;
         });

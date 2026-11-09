@@ -6,7 +6,6 @@ using VoiceBox.Assistant.Diagnostics.Benchmarking;
 using VoiceBox.Assistant.Kernel.Models;
 using VoiceBox.Assistant.Kernel.Signals;
 using VoiceBox.Assistant.Modules.BargeIn.Contracts;
-using VoiceBox.Assistant.Modules.Conversation.Contracts;
 using VoiceBox.Assistant.Modules.Playback;
 using VoiceBox.Assistant.Modules.Recognition.Contracts;
 using VoiceBox.Assistant.Modules.TurnBoundary.Models;

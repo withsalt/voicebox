@@ -1,4 +1,4 @@
-{
+﻿{
   "schema": "voicebox.assistant/kernel-semantic-trace/v1",
   "catalogVersion": "v1",
   "scenarioId": "normal-turn",
@@ -49,8 +49,7 @@
       "previousState": "Speaking",
       "nextState": "Speaking",
       "effects": [
-        { "effectIndex": 0, "type": "effect.history.commit.v1", "detail": "turnId=T1" },
-        { "effectIndex": 1, "type": "effect.public-event.publish.v1", "detail": "AssistantResponseGenerated:好的。" }
+        { "effectIndex": 0, "type": "effect.public-event.publish.v1", "detail": "AssistantResponseGenerated:好的。" }
       ]
     },
     {

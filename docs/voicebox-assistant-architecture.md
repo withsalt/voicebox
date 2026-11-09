@@ -1,26 +1,30 @@
-# VoiceBox.Assistant 架构文档
+﻿# VoiceBox.Assistant 架构文档
 
-> 适用范围：`src/VoiceBox.Assistant`、`src/VoiceBox.Assistant.Integrations.Mcp`
+> 适用范围：`src/VoiceBox.Assistant`、`src/VoiceBox.Assistant.Conversation.Abstractions`、
+> `src/VoiceBox.Assistant.Conversation`、`src/VoiceBox.Assistant.Conversation.Mcp`
 >
-> 相关测试：`src/Tests/VoiceBox.Assistant.Tests/Architecture/`
+> 相关测试：`src/Tests/VoiceBox.Assistant.Tests/Architecture/`、
+> `src/Tests/VoiceBox.Assistant.Conversation.Tests/`
 
 ## 1. 概览
 
 `VoiceBox.Assistant` 是一个端到端语音助手运行时，提供：
 
 - 双工音频输入与播放，或独立录音 + 播放；
-- VAD、ASR、LLM、TTS 流式编排；
+- VAD、ASR、会话输出流、TTS 的流式编排；
 - 唤醒词与连续对话；
 - 说话人验证；
 - render-aware barge-in；
-- 会话历史、事件通知、生命周期与故障处理；
-- 由 LLM 发起、Assistant Host 编排的可选 MCP 工具调用。
+- 事件通知、生命周期与故障处理。
+
+**Assistant 负责语音交互；会话实现负责如何理解输入、生成回答和管理自己的对话状态。** Assistant 通过
+`IConversationSession` 消费“本轮文字 → 输出事件流”，不构建 prompt、不保存历史、不实现工具循环。
 
 架构形态是：
 
 > 模块化单体 + 窄 TurnKernel + AssistantRuntime Shell + Capability Modules + Ports and Adapters + 独立实时数据面
 
-核心设计目标有两条。第一，运行时编排、状态、并发、缓冲区、取消令牌和副作用都必须有唯一所有者，不集中在少数大型类中。第二，可插拔性是一级架构约束：核心只依赖完成一轮会话所需的能力端口，Wakeup、Speaker、DNR、AEC、Barge-in 和 MCP Tools 按能力组合，缺少能力时构建期失败而不是静默降级。
+核心设计目标有两条。第一，运行时编排、状态、并发、缓冲区、取消令牌和副作用都必须有唯一所有者，不集中在少数大型类中。第二，可插拔性是一级架构约束：核心只依赖完成一轮语音回合所需的能力端口，Wakeup、Speaker、DNR、AEC、Barge-in 按能力组合，缺少能力时构建期失败而不是静默降级。会话与工具能力通过独立模块组合，不进入 Assistant 程序集。
 
 ### 1.1 明确不做
 
@@ -36,7 +40,8 @@
 - 把逐帧音频、逐 token LLM chunk、TTS PCM 或每 hop DTD 数据送入 Kernel 或通用消息总线；
 - 为兼容旧内部实现保留两套执行路径；
 - 微服务拆分、跨进程消息总线；
-- 未显式调用 `UseMcpTools` 时连接、发现或调用 MCP Server。
+- Assistant 连接、发现或调用 MCP Server；这项工作只属于 `VoiceBox.Assistant.Conversation.Mcp`；
+- Assistant 内部保存对话历史、提交/回滚历史或拼接模型 prompt。
 
 在 Builder / 组合根中选择一组不可变能力属于启动前静态装配，不属于算法开关。Assistant 一经 `Build`，能力集合在整个实例生命周期内保持不变；需要改变组合时创建新实例，而不是在运行时切换。
 
@@ -63,15 +68,21 @@ flowchart TB
     subgraph Modules["Capability Modules：模块私有状态"]
         TurnBoundary["Turn Boundary"]
         Recognition["Recognition"]
-        Response["Response Generation"]
-        ModelInteraction["Model Interaction"]
+        Response["Response（会话消费 + 语音协调）"]
         Synthesis["Speech Synthesis"]
         Wakeup["Wakeup（可选）"]
         Speaker["Speaker（可选）"]
         BargeIn["Barge-in（可选）"]
-        ToolUse["Tool-use Orchestrator（可选）"]
         Playback["Playback"]
-        History["Conversation"]
+    end
+
+    subgraph ConversationLayer["Conversation：会话状态与回答"]
+        Contract["IConversationSession<br/>（Abstractions，仅 BCL）"]
+        Default["LlmConversationSession /<br/>LlmToolConversationSession"]
+        Tools["Abstractions.Tools<br/>+ 默认工具运行时"]
+        McpAdapter["Conversation.Mcp"]
+        McpServers["MCP Servers"]
+        Llm["VoiceBox LLM providers"]
     end
 
     subgraph Data["实时数据面：高频、低分配"]
@@ -82,11 +93,8 @@ flowchart TB
 
     AudioPorts["Required：Capture + Playback<br/>Duplex 或 Record + Play"]
     OptionalAudio["Optional Audio Capabilities：<br/>Simultaneous Duplex / Render Reference / Processed Timeline / Diagnostics"]
-    Ports["Typed Ports：Turn Boundary / ASR / Response / TTS / KWS / Speaker"]
+    Ports["Typed Ports：Turn Boundary / ASR / Conversation / TTS / KWS / Speaker"]
     Providers["VoiceBox Providers"]
-    ToolPorts["Tool Runtime：Catalog / Approval / Execution"]
-    McpAdapter["MCP Adapter（显式 UseMcpTools）"]
-    McpServers["MCP Servers"]
 
     Host --> Composition --> Graph --> Plan --> Facade --> Lifecycle --> Loop
     Loop -->|semantic signal| Kernel
@@ -94,8 +102,12 @@ flowchart TB
     Effects -->|typed effect handlers| Modules
     Modules -->|completion / fault signal| Loop
     Modules --> Ports --> Providers
-    Response -.->|LLM-backed generator| ModelInteraction
-    ModelInteraction --> Ports
+    Response -->|StreamAsync / Completed| Contract
+    Contract -.-> Default
+    Default --> Llm
+    Default --> Tools
+    Tools -.->|IConversationToolProvider| McpAdapter
+    McpAdapter --> McpServers
     Response --> Synthesis --> Playback
     Effects --> Supervisor
     Effects --> Publisher --> Host
@@ -105,9 +117,6 @@ flowchart TB
     Audio --> Router --> DSP
     Router -->|typed frame/data ports| Modules
     DSP -->|只提交低频语义信号| Loop
-    ToolUse -.->|显式 UseMcpTools| ToolPorts
-    ToolPorts -.->|协议隔离| McpAdapter
-    McpAdapter -.->|stdio / Streamable HTTP| McpServers
 ```
 
 ## 3. 分层与职责边界
@@ -154,7 +163,7 @@ internal sealed record TurnDecision(
 - interruption requested / accepted / rejected；
 - turn cancelled 或 runtime fault 投影。
 
-Kernel 产生的 Effect 只描述意图：begin/finish recognition、generate/cancel response、stop/clear playback（owner-scoped，不存在 duck/restore）、commit/rollback history、publish stateful public event。Effect 不包含可执行 delegate、Provider 实例、CTS、裸音频 buffer 或可变 service reference。
+Kernel 产生的 Effect 只描述意图：begin/finish recognition、generate/cancel response、stop/clear playback（owner-scoped，不存在 duck/restore）、publish stateful public event。历史提交与回滚不属于 Kernel Effect：它们由会话实现在自己的完成临界区内完成。Effect 不包含可执行 delegate、Provider 实例、CTS、裸音频 buffer 或可变 service reference。
 
 未开启声纹认证时，近端模块在 DTD 初步接受语音帧后临时降低原回合的播放增益（`PlaybackDuckGain`，默认 0.15），连续 `PlaybackDuckReleaseMs`（默认 200 ms）无新近端证据则恢复；DTD 确认 Interrupt 后仍由 Kernel 停播。临时增益由播放请求所有者管理，在误报、请求结束或取消后恢复，旧候选不能修改新请求的音量。开启声纹认证时不做临时降音量，等待当前候选的 Speaker Match 后停播。
 
@@ -220,8 +229,6 @@ Effect 至少携带 `type`、`effectIndex`、`turnId` 和 owned immutable payloa
 | `effect.response.cancel.v1` | `CancelResponse` | ResponseGeneration |
 | `effect.playback.clear.v1` | `ClearPlaybackQueue` | Playback |
 | `effect.playback.stop.v1` | `StopPlayback` | Playback |
-| `effect.history.commit.v1` | `CommitHistory` | Conversation |
-| `effect.history.rollback.v1` | `RollbackHistory` | Conversation |
 | `effect.public-event.publish.v1` | `PublishStatefulEvent` | PublicEventPublisher |
 | `effect.operation.cancel.v1` | `CancelOperation` | Runtime EffectRunner / 目标模块 |
 | `effect.turn.complete.v1` | `CompleteTurn` | Runtime TurnContextStore |
@@ -249,7 +256,7 @@ Module observation/result
 5. Runtime `OperationCorrelationGate` 在进入 ControlLoop 前收敛 unknown / duplicate / late operation completion；通过 gate 的 Signal 仍携带 TurnId，TurnKernel 再按当前 snapshot 确定性拒绝 wrong-turn / out-of-state 语义。两层都不得让旧 operation 回写新 Turn。
 6. 替换同一能力的 provider / adapter 只需满足相同 module contract，不修改 Kernel。
 7. 新能力引入新的全局状态或不变量时，必须显式扩展 `TurnSignal` / `AssistantEffect` / Reducer，并补齐状态模型与 Golden Trace；不能用通用 payload 绕过 Kernel 审查。
-8. MCP 是 LLM-backed ResponseGeneration 的内部扩展。只有用户审批等确实改变全局 Turn 语义时才新增协议无关的 Kernel Signal / Effect；MCP DTO 永不进入 Kernel。
+8. 工具与 MCP 是会话实现的内部扩展，不是 Assistant 能力模块。只有用户打断等确实改变全局 Turn 语义时才新增协议无关的 Kernel Signal / Effect；会话输出 DTO 与 MCP DTO 永不进入 Kernel。
 
 Effect 分发的规范形态：
 
@@ -296,14 +303,13 @@ ValueTask<EffectExecutionResult> ExecuteAsync(
 | `Abstractions / Events` | `Api/Events/` | 9 个公开事件的 EventArgs 与 enum |
 | `Abstractions / Status and failures` | `Api/State/AssistantState.cs`、`Runtime/Control/Models/AssistantFailure.cs` | |
 | `Abstractions / Public options` | `Api/Configuration/` | |
-| `Abstractions / Tool contracts` | `Api/Tools/Contracts/`、`Api/Tools/Models/` | 宿主实现进程内工具与审批策略所需的 public contract |
 | `Kernel` | `Kernel/TurnKernel.cs`、`Kernel/Models/`、`Kernel/Signals/`、`Kernel/Effects/`、`Kernel/Extensions/` | `TurnSnapshot` / `TurnSignal` / `AssistantEffect` / `KernelFailure` / 纯 Reduce |
 | `Runtime / Shell` | `Runtime/Lifecycle/`、`Runtime/Control/`、`Runtime/Effects/`、`Runtime/TurnContext/`、`Runtime/Pipelines/`、`Runtime/Gates/` | Shell 是这些协作对象的集合，不是某一个类 |
 | `Runtime / Facade` | `Runtime/AssistantRuntime.cs` | 仅接收协作对象集合、转发事件、Start/Stop/Dispose；只实现 `IDisposable` |
 | `Runtime / LifecycleCoordinator` | `Runtime/Lifecycle/Controllers/`、`Contracts/`、`Models/` | 启停序列 + 模块拓扑 + 订阅所有者 + 故障收敛 |
 | `Runtime / AssistantControlLoop` | `Runtime/Control/Controllers/`、`Contracts/`、`Models/`、`Queues/`、`State/`、`Adapters/` | 有界 MPSC ingress + 单消费者 + typed envelope + 封闭路由 |
 | `Runtime / TurnKernel commit` | `Runtime/Control/State/TurnSnapshotStore.cs`、`Runtime/Control/State/TurnStateProjection.cs`、`Runtime/Control/Controllers/AssistantControlLoopTurnWriter.cs`、`Runtime/Control/Projections/AssistantSignalKernelProjection.cs` | 快照唯一持有者与唯一提交者 |
-| `Runtime / EffectRunner` | `Runtime/Effects/Execution/`、`Handlers/`、`Contracts/`、`Resources/` | 闭合 switch + 7 个能力族 handler |
+| `Runtime / EffectRunner` | `Runtime/Effects/Execution/`、`Handlers/`、`Contracts/`、`Resources/` | 闭合 switch + 6 个能力族 handler |
 | `Runtime / OperationCorrelationGate` | `Runtime/Gates/OperationCorrelationGate.cs`、`Runtime/Control/Queues/CorrelatedObservationQueue.cs` | |
 | `Runtime / TaskSupervisor` | `Runtime/Lifecycle/Controllers/AssistantTaskSupervisor.cs` | 同时是 `IEffectBackgroundScheduler` |
 | `Runtime / TurnContextStore` | `Runtime/TurnContext/`、`Runtime/TurnContext/Contracts/` | |
@@ -312,24 +318,26 @@ ValueTask<EffectExecutionResult> ExecuteAsync(
 | `Modules / AudioFrontend` | `Modules/AudioFrontend/Adapters/`、`Contracts/`、`Models/`、`Diagnostics/Metrics/` | typed input / output / render / processed / diagnostics 端口 |
 | `Modules / TurnBoundary` | `Modules/TurnBoundary/Contracts/`、`Models/`、`Controllers/`、`Adapters/` | `ITurnBoundarySource` + VAD adapter + host seam + ingress |
 | `Modules / Recognition` | `Modules/Recognition/Controllers/`、`Contracts/`、`Models/`、`Adapters/`、`Formatting/` | session、pre-ASR 缓冲、识别工作流 |
-| `Modules / ModelInteraction` | `Modules/ModelInteraction/Contracts/`、`Models/`、`Modules/Response/Adapters/TextOnlyLlmTurnClientAdapter.cs` | protocol-neutral model / tool contracts |
-| `Modules / Response` | `Modules/Response/`、`Runtime/Effects/Resources/ResponseTurnResources.cs` | |
+| `Modules / Response` | `Modules/Response/`、`Runtime/Effects/Resources/ResponseTurnResources.cs` | 会话消费、思考/文字事件、TTS 播放与 response operation |
 | `Modules / Playback` | `Modules/Playback/Contracts/`、`Models/`、`Controllers/`、`Adapters/`、`Buffering/` | synthesis queue、背压、preroll、drain |
 | `Modules / Wakeup` | `Modules/Wakeup/Contracts/`、`Models/`、`Controllers/`、`Adapters/`、`Buffering/`、`Extensions/` | mode / pre-roll / authorization / service adapter + 会话内打断 |
 | `Modules / Speaker` | `Modules/Speaker/Contracts/`、`Models/`、`Controllers/`、`Enrollment/`、`Evidence/`、`Profiles/`、`Policies/`、`State/`、`Buffering/`、`Configuration/`、`Diagnostics/`、`Exceptions/`、`Extensions/` | identity tap + ring + 语音门控预取 + evidence cache + policy + 注册 |
 | `Modules / BargeIn` | `Modules/BargeIn/Contracts/`、`Models/`、`Controllers/`、`Adapters/`、`Policies/`、`State/`、`Buffering/`、`RenderAware/` | 候选所有者、验证回合所有者、打断裁决、数据面控制器；RenderAware 也按契约、模型、控制器、估计器、策略分类 |
-| `Modules / Conversation` | `Modules/Conversation/Contracts/`、`Models/`、`Stores/` | |
 | `Realtime / AudioFrameRouter` | `Realtime/Routing/AudioFrameRouter.cs` | |
 | `Realtime / Buffers` | `Modules/BargeIn/Buffering/NearEndAudioReservoir.cs`、`Realtime/Timeline/BoundedFractionalRenderBuffer.cs`、`Runtime/Control/Queues/BoundedMpscQueue.cs` | |
 | `Realtime / Resampling` | `Realtime/Resampling/AudioResamplerPool.cs` | |
 | `Realtime / Timeline` | `Realtime/Timeline/AdaptiveRenderDelayTracker.cs`、`RenderAlignmentStage.cs`、`Timeline*Resampler.cs` | |
 | `Diagnostics` | `Diagnostics/Benchmarking/`、`Metrics/`、`Recording/` | Benchmarking 内分 `Contracts/`、`Models/`、`Adapters/`；指标快照在 `Metrics/Models/` |
 | `Hosting` | `Hosting/VoiceAssistantServiceCollectionExtensions.cs`、`Configuration/`、`Lifecycle/`、`Diagnostics/`、`Models/`、`Telemetry/` | DI、options 验证、hosted lifecycle、diagnostics、tracing/metrics；不属于 Runtime 或 Modules |
-| `Integrations / Mcp` | `src/VoiceBox.Assistant.Integrations.Mcp/` | 独立程序集，唯一允许引用 MCP SDK 的位置 |
+| `Conversation / Contract` | `src/VoiceBox.Assistant.Conversation.Abstractions/` | 仅 BCL；调用方实现业务会话所需的主接口、输出 DTO 与可选能力 |
+| `Conversation / Default` | `src/VoiceBox.Assistant.Conversation/` | 默认 LLM 会话、内存历史、上下文扩展、工具运行时与本地工具 |
+| `Conversation / Mcp` | `src/VoiceBox.Assistant.Conversation.Mcp/` | 独立程序集，唯一允许引用 MCP SDK 的位置 |
 
 ### 7.1 程序集边界
 
-`Kernel`、`Runtime`、`Modules`、`Hosting` 共处 `VoiceBox.Assistant` 单个程序集。它们共享一组内部 typed plans，没有独立依赖、测试或发布价值，因此不为目录对称拆成空程序集；边界由本文的依赖规则加架构测试锁定。`VoiceBox.Assistant.Integrations.Mcp` 是唯一独立的物理边界，因为它需要隔离 `ModelContextProtocol.*` 包依赖。
+`Kernel`、`Runtime`、`Modules`、`Hosting` 共处 `VoiceBox.Assistant` 单个程序集。它们共享一组内部 typed plans，没有独立依赖、测试或发布价值，因此不为目录对称拆成空程序集；边界由本文的依赖规则加架构测试锁定。
+
+`VoiceBox.Assistant` 只引用 `VoiceBox.Assistant.Conversation.Abstractions`，不引用默认会话或 MCP 集成。Abstractions 仅依赖 BCL，因此实现业务会话的调用方不必引入 Core 的 ONNX 依赖。`VoiceBox.Assistant.Conversation` 依赖 Abstractions 与 Core；`VoiceBox.Assistant.Conversation.Mcp` 只依赖 Abstractions 与 MCP SDK，不引用 Conversation、Assistant 或 Core。
 
 允许的依赖方向：
 
@@ -342,7 +350,9 @@ Composition ──▶ Runtime ──▶ Kernel
 
 Hosting namespace ──▶ (Composition | Runtime | Abstractions)      # 逻辑反向禁止
 Kernel  ──▶ 仅 Abstractions 与自身 pure value/policy
-Integrations.Mcp ──▶ Api/Tools + Composition hook              # 核心不反向依赖
+VoiceBox.Assistant ──▶ Conversation.Abstractions                 # 不引用具体会话
+Conversation ──▶ Conversation.Abstractions + Core
+Conversation.Mcp ──▶ Abstractions + ModelContextProtocol.*      # 不引用 Conversation/Assistant/Core
 ```
 
 ### 7.2 源文件组织约定
@@ -368,10 +378,10 @@ Integrations.Mcp ──▶ Api/Tools + Composition hook              # 核心不
 6. `IAudioServiceManager` 不出现在 `VoiceBox.Assistant` 的任何位置；宿主自行解析 provider 后通过类型化 Builder 注入。
 7. 对外事件只由统一发布器发出，模块不直接调用用户订阅者。
 8. 配置在 Runtime 创建时转换为不可变内部快照，运行期不被外部引用修改。
-9. `Response` 只依赖协议无关的 Response Generation 端口；LLM-backed generator 再依赖 Model Interaction 端口。二者都不依赖 OpenAI、ONNX 或 MCP SDK 类型。
-10. `Kernel`、`Conversation` 和 `Playback` 不引用 `ModelContextProtocol.*` 或 MCP wire DTO。
-11. MCP wire model、transport、版本协商、授权与 SDK 生命周期只存在于 `VoiceBox.Assistant.Integrations.Mcp`。
-12. Tool Adapter 只返回规范化结果，不直接发布 Assistant event、修改 history 或调用 TTS。
+9. `Response` 只依赖 `IConversationSession`、播放与公开事件端口。它不知道会话内部是否使用 LLM、工具或数据库。
+10. `Kernel`、`Response` 和 `Playback` 不引用 `ModelContextProtocol.*` 或 MCP wire DTO。
+11. MCP wire model、transport、版本协商、授权与 SDK 生命周期只存在于 `VoiceBox.Assistant.Conversation.Mcp`。
+12. 工具来源只返回规范化结果，不直接发布 Assistant event、修改会话历史或调用 TTS。
 13. MCP Server 地址、stdio executable 和授权信息只来自受信任配置；模型输出和用户语音不得动态指定 server / command。
 14. 不设计万能插件接口。音频处理器、回合边界、识别、回复生成、合成、输入门和工具是不同扩展轴，各自使用小型类型化端口。
 15. `AssistantCapabilityGraph` 只用于描述、验证和生成诊断快照，不暴露 `Get<T>()`、按名称查询或运行时定位服务的能力。
@@ -526,11 +536,11 @@ stateful 事件在 commit 时取号而不是在 signal 入队时取号，因为�
 | Supervisor | 后台任务、取消、故障收敛 |
 | Factory / Pool | session、detector、resampler、buffer lease |
 | Decorator | telemetry |
-| Anti-Corruption Layer | LLM provider / MCP SDK DTO 与 Assistant 内部模型之间的映射 |
+| Anti-Corruption Layer | LLM provider / MCP SDK DTO 与 Conversation 内部模型的映射；Assistant 只消费 `ConversationEvent` |
 
 不为模式而模式化：不允许每类一个接口、万能 `AssistantContext`、泛型 Repository、深层继承体系、高频帧消息总线或通用 `VoiceAssistantKernel`。Kernel 扩展使用组合与显式协议演进，不使用继承。编码时权衡功能大小和设计成本，避免过度设计和无意义抽象。
 
-接口按业务职责与实际消费者划分：重复的状态视图、无独立用途的继承层和始终成组绑定的同一业务端口应合并；实时音频、语义控制、生命周期与诊断仍保留独立边界。具体关系和合并依据见 [Assistant 接口业务关系与合并依据](voicebox-assistant-interface-consolidation.md)。
+接口按业务职责与实际消费者划分：重复的状态视图、无独立用途的继承层和始终成组绑定的同一业务端口应合并；实时音频、语义控制、生命周期与诊断仍保留独立边界。
 
 ## 12. 能力组合
 
@@ -546,7 +556,7 @@ stateful 事件在 commit 时取号而不是在 signal 入队时取号，因为�
 | `AudioPlayback` | 是 | `IAudioDuplexService` 或 `IAudioPlayService` | 承接 TTS 音频、drain、clear 和播放状态 |
 | `TurnBoundary` | 是 | `IVoiceActivityDetectService` | 决定何时开始 / 结束识别；也可由按键或宿主 endpoint 提供 |
 | `SpeechRecognition` | 是 | `IASRService` | 将一个完整语音 Turn 转为文本 |
-| `ResponseGeneration` | 是 | `IStreamLLMService` adapter | 生成回答；也可由规则、业务回调或其他模型实现 |
+| `Conversation` | 是 | `IConversationSession` | 生成回答并管理自己的对话状态；可由默认 LLM 会话、业务系统 adapter 或其他实现提供 |
 | `SpeechSynthesis` | 是 | `IStreamTTSService` | 将可播报文本转换为播放音频 |
 
 「双工（或录音 + 播放）+ ASR + TTS」表达了主要媒体链路，但还隐含 `TurnBoundary` 与 `ResponseGeneration` 两个必要角色。它们必须显式进入类型系统，否则会重新变成 Runtime 中的隐藏依赖。
@@ -569,7 +579,7 @@ var assistant = VoiceAssistant.CreateBuilder()
     // 或 .UseAudio(record, playback)
     .UseTurnBoundary(vad)
     .UseSpeechRecognition(asr)
-    .UseResponseGeneration(llm)
+    .UseConversation(conversation)
     .UseSpeechSynthesis(tts)
     .AddWakeup(wakeup)
     .AddSpeakerVerification(speaker)
@@ -604,8 +614,10 @@ SpeakerCaptureTimeline
 TurnBoundary                 SpeechRecognition
 ResponseGeneration           SpeechSynthesis
 WakeupGate                   SpeakerEvidence
-BargeIn                      StructuredToolUse
+BargeIn
 ```
+
+`Conversation` 提供 `ResponseGeneration` 能力。工具、MCP、记忆和历史都不是 Assistant 能力图中的节点：它们完全属于会话实现，Assistant 只消费统一输出流。
 
 Graph 必须在订阅事件、创建后台任务或启动 provider 之前完成验证：
 
@@ -631,7 +643,7 @@ Capability Graph 只做验证、生成启动 / 路由计划和诊断 snapshot，
 | Turn boundary | VAD、push-to-talk、external endpoint | 恰好选择一个 endpoint policy |
 | Turn stage | ASR、ResponseGeneration、TTS | 通过专用 session / stream port 串联 |
 | Interruption policy | 普通 Barge-in、render-aware Barge-in | 根据声明的音频与 evidence 能力校验 |
-| Response tool extension | MCP Tool Gateway | 只扩展结构化 Model Interaction，不进入音频数据面 |
+| Conversation implementation | 默认 LLM 会话、业务会话 adapter、工具来源 | 通过 `IConversationSession` 接入；Assistant 不检查其内部实现 |
 
 能力约束矩阵：
 
@@ -644,7 +656,7 @@ Capability Graph 只做验证、生成启动 / 路由计划和诊断 snapshot，
 | SingleTalk（逐句复核） | `Speaker.Confirmation.Enable` + `SpeakerEvidence` + 可定位 `ProcessedCaptureTimeline` + `cleanNearEnd` bank | 不新增 public capability；Listening 回合以 `PendingSpeaker` 打开 | 随 `Confirmation.Enable` 一并开关。开启时缺 timeline/profile/bank 构建失败，不降级为无身份单讲 |
 | Basic Barge-in | `SimultaneousCapturePlayback` + `TurnBoundary` | `BargeIn` | 构建失败，不静默关闭 |
 | Render-aware Barge-in | Basic Barge-in 的依赖 + `RenderReference` + `ProcessedCaptureTimeline` + DTD adapter | `BargeIn` + diagnostics | 构建失败，不自动改用 basic 模式 |
-| MCP tools | `ResponseGeneration` + `StructuredToolUse` + Tool Catalog/Approval/Executor | tool-augmented response | 构建失败，不解析普通文本模拟 |
+| Conversation tools | 会话内部：`ConversationToolRuntime` + 本地/外部工具来源 | 工具增强的会话输出 | 会话 Build 阶段明确失败；Assistant 不感知 |
 
 对 optional module 做组合时，请求该模块就必须满足其依赖。`Speaker.Confirmation.Enable` 的依赖包含 Speaker 身份验证，不能因未调用 AddSpeakerVerification 而放宽；关闭时不解析在线身份依赖，KWS 可以单独安装。Barge-in 的纯声学能力按原依赖校验，身份确认同时开启时另要求对应 Speaker purpose/profile bank。
 
@@ -673,190 +685,115 @@ internal interface IAcousticProcessingDiagnostics { /* immutable snapshots */ }
 
 ### 12.7 生命周期与所有权
 
-- Builder 记录每个对象是 `Borrowed` 还是 `AssistantOwned`；默认外部传入 service 为 `Borrowed`，内部创建的 adapter / module / session 为 `AssistantOwned`；
-- Capability Graph 在 Build 时生成 `ModuleLifecyclePlan`；生命周期协调器按 plan 拓扑启动、逆序停止，同一实例按引用身份去重。启动顺序为 `SpeakerEvidence` → `WakeupGate` → `BargeIn` → `AudioFrontend`：身份与唤醒门先就绪，Audio Frontend 最后启动，首帧 identity tap 音频不丢失；前端启动失败或中止时按逆序回滚已启动的门；
+- Builder 记录每个对象是 `Borrowed` 还是 `AssistantOwned`；默认外部传入 service 与会话实例为 `Borrowed`，内部创建的 adapter / module 为 `AssistantOwned`。Assistant 不 Dispose 借用会话；
+- Capability Graph 在 Build 时生成 `ModuleLifecyclePlan`；生命周期协调器按 plan 拓扑启动、逆序停止，同一实例按引用身份去重。会话实现 `IConversationLifecycle` 时先于其他参与者启动；之后是 `SpeakerEvidence` → `WakeupGate` → `BargeIn` → `AudioFrontend`。身份与唤醒门先就绪，Audio Frontend 最后启动，首帧 identity tap 音频不丢失；前端启动失败或中止时按逆序回滚已启动的门；
 - `StopAsync` 收敛 Assistant 启动的工作，但不 Dispose 借用 provider；`Dispose` 只释放 Assistant 持有的对象；
 - 任一模块启动失败时，按逆序清理已启动模块，并保持既有异常类型、事件和最终状态语义；
 - 未装配模块的语义是「完全不存在」：无订阅、无 task/CTS、无 provider lookup、无 health check、无 telemetry 标签冒充启用；
 - 模块之间不靠测试 `null` 决定业务分支。组合根只把已安装模块的 typed signal source / effect handler 固化到 `ModuleWiring`；Runtime 不提供任意 handler 注册 API；
 - Capability Graph 与 module list 在实例生命周期内不可变，不支持热插拔。
 
-## 13. MCP 工具调用边界
+## 13. 会话契约、完成语义与后台输出
 
-### 13.1 语义澄清
+### 13.1 主接口
 
-「LLM 调用 MCP」在工程实现上不是让模型直接建立 MCP 连接，而是：
-
-1. Assistant Host 从受信任的 Tool Catalog 获取工具定义；
-2. LLM provider 产生结构化 tool call；
-3. Assistant Host 校验参数、执行本地授权 / 审批策略；
-4. Tool Executor 通过 MCP Adapter 调用对应 MCP Server；
-5. Assistant Host 将规范化 tool result 回填给模型；
-6. 模型继续生成最终用户可见回复；
-7. 只有可播报文本进入 TTS。
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Response as "Response Module"
-    participant Model as "Model Interaction Port"
-    participant Policy as "Tool Policy / Approval"
-    participant Gateway as "Tool Gateway"
-    participant Adapter as "MCP Adapter"
-    participant Server as "MCP Server"
-    participant TTS
-
-    User->>Response: user turn
-    Response->>Model: transcript + immutable tool snapshot
-    Model-->>Response: structured ToolCallRequested
-    Response->>Policy: authorize(call id, tool, arguments)
-    Policy-->>Response: allow / deny / require confirmation
-    Response->>Gateway: ExecuteAsync(normalized call)
-    Gateway->>Adapter: protocol-neutral request
-    Adapter->>Server: tools/call
-    Server-->>Adapter: tool result
-    Adapter-->>Gateway: normalized result
-    Gateway-->>Response: success / tool error / unknown outcome
-    Response->>Model: tool result + transcript
-    Model-->>Response: visible text delta
-    Response->>TTS: speakable text only
-```
-
-MCP Server 不获得完整对话历史。Adapter 只接收完成当前工具调用所必需的 tool name、arguments、授权上下文和最小追踪信息。
-
-### 13.2 协议无关契约
+调用方通过 `IConversationSession` 接入一个业务会话：
 
 ```csharp
-internal interface ILlmTurnClient
+public interface IConversationSession : IAsyncDisposable
 {
-    IAsyncEnumerable<ModelTurnEvent> RunAsync(
-        ModelTurnRequest request,
-        CancellationToken cancellationToken);
-}
-
-internal abstract record ModelTurnEvent;
-internal sealed record VisibleTextDelta(string Text) : ModelTurnEvent;
-internal sealed record ThinkingDelta(string Text) : ModelTurnEvent;
-internal readonly record struct AssistantToolId(string ServerAlias, string ToolName);
-internal sealed record ToolCallRequested(
-    string CallId,
-    AssistantToolId ToolId,
-    OwnedJsonValue Arguments) : ModelTurnEvent;
-internal sealed record ModelTurnCompleted(ModelUsage Usage) : ModelTurnEvent;
-
-internal interface IAssistantToolRuntime : IAsyncDisposable
-{
-    Task StartAsync(CancellationToken cancellationToken);
-
-    ValueTask<ToolCatalogSnapshot> GetSnapshotAsync(
-        ToolRequestContext context,
-        CancellationToken cancellationToken);
-
-    ValueTask<ToolApprovalDecision> AuthorizeAsync(
-        AssistantToolCall call,
-        CancellationToken cancellationToken);
-
-    ValueTask<AssistantToolResult> ExecuteAsync(
-        AssistantToolCall call,
-        CancellationToken cancellationToken);
-
-    Task StopAsync();
+    string ConversationId { get; }
+    IAsyncEnumerable<ConversationEvent> StreamAsync(
+        ConversationRequest request,
+        CancellationToken cancellationToken = default);
 }
 ```
 
-契约要求：
+- `ConversationRequest` 只包含调用方生成的 `RequestId` 和本轮文字；不包含 prompt、历史、模型参数或音频时间线。
+- 一次正常请求输出零个或多个 `ConversationTextDelta` / `ConversationThinkingDelta`，随后恰好一个 `ConversationCompleted`，之后结束。
+- `ConversationCompleted.Text` 等于本轮全部可见文字增量的顺序拼接，不含思考、工具参数或原始结果；空回复和仅思考也输出 `Completed("")`。
+- 故障通过异步枚举异常传播，取消使用 `OperationCanceledException`；没有另一套 Failed/Cancelled DTO。
+- 返回流按单次消费设计。实现必须在提前结束枚举或释放时清理未提交状态。
+- `EndsTextSegment` 只表示一段可独立展示的文字结束；它不携带语音控制语义、回调或 TTS DTO。
 
-- 工具目录、授权和执行由同一个 `IAssistantToolRuntime` 提供，共享会话生命周期；编排器仍先调用 `AuthorizeAsync`，仅在 Allowed 时调用 `ExecuteAsync`，宿主授权扩展点 `IAssistantToolApprovalPolicy` 保持独立；
-- `ModelTurnRequest` 包含不可变 transcript、generation options 和不可变 tool catalog snapshot；
-- tool identity 使用强类型 `(ServerAlias, ToolName)`，不依赖拼接字符串反向解析；Tool Catalog 维护稳定、provider-safe 的 exposed-name 映射，发现碰撞时 fail fast，MCP wire 上仍使用 server 原始 tool name；
-- tool arguments / result 必须是拥有自身生命周期的 JSON value，禁止保存依赖已释放 `JsonDocument` 的借用 `JsonElement`；
-- tool definition 保留 input / output JSON Schema、title / description 和本地风险分类；
-- MCP annotations、description 和 tool result 一律视为不可信输入，不能直接决定本地授权；
-- tool call / result 通过稳定 `CallId` 关联；同一结果最多向模型提交一次；
-- protocol error、tool execution error、denied、cancelled、timeout、input-required / unsupported capability 和 unknown outcome 必须是不同结果；
-- `IStreamLLMService` / `ILLMConversation` 通过 `TextOnlyLlmTurnClientAdapter` 接入该端口，映射后的 message、options、文本、思考和完成顺序与直接调用完全一致；
-- 不支持结构化 tool calling 的模型不得通过解析普通文本伪装支持；启用工具时必须在构建 / 启动阶段验证 capability 并 fail fast，不做运行时 provider fallback。
+`IConversationLifecycle` 与 `IConversationBackgroundOutput` 是可选能力。需要建立连接的会话实现前者；能产生请求结束之后结果的会话实现后者。普通业务会话不需要声明空通道。
 
-核心 `VoiceBox.Assistant` 只拥有上述协议无关契约、`ToolUseOrchestrator` 和 capability wiring；真实 executor / client / transport / production registration 只由 `VoiceBox.Assistant.Integrations.Mcp` 提供。未调用 `UseMcpTools` 时组合根只装配 text-only Model Interaction adapter，且不创建 tool runtime。
+### 13.2 Assistant 适配
 
-### 13.3 组合入口
+`ConversationResponseAdapter` 是 Assistant 内唯一的会话消费者适配层：
+
+1. 为每个 Assistant 回合生成新的 `RequestId`，并登记前台输出边界。
+2. 校验恰好一个 `Completed`，且最终文字与累积可见文字一致；缺失、重复或不一致都按会话协议故障处理，不猜测成功。
+3. 首个可见增量仍经过既有的 `StateChanged → Speaking` 事件栅栏。
+4. `EndsTextSegment` 映射为强制语音边界：Assistant 创建内部 `TaskCompletionSource`，TTS 管线先接受该完整片段再继续拉取上游；纯文字会话无需模拟 TTS。
+5. 收到 `Completed` 只通知 Kernel“生成完成”，不再提交历史。会话在此之前已经提交自己的完整历史。
+6. TTS 排空后才触发既有的 `AssistantReplied`；生成完成与播放完成仍是两个事件。
+
+后台输出由独立的 `ConversationBackgroundBridge` 消费：
+
+- 任务由 `AssistantTaskSupervisor` 跟踪，随运行令牌停止，并加入 `StopAsync` 的等待集合；
+- 消息到达后先等待前台请求的输出边界，保证确认文本和相关公开事件顺序；
+- 之后把文本送入 `AssistantText` 与既有的 `BackgroundResponsePlayback` 调度，参与当前用户回合等待和打断规则；
+- bridge 不写历史、不回调模型、不公开原始工具结果。
+
+### 13.3 默认会话与工具
+
+工具公共契约（`IConversationTool`、`IConversationToolProvider`、审批与工具 DTO）位于
+`VoiceBox.Assistant.Conversation.Abstractions.Tools`，仅依赖 BCL。调用方可以只引用
+Abstractions 实现自己的会话、本地工具、工具来源和审批策略。
+
+`VoiceBox.Assistant.Conversation` 提供可选默认实现：
+
+- `ConversationBuilder(IStreamLLMService)` 组合默认文本会话；`UseTools(...)` 组合工具会话。
+- `ConversationToolsBuilder.AddTool(IConversationTool)` 注册进程内工具；`AddToolProvider` 注册外部来源。
+  默认工具运行时把本地工具接入与外部来源相同的执行路径。
+- `LlmConversationOptions` 保存 system prompt、历史轮数、响应 token 上限和 thinking 开关。提示词属于调用方，Assistant 不注入语音助手提示。
+- `IConversationContextProvider` 每轮在构建模型请求前调用一次；返回的背景只进入本轮 system 消息，不写入正式历史。工具续推复用本轮背景。
+- 单会话串行门覆盖“构建 prompt → 生成 → 提交/清理”。生成完成时先检查取消，再原子提交内存历史，然后才产出 `Completed`；任何未提交退出路径都清理本轮暂存消息。
+- 工具会话要求 `IToolCallingStreamLLMService`，在 Build 阶段校验。工具运行时负责聚合、稳定命名、审批、参数校验、并发/重试预算与结果关联；本地工具和外部来源行走同一条执行路径。
+- 工具提示通过 `ConversationTextDelta(prompt, EndsTextSegment: true)` 表达；消费者消费并继续拉取后，工具才开始执行。前台状态提交成功后释放后台接受门，且该动作发生在 `Completed` 之前。
+- 工具会话拥有一个有界单消费者后台通道（容量 64，Wait 背压）；`StartAsync` 创建本次运行的通道和取消域，`StopAsync` 取消阻塞读写、完成通道并等待后台任务退出。结果在入队前已经写入会话历史。
+
+### 13.4 MCP 工具来源
+
+`VoiceBox.Assistant.Conversation.Mcp` 只依赖 Abstractions 与 MCP SDK，提供一个 MCP Server 对应的工具来源：
 
 ```csharp
-builder
-    .UseResponseGeneration(llm)
-    .UseMcpTools(mcp =>
-    {
-        mcp.AddTool(new WeatherTool());
-        mcp.AddStdioServer(/* trusted executable and fixed arguments */);
-        mcp.AddStreamableHttpServer(/* trusted endpoint and auth reference */);
-    });
+IConversationToolProvider files = McpToolProvider.CreateStdio("filesystem", options =>
+{
+    options.Command = "npx";
+    options.Arguments.Add("-y");
+    options.Arguments.Add("@modelcontextprotocol/server-filesystem");
+    options.AllowedTools.Add("read_file");
+});
 ```
 
-`UseMcpTools` 由 `VoiceBox.Assistant.Integrations.Mcp` 提供扩展方法，核心只接收协议无关的 tool provider / factory。注册阶段负责：保证 tool provider 只注册一次；保存不可变的 server 配置快照；把 `StructuredToolUse` 加入请求能力集合；在 `Build()` 时完成静态配置校验但不建立网络连接或启动 stdio 子进程。
+- `CreateStdio` / `CreateStreamableHttp` 只校验并冻结配置，不启动进程或连接网络；
+  `StartAsync` 才建立 client、启动 stdio 子进程并执行 `tools/list`。
+- Provider 只负责 transport、服务发现、`tools/call`、MCP Tasks polling 和协议错误归一化。
+  参数 Schema 校验、审批、重试预算与结果关联属于消费该来源的会话。
+- 默认会话通过通用 `AddToolProvider(files)` 接入。自定义会话可以直接使用
+  `IConversationToolProvider` 的公开 API，只引用 Abstractions 与 Conversation.Mcp 即可完成
+  启动、发现、调用、停止和释放。
+- 支持 MCP stdio、Streamable HTTP 与可选 MCP Tasks。收到不支持的内容类型时返回
+  `UnsupportedCapability`，不静默等待或当成成功。
+- MCP wire model 与 SDK 生命周期只存在于 Conversation.Mcp。
 
-组合层在注册了 tool provider 时验证：已提供创建 `IAssistantToolRuntime` 的 factory，统一提供 catalog / approval / execution；LLM provider 声明支持 structured tool calling；server alias 唯一；qualified tool name 映射无碰撞；transport、allowlist、timeout、参数与结果大小限制有效；side-effecting / destructive / privileged 工具具备审批策略。缺失能力、provider 不支持或名称碰撞必须在 build / start 阶段确定性失败。
 
-生命周期顺序：`Build()` 生成 immutable plan，不产生外部副作用；`StartAsync()` 创建每个受信任 server 的隔离 client session，完成 capability 检查和 `tools/list`，生成稳定 catalog snapshot，MCP ready 后才接受第一个 turn；`StopAsync()` 取消未完成 tool task、关闭 session 和 stdio 子进程。MCP session 的 ownership 由 Assistant 创建的 factory 明确持有并释放。
+### 13.5 所有权与安全
 
-### 13.4 Model event 与 TTS 隔离
-
-模型输出不被建模为「全都是文本」。至少区分 thinking delta、user-visible text delta、structured tool call、completion / usage，以及 fault / cancellation 的终止语义；它们不得伪装为文本。
-
-播报数据面只接受 `ThinkingDelta`、`VisibleTextDelta`、`ModelTurnCompleted`。`TtsPlaybackPump` 只消费经过 Response policy 明确标记的 speakable text。Tool name、arguments、result、approval prompt 和 protocol error 不得因 `ToString()`、序列化或日志拼接进入 TTS、`AssistantText`、playback echo 或用户可见 history。
-
-text-only 路径将每个 visible delta 按既有顺序交给 TTS，新增事件模型不改变首音时机、分句、公开 delta 或 history commit 时机。tool-enabled 路径的前台调用只播报模型最终 visible text；本地 `IAssistantTool` 确定为后台偏好时使用其 Host 配置的受信任执行提示，标准 MCP 后台调用使用 Host 生成的确认文本，结果文本进入同一有序 TTS / 公开文本边界。执行提示携带强制语音边界，必须先提交到 TTS / 播放链路，但不等待音频播放完成才启动工具。
-
-Provider 同一轮可同时返回 visible text 和 structured tool call。前台与后台工具循环均先缓冲该轮文本；若包含工具调用，丢弃附带文本（包括空白），正常执行工具并回传结构化结果；只有不含工具调用的轮次才提供最终回复。附带文本不进入 TTS 或 history，也不因此中止工具循环。
-
-### 13.5 Conversation 的三种视图
-
-工具调用把以下数据分开：
-
-1. `ModelTranscript`：system / user / assistant text / tool call / tool result，供模型续推；
-2. `UserConversationHistory`：用户与最终可见 assistant 回复，供产品展示；
-3. `ToolAuditTrail`：server、tool、call id、参数摘要、审批、耗时、结果状态和 trace id，供安全审计。
-
-历史内部按 Turn 原子裁剪，保证同一 tool call / result 不被拆开。text-only 场景中，转换出的 `ChatMessage[]`、trim 结果和 commit / rollback 行为与不启用工具时完全一致。Tool result 默认不进入用户可见历史，也不直接写入公开 Assistant reply；后台工具的受信任结果摘要是独立的 Host-visible assistant text，不等同于 raw tool result。用户取消或 barge-in 回滚可见回复时，已经发生的外部副作用和审计结果不被声称撤销或静默删除。
-
-### 13.6 所有权、取消与副作用
-
-`ToolUseOrchestrator` 属于 Response / Model Interaction 控制面，由当前 response operation 或显式后台 operation 唯一拥有。完整状态至少表达：
-
-```text
-ModelStreaming -> AwaitingApproval -> ToolExecuting
-               -> ModelContinuing -> Completed
-```
-
-语义约定：
-
-- barge-in 与 Stop 取消等待和后续模型生成，但不声称已撤销外部副作用；
-- 状态变更工具发出后遇到 transport timeout 时结果可能为 `UnknownOutcome`，不得自动重试；
-- 每轮最多 16 个 tool call，模型 / tool round 有确定上限；单工具 timeout 来自冻结的 tool definition，参数与结果大小和 server 并发由 server registration 限制；不得无限循环或无界并行；
-- provider 同一批结构化调用可以按受控并发执行；一批调用混合前台 / 后台偏好时整批按前台处理，保持 transcript 原子性；若其中包含带本地执行提示的后台偏好调用，只按 provider 调用顺序提交第一条提示，不改变整批前台化语义；
-- 后台 tool task 由 tool runtime / response operation 明确登记、取消和收敛，不成为游离任务；
-- tool approval 绑定 CallId、规范化 tool identity 和参数 hash，旧审批不能复用于新调用；
-- side-effecting / destructive / privileged 工具必须可被用户拒绝，模型不得自行批准；
-- 审批提示由 Host 根据受信任的本地元数据生成，不直接使用模型或 MCP Server 提供的描述作为授权依据；
-- 语音确认必须是显式、短时有效且与当前 CallId 关联的肯定答复；静默、唤醒词、普通 barge-in 或低置信度 ASR 不视为同意，高风险操作应支持要求屏幕或物理确认；
-- 用户拒绝、超时和工具错误作为结构化结果反馈给模型，但不转化为运行时 fallback。
-
-### 13.7 MCP Adapter 职责
-
-`VoiceBox.Assistant.Integrations.Mcp` 负责：MCP protocol / version compatibility；server discovery 与 capability 校验；每个受信任 server 对应一个隔离的逻辑 client（禁止跨 server 共享授权上下文）；`tools/list`、工具列表变化和稳定 snapshot；`tools/call` 与 structured content / schema validation；stdio 和 Streamable HTTP transport；OAuth / token provider、secret storage 和最小 scope；timeout、cancellation、result size limit 和安全审计映射；MCP SDK DTO 与 Assistant tool contracts 的双向映射。
-
-协议版本、握手 / 发现方式和 transport 细节不泄漏到 Model Interaction、Response 或 Kernel。Adapter 使用锁定版本的官方 C# SDK；`ModelContextProtocol.*` package reference 只存在于该独立项目，版本升级单独审计。
-
-### 13.8 当前支持范围
-
-支持进程内工具、MCP stdio、Streamable HTTP 与可选 MCP Tasks。resources、prompts、sampling、elicitation、Apps 以及完整 OAuth 流程与持久化审计不在当前范围内。收到 `input_required` / multi-round-trip 或需要未支持内容类型的 tool result 时，返回明确的 unsupported capability；不静默等待、不自动抓取 resource link、不当成成功结果。
-
-Provider adapter 层面，OpenAI-compatible native tools 与 LLamaSharp 的 GBNF-constrained JSON envelope 支持结构化工具调用；ONNX 在启用工具时 fail-fast，不提供文本解析 fallback。LLamaSharp 先按当前工具目录约束 envelope 和工具名，再由 Assistant 的 tool runtime 在授权与执行前校验完整 JSON Schema；不在 Assistant 层重新解析已展示文本。
+- `.UseConversation(session)` 是借用：Assistant 独占运行期使用权，但不转移对象所有权，也不调用会话的 `DisposeAsync`。调用方在 Assistant 停止/释放后再释放会话。
+- 同一会话实例不能同时挂到多个运行中的 Assistant；运行期间调用方也不能另行驱动其生命周期。
+- Assistant 停止时先取消前台请求、停止播放与后台消费，再调用会话 `StopAsync` 并等待其运行任务退出。
+- 撤销对话消息不表示撤销工具副作用。`UnknownOutcome` 等现有结果语义保持不变；工具审计与暂存 transcript 的清理分开。
+- 工具来源地址、stdio 命令和授权信息只来自受信任配置；模型输出和用户语音不得动态指定 server / command。
+- 敏感、状态变更、破坏性或高权限工具必须可被宿主审批策略拒绝；模型与 MCP annotation 不能代替该策略。
 
 ## 14. 安全约束
 
 ### 14.1 威胁面
 
-MCP 工具调用的威胁模型至少覆盖：
+会话与工具调用（包括 MCP 来源）的威胁模型至少覆盖：
 
 - prompt injection 诱导调用高权限工具；
 - tool description / annotation / result 中的间接 prompt injection；
@@ -871,9 +808,9 @@ MCP 工具调用的威胁模型至少覆盖：
 
 ### 14.2 默认策略
 
-安全默认值由 Assistant Host 的本地策略决定，不信任模型或 MCP Server 自报的风险 annotation。
+安全默认值由宿主和会话工具运行时的本地策略决定，不信任模型或 MCP Server 自报的风险 annotation。
 
-- stdio 必须使用固定 executable 与 arguments，不经过 shell 拼接，只继承 allowlist 环境变量，子进程关闭由 Adapter / Supervisor 拥有；
+- stdio 必须使用固定 executable 与 arguments，不经过 shell 拼接，只继承 allowlist 环境变量，子进程关闭由 Conversation.Mcp provider 拥有；
 - HTTP server 必须经过 URI / DNS allowlist、TLS 和目标受众绑定的授权；
 - 敏感、状态变更、破坏性或高权限工具必须提供明确拒绝路径和可审计的人类确认；
 - 用户文本、prompt、speaker embedding 和 secret 默认不进入日志或 trace；

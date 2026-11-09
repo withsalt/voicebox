@@ -8,6 +8,8 @@ using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Api.Events;
 using VoiceBox.Assistant.Api.State;
 using VoiceBox.Assistant.Composition.Builder;
+using VoiceBox.Assistant.Conversation;
+using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Assistant.Diagnostics.Benchmarking;
 using VoiceBox.Assistant.Diagnostics.Benchmarking.Adapters;
 using VoiceBox.Assistant.Diagnostics.Benchmarking.Models;
@@ -199,12 +201,13 @@ internal sealed class EndToEndEvaluator : IDisposable
         var probe = new VoiceAssistantBenchmarkProbe();
         probe.AttachCapturePosition(_audio);
         VoiceAssistantOptions assistantOptions = CreateAssistantOptions();
+        await using IConversationSession conversation = new ConversationBuilder(_llm).Build();
         VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
             .UseOptions(assistantOptions)
             .UseAudio(_audio)
             .UseTurnBoundary(_vad)
             .UseSpeechRecognition(_asr)
-            .UseResponseGeneration(_llm)
+            .UseConversation(conversation)
             .UseSpeechSynthesis(_tts)
             .AddAcousticDiagnostics(_clockedMainAec)
             .AddBargeIn(

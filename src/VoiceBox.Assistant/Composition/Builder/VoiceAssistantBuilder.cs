@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 using VoiceBox.Assistant.Api.Configuration;
@@ -10,13 +10,12 @@ using VoiceBox.Assistant.Diagnostics.Benchmarking;
 using VoiceBox.Core.Services.AcousticProcessing;
 using VoiceBox.Core.Services.ASRService;
 using VoiceBox.Core.Services.AudioService;
-using VoiceBox.Core.Services.LLMService;
 using VoiceBox.Core.Services.SpeakerService;
 using VoiceBox.Core.Services.TTSService;
 using VoiceBox.Core.Services.VadService;
 using VoiceBox.Core.Services.WakeupService;
 using VoiceBox.Assistant.Composition.Exceptions;
-using VoiceBox.Assistant.Modules.ModelInteraction.Contracts;
+using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Assistant.Composition.Configuration;
 using VoiceBox.Assistant.Modules.BargeIn.RenderAware.Contracts;
 
@@ -32,14 +31,12 @@ public sealed class VoiceAssistantBuilder
     private SplitAudioRegistration? _splitAudio;
     private IVoiceActivityDetectService? _turnBoundary;
     private IASRService? _recognition;
-    private IStreamLLMService? _responseGeneration;
+    private IConversationSession? _conversation;
     private IStreamTTSService? _speechSynthesis;
-    private IAssistantToolRuntimeFactory? _toolRuntimeFactory;
     private IWakeupService? _wakeup;
     private ISpeakerService? _speaker;
     private IAcousticProcessingMetricsSource? _acousticDiagnostics;
     private IAcousticPathDelayEstimatorFactory? _acousticPathDelayEstimatorFactory;
-    private readonly HashSet<AssistantCapability> _requestedCapabilities = [];
     private VoiceAssistantOptions _options = new();
     private bool _optionsSpecified;
     private bool _bargeInSpecified;
@@ -87,9 +84,13 @@ public sealed class VoiceAssistantBuilder
         return this;
     }
 
-    public VoiceAssistantBuilder UseResponseGeneration(IStreamLLMService responseGeneration)
+    /// <summary>
+    /// 挂载调用方的业务会话。Assistant 借用该实例, 不转移所有权, 也不会调用它的 DisposeAsync;
+    /// 如果它实现 <see cref="IConversationLifecycle"/>, 运行期会调用 StartAsync/StopAsync。
+    /// </summary>
+    public VoiceAssistantBuilder UseConversation(IConversationSession conversation)
     {
-        _responseGeneration = SetOnce(_responseGeneration, responseGeneration, "ResponseGeneration");
+        _conversation = SetOnce(_conversation, conversation, "Conversation");
         return this;
     }
 
@@ -151,24 +152,6 @@ public sealed class VoiceAssistantBuilder
         _options.BargeIn.Enable = true;
         _acousticPathDelayEstimatorFactory = delayEstimatorFactory;
         _bargeInSpecified = true;
-        return this;
-    }
-
-    /// <summary>
-    /// Declares a capability the composition must provide. Structured tool use must be installed
-    /// through the integration hook; requesting the identity alone still fails deterministically.
-    /// </summary>
-    internal VoiceAssistantBuilder RequireCapability(AssistantCapability capability)
-    {
-        _requestedCapabilities.Add(capability);
-        return this;
-    }
-
-    /// <summary>Integration-assembly hook used by UseMcpTools after it freezes configuration.</summary>
-    internal VoiceAssistantBuilder UseToolRuntime(IAssistantToolRuntimeFactory runtimeFactory)
-    {
-        _toolRuntimeFactory = SetOnce(_toolRuntimeFactory, runtimeFactory, "StructuredToolUse");
-        _requestedCapabilities.Add(AssistantCapability.StructuredToolUse);
         return this;
     }
 
@@ -264,7 +247,7 @@ public sealed class VoiceAssistantBuilder
     {
         IVoiceActivityDetectService turnBoundary = Require(_turnBoundary, "VBX-COMP-001", "TurnBoundary");
         IASRService recognition = Require(_recognition, "VBX-COMP-001", "SpeechRecognition");
-        IStreamLLMService response = Require(_responseGeneration, "VBX-COMP-001", "ResponseGeneration");
+        IConversationSession conversation = Require(_conversation, "VBX-COMP-001", "Conversation");
         IStreamTTSService synthesis = Require(_speechSynthesis, "VBX-COMP-001", "SpeechSynthesis");
 
         options = CloneOptions(_options);
@@ -279,14 +262,12 @@ public sealed class VoiceAssistantBuilder
             audio,
             turnBoundary,
             recognition,
-            response,
+            conversation,
             synthesis,
             _wakeup,
             _speaker,
             _acousticDiagnostics,
             options,
-            _toolRuntimeFactory,
-            _requestedCapabilities,
             acousticPathDelayEstimatorFactory: _acousticPathDelayEstimatorFactory);
         return graph.ValidateAndCreateComposition();
     }

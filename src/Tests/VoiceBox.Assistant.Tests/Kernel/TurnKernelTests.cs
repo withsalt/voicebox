@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using VoiceBox.Assistant.Api.Events;
 using VoiceBox.Assistant.Api.State;
 using VoiceBox.Assistant.Kernel;
@@ -293,11 +293,11 @@ public sealed class TurnKernelTests
         AssertRejected(idle, TurnSignal.ResponseGenerated(0, 14, "invalid"));
         TurnDecision generated = TurnKernel.Reduce(thinking, TurnSignal.ResponseGenerated(7, 15, null!));
         Assert.True(generated.Accepted);
-        Assert.Equal(string.Empty, Assert.IsType<CommitHistoryEffect>(generated.Effects[0]).Text);
-        Assert.Equal(string.Empty, Assert.IsType<PublishAssistantResponseGeneratedEffect>(generated.Effects[1]).Text);
+        Assert.Equal(string.Empty, Assert.IsType<PublishAssistantResponseGeneratedEffect>(generated.Effects[0]).Text);
+        Assert.Single(generated.Effects);
         TurnDecision generatedText = TurnKernel.Reduce(thinking, TurnSignal.ResponseGenerated(7, 15, "generated"));
-        Assert.Equal("generated", Assert.IsType<CommitHistoryEffect>(generatedText.Effects[0]).Text);
-        Assert.Equal("generated", Assert.IsType<PublishAssistantResponseGeneratedEffect>(generatedText.Effects[1]).Text);
+        Assert.Equal("generated", Assert.IsType<PublishAssistantResponseGeneratedEffect>(generatedText.Effects[0]).Text);
+        Assert.Single(generatedText.Effects);
 
         AssertRejected(thinking, TurnSignal.PlaybackStarted(8, 16));
         AssertRejected(idle, TurnSignal.PlaybackStarted(0, 16));
@@ -423,7 +423,6 @@ public sealed class TurnKernelTests
             turnCompleted.Effects,
             effect => Assert.IsType<CompleteTurnEffect>(effect),
             effect => Assert.IsType<PublishStateChangedEffect>(effect));
-        Assert.DoesNotContain(turnCompleted.Effects, static effect => effect is RollbackHistoryEffect);
 
         // AuthorizationResolved is only meaningful for a PendingSpeaker candidate of the same
         // validation turn and candidate; anywhere else it is deterministically rejected.
@@ -513,7 +512,6 @@ public sealed class TurnKernelTests
         Assert.True(operationFailed.Accepted);
         Assert.Collection(
             operationFailed.Effects,
-            effect => Assert.IsType<RollbackHistoryEffect>(effect),
             effect => Assert.IsType<CancelOperationEffect>(effect),
             effect => Assert.IsType<PublishStateChangedEffect>(effect));
         AssertRejected(thinking, TurnSignal.OperationFailed(8, 24, Failure()));
@@ -523,7 +521,6 @@ public sealed class TurnKernelTests
         Assert.Collection(
             cancelled.Effects,
             effect => Assert.IsType<CancelOperationEffect>(effect),
-            effect => Assert.IsType<RollbackHistoryEffect>(effect),
             effect => Assert.IsType<CompleteTurnEffect>(effect),
             effect => Assert.IsType<PublishStateChangedEffect>(effect));
         AssertRejected(thinking, TurnSignal.CancelRequested(8, 25));
@@ -652,7 +649,6 @@ public sealed class TurnKernelTests
         Assert.Collection(
             decision.Effects,
             effect => Assert.IsType<CancelResponseEffect>(effect),
-            effect => Assert.IsType<RollbackHistoryEffect>(effect),
             effect =>
             {
                 PublishStateChangedEffect state = Assert.IsType<PublishStateChangedEffect>(effect);
@@ -666,7 +662,7 @@ public sealed class TurnKernelTests
     {
         Assert.Equal(17, Enum.GetValues<TurnSignalKind>().Length);
         // Duck/Restore are gone: playback has exactly one physical side effect family (stop/clear).
-        Assert.Equal(12, Enum.GetValues<AssistantEffectKind>().Length);
+        Assert.Equal(10, Enum.GetValues<AssistantEffectKind>().Length);
         Assert.DoesNotContain(Enum.GetNames<AssistantEffectKind>(), static name => name.Contains("Duck", StringComparison.Ordinal));
         Assert.DoesNotContain(Enum.GetNames<AssistantEffectKind>(), static name => name.Contains("Restore", StringComparison.Ordinal));
         Assert.DoesNotContain(

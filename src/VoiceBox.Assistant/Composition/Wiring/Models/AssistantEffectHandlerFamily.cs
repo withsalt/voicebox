@@ -6,7 +6,6 @@ internal enum AssistantEffectHandlerFamily
     Recognition,
     ResponseGeneration,
     Playback,
-    Conversation,
     PublicEventPublisher,
     Runtime,
 }

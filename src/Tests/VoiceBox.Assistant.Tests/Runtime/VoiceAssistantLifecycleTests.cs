@@ -5290,8 +5290,8 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Equal("好的。", reply);
         Assert.Equal(AssistantState.Idle, assistant.State);
 
-        // 第二轮的 LLM prompt 必须包含首轮"已完整生成但播放被打断"的完整问答,
-        // 证明该轮被记入了 history (旧实现会把它整轮丢弃)。
+        // 第二轮的 LLM prompt 必须包含首轮"已完整生成但播放被打断"的完整问答:
+        // 会话在生成完成时提交历史，播放打断不撤销已提交的问答。
         ChatMessage[] lastPrompt = services.Llm.Prompts[^1];
         Assert.Equal(2, lastPrompt.Count(m => m.Role == ChatRole.User));
         Assert.Contains(lastPrompt, m => m.Role == ChatRole.Assistant && MessageText(m) == "好的。");
@@ -5975,7 +5975,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 .UseAudio(Audio)
                 .UseTurnBoundary(Vad)
                 .UseSpeechRecognition(Asr)
-                .UseResponseGeneration(Llm)
+                .UseConversation(TestConversation.Create(Llm, enableThinking))
                 .UseSpeechSynthesis(Tts);
             if (enableBargeIn)
                 builder.AddBargeIn(
@@ -6055,7 +6055,6 @@ public sealed partial class VoiceAssistantLifecycleTests
                 },
                 Conversation =
                 {
-                    EnableThinking = enableThinking,
                     ContinuousConversationIdleTimeout = continuousConversationIdleTimeout ?? TimeSpan.FromMinutes(1),
                 },
                 // 生命周期测试用极短的合成音频驱动流程, 关闭 Idle 监听门槛

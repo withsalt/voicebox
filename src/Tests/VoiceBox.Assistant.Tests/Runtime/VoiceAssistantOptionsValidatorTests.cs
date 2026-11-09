@@ -1,4 +1,4 @@
-using Microsoft.ML.OnnxRuntime;
+﻿using Microsoft.ML.OnnxRuntime;
 using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Composition.Configuration;
 using VoiceBox.Assistant.Modules.Speaker.Models;
@@ -53,78 +53,6 @@ public sealed class VoiceAssistantOptionsValidatorTests
     public void DefaultWakeupReplayLeadIn_LeavesCtcAlignmentMargin()
     {
         Assert.Equal(400, new VoiceAssistantOptions().Wakeup.ReplayLeadInMs);
-    }
-
-    [Fact]
-    public void DefaultToolOptions_KeepACappedContextBudget()
-    {
-        VoiceAssistantToolOptions tools = new VoiceAssistantOptions().Tools;
-
-        // An MCP result may be a megabyte, so unbounded retention would eventually exhaust the
-        // model context. Both the window and the per-result cap must stay finite by default.
-        Assert.Equal(3, tools.ToolTranscriptRetentionTurns);
-        Assert.Equal(8 * 1024, tools.MaxPersistedToolResultBytes);
-        Assert.Equal(4, tools.MaxParallelToolCalls);
-        Assert.Equal(2, tools.MaxToolRetryAttempts);
-        Assert.True(tools.ValidateToolArguments);
-    }
-
-    [Theory]
-    [InlineData(-1, 8192, 4, 2, 200, 60000)]
-    [InlineData(3, 255, 4, 2, 200, 60000)]
-    [InlineData(3, 8192, 0, 2, 200, 60000)]
-    [InlineData(3, 8192, 65, 2, 200, 60000)]
-    [InlineData(3, 8192, 4, -1, 200, 60000)]
-    [InlineData(3, 8192, 4, 9, 200, 60000)]
-    [InlineData(3, 8192, 4, 2, -1, 60000)]
-    [InlineData(3, 8192, 4, 2, 200, 0)]
-    public void Validate_RejectsOutOfRangeToolOptions(
-        int retentionTurns,
-        int maxResultBytes,
-        int maxParallel,
-        int retryAttempts,
-        int retryBaseDelayMs,
-        int retryBudgetMs)
-    {
-        var options = new VoiceAssistantOptions
-        {
-            Tools = new VoiceAssistantToolOptions
-            {
-                ToolTranscriptRetentionTurns = retentionTurns,
-                MaxPersistedToolResultBytes = maxResultBytes,
-                MaxParallelToolCalls = maxParallel,
-                MaxToolRetryAttempts = retryAttempts,
-                ToolRetryBaseDelayMs = retryBaseDelayMs,
-                MaxToolRetryBudgetMs = retryBudgetMs,
-            },
-        };
-
-        Assert.Throws<ArgumentException>(() =>
-            VoiceAssistantOptionsValidator.Validate(options, "options"));
-    }
-
-    [Fact]
-    public void Validate_RejectsNullToolOptions()
-    {
-        var options = new VoiceAssistantOptions { Tools = null! };
-
-        Assert.Throws<ArgumentException>(() =>
-            VoiceAssistantOptionsValidator.Validate(options, "options"));
-    }
-
-    [Fact]
-    public void CloneOptions_PreservesToolOptions()
-    {
-        var options = new VoiceAssistantOptions();
-        options.Tools.ToolTranscriptRetentionTurns = 7;
-        options.Tools.MaxParallelToolCalls = 2;
-        options.Tools.ValidateToolArguments = false;
-
-        VoiceAssistantOptions clone = options.Clone();
-
-        Assert.Equal(7, clone.Tools.ToolTranscriptRetentionTurns);
-        Assert.Equal(2, clone.Tools.MaxParallelToolCalls);
-        Assert.False(clone.Tools.ValidateToolArguments);
     }
 
     [Fact]
@@ -216,8 +144,6 @@ public sealed class VoiceAssistantOptionsValidatorTests
     public static IEnumerable<object[]> InvalidOptions()
     {
         yield return [new VoiceAssistantOptions { MinSentenceChars = 0 }, "MinSentenceChars"];
-        yield return [new VoiceAssistantOptions { MaxHistoryTurns = 0 }, "MaxHistoryTurns"];
-        yield return [new VoiceAssistantOptions { MaxResponseTokens = 0 }, "MaxResponseTokens"];
         yield return [new VoiceAssistantOptions { PlaybackTailBufferMs = -1 }, "PlaybackTailBufferMs"];
         yield return [new VoiceAssistantOptions { PlaybackPrerollMs = -1 }, "PlaybackPrerollMs"];
         yield return [new VoiceAssistantOptions { Conversation = null! }, "Conversation"];

@@ -24,7 +24,7 @@
 		<ProjectReference Include="..\..\VoiceBox.AEC.DTLN\VoiceBox.AEC.DTLN.csproj" />
 		<ProjectReference Include="..\..\VoiceBox.ASR.DoubaoOnline\VoiceBox.ASR.DoubaoOnline.csproj" />
 		<ProjectReference Include="..\..\VoiceBox.ASR.Qwen3\VoiceBox.ASR.Qwen3.csproj" />
-		<ProjectReference Include="..\..\VoiceBox.Assistant.Integrations.Mcp\VoiceBox.Assistant.Integrations.Mcp.csproj" />
+		<ProjectReference Include="..\..\VoiceBox.Assistant.Conversation\VoiceBox.Assistant.Conversation.csproj" />
 		<ProjectReference Include="..\..\VoiceBox.Audio.MiniAudio\VoiceBox.Audio.MiniAudio.csproj" />
 		<ProjectReference Include="..\..\VoiceBox.Audio.PortAudio\VoiceBox.Audio.PortAudio.csproj" />
 		<ProjectReference Include="..\..\VoiceBox.DNR.DeepFilterNet\VoiceBox.DNR.DeepFilterNet.csproj" />

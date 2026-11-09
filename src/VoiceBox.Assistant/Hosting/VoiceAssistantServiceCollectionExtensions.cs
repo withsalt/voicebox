@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Composition.Builder;
+using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Assistant.Hosting.Configuration;
 using VoiceBox.Assistant.Hosting.Diagnostics;
 using VoiceBox.Assistant.Hosting.Lifecycle;
@@ -12,7 +13,6 @@ using VoiceBox.Assistant.Hosting.Models;
 using VoiceBox.Core.Services.AcousticProcessing;
 using VoiceBox.Core.Services.ASRService;
 using VoiceBox.Core.Services.AudioService;
-using VoiceBox.Core.Services.LLMService;
 using VoiceBox.Core.Services.SpeakerService;
 using VoiceBox.Core.Services.TTSService;
 using VoiceBox.Core.Services.VadService;
@@ -82,7 +82,7 @@ public static class VoiceAssistantServiceCollectionExtensions
             .UseOptions(options)
             .UseTurnBoundary(provider.GetRequiredService<IVoiceActivityDetectService>())
             .UseSpeechRecognition(provider.GetRequiredService<IASRService>())
-            .UseResponseGeneration(provider.GetRequiredService<IStreamLLMService>())
+            .UseConversation(provider.GetRequiredService<IConversationSession>())
             .UseSpeechSynthesis(provider.GetRequiredService<IStreamTTSService>());
 
         IAudioDuplexService? duplex = provider.GetService<IAudioDuplexService>();

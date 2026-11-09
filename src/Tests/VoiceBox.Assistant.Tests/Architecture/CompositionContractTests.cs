@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Composition.Builder;
 using VoiceBox.Assistant.Composition.Exceptions;
@@ -6,6 +6,7 @@ using VoiceBox.Assistant.Composition.Graph;
 using VoiceBox.Assistant.Composition.Plans;
 using VoiceBox.Assistant.Composition.Wiring;
 using VoiceBox.Assistant.Composition.Wiring.Models;
+using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Assistant.Modules.AudioFrontend.Adapters;
 using VoiceBox.Assistant.Modules.AudioFrontend.Contracts;
 using VoiceBox.Assistant.Modules.AudioFrontend.Models;
@@ -50,7 +51,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .BuildComposition();
 
@@ -91,7 +92,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .UseOptions(options)
             .AddWakeup(services.Wakeup)
@@ -120,7 +121,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         AssertBuilderMethod(builder, "UseAudio", typeof(IAudioRecordService), typeof(IAudioPlayService));
         AssertBuilderMethod(builder, "UseTurnBoundary", typeof(IVoiceActivityDetectService));
         AssertBuilderMethod(builder, "UseSpeechRecognition", typeof(IASRService));
-        AssertBuilderMethod(builder, "UseResponseGeneration", typeof(IStreamLLMService));
+        AssertBuilderMethod(builder, "UseConversation", typeof(IConversationSession));
         AssertBuilderMethod(builder, "UseSpeechSynthesis", typeof(IStreamTTSService));
 
         Assert.DoesNotContain(builder.GetMethods(BindingFlags.Public | BindingFlags.Instance),
@@ -136,7 +137,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts);
 
         AssistantComposition composition = builder.BuildComposition();
@@ -163,7 +164,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio((IAudioRecordService)record, (IAudioPlayService)playback)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts);
 
         AssistantComposition composition = builder.BuildComposition();
@@ -190,7 +191,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio((IAudioRecordService)services.Audio, (IAudioPlayService)services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .BuildComposition();
 
@@ -220,7 +221,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio((IAudioRecordService)record, (IAudioPlayService)playback)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .AddBargeIn(
                 new VoiceAssistantBargeInOptions(),
@@ -402,7 +403,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio((IAudioRecordService)record, (IAudioPlayService)playback)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts);
         AssistantCompositionException format =
             Assert.Throws<AssistantCompositionException>(incompatibleAudio.Build);
@@ -412,7 +413,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .UseOptions(new VoiceAssistantOptions { Wakeup = { Enable = true } });
         using VoiceAssistant assistantWithoutWakeup = builderIgnoringWakeupEnableFlag.Build();
@@ -422,7 +423,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .UseOptions(new VoiceAssistantOptions
             {
@@ -503,7 +504,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             audio,
             services.Vad,
             services.Asr,
-            services.Llm,
+            TestConversation.Create(services.Llm),
             services.Tts,
             wakeup: services.Wakeup,
             speaker: services.Speaker,
@@ -565,7 +566,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio((IAudioRecordService)record, (IAudioPlayService)playback)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts);
 
         AssertCompositionCode("VBX-COMP-005", () => builder.Build());
@@ -589,7 +590,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             audio,
             services.Vad,
             services.Asr,
-            services.Llm,
+            TestConversation.Create(services.Llm),
             services.Tts,
             wakeup: null,
             speaker: null,
@@ -607,7 +608,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAudio(services.Audio)
             .UseTurnBoundary(services.Vad)
             .UseSpeechRecognition(services.Asr)
-            .UseResponseGeneration(services.Llm)
+            .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
             .BuildComposition();
     }
