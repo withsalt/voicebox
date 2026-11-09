@@ -136,14 +136,27 @@ internal sealed class CaptureConversationPipeline : IProcessedCaptureFrameSink
                 return;
             }
 
-            MainAudioObservation observation = _nearEnd.ObserveRecognitionAudio(in frame);
-            // VAD can synchronously emit an endpoint while processing this frame. Admit the
-            // frame to an already-confirmed near-end ASR capture first so the queued endpoint
-            // cannot finalize the session ahead of its final PCM block.
-            _nearEnd.FeedFromRecognitionAudio(raw, observation);
-            // Render-aware DTD owns playback authorization. The main VAD contributes only
-            // onset/endpoint timing on the final primary-AEC recognition stream.
-            _turnBoundary.Observe(raw);
+            // VAD may resume speech on the very frame that catches up to a pending endpoint.
+            // Observe it before clipping the PCM, but hold finalization until both finish so
+            // a synchronous endpoint (or a concurrent DTD callback) cannot outrun this feed.
+            _nearEnd.BeginEndpointObservation();
+            try
+            {
+                MainAudioObservation observation = _nearEnd.ObserveRecognitionAudio(in frame);
+                try
+                {
+                    // DTD still owns authorization; VAD contributes onset/endpoint timing.
+                    _turnBoundary.Observe(raw);
+                }
+                finally
+                {
+                    _nearEnd.FeedFromRecognitionAudio(raw, observation);
+                }
+            }
+            finally
+            {
+                _nearEnd.CompleteEndpointObservation();
+            }
         }
         catch (ObjectDisposedException ex) when (_runtime.IsStopping)
         {

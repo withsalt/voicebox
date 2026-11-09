@@ -43,6 +43,10 @@ internal sealed class NullActiveNearEnd :
         bool playbackStartupGuardActive,
         bool latestNearEndSpeech = false) { }
 
+    public void BeginEndpointObservation() { }
+
+    public void CompleteEndpointObservation() { }
+
     public MainAudioObservation ObserveRecognitionAudio(in ProcessedCaptureFrame frame) => default;
 
     public void FeedFromRecognitionAudio(ReadOnlySpan<float> audio, MainAudioObservation observation) { }

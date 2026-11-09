@@ -97,6 +97,60 @@ public sealed class NearEndStateOwnershipTests
     }
 
     [Fact]
+    public void Capture_FinalizationWaitsForEndpointObservationAndItsMatchingFeed()
+    {
+        NearEndCaptureStateMachine capture = NewDrainingCapture(20, 0);
+        capture.BeginEndpointObservation();
+        NearEndCaptureStateMachine.FeedDecision feed = capture.ReserveFeed(
+            new MainAudioObservation(1, 3, 0, 20, false), 1, 3);
+        capture.CompleteFeed(1, feed.Reservation, failed: false);
+
+        Assert.False(capture.TryClaimEndFinalization(out _, out _));
+        NearEndCaptureStateMachine.Finalization ended = capture.CompleteEndpointObservation();
+
+        Assert.True(ended.Claimed);
+        Assert.Equal(1, ended.TurnId);
+        Assert.Equal(20, ended.Outcome.FedThroughSample);
+        Assert.False(capture.TryClaimEndFinalization(out _, out _));
+    }
+
+    [Fact]
+    public void Capture_EndpointObservationSurvivesTurnReplacementWithoutEarlyFinalization()
+    {
+        var capture = new NearEndCaptureStateMachine();
+        capture.BeginEndpointObservation();
+        capture.Start(1, 0, 0, "test", 0);
+        capture.Stop();
+        capture.Start(2, 20, 0, "test", 0);
+        capture.BeginDrain(3, 20, false, 100);
+        capture.BeginEndpointObservation();
+
+        Assert.False(capture.CompleteEndpointObservation().Claimed);
+        Assert.False(capture.TryClaimEndFinalization(out _, out _));
+        NearEndCaptureStateMachine.Finalization ended = capture.CompleteEndpointObservation();
+
+        Assert.True(ended.Claimed);
+        Assert.Equal(2, ended.TurnId);
+    }
+
+    [Fact]
+    public void Capture_ResumingDrainPreservesInFlightFeedAccounting()
+    {
+        NearEndCaptureStateMachine capture = NewDrainingCapture(20, 0);
+        NearEndCaptureStateMachine.FeedDecision feed = capture.ReserveFeed(
+            new MainAudioObservation(1, 3, 0, 20, false), 1, 3);
+
+        _ = capture.ObserveAudioFrame(1, 3, 21, false, 2, true, 4, 100);
+
+        Assert.False(capture.EndDrainPending);
+        Assert.Equal(1, capture.DirectFeedsInFlight);
+        Assert.Equal(20, capture.DirectFeedNextSample);
+        capture.CompleteFeed(1, feed.Reservation, failed: false);
+        Assert.Equal(0, capture.DirectFeedsInFlight);
+        Assert.False(capture.TryClaimEndFinalization(out _, out _));
+    }
+
+    [Fact]
     public void Capture_ClearEndDrainRestoresEveryDrainFieldAndReturnsToDirectFeed()
     {
         NearEndCaptureStateMachine capture = NewDrainingCapture(targetSample: 800, fedThrough: 800);
@@ -212,6 +266,91 @@ public sealed class NearEndStateOwnershipTests
         Assert.Equal(10, capture.EndDrainTargetSample);
         // The drain is pending, but finalization must wait for the fed watermark to reach it.
         Assert.False(second.Claimed);
+    }
+
+    [Theory]
+    [InlineData(21L)]
+    [InlineData(120L)]
+    public void Capture_ResumedSpeechCancelsDrainAndRequiresFreshSilence(long resumedEndSample)
+    {
+        var capture = new NearEndCaptureStateMachine();
+        capture.Start(1, 0, 40, "test", 0);
+        _ = capture.ObserveAudioFrame(1, 3, 20, false, 4, false, 4, 100);
+        Assert.True(capture.EndDrainPending);
+
+        NearEndCaptureStateMachine.Finalization resumed = capture.ObserveAudioFrame(
+            1, 3, resumedEndSample, false, 2, true, 4, 100);
+
+        Assert.False(resumed.Claimed);
+        Assert.Equal(NearEndCaptureStateMachine.Status.DirectFeed, capture.State);
+        Assert.Equal(1, capture.ActiveTurnId);
+        Assert.Equal(46, capture.SpeechDurationMs);
+        Assert.Equal(0, capture.EndDrainTargetSample);
+        Assert.Equal(0, capture.EndDrainDeadlineSample);
+        Assert.False(capture.TryClaimEndFinalization(out _, out _));
+
+        NearEndCaptureStateMachine.FeedDecision feed = capture.ReserveFeed(
+            new MainAudioObservation(1, 3, 0, resumedEndSample, false), 1, 3);
+        Assert.Equal(resumedEndSample, feed.Reservation.EndSampleExclusive);
+        capture.CompleteFeed(1, feed.Reservation, failed: false);
+
+        _ = capture.ObserveAudioFrame(1, 3, resumedEndSample + 10, false, 2, false, 4, 100);
+        Assert.False(capture.EndDrainPending);
+        _ = capture.ObserveAudioFrame(1, 3, resumedEndSample + 20, false, 2, false, 4, 100);
+        Assert.True(capture.EndDrainPending);
+        Assert.Equal(resumedEndSample + 20, capture.EndDrainTargetSample);
+        Assert.Equal(resumedEndSample + 120, capture.EndDrainDeadlineSample);
+        Assert.False(capture.TryClaimEndFinalization(out _, out _));
+
+        feed = capture.ReserveFeed(
+            new MainAudioObservation(1, 3, resumedEndSample, resumedEndSample + 20, false), 1, 3);
+        capture.CompleteFeed(1, feed.Reservation, failed: false);
+        Assert.True(capture.TryClaimEndFinalization(out TimeSpan duration, out ActiveEndDrainOutcome outcome));
+        Assert.Equal(TimeSpan.FromMilliseconds(50), duration);
+        Assert.Equal(0, outcome.MissingSamples);
+        Assert.False(capture.TryClaimEndFinalization(out _, out _));
+    }
+
+    [Theory]
+    [InlineData(2L, 3L, 21L, false)]
+    [InlineData(1L, 2L, 21L, false)]
+    [InlineData(1L, 3L, 21L, true)]
+    [InlineData(1L, 3L, 20L, false)]
+    [InlineData(1L, 3L, 19L, false)]
+    public void Capture_StaleOrDiscontinuousSpeechCannotReopenDrain(
+        long turnId, long epoch, long endSample, bool discontinuity)
+    {
+        NearEndCaptureStateMachine capture = NewDrainingCapture(20, 0);
+
+        _ = capture.ObserveAudioFrame(turnId, epoch, endSample, discontinuity, 2, true, 4, 100);
+
+        Assert.True(capture.EndDrainPending);
+        Assert.Equal(20, capture.EndDrainTargetSample);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Capture_ResumedSpeechCannotReopenForcedOrClaimedDrain(bool claimed)
+    {
+        NearEndCaptureStateMachine capture = NewDrainingCapture(20, 0);
+        if (claimed)
+        {
+            NearEndCaptureStateMachine.FeedDecision feed = capture.ReserveFeed(
+                new MainAudioObservation(1, 3, 0, 20, false), 1, 3);
+            capture.CompleteFeed(1, feed.Reservation, failed: false);
+            Assert.True(capture.TryClaimEndFinalization(out _, out _));
+        }
+        else
+        {
+            capture.ForceEndDrain("asr-feed-failed");
+        }
+
+        _ = capture.ObserveAudioFrame(1, 3, 21, false, 2, true, 4, 100);
+
+        Assert.True(capture.EndDrainPending);
+        Assert.Equal(20, capture.EndDrainTargetSample);
+        Assert.True(capture.EndFinalizationClaimed);
     }
 
     [Fact]

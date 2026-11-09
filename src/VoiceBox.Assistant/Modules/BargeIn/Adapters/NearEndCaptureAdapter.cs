@@ -13,6 +13,10 @@ internal sealed class NearEndCaptureAdapter : INearEndCapturePort
     public NearEndCaptureAdapter(NearEndDataPlane dataPlane)
         => _dataPlane = dataPlane ?? throw new ArgumentNullException(nameof(dataPlane));
 
+    public void BeginEndpointObservation() => _dataPlane.BeginEndpointObservation();
+
+    public void CompleteEndpointObservation() => _dataPlane.CompleteEndpointObservation();
+
     public MainAudioObservation ObserveRecognitionAudio(in ProcessedCaptureFrame frame)
         => _dataPlane.ObserveRecognitionAudio(in frame);
 

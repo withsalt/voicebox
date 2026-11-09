@@ -5,7 +5,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.State;
 /// <summary>
 /// Owns the confirmed capture's direct ASR feed: the turn identity, the monotonic feed watermark,
 /// in-flight feed accounting and the bounded end drain. Drain finalization is claimed at most once
-/// and only after every reserved feed completed. All mutation happens under the near-end
+/// and only after every reserved feed and endpoint observation completed. All mutation happens under the near-end
 /// data-plane lock.
 /// </summary>
 internal sealed class NearEndCaptureStateMachine
@@ -41,6 +41,7 @@ internal sealed class NearEndCaptureStateMachine
     private long _nextSample;
     private long _directFeedSamples;
     private int _feedsInFlight;
+    private int _endpointObservationsInFlight;
     private bool _drainForced;
     private bool _finalizationClaimed;
     private string _drainReason = "none";
@@ -91,7 +92,7 @@ internal sealed class NearEndCaptureStateMachine
     /// </summary>
     public long ReadActiveTurnIdVolatile() => Volatile.Read(ref _activeTurnId);
 
-    /// <summary>Starts the capture for a committed turn. In-flight feeds from a prior turn stay counted.</summary>
+    /// <summary>Starts the capture for a committed turn. In-flight feeds and observations stay counted.</summary>
     public void Start(
         long turnId,
         long firstFeedSample,
@@ -128,9 +129,6 @@ internal sealed class NearEndCaptureStateMachine
 
     /// <summary>Pins the feed watermark while capture is idle, after a timeline discontinuity.</summary>
     public void SetFeedWatermark(long sample) => _nextSample = sample;
-
-    /// <summary>Moves the watermark forward to owned main audio that was already observed.</summary>
-    public void SetFeedWatermarkAtLeast(long sample) => _nextSample = Math.Max(_nextSample, sample);
 
     public bool IsActive(long turnId) => _activeTurnId == turnId && State != Status.Idle;
 
@@ -221,6 +219,15 @@ internal sealed class NearEndCaptureStateMachine
         }
     }
 
+    /// <summary>Defers finalization until VAD and the matching PCM feed have both completed.</summary>
+    public void BeginEndpointObservation() => _endpointObservationsInFlight++;
+
+    public Finalization CompleteEndpointObservation()
+    {
+        _endpointObservationsInFlight--;
+        return ClaimFinalization(_activeTurnId);
+    }
+
     /// <summary>Advances duration/silence facts for one direct-feed frame and starts the end drain.</summary>
     public Finalization ObserveAudioFrame(
         long turnId,
@@ -239,10 +246,16 @@ internal sealed class NearEndCaptureStateMachine
         {
             if (hasDiscontinuity || streamEpoch != _drainStreamEpoch)
                 ForceEndDrain("capture-discontinuity");
-            else if (endSampleExclusive >= _drainDeadlineSample)
-                ForceEndDrain("drain-timeout");
+            else
+            {
+                if (latestSpeechActive && endSampleExclusive > _drainTargetSample)
+                    TryResumeFromDrain(streamEpoch);
+                if (State == Status.Draining && endSampleExclusive >= _drainDeadlineSample)
+                    ForceEndDrain("drain-timeout");
+            }
 
-            return ClaimFinalization(turnId);
+            if (State == Status.Draining)
+                return ClaimFinalization(turnId);
         }
 
         _speechDurationMs += frameMs;
@@ -260,6 +273,24 @@ internal sealed class NearEndCaptureStateMachine
         }
 
         return Finalization.None;
+    }
+
+    /// <summary>Invalidates a provisional endpoint when newer speech arrives before finalization.</summary>
+    public bool TryResumeFromDrain(long streamEpoch)
+    {
+        if (State != Status.Draining ||
+            _drainForced ||
+            _finalizationClaimed ||
+            streamEpoch != _drainStreamEpoch)
+        {
+            return false;
+        }
+
+        // Preserve the turn, feed watermark and in-flight reservations. New speech wins over
+        // the old timeout boundary; the next silence interval establishes a fresh endpoint.
+        ClearEndDrain();
+        _silenceMs = 0;
+        return true;
     }
 
     public void BeginDrain(
@@ -296,8 +327,8 @@ internal sealed class NearEndCaptureStateMachine
     }
 
     /// <summary>
-    /// Claims the single terminal finalization for this drain. It requires that no direct feed is
-    /// still in flight and that the fed watermark reached the target unless the drain was forced.
+    /// Claims the single terminal finalization for this drain. It requires that no direct feed or
+    /// endpoint observation is in flight and the watermark reached the target unless forced.
     /// </summary>
     public bool TryClaimEndFinalization(
         out TimeSpan speechDuration,
@@ -308,6 +339,7 @@ internal sealed class NearEndCaptureStateMachine
         if (State != Status.Draining ||
             _finalizationClaimed ||
             _feedsInFlight != 0 ||
+            _endpointObservationsInFlight != 0 ||
             (!_drainForced && _nextSample < _drainTargetSample))
         {
             return false;

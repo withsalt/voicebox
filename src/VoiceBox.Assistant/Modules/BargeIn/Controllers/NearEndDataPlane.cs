@@ -128,9 +128,10 @@ internal sealed class NearEndDataPlane
             _endpoint.ClearUnowned();
             if (_capture.DirectFeed)
             {
-                if (_endpoint.CaptureObserved)
-                    return;
                 _endpoint.MarkCaptureSpeechActive();
+                // Synchronous VAD facts can lag the DTD endpoint in sample coordinates. A
+                // fresh onset must reopen capture even before recognition catches up to it.
+                _capture.TryResumeFromDrain(_timeline.StreamEpoch);
                 return;
             }
 
@@ -149,6 +150,7 @@ internal sealed class NearEndDataPlane
             if (_capture.DirectFeed)
             {
                 _endpoint.MarkCaptureSpeechActive();
+                _capture.TryResumeFromDrain(_timeline.StreamEpoch);
                 return;
             }
 
@@ -255,6 +257,22 @@ internal sealed class NearEndDataPlane
         CaptureConfirmationTail(in frame, latestNearEndSpeech);
     }
 
+    public void BeginEndpointObservation()
+    {
+        lock (_lock)
+            _capture.BeginEndpointObservation();
+    }
+
+    public void CompleteEndpointObservation()
+    {
+        NearEndCaptureStateMachine.Finalization finalization;
+        lock (_lock)
+            finalization = _capture.CompleteEndpointObservation();
+
+        if (finalization.Claimed)
+            EndCapture(finalization.TurnId, finalization.SpeechDuration, finalization.Outcome);
+    }
+
     public MainAudioObservation ObserveRecognitionAudio(in ProcessedCaptureFrame frame)
     {
         ReadOnlySpan<float> audio = frame.Audio.Span;
@@ -274,6 +292,7 @@ internal sealed class NearEndDataPlane
                 restore = _ducking.Restore();
                 _candidate.Clear();
                 _endpoint.ClearCandidate();
+                _capture.ForceEndDrain("capture-discontinuity");
                 if (_capture.ActiveTurnId == 0)
                     _capture.SetFeedWatermark(frame.SourceRange.EndSampleExclusive);
             }
@@ -486,15 +505,8 @@ internal sealed class NearEndDataPlane
         ActiveEndDrainOutcome drainOutcome;
         lock (_lock)
         {
-            if (_capture.ActiveTurnId != 0 && _capture.DirectFeed && !_capture.EndDrainPending)
-            {
-                // Confirmation is requested on the duplex callback, before the same callback's
-                // processed-capture frame is observed. Any remaining gap is already-owned main
-                // audio and must be fed from the timeline; only a range that can no longer be
-                // snapshotted is skipped.
-                _capture.SetFeedWatermarkAtLeast(_timeline.EndSample);
-            }
-
+            // A capture callback can observe newer PCM after the catch-up snapshot. Only a
+            // feed reservation may advance the watermark; observation alone does not own it.
             finalize = _capture.TryClaimEndFinalization(out speechDuration, out drainOutcome);
         }
 
@@ -1591,6 +1603,14 @@ internal sealed class NearEndDataPlane
 
                     if (discard || !fault)
                         _ = _replay.TryRead(out _);
+
+                    // Apply resumed speech before its PCM can reach the old drain target.
+                    // Duration/silence accounting still runs once, after the feed below.
+                    if (!discard && !fault && tail.LatestSpeechActive && !tail.HasDiscontinuity &&
+                        tail.EndSampleExclusive > _capture.EndDrainTargetSample)
+                    {
+                        _capture.TryResumeFromDrain(tail.StreamEpoch);
+                    }
                 }
 
                 if (fault)
