@@ -22,9 +22,7 @@ namespace VoiceBox.TTS.Kokoro.Internal
         {
             if (string.IsNullOrEmpty(phonemes)) return [];
 
-            bool useShortFirst = firstBatchBudget > 0
-                && firstBatchBudget < MaxPhonemeLength
-                && phonemes.Length > firstBatchBudget;
+            bool useShortFirst = firstBatchBudget > 0 && firstBatchBudget < MaxPhonemeLength && phonemes.Length > firstBatchBudget;
 
             if (!useShortFirst && phonemes.Length <= MaxPhonemeLength)
                 return [phonemes];
@@ -85,12 +83,8 @@ namespace VoiceBox.TTS.Kokoro.Internal
                     if (tail.Length > 0)
                     {
                         string prev = batches[^1];
-                        string separator = tail.Length == 1 && PunctuationChars.Contains(tail[0])
-                            ? string.Empty
-                            : " ";
-                        int previousBudget = useShortFirst && batches.Count == 1
-                            ? firstBatchBudget
-                            : MaxPhonemeLength;
+                        string separator = tail.Length == 1 && PunctuationChars.Contains(tail[0]) ? string.Empty : " ";
+                        int previousBudget = useShortFirst && batches.Count == 1 ? firstBatchBudget : MaxPhonemeLength;
                         if (prev.Length + separator.Length + tail.Length <= previousBudget)
                             batches[^1] = prev + separator + tail;
                         else

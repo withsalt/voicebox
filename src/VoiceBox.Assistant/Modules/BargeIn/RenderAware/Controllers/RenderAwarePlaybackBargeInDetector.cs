@@ -265,16 +265,12 @@ internal sealed class RenderAwarePlaybackBargeInDetector : IPlaybackBargeInDetec
             ObjectDisposedException.ThrowIf(_disposed, this);
             if (_faulted)
             {
-                throw new InvalidOperationException(
-                    "Render-aware DTD detector is faulted and must be recreated.",
-                    _faultException);
+                throw new InvalidOperationException("Render-aware DTD detector is faulted and must be recreated.", _faultException);
             }
             _pushHopCount = 0;
             _pushObservationCount = 0;
             _pushStateReset = false;
-            _alignmentStage.DelayHint = _alignmentStage.IsFreshDelayHint(primaryAecDelay, frame.TimestampTicks)
-                ? primaryAecDelay
-                : null;
+            _alignmentStage.DelayHint = _alignmentStage.IsFreshDelayHint(primaryAecDelay, frame.TimestampTicks) ? primaryAecDelay : null;
             try
             {
                 _pushDecisionEnabled = decisionEnabled;
@@ -297,14 +293,11 @@ internal sealed class RenderAwarePlaybackBargeInDetector : IPlaybackBargeInDetec
                     return Batch();
                 }
                 CaptureRange sourceRange = microphoneTimeline.SourceRange;
-                bool formatChanged = _inputSampleRate != 0 &&
-                    (_inputSampleRate != frame.SampleRate || _inputChannels != frame.Channels);
+                bool formatChanged = _inputSampleRate != 0 && (_inputSampleRate != frame.SampleRate || _inputChannels != frame.Channels);
                 bool epochChanged = _streamEpoch != 0L && _streamEpoch != sourceRange.StreamEpoch;
-                bool captureDiscontinuous = _sourceTimelineInitialized &&
-                    sourceRange.StartSample != _expectedSourceSample;
+                bool captureDiscontinuous = _sourceTimelineInitialized && sourceRange.StartSample != _expectedSourceSample;
                 bool renderDiscontinuous = HasRenderDiscontinuity(in frame);
-                if (formatChanged || epochChanged || captureDiscontinuous ||
-                    frame.HasDiscontinuity || renderDiscontinuous)
+                if (formatChanged || epochChanged || captureDiscontinuous || frame.HasDiscontinuity || renderDiscontinuous)
                 {
                     ResetPipeline();
                     _renderStatus = renderStatus;
@@ -383,9 +376,7 @@ internal sealed class RenderAwarePlaybackBargeInDetector : IPlaybackBargeInDetec
         lock (_sync)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            long remainingGuardSamples = Math.Max(
-                0,
-                _acousticPathChangeGuardUntilSample - _nextTargetSample);
+            long remainingGuardSamples = Math.Max(0, _acousticPathChangeGuardUntilSample - _nextTargetSample);
             return new RenderAwareBargeInSnapshot(
                 _hasObservation,
                 _probability,
@@ -485,9 +476,7 @@ internal sealed class RenderAwarePlaybackBargeInDetector : IPlaybackBargeInDetec
         {
             return false;
         }
-        if (frame.RenderReference.Length < (int)num ||
-            !microphoneTimeline.IsValid ||
-            microphone.Length < (int)num)
+        if (frame.RenderReference.Length < (int)num || !microphoneTimeline.IsValid || microphone.Length < (int)num)
         {
             return false;
         }
@@ -548,21 +537,14 @@ internal sealed class RenderAwarePlaybackBargeInDetector : IPlaybackBargeInDetec
             {
                 _correlationFallbackCount++;
                 _lastCorrelationFallbackDelayMs = localEstimate.DelaySamples * 1000.0 / 16000.0;
-                _minimumCorrelationFallbackDelayMs = Math.Min(
-                    _minimumCorrelationFallbackDelayMs,
-                    _lastCorrelationFallbackDelayMs);
-                _maximumCorrelationFallbackDelayMs = Math.Max(
-                    _maximumCorrelationFallbackDelayMs,
-                    _lastCorrelationFallbackDelayMs);
+                _minimumCorrelationFallbackDelayMs = Math.Min(_minimumCorrelationFallbackDelayMs, _lastCorrelationFallbackDelayMs);
+                _maximumCorrelationFallbackDelayMs = Math.Max(_maximumCorrelationFallbackDelayMs, _lastCorrelationFallbackDelayMs);
             }
         }
         RenderDelayEstimate estimate = _alignmentStage.SelectDelayEstimate(localEstimate, num);
-        _lastSelectedDelayMs = estimate.HasEstimate
-            ? estimate.DelaySamples * 1000.0 / 16000.0
-            : double.NaN;
+        _lastSelectedDelayMs = estimate.HasEstimate ? estimate.DelaySamples * 1000.0 / 16000.0 : double.NaN;
         _lastSelectedDelayWasLocal = localEstimate.HasEstimate &&
-            ((localEstimate.IsRefined && estimate.IsRefined) ||
-             Math.Abs(estimate.DelaySamples - localEstimate.DelaySamples) < 1e-9);
+            ((localEstimate.IsRefined && estimate.IsRefined) || Math.Abs(estimate.DelaySamples - localEstimate.DelaySamples) < 1e-9);
         _alignment = (estimate.HasEstimate ? _delayTracker.Observe(num, in estimate) : _delayTracker.Advance(num));
         if (_alignment.PathChanged)
         {
@@ -598,24 +580,16 @@ internal sealed class RenderAwarePlaybackBargeInDetector : IPlaybackBargeInDetec
             // One pass over the hop pair yields both RMS values and their correlation.
             // Each accumulator still sums in ascending sample order, so the results are
             // bit-identical to the three separate loops this replaces.
-            RmsPairWithCorrelation(
-                _microphoneHop,
-                _renderHop,
-                out double captureRms,
-                out double renderRms,
-                out double renderCorrelation);
+            RmsPairWithCorrelation(_microphoneHop, _renderHop, out double captureRms, out double renderRms, out double renderCorrelation);
             _peakCaptureRms = Math.Max(_peakCaptureRms, captureRms);
-            _maximumAbsoluteRenderCorrelation = Math.Max(
-                _maximumAbsoluteRenderCorrelation,
-                Math.Abs(renderCorrelation));
+            _maximumAbsoluteRenderCorrelation = Math.Max(_maximumAbsoluteRenderCorrelation, Math.Abs(renderCorrelation));
             long num2 = MapTargetToSource(num);
             long num3 = MapTargetToSource(num + 320);
             _lastStartSample = num2;
             _lastEndSample = num3;
             if (_pushDecisionEnabled || _pushEchoLearningEnabled)
             {
-                bool decisionDiscontinuityPending =
-                    _pushDecisionEnabled && _decisionDiscontinuityPending;
+                bool decisionDiscontinuityPending = _pushDecisionEnabled && _decisionDiscontinuityPending;
                 if (_pushDecisionEnabled)
                     _decisionDiscontinuityPending = false;
                 EnqueuePendingObservation(new PendingDtdObservation(
@@ -681,12 +655,10 @@ internal sealed class RenderAwarePlaybackBargeInDetector : IPlaybackBargeInDetec
         while (_pendingObservationCount > 0)
         {
             PendingDtdObservation observation = _pendingObservations[_pendingObservationHead];
-            bool hasPostAecEvidence = _postAecTimelineSeen &&
-                _postAecBuffer.TryRead(observation.StartSample, _postAecHop);
+            bool hasPostAecEvidence = _postAecTimelineSeen && _postAecBuffer.TryRead(observation.StartSample, _postAecHop);
             bool expired = forceFallback ||
                 (!_postAecTimelineSeen && _nextTargetSample - observation.EndSampleExclusive >= _postAecWaitSamples) ||
-                (_postAecTimelineSeen && _postAecBuffer.Count > 0 &&
-                    _postAecBuffer.StartSample > observation.StartSample);
+                (_postAecTimelineSeen && _postAecBuffer.Count > 0 && _postAecBuffer.StartSample > observation.StartSample);
             if (!hasPostAecEvidence && !expired)
                 break;
 
@@ -714,9 +686,7 @@ internal sealed class RenderAwarePlaybackBargeInDetector : IPlaybackBargeInDetec
             _minimumPostAecResidualRatio = Math.Min(_minimumPostAecResidualRatio, residualRatio);
             _lastPostAecResidualRatio = residualRatio;
             _lastRenderCorrelation = observation.RenderCorrelation;
-            if (_renderBuffer.TryRead(
-                observation.StartSample - observation.DelaySamples,
-                _renderEvidenceHop))
+            if (_renderBuffer.TryRead(observation.StartSample - observation.DelaySamples, _renderEvidenceHop))
             {
                 postAecRenderCorrelation = Correlation(_postAecHop, _renderEvidenceHop);
             }
@@ -745,11 +715,8 @@ internal sealed class RenderAwarePlaybackBargeInDetector : IPlaybackBargeInDetec
             postAecRms,
             residualRatio,
             postAecRenderCorrelation);
-        RenderAwareDtdEvidenceDecision evidenceDecision =
-            _evidencePolicy.Evaluate(in evidence, in profile);
-        UpdateAcousticPathChangeState(
-            evidenceDecision.AcousticPathChange,
-            observation.StartSample);
+        RenderAwareDtdEvidenceDecision evidenceDecision = _evidencePolicy.Evaluate(in evidence, in profile);
+        UpdateAcousticPathChangeState(evidenceDecision.AcousticPathChange, observation.StartSample);
         bool pathChangeGuarded = IsAcousticPathChangeGuardActiveAt(observation.StartSample);
         _lastObservationEchoLike = evidenceDecision.EchoLike;
         _lastObservationPreservedNearEnd = evidenceDecision.PreservedNearEnd;
@@ -764,17 +731,13 @@ internal sealed class RenderAwarePlaybackBargeInDetector : IPlaybackBargeInDetec
         {
             string reason = pathChangeGuarded
                 ? "acoustic-path-change-guard"
-                : forceFallback && !hasPostAecEvidence
-                ? "render-aware-dtd-no-post-aec-evidence"
-                : evidenceDecision.Reason;
+                : forceFallback && !hasPostAecEvidence ? "render-aware-dtd-no-post-aec-evidence" : evidenceDecision.Reason;
             // A rejected frame either carries positive causal echo evidence or it merely
             // failed to carry near-end evidence. Only the former justifies erasing
             // previously earned near-end duration in full. The path-change guard
             // deliberately suppresses confirmation while the acoustic path is unsettled, so
             // it keeps full decay as well.
-            double rejectDecay = evidenceDecision.EchoLike || pathChangeGuarded
-                ? CausalEchoRejectDecay
-                : EvidenceAbsentRejectDecay;
+            double rejectDecay = evidenceDecision.EchoLike || pathChangeGuarded ? CausalEchoRejectDecay : EvidenceAbsentRejectDecay;
             _decisions.Add(new NearEndFrameDecision(
                 0L,
                 20.0,
@@ -847,11 +810,8 @@ internal sealed class RenderAwarePlaybackBargeInDetector : IPlaybackBargeInDetec
         // Restoring/increasing gain can expose a stronger echo and still needs the guard below.
         if (current <= previous)
             return;
-        bool crossedSilenceBoundary = (previous <= 1e-4f || current <= 1e-4f) &&
-            Math.Abs(current - previous) >= 0.05f;
-        double changeDb = previous > 1e-4f && current > 1e-4f
-            ? Math.Abs(20.0 * Math.Log10(current / previous))
-            : 0;
+        bool crossedSilenceBoundary = (previous <= 1e-4f || current <= 1e-4f) && Math.Abs(current - previous) >= 0.05f;
+        double changeDb = previous > 1e-4f && current > 1e-4f ? Math.Abs(20.0 * Math.Log10(current / previous)) : 0;
         if (crossedSilenceBoundary || changeDb >= SignificantPlaybackGainChangeDb)
             StartAcousticPathChangeGuard(_nextTargetSample, "playback-gain-change");
     }
@@ -881,8 +841,7 @@ internal sealed class RenderAwarePlaybackBargeInDetector : IPlaybackBargeInDetec
 
     private void StartAcousticPathChangeGuard(long startSample, string reason)
     {
-        if (_acousticPathChangeGuardSamples <= 0 ||
-            IsAcousticPathChangeGuardActiveAt(startSample))
+        if (_acousticPathChangeGuardSamples <= 0 || IsAcousticPathChangeGuardActiveAt(startSample))
         {
             return;
         }
@@ -895,8 +854,7 @@ internal sealed class RenderAwarePlaybackBargeInDetector : IPlaybackBargeInDetec
     }
 
     private bool IsAcousticPathChangeGuardActiveAt(long samplePosition)
-        => _acousticPathChangeGuardSamples > 0 &&
-            samplePosition < _acousticPathChangeGuardUntilSample;
+        => _acousticPathChangeGuardSamples > 0 && samplePosition < _acousticPathChangeGuardUntilSample;
 
     private void ClearPendingObservations()
     {
@@ -1065,9 +1023,7 @@ internal sealed class RenderAwarePlaybackBargeInDetector : IPlaybackBargeInDetec
         leftRms = Math.Sqrt(leftRmsEnergy / count);
         rightRms = Math.Sqrt(rightRmsEnergy / count);
         double denominator = Math.Sqrt(leftEnergy * rightEnergy);
-        correlation = count > 0 && denominator > 1e-12
-            ? Math.Clamp(dot / denominator, -1.0, 1.0)
-            : 0;
+        correlation = count > 0 && denominator > 1e-12 ? Math.Clamp(dot / denominator, -1.0, 1.0) : 0;
     }
 
     private static double Correlation(ReadOnlySpan<float> left, ReadOnlySpan<float> right)

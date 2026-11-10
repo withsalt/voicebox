@@ -69,19 +69,13 @@ internal sealed class ManualTimerTimeProvider : TimeProvider
         TimeSpan dueTime,
         TimeSpan period) : ITimer
     {
-        private long _due = dueTime == Timeout.InfiniteTimeSpan
-            ? long.MaxValue
-            : owner.GetTimestamp() + dueTime.Ticks;
-        private long _period = period == Timeout.InfiniteTimeSpan
-            ? long.MaxValue
-            : period.Ticks;
+        private long _due = dueTime == Timeout.InfiniteTimeSpan ? long.MaxValue : owner.GetTimestamp() + dueTime.Ticks;
+        private long _period = period == Timeout.InfiniteTimeSpan ? long.MaxValue : period.Ticks;
         private int _disposed;
 
         public bool Change(TimeSpan dueTime, TimeSpan period)
         {
-            _due = dueTime == Timeout.InfiniteTimeSpan
-                ? long.MaxValue
-                : owner.GetTimestamp() + dueTime.Ticks;
+            _due = dueTime == Timeout.InfiniteTimeSpan ? long.MaxValue : owner.GetTimestamp() + dueTime.Ticks;
             _period = period == Timeout.InfiniteTimeSpan ? long.MaxValue : period.Ticks;
             return Volatile.Read(ref _disposed) == 0;
         }

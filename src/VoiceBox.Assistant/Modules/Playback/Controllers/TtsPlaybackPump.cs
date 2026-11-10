@@ -38,11 +38,7 @@ namespace VoiceBox.Assistant.Modules.Playback.Controllers
             IScheduledSpeechSink scheduledSpeech)
         {
             _tts = tts ?? throw new ArgumentNullException(nameof(tts));
-            _playbackWriter = new BoundedPlaybackWriter(
-                playback,
-                logger,
-                ownerTurnId,
-                playbackStarted);
+            _playbackWriter = new BoundedPlaybackWriter(playback, logger, ownerTurnId, playbackStarted);
             _drainWaiter = new PlaybackDrainWaiter(playback, logger, tailBufferMs);
             _minSentenceChars = minSentenceChars;
             _prerollMs = prerollMs;
@@ -73,9 +69,7 @@ namespace VoiceBox.Assistant.Modules.Playback.Controllers
             // 播放队列, 之后转为逐块直通。这样播放一开始就有一段领先缓冲, 合成偶发跟不上 1x 播放
             // 速度 (例如句与句之间的首包等待) 时不会立刻把队列抽干而出现欠载卡顿。
             // 阈值以"播放格式的交织样本数"计; 整轮只在最前面建一次缓冲垫, 之后一直受用。
-            var preroll = new PrerollGate(
-                ComputePrerollThresholdSamples(playbackSampleRate, playbackChannels),
-                _playbackWriter);
+            var preroll = new PrerollGate(ComputePrerollThresholdSamples(playbackSampleRate, playbackChannels), _playbackWriter);
             Task<long> synthesisTask = RunSynthesisAsync();
 
             async Task<long> RunSynthesisAsync()
@@ -114,8 +108,7 @@ namespace VoiceBox.Assistant.Modules.Playback.Controllers
                         if (delta.ForceSpeechBoundary)
                         {
                             TaskCompletionSource completion = delta.SpeechBoundaryCompletion
-                                ?? new TaskCompletionSource(
-                                    TaskCreationOptions.RunContinuationsAsynchronously);
+                                ?? new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
                             await sentences.FlushAsync(completion, pipelineToken).ConfigureAwait(false);
                             await AwaitSpeechBoundaryAsync(completion.Task, synthesisTask, pipelineToken)
                                 .ConfigureAwait(false);
@@ -180,8 +173,7 @@ namespace VoiceBox.Assistant.Modules.Playback.Controllers
                     {
                         if (enqueuedSamples <= lastBoundarySamples)
                         {
-                            throw new InvalidOperationException(
-                                "A forced speech boundary did not produce any audio samples.");
+                            throw new InvalidOperationException("A forced speech boundary did not produce any audio samples.");
                         }
                         // A boundary must mean that audio has reached the device playback
                         // queue, not merely the optional preroll buffer. Once released, the

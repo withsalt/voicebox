@@ -51,11 +51,7 @@ internal sealed class BargeInCorpusEvaluator : IDisposable
             EnableAgc2 = false,
         }));
         _timeProvider = new BenchmarkTimeProvider();
-        _audio = new BenchmarkDuplexAudioIngress(
-            _mainAec,
-            _timeProvider,
-            EvaluationOptions.TargetSampleRate,
-            channels: 1);
+        _audio = new BenchmarkDuplexAudioIngress(_mainAec, _timeProvider, EvaluationOptions.TargetSampleRate, channels: 1);
         _vad = new BenchmarkVadService();
         _asr = new BenchmarkAsrService();
         _llm = new BenchmarkLlmService();
@@ -83,12 +79,8 @@ internal sealed class BargeInCorpusEvaluator : IDisposable
         if (callbackSamples <= 0)
             throw new ArgumentOutOfRangeException(nameof(callbackSamples));
 
-        WaveAudio microphone = WaveAudioLoader.LoadMono(
-            testCase.MicrophonePath,
-            EvaluationOptions.TargetSampleRate);
-        WaveAudio renderAudio = WaveAudioLoader.LoadMono(
-            testCase.RenderPath,
-            EvaluationOptions.TargetSampleRate);
+        WaveAudio microphone = WaveAudioLoader.LoadMono(testCase.MicrophonePath, EvaluationOptions.TargetSampleRate);
+        WaveAudio renderAudio = WaveAudioLoader.LoadMono(testCase.RenderPath, EvaluationOptions.TargetSampleRate);
         WaveAudio? nearEnd = testCase.NearEndReferencePath is null
             ? null
             : WaveAudioLoader.LoadMono(testCase.NearEndReferencePath, EvaluationOptions.TargetSampleRate);
@@ -118,9 +110,7 @@ internal sealed class BargeInCorpusEvaluator : IDisposable
                 .UseConversation(conversation)
                 .UseSpeechSynthesis(_tts)
                 .AddAcousticDiagnostics(_clockedMainAec)
-                .AddBargeIn(
-                    assistantOptions.BargeIn,
-                    new WebRtcAec3DelayEstimatorFactory());
+                .AddBargeIn(assistantOptions.BargeIn, new WebRtcAec3DelayEstimatorFactory());
             using var assistant = builder.BuildForBenchmark(_timeProvider, probe);
 
             bool detected = false;
@@ -168,10 +158,7 @@ internal sealed class BargeInCorpusEvaluator : IDisposable
                      drain < 2 && !detected && _audio.CaptureProcessorDelaySamples > 0;
                      drain++)
                 {
-                    _timeProvider.AdvanceSamples(
-                        _audio.CaptureProcessorDelaySamples,
-                        sampleRate,
-                        channels: 1);
+                    _timeProvider.AdvanceSamples(_audio.CaptureProcessorDelaySamples, sampleRate, channels: 1);
                     _audio.FlushCaptureProcessorDelay();
                 }
 
@@ -190,9 +177,7 @@ internal sealed class BargeInCorpusEvaluator : IDisposable
                     };
                 }
 
-                bool gradeablePositive =
-                    testCase.ExpectedNearEnd &&
-                    (!oracle.Available || oracle.Eligible);
+                bool gradeablePositive = testCase.ExpectedNearEnd && (!oracle.Available || oracle.Eligible);
                 bool earlyFalseTrigger =
                     detected &&
                     oracle.Available &&
@@ -225,9 +210,7 @@ internal sealed class BargeInCorpusEvaluator : IDisposable
                     Resampled = microphone.Resampled || renderAudio.Resampled || nearEnd?.Resampled == true,
                     Detected = detected,
                     DetectionTimeMs = detected ? evaluatedSamples * 1000.0 / sampleRate : null,
-                    DecisionReason = detected
-                        ? "confirmed-nearend-window"
-                        : decision.Reason ?? "none",
+                    DecisionReason = detected ? "confirmed-nearend-window" : decision.Reason ?? "none",
                     DecisionFrameCount = decision.FrameCount,
                     DecisionAcceptedFrameCount = decision.AcceptedFrameCount,
                     DecisionEchoLikeFrameCount = decision.EchoLikeFrameCount,
@@ -323,8 +306,7 @@ internal sealed class BargeInCorpusEvaluator : IDisposable
 
             void OnBargeInValidation(object? sender, BargeInValidationEventArgs args)
             {
-                if (args.Kind != BargeInValidationKind.Heard ||
-                    args.Source != BargeInTriggerSource.NearEndWindow)
+                if (args.Kind != BargeInValidationKind.Heard || args.Source != BargeInTriggerSource.NearEndWindow)
                 {
                     return;
                 }
@@ -425,9 +407,7 @@ internal sealed class BargeInCorpusEvaluator : IDisposable
             return false;
 
         VoiceAssistantBenchmarkSnapshot snapshot = probe.GetSnapshot();
-        return !probe.InterruptionAdmissionsSettled ||
-               snapshot.Coordinator.ConfirmationPending ||
-               snapshot.Coordinator.ActiveTurnId != 0;
+        return !probe.InterruptionAdmissionsSettled || snapshot.Coordinator.ConfirmationPending || snapshot.Coordinator.ActiveTurnId != 0;
     }
 
     private static void CopyAvailable(float[] source, int offset, Span<float> destination)

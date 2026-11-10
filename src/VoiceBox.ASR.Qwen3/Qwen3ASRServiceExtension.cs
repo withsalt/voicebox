@@ -19,14 +19,12 @@ namespace VoiceBox.ASR.Qwen3
             {
                 services.AddService<IStreamASRService, Qwen3ASRService>(serviceName).Configure(configure);
                 services.AddService<IASRService>(sc =>
-                    sc.AddKeyedSingleton<IASRService>(serviceName, (sp, _) =>
-                        sp.GetRequiredKeyedService<IStreamASRService>(serviceName)));
+                    sc.AddKeyedSingleton<IASRService>(serviceName, (sp, _) => sp.GetRequiredKeyedService<IStreamASRService>(serviceName)));
             }
             else
             {
                 services.AddService<IStreamASRService, Qwen3ASRService>().Configure(configure);
-                services.AddService<IASRService>(sc =>
-                    sc.TryAddSingleton<IASRService>(sp => sp.GetRequiredService<IStreamASRService>()));
+                services.AddService<IASRService>(sc => sc.TryAddSingleton<IASRService>(sp => sp.GetRequiredService<IStreamASRService>()));
             }
             return services;
         }

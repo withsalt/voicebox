@@ -55,6 +55,5 @@ internal sealed class AssistantRuntimePlan
     /// </summary>
     public IPlaybackBargeInDetectorFactory? PlaybackBargeInDetectorFactory { get; }
 
-    public IReadOnlyList<ModuleOwnership> Ownership { get; internal set; } =
-        Array.AsReadOnly(Array.Empty<ModuleOwnership>());
+    public IReadOnlyList<ModuleOwnership> Ownership { get; internal set; } = Array.AsReadOnly(Array.Empty<ModuleOwnership>());
 }

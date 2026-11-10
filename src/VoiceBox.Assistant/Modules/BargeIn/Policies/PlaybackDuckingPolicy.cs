@@ -61,8 +61,7 @@ internal sealed class PlaybackDuckingPolicy
         int releaseMs)
     {
         Command first = Command.None;
-        if (_duckedOwnerTurnId != 0 &&
-            (_duckedOwnerTurnId != ownerTurnId || _duckedStreamEpoch != frame.StreamEpoch))
+        if (_duckedOwnerTurnId != 0 && (_duckedOwnerTurnId != ownerTurnId || _duckedStreamEpoch != frame.StreamEpoch))
         {
             first = Restore();
         }
@@ -111,8 +110,7 @@ internal sealed class PlaybackDuckingPolicy
             return new CommandBatch(first, Command.None);
         }
 
-        if (_duckedOwnerTurnId != 0 &&
-            frame.EndSampleExclusive - _lastSpeechEndSample >= releaseSamples)
+        if (_duckedOwnerTurnId != 0 && frame.EndSampleExclusive - _lastSpeechEndSample >= releaseSamples)
         {
             return new CommandBatch(first, Restore());
         }
@@ -127,14 +125,7 @@ internal sealed class PlaybackDuckingPolicy
             return Command.None;
 
         long sequence = checked(++_sequence);
-        var command = new Command(
-            Kind.Restore,
-            sequence,
-            _duckedOwnerTurnId,
-            _duckedStreamEpoch,
-            0,
-            0,
-            0);
+        var command = new Command(Kind.Restore, sequence, _duckedOwnerTurnId, _duckedStreamEpoch, 0, 0, 0);
         _duckedOwnerTurnId = 0;
         _duckedStreamEpoch = 0;
         _lastSpeechEndSample = 0;

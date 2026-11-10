@@ -26,8 +26,7 @@ public sealed class OrderedPublicationBoundaryTests(ITestOutputHelper output)
         boundary.PublishCommitted(second, publication);
         try
         {
-            await Assert.ThrowsAsync<InvalidOperationException>(
-                () => boundary.Completion.WaitAsync(TimeSpan.FromSeconds(2)));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => boundary.Completion.WaitAsync(TimeSpan.FromSeconds(2)));
             if (checkAdmission)
             {
                 long next = boundary.NextPublicationSequence;
@@ -101,8 +100,7 @@ public sealed class OrderedPublicationBoundaryTests(ITestOutputHelper output)
     [Fact]
     public async Task DeferredPublicationWorker_CanDisposeBeforeStart()
     {
-        var boundary = new OrderedPublicationBoundary(
-            new AssistantEventDispatcher(new object(), NullLogger.Instance), startWorker: false);
+        var boundary = new OrderedPublicationBoundary(new AssistantEventDispatcher(new object(), NullLogger.Instance), startWorker: false);
         Assert.False(boundary.Completion.IsCompleted);
         Assert.Equal(0, boundary.PublisherThreadId);
         await boundary.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
@@ -178,9 +176,7 @@ public sealed class OrderedPublicationBoundaryTests(ITestOutputHelper output)
     public async Task ReservedSequenceGap_FaultsInsteadOfSkippingOrWaitingForever()
     {
         var dispatcher = new AssistantEventDispatcher(new object(), NullLogger.Instance);
-        var boundary = new OrderedPublicationBoundary(
-            dispatcher,
-            gapTimeout: TimeSpan.FromMilliseconds(20));
+        var boundary = new OrderedPublicationBoundary(dispatcher, gapTimeout: TimeSpan.FromMilliseconds(20));
         _ = boundary.ReserveSequence();
         long second = boundary.ReserveSequence();
         boundary.PublishCommitted(second, new StateChangedPublication(AssistantState.Idle, AssistantState.Listening));
@@ -195,9 +191,7 @@ public sealed class OrderedPublicationBoundaryTests(ITestOutputHelper output)
     public async Task Drain_PropagatesWorkerGapFaultInsteadOfWaitingForProgressForever()
     {
         var dispatcher = new AssistantEventDispatcher(new object(), NullLogger.Instance);
-        var boundary = new OrderedPublicationBoundary(
-            dispatcher,
-            gapTimeout: TimeSpan.FromMilliseconds(20));
+        var boundary = new OrderedPublicationBoundary(dispatcher, gapTimeout: TimeSpan.FromMilliseconds(20));
         _ = boundary.ReserveSequence();
         long second = boundary.ReserveSequence();
         boundary.PublishCommitted(second, new StateChangedPublication(AssistantState.Idle, AssistantState.Listening));
@@ -249,14 +243,11 @@ public sealed class OrderedPublicationBoundaryTests(ITestOutputHelper output)
         var dispatcher = new AssistantEventDispatcher(new object(), NullLogger.Instance);
         await using var boundary = new OrderedPublicationBoundary(dispatcher);
 
-        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => boundary.WaitUntilDeliveredAsync(-1));
-        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => boundary.WaitUntilDeliveredAsync(1));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => boundary.WaitUntilDeliveredAsync(-1));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => boundary.WaitUntilDeliveredAsync(1));
         await boundary.WaitUntilDeliveredAsync(0).WaitAsync(TimeSpan.FromSeconds(1));
 
-        long sequence = boundary.PublishStream(
-            new StateChangedPublication(AssistantState.Idle, AssistantState.Listening));
+        long sequence = boundary.PublishStream(new StateChangedPublication(AssistantState.Idle, AssistantState.Listening));
         await boundary.WaitUntilDeliveredAsync(sequence).WaitAsync(TimeSpan.FromSeconds(1));
         await boundary.WaitUntilDeliveredAsync(sequence).WaitAsync(TimeSpan.FromSeconds(1));
     }
@@ -268,8 +259,7 @@ public sealed class OrderedPublicationBoundaryTests(ITestOutputHelper output)
         var boundary = new OrderedPublicationBoundary(dispatcher);
         _ = boundary.ReserveSequence();
 
-        InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => boundary.DisposeAsync().AsTask());
+        InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(() => boundary.DisposeAsync().AsTask());
         Assert.Contains("gap at 1 during drain", error.Message, StringComparison.Ordinal);
     }
 
@@ -279,10 +269,7 @@ public sealed class OrderedPublicationBoundaryTests(ITestOutputHelper output)
         var dispatcher = new AssistantEventDispatcher(new object(), NullLogger.Instance);
         var time = new ManualTimerTimeProvider();
         time.Advance(TimeSpan.FromTicks(1));
-        var boundary = new OrderedPublicationBoundary(
-            dispatcher,
-            timeProvider: time,
-            gapTimeout: TimeSpan.FromMilliseconds(20));
+        var boundary = new OrderedPublicationBoundary(dispatcher, timeProvider: time, gapTimeout: TimeSpan.FromMilliseconds(20));
         _ = boundary.ReserveSequence();
         long second = boundary.ReserveSequence();
         long third = boundary.ReserveSequence();

@@ -98,9 +98,7 @@ namespace VoiceBox.Wakeup.FsmnKws.Internal
             for (int i = 0; i < _scoreBeam; i++)
             {
                 int token = topIdx[i];
-                if (topProb[i] > _probFloor
-                    && (uint)token < (uint)_tokenMask.Length
-                    && _tokenMask[token])
+                if (topProb[i] > _probFloor && (uint)token < (uint)_tokenMask.Length && _tokenMask[token])
                 {
                     candIdx[candCount] = token;
                     candProb[candCount] = topProb[i];
@@ -334,8 +332,7 @@ namespace VoiceBox.Wakeup.FsmnKws.Internal
                 _hash = hash.ToHashCode();
             }
 
-            public bool Equals(PrefixKey other) =>
-                _hash == other._hash && _ids.AsSpan().SequenceEqual(other._ids);
+            public bool Equals(PrefixKey other) => _hash == other._hash && _ids.AsSpan().SequenceEqual(other._ids);
 
             public override bool Equals(object? obj) => obj is PrefixKey other && Equals(other);
 

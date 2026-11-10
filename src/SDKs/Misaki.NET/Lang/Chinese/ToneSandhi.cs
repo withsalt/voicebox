@@ -204,10 +204,7 @@ public class ToneSandhi
                 // Check for V一V reduplication pattern: previous POS must be verb
                 var prev = result.Count > 0 ? result[^1] : (word: "", pos: "");
                 var next = segments[i + 1];
-                if (prev.word.Length == 1 && next.word.Length == 1 &&
-                    prev.word == next.word &&
-                    prev.pos == "v" &&
-                    !XEng.Contains(next.pos))
+                if (prev.word.Length == 1 && next.word.Length == 1 && prev.word == next.word && prev.pos == "v" && !XEng.Contains(next.pos))
                 {
                     // Merge into V一V pattern
                     result[^1] = (prev.word + "一" + next.word, prev.pos);
@@ -240,9 +237,7 @@ public class ToneSandhi
         for (int i = 0; i < segments.Count; i++)
         {
             var (word, pos) = segments[i];
-            if (result.Count > 0 &&
-                word == result[^1].word &&
-                !XEng.Contains(pos))
+            if (result.Count > 0 && word == result[^1].word && !XEng.Contains(pos))
             {
                 var last = result[^1];
                 result[^1] = (last.word + word, last.pos);
@@ -296,9 +291,7 @@ public class ToneSandhi
             {
                 var prevFinals = subFinals[i - 1];
                 var curFinals = subFinals[i];
-                if (prevFinals != null && curFinals != null &&
-                    AllToneThree(prevFinals) && AllToneThree(curFinals) &&
-                    !mergeLast[i - 1])
+                if (prevFinals != null && curFinals != null && AllToneThree(prevFinals) && AllToneThree(curFinals) && !mergeLast[i - 1])
                 {
                     var prevWord = segments[i - 1].word;
                     if (!IsReduplication(prevWord) && prevWord.Length + word.Length <= 3)
@@ -577,36 +570,31 @@ public class ToneSandhi
             handled = true;
         }
         // Single-char aspect particles: 了着过 with aspect POS
-        else if (word.Length == 1 && (lastChar == '了' || lastChar == '着' || lastChar == '过') &&
-                 (pos == "ul" || pos == "uz" || pos == "ug"))
+        else if (word.Length == 1 && (lastChar == '了' || lastChar == '着' || lastChar == '过') && (pos == "ul" || pos == "uz" || pos == "ug"))
         {
             result[lastIdx] = SetTone(result[lastIdx], 5);
             handled = true;
         }
         // Plural/diminutive suffix: 们/子 on pronouns/nouns
-        else if (word.Length > 1 && (lastChar == '们' || lastChar == '子') &&
-                 (pos == "r" || pos == "n"))
+        else if (word.Length > 1 && (lastChar == '们' || lastChar == '子') && (pos == "r" || pos == "n"))
         {
             result[lastIdx] = SetTone(result[lastIdx], 5);
             handled = true;
         }
         // Locative suffix: 上/下 on space/location/direction POS
-        else if (word.Length > 1 && (lastChar == '上' || lastChar == '下') &&
-                 (pos == "s" || pos == "l" || pos == "f"))
+        else if (word.Length > 1 && (lastChar == '上' || lastChar == '下') && (pos == "s" || pos == "l" || pos == "f"))
         {
             result[lastIdx] = SetTone(result[lastIdx], 5);
             handled = true;
         }
         // Directional complement: 来/去 after 上下进出回过起开
-        else if (word.Length > 1 && (lastChar == '来' || lastChar == '去') &&
-                 DirectionalStems.Contains(word[^2]))
+        else if (word.Length > 1 && (lastChar == '来' || lastChar == '去') && DirectionalStems.Contains(word[^2]))
         {
             result[lastIdx] = SetTone(result[lastIdx], 5);
             handled = true;
         }
         // 个 patterns: preceded by a numeric or 几有两半多各整每做是; or standalone 个
-        else if ((geIdx >= 1 && geIdx < result.Count &&
-                  (IsCjkNumeric(word[geIdx - 1]) || GePrecedents.Contains(word[geIdx - 1])))
+        else if ((geIdx >= 1 && geIdx < result.Count && (IsCjkNumeric(word[geIdx - 1]) || GePrecedents.Contains(word[geIdx - 1])))
                  || word == "个")
         {
             if (geIdx >= 0 && geIdx < result.Count)
@@ -660,15 +648,13 @@ public class ToneSandhi
         }
     }
 
-    private static readonly HashSet<char> ModalParticles = new(
-        "吧呢啊呐噻嘛吖嗨哦哒滴哩哟喽啰耶喔诶");
+    private static readonly HashSet<char> ModalParticles = new("吧呢啊呐噻嘛吖嗨哦哒滴哩哟喽啰耶喔诶");
 
     private static readonly HashSet<char> DirectionalStems = new("上下进出回过起开");
 
     private static readonly HashSet<char> GePrecedents = new("几有两半多各整每做是");
 
-    private static readonly HashSet<char> CjkNumerics = new(
-        "零一二三四五六七八九十百千万亿兆〇○两壹贰叁肆伍陆柒捌玖拾佰仟萬億");
+    private static readonly HashSet<char> CjkNumerics = new("零一二三四五六七八九十百千万亿兆〇○两壹贰叁肆伍陆柒捌玖拾佰仟萬億");
 
     /// <summary>
     /// Matches Python str.isnumeric() for CJK numeric characters.
@@ -871,16 +857,12 @@ public static class JiebaBridge
 
         if (firstBeginIdx == 0)
         {
-            var second = firstSubword.Length >= word.Length
-                ? string.Empty
-                : word[firstSubword.Length..];
+            var second = firstSubword.Length >= word.Length ? string.Empty : word[firstSubword.Length..];
             return new List<string> { firstSubword, second };
         }
         else
         {
-            var second = firstSubword.Length >= word.Length
-                ? string.Empty
-                : word[..^firstSubword.Length];
+            var second = firstSubword.Length >= word.Length ? string.Empty : word[..^firstSubword.Length];
             return new List<string> { second, firstSubword };
         }
     }

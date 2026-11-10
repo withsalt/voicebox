@@ -92,11 +92,6 @@ public sealed class ConversationBuilder
                 "so a tool-enabled conversation cannot be built.");
         }
 
-        return new LlmToolConversationSession(
-            conversationId,
-            options,
-            contextProviders,
-            toolCallingService,
-            tools);
+        return new LlmToolConversationSession(conversationId, options, contextProviders, toolCallingService, tools);
     }
 }

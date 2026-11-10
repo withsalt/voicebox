@@ -14,10 +14,7 @@ internal static class ButterworthHighPassFilterValidation
 
         if (options.Order is < 2 or > 8 || options.Order % 2 != 0)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(options.Order),
-                options.Order,
-                "Order must be an even number between 2 and 8.");
+            throw new ArgumentOutOfRangeException(nameof(options.Order), options.Order, "Order must be an even number between 2 and 8.");
         }
     }
 

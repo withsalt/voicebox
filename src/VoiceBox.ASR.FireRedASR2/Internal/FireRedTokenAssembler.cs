@@ -63,8 +63,7 @@ namespace VoiceBox.ASR.FireRedASR2.Internal
                 string combined = lastToken + WordBoundary + current + WordBoundary;
                 bool hasBpeMarker = combined.IndexOf("@@▁▁", StringComparison.Ordinal) > 0;
                 int underscoreCount = CountChar(combined, WordBoundary);
-                bool isWordPiece = (underscoreCount == 3 || underscoreCount == 5)
-                    && combined.IndexOf("▁▁▁", StringComparison.Ordinal) < 0;
+                bool isWordPiece = (underscoreCount == 3 || underscoreCount == 5) && combined.IndexOf("▁▁▁", StringComparison.Ordinal) < 0;
 
                 if (hasBpeMarker)
                 {
@@ -94,8 +93,7 @@ namespace VoiceBox.ASR.FireRedASR2.Internal
             }
 
             string text = textBuilder.ToString();
-            if (text.IndexOf("@@▁▁", StringComparison.Ordinal) > 0
-                || text.IndexOf("▁▁▁", StringComparison.Ordinal) < 0)
+            if (text.IndexOf("@@▁▁", StringComparison.Ordinal) > 0 || text.IndexOf("▁▁▁", StringComparison.Ordinal) < 0)
             {
                 text = text
                     .Replace("@@▁▁", string.Empty)

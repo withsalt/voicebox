@@ -9,8 +9,7 @@ public sealed record ConversationToolDefinition(ConversationToolId Id, Conversat
 {
     public ConversationToolId Id { get; } = ValidateId(Id);
 
-    public ConversationToolDescriptor Descriptor { get; } = Descriptor
-        ?? throw new ArgumentNullException(nameof(Descriptor));
+    public ConversationToolDescriptor Descriptor { get; } = Descriptor ?? throw new ArgumentNullException(nameof(Descriptor));
 
     private static ConversationToolId ValidateId(ConversationToolId id)
     {

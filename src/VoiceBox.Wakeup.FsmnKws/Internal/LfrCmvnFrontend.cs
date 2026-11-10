@@ -24,8 +24,7 @@ namespace VoiceBox.Wakeup.FsmnKws.Internal
             if (_addShift.Length != OutputDim || _rescale.Length != OutputDim)
                 throw new InvalidDataException(
                     $"CMVN dim mismatch: expected {OutputDim}, got AddShift={_addShift.Length}, Rescale={_rescale.Length}.");
-            if (_addShift.Any(value => !float.IsFinite(value))
-                || _rescale.Any(value => !float.IsFinite(value) || value <= 0f))
+            if (_addShift.Any(value => !float.IsFinite(value)) || _rescale.Any(value => !float.IsFinite(value) || value <= 0f))
                 throw new InvalidDataException("CMVN values must be finite; Rescale values must be positive.");
         }
 
@@ -50,8 +49,7 @@ namespace VoiceBox.Wakeup.FsmnKws.Internal
         {
             int capacity = output.Length / OutputDim;
             int produced = 0;
-            while (produced < capacity
-                   && _nextLfrFrame * LfrN + (LfrM - 1) / 2 < fbank.NumFramesReady)
+            while (produced < capacity && _nextLfrFrame * LfrN + (LfrM - 1) / 2 < fbank.NumFramesReady)
             {
                 Span<float> vec = output.Slice(produced * OutputDim, OutputDim);
                 long baseIndex = _nextLfrFrame * LfrN - (LfrM - 1) / 2;

@@ -311,10 +311,7 @@ public sealed class MiniAudioPlayService : MiniAudioServiceBase, IAudioPlayServi
     }
 
     private void RaiseError(Exception exception, string message)
-        => MiniAudioServiceHelpers.InvokeEventHandlers(
-            OnError,
-            this,
-            new AudioErrorEventArgs(exception, message, _state));
+        => MiniAudioServiceHelpers.InvokeEventHandlers(OnError, this, new AudioErrorEventArgs(exception, message, _state));
 
     private void RaiseErrorAsync(Exception exception, string message)
         => _ = Task.Run(() => RaiseError(exception, message));

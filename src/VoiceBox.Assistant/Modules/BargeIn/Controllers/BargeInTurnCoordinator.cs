@@ -26,9 +26,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Controllers;
 /// candidate's Match stops playback; otherwise acoustic confirmation does. Whole-utterance
 /// recognition then decides whether to start a response.
 /// </summary>
-internal sealed class BargeInTurnCoordinator :
-    IBargeInTurnSupportPort,
-    IActiveNearEndConversationView
+internal sealed class BargeInTurnCoordinator : IBargeInTurnSupportPort, IActiveNearEndConversationView
 {
     private readonly ITurnStateView _turnState;
     private readonly SpeechCandidateOwner _candidates;
@@ -110,8 +108,7 @@ internal sealed class BargeInTurnCoordinator :
     /// </summary>
     public void BindRecognition(IRecognitionPreparationPort recognitionPreparation)
     {
-        _boundRecognitionPreparation = recognitionPreparation
-            ?? throw new ArgumentNullException(nameof(recognitionPreparation));
+        _boundRecognitionPreparation = recognitionPreparation ?? throw new ArgumentNullException(nameof(recognitionPreparation));
     }
 
     private IRecognitionPreparationPort _recognitionPreparation
@@ -133,10 +130,7 @@ internal sealed class BargeInTurnCoordinator :
         {
             // Never reaches the Kernel: with KWS enabled an unauthorized candidate cannot even be
             // requested as an interruption, so it cannot produce any playback side effect.
-            _logger.LogDebug(
-                "播放期候选未获当前窗口 Speaker 授权, 不提交打断: turnId={TurnId}, source={Source}.",
-                decision.TurnId,
-                source);
+            _logger.LogDebug("播放期候选未获当前窗口 Speaker 授权, 不提交打断: turnId={TurnId}, source={Source}.", decision.TurnId, source);
             return default;
         }
 
@@ -178,16 +172,12 @@ internal sealed class BargeInTurnCoordinator :
             return default;
 
         SpeakingDecision decision = plan.Decision;
-        _benchmarkProbe?.ObserveControlTrace(
-            "barge-in.confirmed",
-            decision.TurnId,
-            detail: plan.Source.ToString());
+        _benchmarkProbe?.ObserveControlTrace("barge-in.confirmed", decision.TurnId, detail: plan.Source.ToString());
         _diagnostics.RecordConfirmed(decision, plan.Source);
         _wakeup?.MarkUserActivity();
         if (!_applier.Apply(decision, plan.InitialAudio))
         {
-            throw new InvalidOperationException(
-                "Confirmed barge-in observation could not be committed after Kernel acceptance.");
+            throw new InvalidOperationException("Confirmed barge-in observation could not be committed after Kernel acceptance.");
         }
 
         if (decision.OldState == AssistantState.Thinking)
@@ -251,11 +241,7 @@ internal sealed class BargeInTurnCoordinator :
             "physical-interrupt-issued:speaker-match: turnId={TurnId}, interruptedTurnId={InterruptedTurnId}.",
             plan.TurnId,
             plan.InterruptedTurnId);
-        return ObserveValidatedBargeIn(
-            plan.TurnId,
-            text: null,
-            reason: SpeakerMatchReason,
-            operationId: _controlSignals.NextOperationId());
+        return ObserveValidatedBargeIn(plan.TurnId, text: null, reason: SpeakerMatchReason, operationId: _controlSignals.NextOperationId());
     }
 
     public bool TryConfirmFromNearEndWindow(
@@ -296,11 +282,7 @@ internal sealed class BargeInTurnCoordinator :
         string reason = signal.Reason ?? "unknown";
         if (signal.Flag)
         {
-            if (!_validation.TryObserveValidated(
-                    signal.TurnId,
-                    out _,
-                    out _,
-                    out long interruptedTurnId))
+            if (!_validation.TryObserveValidated(signal.TurnId, out _, out _, out long interruptedTurnId))
             {
                 return default;
             }
@@ -313,19 +295,12 @@ internal sealed class BargeInTurnCoordinator :
                 textPresent: !string.IsNullOrWhiteSpace(signal.Text));
         }
 
-        if (!_validation.TryObserveRejection(
-                signal.TurnId,
-                out _,
-                out AssistantState restored))
+        if (!_validation.TryObserveRejection(signal.TurnId, out _, out AssistantState restored))
         {
             return default;
         }
 
-        return BargeInSemanticPlan.ValidationRejected(
-            kernelSignal,
-            signal.TurnId,
-            reason,
-            restored);
+        return BargeInSemanticPlan.ValidationRejected(kernelSignal, signal.TurnId, reason, restored);
     }
 
     public BargeInSemanticPlan ObserveValidatedBargeIn(
@@ -336,16 +311,9 @@ internal sealed class BargeInTurnCoordinator :
         long sourceSequence = 0,
         long sourceTimestamp = 0)
     {
-        if (!_validation.TryObserveValidated(
-                turnId,
-                out _,
-                out _,
-                out long interruptedTurnId))
+        if (!_validation.TryObserveValidated(turnId, out _, out _, out long interruptedTurnId))
         {
-            _logger.LogDebug(
-                "忽略已失效的播放期 barge-in 授权结果: turnId={TurnId}, reason={Reason}.",
-                turnId,
-                reason);
+            _logger.LogDebug("忽略已失效的播放期 barge-in 授权结果: turnId={TurnId}, reason={Reason}.", turnId, reason);
             return default;
         }
 
@@ -392,11 +360,7 @@ internal sealed class BargeInTurnCoordinator :
             restoreState: restored,
             sourceSequence: sourceSequence,
             sourceTick: sourceTimestamp);
-        return BargeInSemanticPlan.ValidationRejected(
-            signal,
-            turnId,
-            reason,
-            restored);
+        return BargeInSemanticPlan.ValidationRejected(signal, turnId, reason, restored);
     }
 
     public AssistantControlSignalResult CommitValidationPlan(BargeInSemanticPlan plan, KernelCommitResult kernel)
@@ -421,10 +385,7 @@ internal sealed class BargeInTurnCoordinator :
 
         if (plan.Kind == BargeInSemanticPlanKind.ValidationAccepted)
         {
-            _benchmarkProbe?.ObserveControlTrace(
-                "validation.accept.begin",
-                plan.TurnId,
-                detail: plan.Reason);
+            _benchmarkProbe?.ObserveControlTrace("validation.accept.begin", plan.TurnId, detail: plan.Reason);
             _logger.LogDebug(
                 "播放期 barge-in 已接受: turnId={TurnId}, interruptedTurnId={InterruptedTurnId}, " +
                 "reason={Reason}, textPresent={TextPresent}.",
@@ -435,8 +396,7 @@ internal sealed class BargeInTurnCoordinator :
             _turnContexts.TryCreate(plan.TurnId);
             if (!_validation.CommitAccepted(plan.TurnId, responseCts: null, clearValidationContext: false))
             {
-                throw new InvalidOperationException(
-                    "Validated barge-in acceptance could not be committed after Kernel acceptance.");
+                throw new InvalidOperationException("Validated barge-in acceptance could not be committed after Kernel acceptance.");
             }
 
             _recognitionTurn.ClearActiveSessionId();
@@ -445,16 +405,12 @@ internal sealed class BargeInTurnCoordinator :
             // outcome decides whether a response follows.
             _recognitionPreparation.MarkDeferred(plan.TurnId);
             CompleteDecisionContext(plan.TurnId);
-            return new AssistantControlSignalResult(
-                kernel.Accepted,
-                kernel.StateChanged,
-                kernel.PublicationSequence);
+            return new AssistantControlSignalResult(kernel.Accepted, kernel.StateChanged, kernel.PublicationSequence);
         }
 
         if (!_validation.CommitRejected(plan.TurnId))
         {
-            throw new InvalidOperationException(
-                "Validated barge-in rejection could not be committed after Kernel acceptance.");
+            throw new InvalidOperationException("Validated barge-in rejection could not be committed after Kernel acceptance.");
         }
 
         // Denied: the candidate is dropped; the interrupted reply was never touched, so nothing is
@@ -467,25 +423,14 @@ internal sealed class BargeInTurnCoordinator :
         if (_runScope.CanOpenInput)
             _gate.Open();
 
-        return new AssistantControlSignalResult(
-            kernel.Accepted,
-            kernel.StateChanged,
-            kernel.PublicationSequence);
+        return new AssistantControlSignalResult(kernel.Accepted, kernel.StateChanged, kernel.PublicationSequence);
     }
 
     public void ProcessCompleteValidationTurn(long turnId, bool endConversationRequested)
     {
-        CancellationTokenSource? responseCts = _turnState.IsCurrentTurn(turnId)
-            ? _resources.GetOrCreate(turnId).ResponseCts
-            : null;
-        bool completedCurrentTurn = _turnCompletion!.TryCompleteTurn(
-            turnId,
-            endConversationRequested,
-            publishStateTransition: false);
-        if (completedCurrentTurn &&
-            responseCts?.IsCancellationRequested != true &&
-            _runScope.CanOpenInput &&
-            IsIdleWithoutCandidate)
+        CancellationTokenSource? responseCts = _turnState.IsCurrentTurn(turnId) ? _resources.GetOrCreate(turnId).ResponseCts : null;
+        bool completedCurrentTurn = _turnCompletion!.TryCompleteTurn(turnId, endConversationRequested, publishStateTransition: false);
+        if (completedCurrentTurn && responseCts?.IsCancellationRequested != true && _runScope.CanOpenInput && IsIdleWithoutCandidate)
         {
             _gate.Open();
         }
@@ -500,9 +445,7 @@ internal sealed class BargeInTurnCoordinator :
     /// 该状态下进行, 否则会把候选累积期/回合进行中的用户语音掐断在半截。
     /// </summary>
     public bool IsIdleWithoutCandidate
-        => _turnState.ConversationState == AssistantState.Idle &&
-            !_candidates.IsCandidateActive &&
-            !_validation.HasValidation;
+        => _turnState.ConversationState == AssistantState.Idle && !_candidates.IsCandidateActive && !_validation.HasValidation;
 
     public AssistantState ConversationState => _turnState.ConversationState;
 
@@ -512,9 +455,7 @@ internal sealed class BargeInTurnCoordinator :
     /// 播放中且没有正在累积/验证的语音候选 —— 主动近端 barge-in 触发的前置条件。
     /// </summary>
     public bool IsSpeakingWithoutPendingCandidate
-        => _turnState.ConversationState == AssistantState.Speaking &&
-            !_candidates.IsCandidateActive &&
-            !_validation.HasValidation;
+        => _turnState.ConversationState == AssistantState.Speaking && !_candidates.IsCandidateActive && !_validation.HasValidation;
 
     public bool IsValidating(long turnId) => _validation.IsValidating(turnId);
 

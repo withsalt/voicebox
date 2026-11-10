@@ -29,8 +29,7 @@ public sealed class ConversationAudioTests
     [InlineData(16_000, 0)]
     [InlineData(16_000, -1)]
     public void AudioRequiresAPositiveSampleRateAndChannelCount(int sampleRate, int channels)
-        => Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new ConversationAudio([0f], sampleRate, channels));
+        => Assert.Throws<ArgumentOutOfRangeException>(() => new ConversationAudio([0f], sampleRate, channels));
 
     [Fact]
     public void AudioRequiresNonemptyCompleteFrames()

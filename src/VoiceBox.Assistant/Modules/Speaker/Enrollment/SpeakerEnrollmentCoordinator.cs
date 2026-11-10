@@ -237,9 +237,7 @@ public sealed class SpeakerEnrollmentCoordinator
                     pacer,
                     ct).ConfigureAwait(false);
                 bool needDoubleTalk = wantDoubleTalk && session.DoubleTalk.Count < _options.DoubleTalkSegmentCount;
-                resumeStage = needDoubleTalk
-                    ? SpeakerEnrollmentStage.DoubleTalkEnrollment
-                    : SpeakerEnrollmentStage.CleanConfirmation;
+                resumeStage = needDoubleTalk ? SpeakerEnrollmentStage.DoubleTalkEnrollment : SpeakerEnrollmentStage.CleanConfirmation;
                 resumeIndex = needDoubleTalk ? session.DoubleTalk.Count : 0;
                 Persist(session, resumeStage, resumeIndex);
             }
@@ -326,10 +324,7 @@ public sealed class SpeakerEnrollmentCoordinator
 
                 session.CleanConfirmationPassed = true;
                 session.CleanConfirmationScore = cleanConfirmation;
-                Persist(
-                    session,
-                    wantDoubleTalk ? SpeakerEnrollmentStage.DoubleTalkConfirmation : SpeakerEnrollmentStage.SavingProfile,
-                    0);
+                Persist(session, wantDoubleTalk ? SpeakerEnrollmentStage.DoubleTalkConfirmation : SpeakerEnrollmentStage.SavingProfile, 0);
             }
 
             double doubleTalkConfirmation = double.NaN;
@@ -376,9 +371,7 @@ public sealed class SpeakerEnrollmentCoordinator
             if (doubleTalkBank is not null)
                 banks[SpeakerPurposeBank.DoubleTalkNearEnd] = doubleTalkBank.Bank;
 
-            double confirmationMin = doubleTalkBank is null
-                ? cleanConfirmation
-                : Math.Min(cleanConfirmation, doubleTalkConfirmation);
+            double confirmationMin = doubleTalkBank is null ? cleanConfirmation : Math.Min(cleanConfirmation, doubleTalkConfirmation);
             var variant = new OwnerSpeakerProfileVariant(
                 Guid.NewGuid().ToString("N"),
                 _descriptor.FrontendFingerprint,
@@ -606,25 +599,13 @@ public sealed class SpeakerEnrollmentCoordinator
         SpeakerEnrollmentSegmentEvaluation evaluation = default;
         for (int attempt = 1; attempt <= _options.MaxAttemptsPerSegment; attempt++)
         {
-            evaluation = await RecordSegmentAsync(
-                stage,
-                condition,
-                0,
-                1,
-                attempt,
-                requiredSamples,
-                pacer,
-                ct).ConfigureAwait(false);
+            evaluation = await RecordSegmentAsync(stage, condition, 0, 1, attempt, requiredSamples, pacer, ct).ConfigureAwait(false);
             if (evaluation.Accepted)
                 break;
         }
         if (!evaluation.Accepted)
         {
-            throw Failure(
-                SpeakerEnrollmentReasonCode.TooManyRetries,
-                $"{condition} 确认段未通过质量门（{evaluation.Reason}）。",
-                stage,
-                0);
+            throw Failure(SpeakerEnrollmentReasonCode.TooManyRetries, $"{condition} 确认段未通过质量门（{evaluation.Reason}）。", stage, 0);
         }
 
         // Same window rule as online verification: every accepted window is scored against the bank;

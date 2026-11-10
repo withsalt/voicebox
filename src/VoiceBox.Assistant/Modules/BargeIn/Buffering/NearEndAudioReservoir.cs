@@ -31,9 +31,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Buffering
                 return false;
 
             bool resetExisting = _hasTimeline &&
-                (hasDiscontinuity ||
-                 _streamEpoch != sourceRange.StreamEpoch ||
-                 _endSample != sourceRange.StartSample);
+                (hasDiscontinuity || _streamEpoch != sourceRange.StreamEpoch || _endSample != sourceRange.StartSample);
             if (!_hasTimeline || resetExisting)
             {
                 ClearLocked();
@@ -154,8 +152,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Buffering
                 return false;
 
             long retainedStart = _endSample - _count;
-            if (!_hasTimeline || streamEpoch != _streamEpoch ||
-                startSample < retainedStart || endSampleExclusive > _endSample)
+            if (!_hasTimeline || streamEpoch != _streamEpoch || startSample < retainedStart || endSampleExclusive > _endSample)
             {
                 return false;
             }

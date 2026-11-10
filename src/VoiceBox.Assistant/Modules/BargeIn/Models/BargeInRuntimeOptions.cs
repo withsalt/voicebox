@@ -80,18 +80,12 @@ internal sealed class BargeInRuntimeOptions
         int reservoirMs = Math.Max(timelineAlignedAudioLimitMs, options.ActiveNearEndWindowMs);
         return new BargeInRuntimeOptions(
             options,
-            audioFormat.SamplesFromMillisecondsToInt32(
-                reservoirMs,
-                audioFormat.AudioSampleRate,
-                audioFormat.AudioChannels),
+            audioFormat.SamplesFromMillisecondsToInt32(reservoirMs, audioFormat.AudioSampleRate, audioFormat.AudioChannels),
             audioFormat.SamplesFromMillisecondsToInt32(
                 options.ActiveNearEndPreRollMs,
                 audioFormat.AudioSampleRate,
                 audioFormat.AudioChannels),
-            audioFormat.SamplesFromMillisecondsToInt32(
-                timelineAlignedAudioLimitMs,
-                audioFormat.AudioSampleRate,
-                audioFormat.AudioChannels),
+            audioFormat.SamplesFromMillisecondsToInt32(timelineAlignedAudioLimitMs, audioFormat.AudioSampleRate, audioFormat.AudioChannels),
             audioFormat.SamplesFromMillisecondsToInt32(
                 options.PlaybackMaxCandidateMs,
                 audioFormat.AudioSampleRate,

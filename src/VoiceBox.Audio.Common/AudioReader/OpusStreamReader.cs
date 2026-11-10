@@ -114,9 +114,7 @@ public class OpusStreamReader : IAudioStreamReader
         {
             if (_remainingSamplesOffset < _decodedSampleCount)
             {
-                int count = Math.Min(
-                    _decodedSampleCount - _remainingSamplesOffset,
-                    buffer.Length - samplesCopied);
+                int count = Math.Min(_decodedSampleCount - _remainingSamplesOffset, buffer.Length - samplesCopied);
 
                 _decodeBuffer.AsSpan(_remainingSamplesOffset, count)
                     .CopyTo(buffer[samplesCopied..]);
@@ -133,9 +131,7 @@ public class OpusStreamReader : IAudioStreamReader
                 continue;
             }
 
-            int decodedSampleCount = _isOgg
-                ? DecodeNextOggPacket()
-                : DecodeNextLengthPrefixedPacket();
+            int decodedSampleCount = _isOgg ? DecodeNextOggPacket() : DecodeNextLengthPrefixedPacket();
 
             if (decodedSampleCount < 0)
             {
@@ -274,9 +270,7 @@ public class OpusStreamReader : IAudioStreamReader
             return;
         }
 
-        int newLength = buffer.Length == 0
-            ? Math.Max(requiredLength, 256)
-            : Math.Max(requiredLength, buffer.Length * 2);
+        int newLength = buffer.Length == 0 ? Math.Max(requiredLength, 256) : Math.Max(requiredLength, buffer.Length * 2);
         buffer = GC.AllocateUninitializedArray<T>(newLength);
     }
 
@@ -332,16 +326,12 @@ public class OpusStreamReader : IAudioStreamReader
     {
         if (sampleRate is not (8000 or 12000 or 16000 or 24000 or 48000))
         {
-            throw new ArgumentException(
-                "Invalid sample rate. Opus supports: 8k, 12k, 16k, 24k, 48k Hz",
-                nameof(sampleRate));
+            throw new ArgumentException("Invalid sample rate. Opus supports: 8k, 12k, 16k, 24k, 48k Hz", nameof(sampleRate));
         }
 
         if (channels is < 1 or > 2)
         {
-            throw new ArgumentException(
-                "Invalid channel count. Opus supports 1 (mono) or 2 (stereo) channels",
-                nameof(channels));
+            throw new ArgumentException("Invalid channel count. Opus supports 1 (mono) or 2 (stereo) channels", nameof(channels));
         }
 
         if (frameSizeMs <= 0)

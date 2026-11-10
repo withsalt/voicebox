@@ -85,11 +85,7 @@ internal sealed class VadSpeakerGateHost : IVadSpeakerGateHost
                 out _))
         {
             _ingress.TryTerminate(
-                new AssistantFailure(
-                    "VBX-CTRL-016",
-                    "capacity",
-                    "vad-speaker-data-plane",
-                    "speaker-gate-admission-failed"),
+                new AssistantFailure("VBX-CTRL-016", "capacity", "vad-speaker-data-plane", "speaker-gate-admission-failed"),
                 Stopwatch.GetTimestamp(),
                 out _);
         }

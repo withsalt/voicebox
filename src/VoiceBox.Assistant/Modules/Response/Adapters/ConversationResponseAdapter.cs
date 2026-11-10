@@ -50,9 +50,7 @@ internal sealed class ConversationResponseAdapter
         var visible = new StringBuilder();
         try
         {
-            ConversationAudio? snapshot = audio.IsEmpty
-                ? null
-                : new ConversationAudio(audio.Span, _sampleRate, _channels);
+            ConversationAudio? snapshot = audio.IsEmpty ? null : new ConversationAudio(audio.Span, _sampleRate, _channels);
             await foreach (ConversationEvent update in _conversation
                 .StreamAsync(new ConversationRequest(requestId, text, snapshot), cancellationToken)
                 .WithCancellation(cancellationToken)
@@ -62,15 +60,13 @@ internal sealed class ConversationResponseAdapter
                 {
                     case ConversationThinkingDelta thinking:
                         if (completed)
-                            throw new ConversationProtocolException(
-                                "The conversation emitted thinking after its completed update.");
+                            throw new ConversationProtocolException("The conversation emitted thinking after its completed update.");
                         if (!string.IsNullOrEmpty(thinking.Text))
                             yield return new ConversationTurnThinking(thinking.Text);
                         break;
                     case ConversationTextDelta delta:
                         if (completed)
-                            throw new ConversationProtocolException(
-                                "The conversation emitted text after its completed update.");
+                            throw new ConversationProtocolException("The conversation emitted text after its completed update.");
                         if (!string.IsNullOrEmpty(delta.Text))
                         {
                             visible.Append(delta.Text);
@@ -79,27 +75,23 @@ internal sealed class ConversationResponseAdapter
                         break;
                     case ConversationCompleted completion:
                         if (completed)
-                            throw new ConversationProtocolException(
-                                "The conversation emitted more than one completed update.");
+                            throw new ConversationProtocolException("The conversation emitted more than one completed update.");
                         completed = true;
                         string accumulated = visible.ToString();
                         if (!string.Equals(accumulated, completion.Text, StringComparison.Ordinal))
                         {
-                            throw new ConversationProtocolException(
-                                "The conversation completed update does not match its visible text.");
+                            throw new ConversationProtocolException("The conversation completed update does not match its visible text.");
                         }
                         yield return new ConversationTurnCompleted(requestId, completion.Text);
                         break;
                     default:
-                        throw new ConversationProtocolException(
-                            $"Unsupported conversation update '{update.GetType().Name}'.");
+                        throw new ConversationProtocolException($"Unsupported conversation update '{update.GetType().Name}'.");
                 }
             }
 
             if (!completed)
             {
-                throw new ConversationProtocolException(
-                    "The conversation ended without a completed update.");
+                throw new ConversationProtocolException("The conversation ended without a completed update.");
             }
         }
         finally

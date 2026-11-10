@@ -137,9 +137,7 @@ namespace VoiceBox.Assistant.Diagnostics.Benchmarking.Adapters
             }
         }
         public int CaptureProcessorDelaySamples
-            => EnableAec
-                ? Math.Max(0, _aecService.DelaySamples)
-                : 0;
+            => EnableAec ? Math.Max(0, _aecService.DelaySamples) : 0;
         public event Action<ReadOnlySpan<float>>? OnDataAvailable;
         public event EventHandler? OnPlaybackCompleted;
         public event EventHandler<AudioQueueOverflowEventArgs>? OnQueueOverflow
@@ -314,9 +312,7 @@ namespace VoiceBox.Assistant.Diagnostics.Benchmarking.Adapters
             float clamped = Math.Clamp(gain, 0, 1);
             if (clamped < PlaybackGain && PlaybackDuckCapturePosition < 0)
                 PlaybackDuckCapturePosition = _capturePosition;
-            if (clamped > PlaybackGain &&
-                PlaybackDuckCapturePosition >= 0 &&
-                PlaybackResumeCapturePosition < 0)
+            if (clamped > PlaybackGain && PlaybackDuckCapturePosition >= 0 && PlaybackResumeCapturePosition < 0)
             {
                 PlaybackResumeCapturePosition = _capturePosition;
             }
@@ -341,15 +337,11 @@ namespace VoiceBox.Assistant.Diagnostics.Benchmarking.Adapters
                     destination[i] = _emitStream[_emitCursor + i];
                 _emitCursor += count;
 
-                if (_duckCommitIndex >= 0 &&
-                    PlaybackAudibleDuckCapturePosition < 0 &&
-                    _emitCursor > _duckCommitIndex)
+                if (_duckCommitIndex >= 0 && PlaybackAudibleDuckCapturePosition < 0 && _emitCursor > _duckCommitIndex)
                 {
                     PlaybackAudibleDuckCapturePosition = _capturePosition;
                 }
-                if (_drainTargetIndex >= 0 &&
-                    PlaybackDrainCompleteCapturePosition < 0 &&
-                    _emitCursor >= _drainTargetIndex)
+                if (_drainTargetIndex >= 0 && PlaybackDrainCompleteCapturePosition < 0 && _emitCursor >= _drainTargetIndex)
                 {
                     PlaybackDrainCompleteCapturePosition = _capturePosition;
                 }
@@ -364,9 +356,7 @@ namespace VoiceBox.Assistant.Diagnostics.Benchmarking.Adapters
         private void AppendToDeviceBuffer(int count)
         {
             float target = PlaybackGain;
-            float step = PlaybackGainRampMs > 0 && Options.SampleRate > 0
-                ? 1f / (PlaybackGainRampMs * Options.SampleRate / 1000f)
-                : 1f;
+            float step = PlaybackGainRampMs > 0 && Options.SampleRate > 0 ? 1f / (PlaybackGainRampMs * Options.SampleRate / 1000f) : 1f;
 
             for (int i = 0; i < count; i++)
             {
@@ -406,8 +396,7 @@ namespace VoiceBox.Assistant.Diagnostics.Benchmarking.Adapters
         }
 
         private bool HasAudioInFlight()
-            => _playbackQueue.Count - _playbackQueueOffset > 0 ||
-               _emitCursor < _lastRealCommitIndex;
+            => _playbackQueue.Count - _playbackQueueOffset > 0 || _emitCursor < _lastRealCommitIndex;
 
         public void CommitPlaybackFrame()
         {
@@ -416,9 +405,7 @@ namespace VoiceBox.Assistant.Diagnostics.Benchmarking.Adapters
             {
                 // Playback is only finished once the committed device buffer has drained as well,
                 // not when the software queue empties.
-                if (_playbackCompletionPending &&
-                    _playbackQueue.Count == 0 &&
-                    _emitCursor >= _lastRealCommitIndex)
+                if (_playbackCompletionPending && _playbackQueue.Count == 0 && _emitCursor >= _lastRealCommitIndex)
                 {
                     _playbackCompletionPending = false;
                     _playbackHeld = false;
@@ -431,14 +418,11 @@ namespace VoiceBox.Assistant.Diagnostics.Benchmarking.Adapters
 
         public void MarkPlaybackAudibleStop(long capturePosition)
         {
-            if (PlaybackClearCapturePosition < 0 ||
-                PlaybackAudibleStopCapturePosition >= 0)
+            if (PlaybackClearCapturePosition < 0 || PlaybackAudibleStopCapturePosition >= 0)
             {
                 return;
             }
-            PlaybackAudibleStopCapturePosition = Math.Max(
-                PlaybackClearCapturePosition,
-                capturePosition);
+            PlaybackAudibleStopCapturePosition = Math.Max(PlaybackClearCapturePosition, capturePosition);
         }
 
         public float[] CopyCapturedPlayback()
@@ -471,9 +455,7 @@ namespace VoiceBox.Assistant.Diagnostics.Benchmarking.Adapters
             }
             if (renderStatus == RenderTimelineStatus.Gap && hasRenderDiscontinuity)
             {
-                throw new ArgumentException(
-                    "A render gap must remain on the current render timeline.",
-                    nameof(hasRenderDiscontinuity));
+                throw new ArgumentException("A render gap must remain on the current render timeline.", nameof(hasRenderDiscontinuity));
             }
 
             if (hasRenderDiscontinuity)
@@ -507,36 +489,22 @@ namespace VoiceBox.Assistant.Diagnostics.Benchmarking.Adapters
                 _aecService.Reset();
             if (EnableAec)
             {
-                _aecService.Process(
-                    afterAec,
-                    renderCopy,
-                    Options.ChannelCount,
-                    Options.SampleRate);
+                _aecService.Process(afterAec, renderCopy, Options.ChannelCount, Options.SampleRate);
             }
 
             long start = _capturePosition;
             long sequence = checked(++_sequence);
             _capturePosition = checked(_capturePosition + afterAec.Length);
             long timestamp = _timeProvider.GetTimestamp();
-            var range = new CaptureRange(
-                _streamEpoch,
-                sequence,
-                sequence,
-                start,
-                _capturePosition,
-                timestamp);
+            var range = new CaptureRange(_streamEpoch, sequence, sequence, start, _capturePosition, timestamp);
             BufferedCaptureOutput captureOutput = _captureTimelineMapper.Map(
                 in range,
                 afterAec.Length,
                 buffered: EnableAec && captureProcessorDelay > 0,
                 captureProcessorDelay,
                 hasDiscontinuity);
-            CaptureSignalTimeline callbackTimeline =
-                CaptureSignalTimeline.FromWholeBuffer(in range, afterAec.Length);
-            var timeline = new DuplexCaptureTimeline(
-                callbackTimeline,
-                callbackTimeline,
-                captureOutput.Timeline);
+            CaptureSignalTimeline callbackTimeline = CaptureSignalTimeline.FromWholeBuffer(in range, afterAec.Length);
+            var timeline = new DuplexCaptureTimeline(callbackTimeline, callbackTimeline, captureOutput.Timeline);
             var duplex = new DuplexAudioFrame(
                 SequenceNumber: sequence,
                 TimestampTicks: timestamp,
@@ -559,10 +527,7 @@ namespace VoiceBox.Assistant.Diagnostics.Benchmarking.Adapters
             if (!captureOutput.IsValid)
                 return range;
 
-            var processedAudio = new ReadOnlyMemory<float>(
-                afterAec,
-                captureOutput.BufferOffset,
-                captureOutput.SampleCount);
+            var processedAudio = new ReadOnlyMemory<float>(afterAec, captureOutput.BufferOffset, captureOutput.SampleCount);
             var processed = new ProcessedCaptureFrame(
                 captureOutput.SourceRange,
                 Options.SampleRate,

@@ -18,10 +18,7 @@ namespace VoiceBox.Assistant.Conversation;
 /// 等待启动清理和运行任务退出后断开连接。停止保留业务历史, 完成后允许再次启动。
 /// DisposeAsync 释放本会话拥有的工具与来源, 不释放借用的 LLM 服务。
 /// </remarks>
-public sealed class LlmToolConversationSession :
-    IConversationSession,
-    IConversationBackgroundOutput,
-    IBackgroundResultPublisher
+public sealed class LlmToolConversationSession : IConversationSession, IConversationBackgroundOutput, IBackgroundResultPublisher
 {
     private const int BackgroundChannelCapacity = 64;
 
@@ -43,23 +40,9 @@ public sealed class LlmToolConversationSession :
             options.MaxHistoryTurns,
             tools.Options.ToolTranscriptRetentionTurns,
             tools.Options.MaxPersistedToolResultBytes);
-        var runtime = new ConversationToolRuntime(
-            tools.Tools,
-            tools.Providers,
-            tools.ApprovalPolicy,
-            tools.Options);
-        _executor = new ToolTurnExecutor(
-            new StructuredLlmTurnClient(service),
-            runtime,
-            history,
-            this,
-            tools.Options);
-        _core = new ConversationSessionCore(
-            conversationId,
-            history,
-            options,
-            contextProviders,
-            _executor);
+        var runtime = new ConversationToolRuntime(tools.Tools, tools.Providers, tools.ApprovalPolicy, tools.Options);
+        _executor = new ToolTurnExecutor(new StructuredLlmTurnClient(service), runtime, history, this, tools.Options);
+        _core = new ConversationSessionCore(conversationId, history, options, contextProviders, _executor);
     }
 
     public string ConversationId => _core.ConversationId;
@@ -93,8 +76,7 @@ public sealed class LlmToolConversationSession :
     {
         try
         {
-            using var startup = CancellationTokenSource.CreateLinkedTokenSource(
-                cancellationToken, run.Cancellation.Token);
+            using var startup = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, run.Cancellation.Token);
             _core.BeginRun();
             await _executor.StartAsync(startup.Token).ConfigureAwait(false);
             startup.Token.ThrowIfCancellationRequested();
@@ -208,9 +190,7 @@ public sealed class LlmToolConversationSession :
     {
         Channel<ConversationBackgroundMessage>? background;
         lock (_lifecycleLock)
-            background = _run is { IsStarted: true, StopCompletion: null } run
-                ? run.Background
-                : null;
+            background = _run is { IsStarted: true, StopCompletion: null } run ? run.Background : null;
 
         if (background is null)
             return;

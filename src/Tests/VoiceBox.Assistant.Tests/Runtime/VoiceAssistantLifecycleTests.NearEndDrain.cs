@@ -141,9 +141,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Empty(faults);
         Assert.Equal(12, coordinator.Module.Capture.DirectFeedNextSample);
         Assert.Equal(8, coordinator.Module.Capture.DirectFeedSamples);
-        Assert.Equal(
-            [5f, 6f, 7f, 8f, 9f, 10f, 11f, 12f],
-            services.Asr.FedAudio["confirmation-handoff"].SelectMany(static chunk => chunk));
+        Assert.Equal([5f, 6f, 7f, 8f, 9f, 10f, 11f, 12f], services.Asr.FedAudio["confirmation-handoff"].SelectMany(static chunk => chunk));
     }
 
     [Theory]
@@ -193,8 +191,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         Assert.Equal(1, speechEnded);
         Assert.Empty(faults);
-        Assert.Equal(resumedAudio.Concat(trailingSilence),
-            services.Asr.FedAudio["resumed-endpoint"].SelectMany(static chunk => chunk));
+        Assert.Equal(resumedAudio.Concat(trailingSilence), services.Asr.FedAudio["resumed-endpoint"].SelectMany(static chunk => chunk));
     }
 
     [Fact]

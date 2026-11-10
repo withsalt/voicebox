@@ -25,8 +25,7 @@ namespace FsmnKwsDemo
         private static readonly string ModelDir = Path.Combine(BASE_MODEL_DIR, "kws", "kws-xiaoai-onnx");
 
         /// <summary>从模型目录的 kws_meta.json 读取唤醒词 (仅用于提示显示)。</summary>
-        private static string ReadKeyword() =>
-            FsmnKwsMetadata.Load(Path.Combine(ModelDir, FsmnKwsMetadata.FileName)).Keyword;
+        private static string ReadKeyword() => FsmnKwsMetadata.Load(Path.Combine(ModelDir, FsmnKwsMetadata.FileName)).Keyword;
 
         static async Task Main(string[] args)
         {

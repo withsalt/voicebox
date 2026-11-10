@@ -82,7 +82,6 @@ public sealed class SpeakerProfileMatcherTests
             ScriptedSpeakerService.OwnerAxis(),
             [new SpeakerPrototype("only", ScriptedSpeakerService.OwnerAxis(), 1f)]);
         Assert.False(bank.IsUsable);
-        Assert.Throws<InvalidOperationException>(() =>
-            SpeakerProfileMatcher.Score(_speaker, bank, ScriptedSpeakerService.OwnerAxis()));
+        Assert.Throws<InvalidOperationException>(() => SpeakerProfileMatcher.Score(_speaker, bank, ScriptedSpeakerService.OwnerAxis()));
     }
 }

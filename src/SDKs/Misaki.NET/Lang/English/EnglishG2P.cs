@@ -37,9 +37,7 @@ public sealed class EnglishG2P : IG2P, IDisposable
         @"[A-Za-z]+\d+[A-Za-z\d]*|\d+[A-Za-z]+[A-Za-z\d]*|[A-Z]?[a-z]+(?:'[a-z]+)?|[A-Z]+(?=[A-Z][a-z]|\d|\b)|[A-Z](?=[a-z])|[0-9]+(?:[,\.][0-9]+)*|\S",
         RegexOptions.Compiled);
 
-    private static readonly Regex LinkRegex = new(
-        @"\[([^\]]+)\]\(([^\)]*)\)",
-        RegexOptions.Compiled);
+    private static readonly Regex LinkRegex = new(@"\[([^\]]+)\]\(([^\)]*)\)", RegexOptions.Compiled);
 
     /// <summary>
     /// Creates a new English G2P instance. The DeepPhonemizer model files are loaded from
@@ -82,8 +80,7 @@ public sealed class EnglishG2P : IG2P, IDisposable
             if (Directory.Exists(c) && File.Exists(Path.Combine(c, ModelFileName)))
                 return c;
 
-        throw new DirectoryNotFoundException(
-            $"DeepPhonemizer model dir not found. Tried: {string.Join(", ", candidates)}");
+        throw new DirectoryNotFoundException($"DeepPhonemizer model dir not found. Tried: {string.Join(", ", candidates)}");
     }
 
     /// <inheritdoc />

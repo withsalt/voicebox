@@ -31,8 +31,7 @@ internal sealed class Pcm16WaveWriter : IDisposable
         WriteHeader(dataSize: 0);
     }
 
-    public TimeSpan Duration => TimeSpan.FromSeconds(
-        _dataSize / (double)(sizeof(short) * _channelCount * _sampleRate));
+    public TimeSpan Duration => TimeSpan.FromSeconds(_dataSize / (double)(sizeof(short) * _channelCount * _sampleRate));
 
     public void WriteSamples(ReadOnlySpan<float> samples)
     {
@@ -55,9 +54,7 @@ internal sealed class Pcm16WaveWriter : IDisposable
             for (int i = 0; i < samples.Length; i++)
             {
                 float sample = float.IsFinite(samples[i]) ? Math.Clamp(samples[i], -1f, 1f) : 0f;
-                short pcm = sample <= -1f
-                    ? short.MinValue
-                    : (short)MathF.Round(sample * short.MaxValue);
+                short pcm = sample <= -1f ? short.MinValue : (short)MathF.Round(sample * short.MaxValue);
                 BinaryPrimitives.WriteInt16LittleEndian(bytes.Slice(i * sizeof(short), sizeof(short)), pcm);
             }
 

@@ -54,9 +54,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
         public AudioFeatures Encode(ReadOnlySpan<float> waveform, IncrementalMelState? melState = null)
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            LogMelSpectrogram mel = melState is null
-                ? _features.Compute(waveform)
-                : _features.ComputeIncremental(waveform, melState);
+            LogMelSpectrogram mel = melState is null ? _features.Compute(waveform) : _features.ComputeIncremental(waveform, melState);
             double melSeconds = sw.Elapsed.TotalSeconds;
             AudioFeatures features = EncodeFromMel(mel, waveform.Length);
             double encodeSeconds = sw.Elapsed.TotalSeconds;
@@ -208,8 +206,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
                 }
 
                 ReadOnlySpan<long> hiddenShape = stackalloc long[] { totalRows, embedDim };
-                using OrtValue hiddenValue = OrtValue.CreateTensorValueFromMemory<float>(
-                    hiddenStates, hiddenShape.ToArray());
+                using OrtValue hiddenValue = OrtValue.CreateTensorValueFromMemory<float>(hiddenStates, hiddenShape.ToArray());
                 using var stackOutputs = _sessions.AudioStack!.Run(
                     _runOptions,
                     new Dictionary<string, OrtValue> { ["hidden_states"] = hiddenValue },

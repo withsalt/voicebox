@@ -46,12 +46,10 @@ public sealed class WakeupSpeakerModuleContractTests
 
         Assert.Contains(
             typeof(WakeupModule).GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic),
-            method => method.GetParameters().Any(parameter =>
-                parameter.ParameterType == typeof(ProcessedCaptureFrame).MakeByRefType()));
+            method => method.GetParameters().Any(parameter => parameter.ParameterType == typeof(ProcessedCaptureFrame).MakeByRefType()));
         Assert.Contains(
             typeof(SpeakerModule).GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic),
-            method => method.GetParameters().Any(parameter =>
-                parameter.ParameterType == typeof(SpeakerCaptureFrame).MakeByRefType()));
+            method => method.GetParameters().Any(parameter => parameter.ParameterType == typeof(SpeakerCaptureFrame).MakeByRefType()));
     }
 
     /// <summary>
@@ -99,8 +97,7 @@ public sealed class WakeupSpeakerModuleContractTests
             field => field.FieldType == typeof(SpeechGatedSpeakerVerifier));
         Assert.DoesNotContain(
             typeof(SpeakerModule).GetFields(BindingFlags.Instance | BindingFlags.NonPublic),
-            field => field.FieldType == typeof(Channel<>) ||
-                field.FieldType.Name.Contains("Dictionary", StringComparison.Ordinal));
+            field => field.FieldType == typeof(Channel<>) || field.FieldType.Name.Contains("Dictionary", StringComparison.Ordinal));
         Assert.Contains(typeof(ISpeakerCaptureFrameSink).GetMethods(), method => method.Name == "OnSpeakerCapture");
         Assert.Contains(typeof(ISpeakerModule).GetMethods(), method => method.Name == "StopAsync");
         Assert.Contains(typeof(ISpeakerEvidenceProvider).GetMethods(), method => method.Name == "Cancel");
@@ -191,8 +188,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseSpeechSynthesis(services.Tts)
             .AddWakeup(services.Wakeup);
 
-        AssistantCompositionException exception =
-            Assert.Throws<AssistantCompositionException>(builder.BuildComposition);
+        AssistantCompositionException exception = Assert.Throws<AssistantCompositionException>(builder.BuildComposition);
         Assert.Equal("VBX-COMP-004", exception.Code);
     }
 
@@ -247,8 +243,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .AddWakeup(services.Wakeup)
             .AddSpeakerVerification(services.Speaker);
 
-        AssistantCompositionException exception =
-            Assert.Throws<AssistantCompositionException>(builder.BuildComposition);
+        AssistantCompositionException exception = Assert.Throws<AssistantCompositionException>(builder.BuildComposition);
         Assert.Equal("VBX-COMP-013", exception.Code);
 
         // Without KWS a split frontend with an installed speaker provider composes normally.
@@ -279,11 +274,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .AddSpeakerVerification(services.Speaker)
             .BuildComposition();
 
-        Assert.Contains(
-            "TurnBoundary:Requires:ProcessedCaptureTimeline:0",
-            composition.Snapshot.CapabilityEdges);
-        Assert.DoesNotContain(
-            "Speaker:Requires:ProcessedCaptureTimeline:0",
-            composition.Snapshot.CapabilityEdges);
+        Assert.Contains("TurnBoundary:Requires:ProcessedCaptureTimeline:0", composition.Snapshot.CapabilityEdges);
+        Assert.DoesNotContain("Speaker:Requires:ProcessedCaptureTimeline:0", composition.Snapshot.CapabilityEdges);
     }
 }

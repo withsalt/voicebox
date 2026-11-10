@@ -14,10 +14,7 @@ namespace VoiceBox.AEC.DFSMN
     /// Combined DFSMN AEC + near-end VAD service. One model invocation per ready hop produces
     /// both the AEC spectral mask and the near-end VAD probability.
     /// </summary>
-    public sealed class DfsmnAecVadService :
-        IAcousticEchoCancellationService,
-        IAcousticProcessingMetricsSource,
-        IVoiceActivityDetectService
+    public sealed class DfsmnAecVadService : IAcousticEchoCancellationService, IAcousticProcessingMetricsSource, IVoiceActivityDetectService
     {
         private readonly object _lock = new();
         private readonly DfsmnAecVadOptions _options;
@@ -38,8 +35,7 @@ namespace VoiceBox.AEC.DFSMN
         public DfsmnAecVadService(IOptions<DfsmnAecVadOptions> options)
         {
             ArgumentNullException.ThrowIfNull(options);
-            _options = options.Value
-                ?? throw new ArgumentException("DFSMN AEC+VAD options value cannot be null.", nameof(options));
+            _options = options.Value ?? throw new ArgumentException("DFSMN AEC+VAD options value cannot be null.", nameof(options));
             _options.Validate();
 
             _pipeline = new DfsmnAecPipeline(_options, maskRunner: null, mvn: null, requireVadOutput: true);
@@ -55,8 +51,7 @@ namespace VoiceBox.AEC.DFSMN
             ArgumentNullException.ThrowIfNull(runner);
             ArgumentNullException.ThrowIfNull(mvn);
 
-            _options = options.Value
-                ?? throw new ArgumentException("DFSMN AEC+VAD options value cannot be null.", nameof(options));
+            _options = options.Value ?? throw new ArgumentException("DFSMN AEC+VAD options value cannot be null.", nameof(options));
             _options.Validate();
 
             _pipeline = new DfsmnAecPipeline(_options, runner, mvn, requireVadOutput: true);
@@ -105,15 +100,9 @@ namespace VoiceBox.AEC.DFSMN
                 _notifications.Clear();
                 _probabilityObservations.Clear();
                 bool hasProbabilitySubscribers = OnProbability is not null;
-                while (_observations.TryDequeue(
-                    out float probability,
-                    _drainHop,
-                    out bool hasAudio,
-                    out CaptureRange captureRange))
+                while (_observations.TryDequeue(out float probability, _drainHop, out bool hasAudio, out CaptureRange captureRange))
                 {
-                    NearendVadProbabilityObservation observation = ObserveProbability(
-                        probability,
-                        in captureRange);
+                    NearendVadProbabilityObservation observation = ObserveProbability(probability, in captureRange);
                     if (hasAudio)
                         _vadStateMachine.ProcessHop(probability, _drainHop, _notifications.Add);
 
@@ -209,14 +198,10 @@ namespace VoiceBox.AEC.DFSMN
         }
 
         private bool HasVadSubscribers()
-            => _options.Vad.Enabled && (
-                HasSpeechSubscribers() ||
-                OnProbability is not null);
+            => _options.Vad.Enabled && (HasSpeechSubscribers() || OnProbability is not null);
 
         private bool HasSpeechSubscribers()
-            => OnSpeechStarted is not null ||
-                OnSpeaking is not null ||
-                OnSpeechEnded is not null;
+            => OnSpeechStarted is not null || OnSpeaking is not null || OnSpeechEnded is not null;
 
         private void OnPipelineHop(
             ReadOnlySpan<float> rawCapture,
@@ -260,12 +245,7 @@ namespace VoiceBox.AEC.DFSMN
 
             float smoothed = _probabilitySmoothSum / _probabilitySmoothCount;
             bool isSpeech = smoothed >= _options.Vad.SpeechThreshold;
-            return new NearendVadProbabilityObservation(
-                probability,
-                smoothed,
-                isSpeech,
-                _probabilityHopCount,
-                captureRange);
+            return new NearendVadProbabilityObservation(probability, smoothed, isSpeech, _probabilityHopCount, captureRange);
         }
 
         private void RaiseVadNotification(NearendVadNotification notification)

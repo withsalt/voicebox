@@ -61,10 +61,7 @@ internal sealed class TimelineMonoResampler
             // A buffered capture processor can still emit source audio from before a
             // newly-established detector origin. That prefix belongs to the discarded
             // stream state and must not be represented by negative target positions.
-            _nextTargetSample = Math.Max(
-                0,
-                checked((long)Math.Ceiling(
-                    (sourceStartFrame - originFrame) * 16000.0 / sampleRate)));
+            _nextTargetSample = Math.Max(0, checked((long)Math.Ceiling((sourceStartFrame - originFrame) * 16000.0 / sampleRate)));
             _configured = true;
         }
         else if (_sampleRate != sampleRate ||
@@ -87,9 +84,7 @@ internal sealed class TimelineMonoResampler
             double fraction = sourcePosition - firstFrame;
             float first = ReadMono(valid.Span, firstFrame, sourceStartFrame, channels);
             float second = ReadMono(valid.Span, checked(firstFrame + 1), sourceStartFrame, channels);
-            destination.Append(
-                first + (second - first) * (float)fraction,
-                _nextTargetSample);
+            destination.Append(first + (second - first) * (float)fraction, _nextTargetSample);
             _nextTargetSample = checked(_nextTargetSample + 1);
         }
 

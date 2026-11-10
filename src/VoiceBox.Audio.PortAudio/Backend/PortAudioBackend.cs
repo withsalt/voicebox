@@ -62,8 +62,7 @@ namespace VoiceBox.Audio.PortAudio.Backend
         /// Translate the supplied PortAudio error code into a human readable
         /// message.
         /// </summary>
-        public static string? GetErrorText(ErrorCode errorCode) =>
-            Marshal.PtrToStringAnsi(PortAudioNative.Pa_GetErrorText(errorCode));
+        public static string? GetErrorText(ErrorCode errorCode) => Marshal.PtrToStringAnsi(PortAudioNative.Pa_GetErrorText(errorCode));
 
         /// <summary>
         /// This is a function that's not found in the original PortAudio library.  Because of how the native libraries are
@@ -278,8 +277,7 @@ namespace VoiceBox.Audio.PortAudio.Backend
         /// <summary>
         /// 把 host API 类型映射为当前运行时的 host API 索引; 该类型未编译进库或不可用时返回负值。
         /// </summary>
-        public static int GetHostApiIndex(HostApiType type) =>
-            PortAudioNative.Pa_HostApiTypeIdToHostApiIndex((int)type);
+        public static int GetHostApiIndex(HostApiType type) => PortAudioNative.Pa_HostApiTypeIdToHostApiIndex((int)type);
 
         /// <summary>
         /// 首选 host API: Windows 上为 WASAPI (设备名完整不截断、共享模式延迟远低于 MME),
@@ -378,8 +376,7 @@ namespace VoiceBox.Audio.PortAudio.Backend
                 size = (uint)Marshal.SizeOf<PaWasapiStreamInfo>(),
                 hostApiType = (int)HostApiType.WASAPI,
                 version = 1,
-                flags = (uint)((exclusiveMode ? PaWasapiFlags.Exclusive : PaWasapiFlags.AutoConvert)
-                    | PaWasapiFlags.ThreadPriority),
+                flags = (uint)((exclusiveMode ? PaWasapiFlags.Exclusive : PaWasapiFlags.AutoConvert) | PaWasapiFlags.ThreadPriority),
                 threadPriority = (int)PaWasapiThreadPriority.ProAudio,
             };
 

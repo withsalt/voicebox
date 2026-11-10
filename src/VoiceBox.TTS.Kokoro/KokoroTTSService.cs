@@ -354,9 +354,7 @@ namespace VoiceBox.TTS.Kokoro
 
         private string Phonemize(string text)
         {
-            return ContainsChineseChar(text)
-                ? _chinesePhonemizer.Process(text).Phonemes
-                : _engPhonemizer.Process(text).Phonemes;
+            return ContainsChineseChar(text) ? _chinesePhonemizer.Process(text).Phonemes : _engPhonemizer.Process(text).Phonemes;
         }
 
         private WetextProcessor? CreateTextNormalizer(WetextLanguage language)
@@ -380,11 +378,8 @@ namespace VoiceBox.TTS.Kokoro
         {
             if (!_options.EnableTextNormalization) return text;
 
-            bool useChinese = ContainsChineseChar(text)
-                || (!ContainsLatinLetter(text) && IsChineseVoice(voiceName));
-            WetextProcessor? normalizer = useChinese
-                ? _chineseTextNormalizer
-                : _englishTextNormalizer;
+            bool useChinese = ContainsChineseChar(text) || (!ContainsLatinLetter(text) && IsChineseVoice(voiceName));
+            WetextProcessor? normalizer = useChinese ? _chineseTextNormalizer : _englishTextNormalizer;
             if (normalizer is null) return text;
 
             try
@@ -424,9 +419,7 @@ namespace VoiceBox.TTS.Kokoro
             for (int i = 0; i < text.Length; i++)
             {
                 char c = text[i];
-                bool isBreak = c is '.' or '!' or '?' or ';' or '\n'
-                    or '。' or '！' or '？' or '；'
-                    or ',' or '，' or '、';
+                bool isBreak = c is '.' or '!' or '?' or ';' or '\n' or '。' or '！' or '？' or '；' or ',' or '，' or '、';
                 if (!isBreak) continue;
 
                 string seg = text[start..(i + 1)].Trim();

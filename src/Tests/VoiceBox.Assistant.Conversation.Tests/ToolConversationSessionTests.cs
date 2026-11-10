@@ -37,14 +37,11 @@ public sealed class ToolConversationSessionTests
             _ => throw new InvalidOperationException("unexpected round"),
         };
 
-        await using IConversationSession session = new ConversationBuilder(llm)
-            .UseTools(tools => tools.AddTool(tool))
-            .Build();
+        await using IConversationSession session = new ConversationBuilder(llm).UseTools(tools => tools.AddTool(tool)).Build();
         await ((IConversationLifecycle)session).StartAsync();
         try
         {
-            List<ConversationEvent> updates = await ConversationEvents.CollectAsync(
-                session.StreamAsync(Request("查一下")));
+            List<ConversationEvent> updates = await ConversationEvents.CollectAsync(session.StreamAsync(Request("查一下")));
 
             Assert.Equal("最终回答", Assert.IsType<ConversationCompleted>(updates[^1]).Text);
             Assert.Equal(1, tool.ExecuteCount);
@@ -52,8 +49,7 @@ public sealed class ToolConversationSessionTests
             ChatMessage[] secondRound = llm.Prompts[1];
             Assert.Contains(secondRound, message => message.Role == ChatRole.Tool);
             Assert.Contains(secondRound,
-                message => message.Role == ChatRole.Assistant &&
-                    message.Content.Any(content => content is ToolCallContent));
+                message => message.Role == ChatRole.Assistant && message.Content.Any(content => content is ToolCallContent));
         }
         finally
         {
@@ -67,10 +63,8 @@ public sealed class ToolConversationSessionTests
         var llm = new RecordingLlmService();
         llm.ToolTurnScript = (call, request) => call switch
         {
-            1 => Events(new LlmTurnTextDelta("选择工具", LlmChunkKind.Thinking),
-                Call("c1", request), new LlmTurnCompletedEvent()),
-            2 => Events(new LlmTurnTextDelta("整理结果", LlmChunkKind.Thinking),
-                new LlmTurnTextDelta("最终回答"), new LlmTurnCompletedEvent()),
+            1 => Events(new LlmTurnTextDelta("选择工具", LlmChunkKind.Thinking), Call("c1", request), new LlmTurnCompletedEvent()),
+            2 => Events(new LlmTurnTextDelta("整理结果", LlmChunkKind.Thinking), new LlmTurnTextDelta("最终回答"), new LlmTurnCompletedEvent()),
             3 => Events(new LlmTurnTextDelta("继续回答"), new LlmTurnCompletedEvent()),
             _ => throw new InvalidOperationException("unexpected round"),
         };
@@ -80,16 +74,13 @@ public sealed class ToolConversationSessionTests
             .Build();
         await ((IConversationLifecycle)session).StartAsync();
 
-        List<ConversationEvent> updates = await ConversationEvents.CollectAsync(
-            session.StreamAsync(Request("查一下")));
+        List<ConversationEvent> updates = await ConversationEvents.CollectAsync(session.StreamAsync(Request("查一下")));
 
-        Assert.Equal(["选择工具", "整理结果"],
-            updates.OfType<ConversationThinkingDelta>().Select(update => update.Text));
+        Assert.Equal(["选择工具", "整理结果"], updates.OfType<ConversationThinkingDelta>().Select(update => update.Text));
         Assert.Equal("最终回答", Assert.Single(updates.OfType<ConversationTextDelta>()).Text);
         Assert.Equal("最终回答", Assert.IsType<ConversationCompleted>(updates[^1]).Text);
         await ConversationEvents.CollectAsync(session.StreamAsync(Request("继续")));
-        Assert.All(llm.Prompts, prompt =>
-            Assert.DoesNotContain(prompt, message => TextOf(message) is "选择工具" or "整理结果"));
+        Assert.All(llm.Prompts, prompt => Assert.DoesNotContain(prompt, message => TextOf(message)is "选择工具" or "整理结果"));
         Assert.Contains(llm.Prompts[^1], message => TextOf(message) == "最终回答");
     }
 
@@ -118,9 +109,7 @@ public sealed class ToolConversationSessionTests
         };
 
         await using IConversationSession session = new ConversationBuilder(llm)
-            .UseTools(tools => tools
-                .UseApprovalPolicy(policy)
-                .AddTool(tool))
+            .UseTools(tools => tools.UseApprovalPolicy(policy).AddTool(tool))
             .Build();
         await ((IConversationLifecycle)session).StartAsync();
         try
@@ -150,9 +139,7 @@ public sealed class ToolConversationSessionTests
             _ => throw new InvalidOperationException("unexpected round"),
         };
 
-        await using IConversationSession session = new ConversationBuilder(llm)
-            .UseTools(tools => tools.AddTool(tool))
-            .Build();
+        await using IConversationSession session = new ConversationBuilder(llm).UseTools(tools => tools.AddTool(tool)).Build();
         await ((IConversationLifecycle)session).StartAsync();
         try
         {
@@ -160,8 +147,7 @@ public sealed class ToolConversationSessionTests
             Assert.Equal(0, tool.ExecuteCount);
             Assert.Contains(llm.Prompts[1],
                 message => message.Content.OfType<ToolResultContent>()
-                    .Any(result => result.ResultJson.Contains(
-                        "invalid_arguments", StringComparison.Ordinal)));
+                    .Any(result => result.ResultJson.Contains("invalid_arguments", StringComparison.Ordinal)));
         }
         finally
         {
@@ -200,12 +186,10 @@ public sealed class ToolConversationSessionTests
             .Build();
         await ((IConversationLifecycle)session).StartAsync();
 
-        List<ConversationEvent> updates = await ConversationEvents.CollectAsync(
-            session.StreamAsync(Request("查一下北京")));
+        List<ConversationEvent> updates = await ConversationEvents.CollectAsync(session.StreamAsync(Request("查一下北京")));
 
         Assert.Equal("查询完成", Assert.IsType<ConversationCompleted>(updates[^1]).Text);
-        ToolResultContent invalid = Assert.Single(llm.Prompts[1]
-            .SelectMany(message => message.Content).OfType<ToolResultContent>());
+        ToolResultContent invalid = Assert.Single(llm.Prompts[1].SelectMany(message => message.Content).OfType<ToolResultContent>());
         Assert.Equal("invalid", invalid.CallId);
         Assert.Contains("invalid_arguments", invalid.ResultJson, StringComparison.Ordinal);
         Assert.Equal("corrected", Assert.Single(policy.Invocations).CallId);
@@ -218,9 +202,7 @@ public sealed class ToolConversationSessionTests
     public async Task BackgroundToolAcknowledgesThenPublishesOnTheBackgroundChannel()
     {
         var llm = new RecordingLlmService();
-        var tool = new EchoTool(
-            policy: ConversationToolExecutionPolicy.BackgroundOnly,
-            executionPrompt: "正在查询");
+        var tool = new EchoTool(policy: ConversationToolExecutionPolicy.BackgroundOnly, executionPrompt: "正在查询");
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         tool.OnExecute = async cancellationToken =>
         {
@@ -243,8 +225,7 @@ public sealed class ToolConversationSessionTests
         try
         {
             var request = Request("天气");
-            await using IAsyncEnumerator<ConversationEvent> updates =
-                session.StreamAsync(request).GetAsyncEnumerator();
+            await using IAsyncEnumerator<ConversationEvent> updates = session.StreamAsync(request).GetAsyncEnumerator();
             Assert.True(await updates.MoveNextAsync());
             var prompt = Assert.IsType<ConversationTextDelta>(updates.Current);
             Assert.Equal("正在查询", prompt.Text);
@@ -279,9 +260,7 @@ public sealed class ToolConversationSessionTests
     public async Task BackgroundResultsAreRecordedInHistoryBeforePublication(int retentionTurns)
     {
         var llm = new RecordingLlmService();
-        var tool = new EchoTool(
-            policy: ConversationToolExecutionPolicy.BackgroundOnly,
-            executionPrompt: "正在查询");
+        var tool = new EchoTool(policy: ConversationToolExecutionPolicy.BackgroundOnly, executionPrompt: "正在查询");
         llm.ToolTurnScript = (call, request) => call switch
         {
             1 => Events(Call("c1", request), new LlmTurnCompletedEvent()),
@@ -367,8 +346,7 @@ public sealed class ToolConversationSessionTests
             4 => Events(new LlmTurnTextDelta("继续回答"), new LlmTurnCompletedEvent()),
             _ => throw new InvalidOperationException("unexpected round"),
         };
-        await using IConversationSession session = new ConversationBuilder(llm)
-            .UseTools(tools => tools.AddTool(tool)).Build();
+        await using IConversationSession session = new ConversationBuilder(llm).UseTools(tools => tools.AddTool(tool)).Build();
         var background = (IConversationBackgroundOutput)session;
         await background.StartAsync();
         await ConversationEvents.CollectAsync(session.StreamAsync(Request("天气")));
@@ -415,8 +393,7 @@ public sealed class ToolConversationSessionTests
             _ => Events(Call("c2", request), new LlmTurnCompletedEvent()),
         };
         await using IConversationSession session = new ConversationBuilder(llm)
-            .UseTools(tools => tools.AddTool(tool)
-                .UseApprovalPolicy(new FailingApprovalPolicy(failingApproval)))
+            .UseTools(tools => tools.AddTool(tool).UseApprovalPolicy(new FailingApprovalPolicy(failingApproval)))
             .Build();
         var background = (IConversationBackgroundOutput)session;
         await background.StartAsync();
@@ -452,18 +429,14 @@ public sealed class ToolConversationSessionTests
             _ => throw new InvalidOperationException("unexpected round"),
         };
 
-        await using IConversationSession session = new ConversationBuilder(llm)
-            .UseTools(tools => tools.AddTool(tool))
-            .Build();
+        await using IConversationSession session = new ConversationBuilder(llm).UseTools(tools => tools.AddTool(tool)).Build();
         await ((IConversationLifecycle)session).StartAsync();
         try
         {
-            List<ConversationEvent> events = await ConversationEvents.CollectAsync(
-                session.StreamAsync(Request("思考")));
+            List<ConversationEvent> events = await ConversationEvents.CollectAsync(session.StreamAsync(Request("思考")));
 
             Assert.Contains(events, item => item is ConversationThinkingDelta { Text: "思考中" });
-            Assert.DoesNotContain(events, item =>
-                item is ConversationTextDelta { Text: "工具前附带文本" });
+            Assert.DoesNotContain(events, item => item is ConversationTextDelta { Text: "工具前附带文本" });
             Assert.Equal("最终回答", Assert.IsType<ConversationCompleted>(events[^1]).Text);
         }
         finally
@@ -485,9 +458,7 @@ public sealed class ToolConversationSessionTests
         };
 
         await using IConversationSession session = new ConversationBuilder(llm)
-            .UseTools(tools => tools
-                .UseApprovalPolicy(new ThrowingApprovalPolicy())
-                .AddTool(tool))
+            .UseTools(tools => tools.UseApprovalPolicy(new ThrowingApprovalPolicy()).AddTool(tool))
             .Build();
         await ((IConversationLifecycle)session).StartAsync();
         try
@@ -499,8 +470,7 @@ public sealed class ToolConversationSessionTests
 
             await ConversationEvents.CollectAsync(session.StreamAsync(Request("下一轮")));
             Assert.DoesNotContain(llm.Prompts[^1],
-                message => message.Content.Any(content =>
-                    content is ToolCallContent or ToolResultContent));
+                message => message.Content.Any(content => content is ToolCallContent or ToolResultContent));
             Assert.Contains(llm.Prompts[^1],
                 message => message.Content.OfType<TextContent>()
                     .Any(content => content.Text == "下一轮"));
@@ -515,9 +485,7 @@ public sealed class ToolConversationSessionTests
     public async Task ToolSessionMustBeStartedBeforeStreaming()
     {
         var llm = new RecordingLlmService();
-        await using IConversationSession session = new ConversationBuilder(llm)
-            .UseTools(tools => tools.AddTool(new EchoTool()))
-            .Build();
+        await using IConversationSession session = new ConversationBuilder(llm).UseTools(tools => tools.AddTool(new EchoTool())).Build();
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
         {
@@ -529,9 +497,7 @@ public sealed class ToolConversationSessionTests
     public async Task StopAfterDisposeAndRestartRetainsHistory()
     {
         var llm = new RecordingLlmService { ResponseText = "回答" };
-        IConversationSession session = new ConversationBuilder(llm)
-            .UseTools(tools => tools.AddTool(new EchoTool()))
-            .Build();
+        IConversationSession session = new ConversationBuilder(llm).UseTools(tools => tools.AddTool(new EchoTool())).Build();
         var lifecycle = (IConversationLifecycle)session;
 
         await lifecycle.StartAsync();
@@ -564,14 +530,12 @@ public sealed class ToolConversationSessionTests
         for (int index = 0; index < 64; index++)
         {
             await publisher.PublishAsync(
-                new ConversationBackgroundMessage(
-                    Guid.NewGuid(), "backpressure", Guid.NewGuid(), $"m{index}"),
+                new ConversationBackgroundMessage(Guid.NewGuid(), "backpressure", Guid.NewGuid(), $"m{index}"),
                 CancellationToken.None);
         }
 
         Task blocked = publisher.PublishAsync(
-            new ConversationBackgroundMessage(
-                Guid.NewGuid(), "backpressure", Guid.NewGuid(), "blocked"),
+            new ConversationBackgroundMessage(Guid.NewGuid(), "backpressure", Guid.NewGuid(), "blocked"),
             CancellationToken.None).AsTask();
         await Task.Delay(50);
         Assert.False(blocked.IsCompleted);
@@ -595,8 +559,7 @@ public sealed class ToolConversationSessionTests
 
         await background.StartAsync();
         await publisher.PublishAsync(
-            new ConversationBackgroundMessage(
-                Guid.NewGuid(), "restart", Guid.NewGuid(), "旧运行消息"),
+            new ConversationBackgroundMessage(Guid.NewGuid(), "restart", Guid.NewGuid(), "旧运行消息"),
             CancellationToken.None);
         await background.StopAsync();
 
@@ -628,9 +591,7 @@ public sealed class ToolConversationSessionTests
             2 => Events(new LlmTurnTextDelta("ok"), new LlmTurnCompletedEvent()),
             _ => throw new InvalidOperationException("unexpected round"),
         };
-        await using IConversationSession session = new ConversationBuilder(llm)
-            .UseTools(tools => tools.AddTool(new EchoTool()))
-            .Build();
+        await using IConversationSession session = new ConversationBuilder(llm).UseTools(tools => tools.AddTool(new EchoTool())).Build();
         await ((IConversationLifecycle)session).StartAsync();
         try
         {
@@ -678,9 +639,7 @@ public sealed class ToolConversationSessionTests
                       """,
                 risk: risk,
                 executionPolicy: policy,
-                executionPrompt: executionPrompt ?? (policy == ConversationToolExecutionPolicy.ForegroundOnly
-                    ? null
-                    : "正在处理"),
+                executionPrompt: executionPrompt ?? (policy == ConversationToolExecutionPolicy.ForegroundOnly ? null : "正在处理"),
                 timeout: TimeSpan.FromSeconds(5));
         }
 

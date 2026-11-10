@@ -23,17 +23,11 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         await assistant.StartAsync();
         services.PlaybackDetector.PushException = new InvalidOperationException("detector fault");
-        services.Audio.EmitFrame(
-            new float[320],
-            new float[320],
-            new float[320],
-            new float[320]);
+        services.Audio.EmitFrame(new float[320], new float[320], new float[320], new float[320]);
 
         await stopped.Task.WaitAsync(TimeSpan.FromSeconds(2));
 
-        Assert.Equal(
-            ["Faulted:render-aware-dtd", "StateChanged:Idle->Stopped"],
-            observed);
+        Assert.Equal(["Faulted:render-aware-dtd", "StateChanged:Idle->Stopped"], observed);
         Assert.Equal(1, services.PlaybackDetector.PushCount);
         Assert.Equal(AssistantState.Stopped, assistant.State);
         Assert.Equal(1, services.Audio.StopCount);

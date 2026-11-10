@@ -64,8 +64,7 @@ namespace VoiceBox.TTS.Qwen3.Internal
             foreach (int s in e.Shape) count *= s;
             var bytes = File.ReadAllBytes(path);
             if (bytes.Length != count * sizeof(float))
-                throw new InvalidDataException(
-                    $"{e.File} 大小不符: 期望 {count * sizeof(float)} 字节, 实际 {bytes.Length}。");
+                throw new InvalidDataException($"{e.File} 大小不符: 期望 {count * sizeof(float)} 字节, 实际 {bytes.Length}。");
             var arr = new float[count];
             Buffer.BlockCopy(bytes, 0, arr, 0, bytes.Length);
             return arr;

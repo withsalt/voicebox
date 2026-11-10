@@ -35,8 +35,7 @@ internal sealed class Confucius4Session : AsrSession
     private string _language = "";
     private AsrResult _latest = Transcript.Result("", "", "");
 
-    public Task<AsrResult> Completion { get; private set; } =
-        Task.FromResult(Transcript.Result("", "", ""));
+    public Task<AsrResult> Completion { get; private set; } = Task.FromResult(Transcript.Result("", "", ""));
 
     public Confucius4Session(string sessionId, Confucius4AsrOptions options, IConfucius4Runtime runtime, SemaphoreSlim inference)
         : base(sessionId)

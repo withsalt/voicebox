@@ -27,10 +27,7 @@ internal static class NearEndModuleFactory
         ArgumentNullException.ThrowIfNull(dependencies.RecognitionAudio);
 
         bool identityRequired = dependencies.SpeakerEvidence is not null;
-        BargeInRuntimeOptions options = BargeInRuntimeOptions.From(
-            dependencies.Options,
-            dependencies.AudioFormat,
-            identityRequired);
+        BargeInRuntimeOptions options = BargeInRuntimeOptions.From(dependencies.Options, dependencies.AudioFormat, identityRequired);
         INearEndAuthorizationPolicy authorization = identityRequired
             ? SpeakerAuthorizationPolicy.Instance
             : AcousticAuthorizationPolicy.Instance;

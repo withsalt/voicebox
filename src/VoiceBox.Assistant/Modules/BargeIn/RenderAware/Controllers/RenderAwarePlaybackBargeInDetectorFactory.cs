@@ -66,8 +66,7 @@ internal sealed class RenderAwarePlaybackBargeInDetectorFactory : IPlaybackBarge
     private IRenderDelayEstimator CreateDelayEstimator()
         => new CompositeRenderDelayEstimator(
             _delayEstimatorFactory.Create(sampleRate: 16000, channelCount: 1)
-                ?? throw new InvalidOperationException(
-                    "The acoustic-path delay estimator factory returned null."),
+                ?? throw new InvalidOperationException("The acoustic-path delay estimator factory returned null."),
             _options.RenderAlignment.MaxTrackedDelayMs,
             minimumCorrelationConfidence:
                 _options.RenderAlignment.MinimumAlignmentConfidence);

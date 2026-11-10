@@ -75,20 +75,16 @@ namespace VoiceBox.APM.WebRtc.Models
         public void Validate()
         {
             if (SampleRate is not (8000 or 16000 or 32000 or 48000))
-                throw new ArgumentException(
-                    $"WebRtcApmOptions.SampleRate must be 8000/16000/32000/48000, got {SampleRate}.");
+                throw new ArgumentException($"WebRtcApmOptions.SampleRate must be 8000/16000/32000/48000, got {SampleRate}.");
             if (ChannelCount != 1)
-                throw new ArgumentException(
-                    $"WebRtcApmService currently supports mono only (ChannelCount=1), got {ChannelCount}.");
+                throw new ArgumentException($"WebRtcApmService currently supports mono only (ChannelCount=1), got {ChannelCount}.");
             if (EnableNeuralResidualEchoEstimator && !EnableEchoCanceller)
-                throw new ArgumentException(
-                    "EnableNeuralResidualEchoEstimator requires EnableEchoCanceller=true.");
+                throw new ArgumentException("EnableNeuralResidualEchoEstimator requires EnableEchoCanceller=true.");
             if (EnableNeuralResidualEchoEstimator &&
                 NeuralResidualEchoEstimatorModelPath is not null &&
                 string.IsNullOrWhiteSpace(NeuralResidualEchoEstimatorModelPath))
             {
-                throw new ArgumentException(
-                    "NeuralResidualEchoEstimatorModelPath cannot be empty when the neural estimator is enabled.");
+                throw new ArgumentException("NeuralResidualEchoEstimatorModelPath cannot be empty when the neural estimator is enabled.");
             }
         }
     }

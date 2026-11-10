@@ -72,8 +72,7 @@ internal static class AssistantRuntimeCompositionFactory
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(timeProvider);
 
-        VoiceAssistantOptions supplied = options.Value
-            ?? throw new ArgumentException("Options value is null.", nameof(options));
+        VoiceAssistantOptions supplied = options.Value ?? throw new ArgumentException("Options value is null.", nameof(options));
         VoiceAssistantOptions snapshot = supplied.Clone();
         VoiceAssistantOptionsValidator.Validate(snapshot, nameof(options));
         VoiceAssistantBargeInOptions bargeInOptions = snapshot.BargeIn;
@@ -111,11 +110,7 @@ internal static class AssistantRuntimeCompositionFactory
         ControlPlaneAvailability availability = new(runScope, ingress, loopHost);
 
         AssistantEventDispatcher events = new(eventSender, logger);
-        OrderedPublicationBoundary publications = new(
-            events,
-            timeProvider,
-            faults: ingress,
-            startWorker: false);
+        OrderedPublicationBoundary publications = new(events, timeProvider, faults: ingress, startWorker: false);
         BargeInDecisionJournal journal = new();
 
         AssistantControlSignalGateway controlSignals = new(
@@ -135,23 +130,11 @@ internal static class AssistantRuntimeCompositionFactory
         BargeInDiagnosticsCoordinator diagnostics = new(listeningOptions, audioFormat, journal, logger);
         AecMetricsSampler aecMetrics = new(runtimePlan.AcousticDiagnostics, logger, timeProvider);
         AudioResamplerPool resamplers = new(audioFormat.AudioSampleRate, audioFormat.AudioChannels);
-        var conversation = new ConversationResponseAdapter(
-            installed.Conversation,
-            audioFormat.AudioSampleRate,
-            audioFormat.AudioChannels);
+        var conversation = new ConversationResponseAdapter(installed.Conversation, audioFormat.AudioSampleRate, audioFormat.AudioChannels);
 
-        BargeInDataPlaneController bargeInDataPlane = new(
-            detector,
-            journal,
-            ingress,
-            runScope);
+        BargeInDataPlaneController bargeInDataPlane = new(detector, journal, ingress, runScope);
 
-        AssistantRuntimePublicEventEffectHandler publicEventEffects = new(
-            publications,
-            logger,
-            bargeInDataPlane,
-            projection,
-            journal);
+        AssistantRuntimePublicEventEffectHandler publicEventEffects = new(publications, logger, bargeInDataPlane, projection, journal);
 
         // --- Turn observation owners that replace the retired observation store. ---------------
         int minimumDurationMs = bargeInOptions.MinDurationMs;
@@ -168,65 +151,26 @@ internal static class AssistantRuntimeCompositionFactory
             recognitionSuppressionMs: 0,
             maxCandidateMs: bargeInOptions.PlaybackMaxCandidateMs,
             recognitionAudioLimitMs: bargeInOptions.PlaybackRecognitionAudioLimitMs);
-        BargeInConfirmationPolicy candidatePolicy = new(
-            thinkingSettings,
-            speakingSettings,
-            startupGuard);
+        BargeInConfirmationPolicy candidatePolicy = new(thinkingSettings, speakingSettings, startupGuard);
         BargeInConfirmationSettings? listeningGate =
             listeningOptions.MinDurationMs > 0 || listeningOptions.MinRms > 0
                 ? new BargeInConfirmationSettings(listeningOptions.MinDurationMs, listeningOptions.MinRms)
                 : null;
 
-        SpeechCandidateOwner candidates = new(
-            candidateDetector,
-            candidatePolicy,
-            listeningGate,
-            snapshots,
-            turnContexts);
+        SpeechCandidateOwner candidates = new(candidateDetector, candidatePolicy, listeningGate, snapshots, turnContexts);
         BargeInValidationTurnOwner validation = new(snapshots);
-        RecognitionModule recognition = new(
-            installed.Recognition,
-            controlSignals,
-            logger,
-            turnContexts);
-        RecognitionTurnOwner recognitionTurn = new(
-            recognition,
-            snapshots,
-            validation,
-            validation,
-            candidates);
-        ConfirmedBargeInApplier confirmedBargeIn = new(
-            snapshots,
-            candidates,
-            validation,
-            recognitionTurn,
-            turnContexts);
-        TurnObservationRelease observationRelease = new(
-            snapshots,
-            recognitionTurn,
-            validation,
-            candidates,
-            turnContexts);
+        RecognitionModule recognition = new(installed.Recognition, controlSignals, logger, turnContexts);
+        RecognitionTurnOwner recognitionTurn = new(recognition, snapshots, validation, validation, candidates);
+        ConfirmedBargeInApplier confirmedBargeIn = new(snapshots, candidates, validation, recognitionTurn, turnContexts);
+        TurnObservationRelease observationRelease = new(snapshots, recognitionTurn, validation, candidates, turnContexts);
 
         // --- The single Kernel commit port. Effects are bound once their handlers exist. -------
-        AssistantControlLoopTurnWriter turnWriter = new(
-            snapshots,
-            projection,
-            [stateMirror],
-            publicEventEffects,
-            loopHost,
-            benchmarkProbe);
+        AssistantControlLoopTurnWriter turnWriter = new(snapshots, projection, [stateMirror], publicEventEffects, loopHost, benchmarkProbe);
 
         // --- Capability modules. ----------------------------------------------------------------
         ActiveNearEndSignalSink nearEndSignals = new(ingress, operations, benchmarkProbe);
         PlaybackStartedIngressSink playbackStartedIngress = new(ingress);
-        ResponseTurnResources responseResources = new(
-            turnContexts,
-            turnContexts,
-            snapshots,
-            operations,
-            availability,
-            runScope);
+        ResponseTurnResources responseResources = new(turnContexts, turnContexts, snapshots, operations, availability, runScope);
         responseResources.Bind(controlSignals);
 
         PlaybackModule playbackSessions = new(
@@ -237,11 +181,7 @@ internal static class AssistantRuntimeCompositionFactory
             resamplers,
             playbackStartedIngress,
             echoGuard);
-        PlaybackInterruptionController playbackInterruption = new(
-            audioOutput,
-            startupGuard,
-            playbackSessions,
-            logger);
+        PlaybackInterruptionController playbackInterruption = new(audioOutput, startupGuard, playbackSessions, logger);
         ResponseModule responses = new(
             snapshot,
             bargeInInstalled,
@@ -307,8 +247,7 @@ internal static class AssistantRuntimeCompositionFactory
         // The VAD speaker gate locates every candidate chunk on the processed source timeline. With
         // barge-in installed the near-end module's timeline is that source; a KWS-enabled
         // composition that verifies single talk without barge-in retains its own processed reservoir.
-        bool singleTalkEffective = speaker is not null &&
-            speaker.Policy.Get(SpeakerVerificationPurpose.SingleTalk).Enabled;
+        bool singleTalkEffective = speaker is not null && speaker.Policy.Get(SpeakerVerificationPurpose.SingleTalk).Enabled;
         ProcessedSpeechTimelineLocator? standaloneSpeechTimeline = detector is null && singleTalkEffective
             ? new ProcessedSpeechTimelineLocator(
                 audioFormat.SamplesFromMillisecondsToInt32(
@@ -335,11 +274,7 @@ internal static class AssistantRuntimeCompositionFactory
         bargeInTurns.BindRecognition(recognitionTurns);
 
         VadSpeakerGateHost speakerGateHost = new(ingress, operations, tasks, runScope);
-        VadSpeakerGateCoordinator speakerGate = new(
-            speaker,
-            speakerGateHost,
-            speechTimeline,
-            logger);
+        VadSpeakerGateCoordinator speakerGate = new(speaker, speakerGateHost, speechTimeline, logger);
 
         SpeechBoundaryIngress speechIngress = new(
             ingress,
@@ -399,12 +334,7 @@ internal static class AssistantRuntimeCompositionFactory
 
         BargeInRecognitionOutcomeCoordinator? recognitionOutcome = detector is null
             ? null
-            : new BargeInRecognitionOutcomeCoordinator(
-                recognition,
-                controlSignals,
-                logger,
-                echoGuard,
-                benchmarkProbe);
+            : new BargeInRecognitionOutcomeCoordinator(recognition, controlSignals, logger, echoGuard, benchmarkProbe);
         bargeInTurns.Bind(turnCompletion);
         recognitionTurns.Bind(recognitionOutcome);
 
@@ -412,13 +342,7 @@ internal static class AssistantRuntimeCompositionFactory
         AssistantEffectRunner effectRunner = new(
             new AssistantEffectHandlers(
                 new InputGateEffectHandler(inputGate),
-                new RecognitionEffectHandler(
-                    recognition,
-                    turnContexts,
-                    controlSignals,
-                    tasks,
-                    operations,
-                    runScope),
+                new RecognitionEffectHandler(recognition, turnContexts, controlSignals, tasks, operations, runScope),
                 new ResponseEffectHandler(
                     responses,
                     turnContexts,
@@ -428,9 +352,7 @@ internal static class AssistantRuntimeCompositionFactory
                     snapshot.Conversation.ContinuousConversationEnabled,
                     wakeup,
                     benchmarkProbe),
-                new PlaybackEffectHandler(
-                    playbackInterruption,
-                    benchmarkProbe),
+                new PlaybackEffectHandler(playbackInterruption, benchmarkProbe),
                 publicEventEffects,
                 new RuntimeOperationEffectHandler(responses, turnCompletion)));
         turnWriter.BindEffects(effectRunner);

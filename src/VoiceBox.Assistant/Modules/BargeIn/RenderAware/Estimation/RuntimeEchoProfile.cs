@@ -105,20 +105,8 @@ internal sealed class RuntimeEchoProfile
             Math.Clamp(_trustedEchoDurationMs / ReadyTrustedEchoMs, 0, 1),
             Math.Clamp(relevantDurationMs / ReadyRelevantEchoMs, 0, 1));
 
-        double captureDb = InterpolatedQuantile(
-            _captureDbByRender,
-            _captureDbPrior,
-            lower,
-            upper,
-            lowerWeight,
-            upperWeight);
-        double postAecDb = InterpolatedQuantile(
-            _postAecDbByRender,
-            _postAecDbPrior,
-            lower,
-            upper,
-            lowerWeight,
-            upperWeight);
+        double captureDb = InterpolatedQuantile(_captureDbByRender, _captureDbPrior, lower, upper, lowerWeight, upperWeight);
+        double postAecDb = InterpolatedQuantile(_postAecDbByRender, _postAecDbPrior, lower, upper, lowerWeight, upperWeight);
         double residualRatioDb = InterpolatedQuantile(
             _residualRatioDbByRender,
             _residualRatioDbPrior,
@@ -185,12 +173,8 @@ internal sealed class RuntimeEchoProfile
         double upperWeight)
     {
         double priorValue = prior.Quantile(UpperQuantile);
-        double lowerValue = histograms[lower].EffectiveWeight > 0
-            ? histograms[lower].Quantile(UpperQuantile)
-            : priorValue;
-        double upperValue = histograms[upper].EffectiveWeight > 0
-            ? histograms[upper].Quantile(UpperQuantile)
-            : priorValue;
+        double lowerValue = histograms[lower].EffectiveWeight > 0 ? histograms[lower].Quantile(UpperQuantile) : priorValue;
+        double upperValue = histograms[upper].EffectiveWeight > 0 ? histograms[upper].Quantile(UpperQuantile) : priorValue;
         return lowerValue * lowerWeight + upperValue * upperWeight;
     }
 

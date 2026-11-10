@@ -19,8 +19,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         services.Audio.OnStarted = cancellation.Cancel;
         using var assistant = services.CreateAssistant(enableWakeWord: true);
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => assistant.StartAsync(cancellation.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => assistant.StartAsync(cancellation.Token));
 
         Assert.Equal(AssistantState.Stopped, assistant.State);
         Assert.False(services.Audio.IsRecording);
@@ -126,8 +125,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             services.Vad.EmitSpeechStarted();
             services.Vad.EmitSpeaking([0.1f, 0.2f]);
             services.Vad.EmitSpeechEnded(TimeSpan.FromMilliseconds(120));
-            await WaitUntilAsync(() => Volatile.Read(ref replies) == round &&
-                runtime.ActiveTurnContextCount == 0);
+            await WaitUntilAsync(() => Volatile.Read(ref replies) == round && runtime.ActiveTurnContextCount == 0);
             Assert.Equal(AssistantState.Idle, assistant.State);
 
             // A delayed VAD callback has no active utterance after the completed turn.

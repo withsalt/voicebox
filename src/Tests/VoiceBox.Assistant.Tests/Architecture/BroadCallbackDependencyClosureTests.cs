@@ -69,8 +69,7 @@ public sealed class BroadCallbackDependencyClosureTests
             foreach (MethodInfo method in type.GetMethods(Declared).Where(static method => !method.IsSpecialName))
             {
                 CheckCallable(type, method, method.Name, violations);
-                if (typeof(Delegate).IsAssignableFrom(method.ReturnType) &&
-                    !AllowedDelegateMembers.Contains(MemberKey(type, method.Name)))
+                if (typeof(Delegate).IsAssignableFrom(method.ReturnType) && !AllowedDelegateMembers.Contains(MemberKey(type, method.Name)))
                 {
                     violations.Add($"return:{MemberKey(type, method.Name)}:{method.ReturnType}");
                 }
@@ -131,8 +130,7 @@ public sealed class BroadCallbackDependencyClosureTests
             type.Namespace?.StartsWith("VoiceBox.Assistant.Composition", StringComparison.Ordinal) == true;
 
     private static bool IsEventBackingField(Type type, FieldInfo field)
-        => type.GetEvents(Declared).Any(value =>
-            value.Name == field.Name && value.EventHandlerType == field.FieldType);
+        => type.GetEvents(Declared).Any(value => value.Name == field.Name && value.EventHandlerType == field.FieldType);
 
     private static string MemberKey(Type type, string name) => $"{type.FullName}.{name}";
 }

@@ -109,8 +109,7 @@ internal sealed class TurnContextStore : IDisposable, ITurnResource, IRecognitio
         CancellationTokenSource? responseCts = null;
         lock (_lock)
         {
-            if (_contexts.TryGetValue(turnId, out TurnContext? context) &&
-                context.Resources.ResponseCts is not null)
+            if (_contexts.TryGetValue(turnId, out TurnContext? context) && context.Resources.ResponseCts is not null)
             {
                 return;
             }
@@ -172,9 +171,7 @@ internal sealed class TurnContextStore : IDisposable, ITurnResource, IRecognitio
         ArgumentException.ThrowIfNullOrEmpty(sessionId);
         lock (_lock)
         {
-            if (!_contexts.TryGetValue(turnId, out TurnContext? context) ||
-                context.AsrSession is not null ||
-                operationId <= 0)
+            if (!_contexts.TryGetValue(turnId, out TurnContext? context) || context.AsrSession is not null || operationId <= 0)
             {
                 return false;
             }

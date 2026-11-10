@@ -24,8 +24,7 @@ internal static class Program
             try { Console.OutputEncoding = System.Text.Encoding.UTF8; } catch { }
         }
 
-        using var loggerFactory = LoggerFactory.Create(builder =>
-            builder.SetMinimumLevel(LogLevel.Warning));
+        using var loggerFactory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Warning));
         using IStreamLLMService llm = CreateLlm(loggerFactory);
         var memory = new NameMemoryContextProvider();
 
@@ -45,8 +44,7 @@ internal static class Program
         {
             Console.Write("> ");
             string? line = Console.ReadLine();
-            if (string.IsNullOrWhiteSpace(line) ||
-                string.Equals(line.Trim(), "exit", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(line) || string.Equals(line.Trim(), "exit", StringComparison.OrdinalIgnoreCase))
             {
                 break;
             }
@@ -138,9 +136,7 @@ internal static class Program
                     _name = text[(marker + 2)..].Trim().TrimEnd('。', '！', '!', '.', '，', ',');
             }
 
-            return ValueTask.FromResult(_name is null
-                ? string.Empty
-                : $"用户的名字是 {_name}。请在合适时自然地称呼对方。");
+            return ValueTask.FromResult(_name is null ? string.Empty : $"用户的名字是 {_name}。请在合适时自然地称呼对方。");
         }
     }
 
@@ -165,9 +161,7 @@ internal static class Program
             string lastUser = messages.LastOrDefault(message => message.Role == ChatRole.User) is { } user
                 ? string.Concat(user.Content.OfType<TextContent>().Select(c => c.Text))
                 : string.Empty;
-            string memory = system.Contains("用户的名字是", StringComparison.Ordinal)
-                ? "（我记得你的名字）"
-                : string.Empty;
+            string memory = system.Contains("用户的名字是", StringComparison.Ordinal) ? "（我记得你的名字）" : string.Empty;
             string response = $"演示模型{memory}收到: {lastUser}。设置 OPENAI_API_KEY、OPENAI_BASE_URL 和 OPENAI_MODEL 可接入真实模型。";
 
             foreach (string piece in Split(response, 6))

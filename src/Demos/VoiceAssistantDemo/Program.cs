@@ -30,8 +30,7 @@ namespace VoiceAssistantDemo
             // 后创建的资源先释放，日志工厂关闭后再收尾控制台缓存。
             using var display = new ConsoleDisplay(Console.Out, interactive: !Console.IsOutputRedirected);
             var input = new ConsoleInput(Console.In, interactive: !Console.IsInputRedirected);
-            using var loggerFactory = DemoLogging.CreateLoggerFactory(
-                DemoLoggingConfiguration.FromEnvironment(), display.WriteLog);
+            using var loggerFactory = DemoLogging.CreateLoggerFactory(DemoLoggingConfiguration.FromEnvironment(), display.WriteLog);
 
             display.WriteLines(string.Empty, "  正在唤醒语音助手, 首次启动需要加载模型, 请稍候...", string.Empty);
 
@@ -147,8 +146,7 @@ namespace VoiceAssistantDemo
                 .AddSpeakerVerification(services.Speaker)
                 .AddBargeIn(options.BargeIn, new WebRtcAec3DelayEstimatorFactory())
                 .AddAcousticDiagnostics(services.AcousticDiagnostics);
-            using var assistant = builder.BuildWithDiagnostics(
-                loggerFactory.CreateLogger<VoiceAssistant>()).Assistant;
+            using var assistant = builder.BuildWithDiagnostics(loggerFactory.CreateLogger<VoiceAssistant>()).Assistant;
 
             using var presenter = new AssistantConsolePresenter(assistant, display, AudioDefaults.WakeupWord);
             try

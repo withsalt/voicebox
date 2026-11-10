@@ -85,9 +85,7 @@ internal static class ReportWriter
         if (!string.IsNullOrWhiteSpace(requestedPath))
         {
             string full = Path.GetFullPath(requestedPath);
-            return string.Equals(Path.GetExtension(full), ".json", StringComparison.OrdinalIgnoreCase)
-                ? full
-                : full + ".json";
+            return string.Equals(Path.GetExtension(full), ".json", StringComparison.OrdinalIgnoreCase) ? full : full + ".json";
         }
 
         string fileName = $"barge-in-aec-challenge-{DateTime.Now:yyyyMMdd-HHmmss}.json";

@@ -32,8 +32,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Controllers
             _recognition = recognition ?? throw new ArgumentNullException(nameof(recognition));
             _control = control ?? throw new ArgumentNullException(nameof(control));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _playbackTextEchoGuard = playbackTextEchoGuard
-                ?? throw new ArgumentNullException(nameof(playbackTextEchoGuard));
+            _playbackTextEchoGuard = playbackTextEchoGuard ?? throw new ArgumentNullException(nameof(playbackTextEchoGuard));
             _benchmarkProbe = benchmarkProbe;
         }
 
@@ -52,32 +51,18 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Controllers
                 ThrowIfRecognitionFailed(outcome, runToken);
                 string userText = outcome.Text;
                 bool meaningful = AsrTextNormalizer.IsMeaningfulPlaybackBargeInText(userText);
-                PlaybackTextEchoMatch echoMatch = meaningful
-                    ? _playbackTextEchoGuard.Match(userText)
-                    : default;
+                PlaybackTextEchoMatch echoMatch = meaningful ? _playbackTextEchoGuard.Match(userText) : default;
                 bool validUserText = meaningful && !echoMatch.IsMatch;
                 string resolutionReason = validUserText
                     ? "recognized"
-                    : echoMatch.IsMatch
-                        ? "playback-echo-text"
-                        : string.IsNullOrEmpty(userText)
-                            ? "empty"
-                            : "filler";
+                    : echoMatch.IsMatch ? "playback-echo-text" : string.IsNullOrEmpty(userText) ? "empty" : "filler";
                 // The turn is already accepted; this only releases the recognition-side context of
                 // the interruption. It can neither reject nor restore anything.
-                await _control.ResolveValidationAsync(
-                    turnId,
-                    userText,
-                    resolutionReason,
-                    validUserText,
-                    runToken).ConfigureAwait(false);
+                await _control.ResolveValidationAsync(turnId, userText, resolutionReason, validUserText, runToken).ConfigureAwait(false);
 
                 if (!validUserText)
                 {
-                    _logger.LogDebug(
-                        "播放期打断整句文本无效, 不生成新回复: turnId={TurnId}, reason={Reason}.",
-                        turnId,
-                        resolutionReason);
+                    _logger.LogDebug("播放期打断整句文本无效, 不生成新回复: turnId={TurnId}, reason={Reason}.", turnId, resolutionReason);
                     completeWithoutResponse = true;
                     return;
                 }
@@ -118,9 +103,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Controllers
             {
                 if (completeWithoutResponse)
                 {
-                    await _control.PublishValidationCancelledAsync(
-                        turnId,
-                        CancellationToken.None).ConfigureAwait(false);
+                    await _control.PublishValidationCancelledAsync(turnId, CancellationToken.None).ConfigureAwait(false);
                 }
             }
         }
@@ -131,8 +114,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Controllers
                 throw new OperationCanceledException(cancellationToken);
             if (outcome.Kind == RecognitionOutcomeKind.Failed)
             {
-                throw new InvalidOperationException(
-                    $"{outcome.Failure.Code}:{outcome.Failure.Component}:{outcome.Failure.MessageKey}");
+                throw new InvalidOperationException($"{outcome.Failure.Code}:{outcome.Failure.Component}:{outcome.Failure.MessageKey}");
             }
         }
     }

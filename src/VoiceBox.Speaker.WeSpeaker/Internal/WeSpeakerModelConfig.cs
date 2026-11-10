@@ -62,13 +62,11 @@ namespace VoiceBox.Speaker.WeSpeaker.Internal
 
         private void Validate(string configPath)
         {
-            if (Path.GetFileName(ModelFile) != ModelFile ||
-                !ModelFile.EndsWith(".onnx", StringComparison.OrdinalIgnoreCase))
+            if (Path.GetFileName(ModelFile) != ModelFile || !ModelFile.EndsWith(".onnx", StringComparison.OrdinalIgnoreCase))
             {
                 throw Invalid($"Invalid model_file '{ModelFile}'.", configPath);
             }
-            if (ModelSha256.Length != 64 ||
-                ModelSha256.Any(c => !Uri.IsHexDigit(c)))
+            if (ModelSha256.Length != 64 || ModelSha256.Any(c => !Uri.IsHexDigit(c)))
             {
                 throw Invalid("model_sha256 must contain exactly 64 hexadecimal characters.", configPath);
             }
@@ -100,8 +98,7 @@ namespace VoiceBox.Speaker.WeSpeaker.Internal
                 throw Invalid($"Invalid threshold {Threshold}.", configPath);
         }
 
-        private static InvalidOperationException Invalid(string message, string path) =>
-            new($"{message} [{path}]");
+        private static InvalidOperationException Invalid(string message, string path) => new($"{message} [{path}]");
 
         private static Dictionary<string, string> ParseIni(string path)
         {

@@ -18,14 +18,10 @@ namespace VoiceBox.Assistant.Modules.AudioFrontend.Models
         }
 
         public int AudioSampleRate
-            => _input.SampleRate is > 0 and <= int.MaxValue
-                ? (int)_input.SampleRate
-                : _speechSynthesis.OutputSampleRate;
+            => _input.SampleRate is> 0 and <= int.MaxValue ? (int)_input.SampleRate : _speechSynthesis.OutputSampleRate;
 
         public int AudioChannels
-            => _input.ChannelCount is > 0 and <= int.MaxValue
-                ? (int)_input.ChannelCount
-                : Math.Max(1, _speechSynthesis.OutputChannels);
+            => _input.ChannelCount is> 0 and <= int.MaxValue ? (int)_input.ChannelCount : Math.Max(1, _speechSynthesis.OutputChannels);
 
         public int WakeupSampleRate => AudioSampleRate;
 

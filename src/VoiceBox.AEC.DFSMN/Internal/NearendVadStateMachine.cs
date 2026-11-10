@@ -299,10 +299,7 @@ namespace VoiceBox.AEC.DFSMN.Internal
 
             _speechBuffer.AddRange(audio);
             _lastEmittedHop = endHop;
-            notify(new NearendVadNotification(
-                NearendVadNotificationKind.Speaking,
-                audio,
-                VADEventDataType.Chunk));
+            notify(new NearendVadNotification(NearendVadNotificationKind.Speaking, audio, VADEventDataType.Chunk));
         }
 
         private void WriteAudioHop(long hopIndex, ReadOnlySpan<float> audioHop)

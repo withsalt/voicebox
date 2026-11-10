@@ -45,9 +45,7 @@ namespace VoiceBox.TTS.MossNano.Internal
             float bestValue = float.NegativeInfinity;
             bool applyPenalty = previousTokenSet.Count > 0 && repetitionPenalty != 1f;
 
-            HashSet<int>? penaltySet = applyPenalty
-                ? (previousTokenSet as HashSet<int>) ?? new HashSet<int>(previousTokenSet)
-                : null;
+            HashSet<int>? penaltySet = applyPenalty ? (previousTokenSet as HashSet<int>) ?? new HashSet<int>(previousTokenSet) : null;
 
             for (int i = 0; i < values.Length; i++)
             {

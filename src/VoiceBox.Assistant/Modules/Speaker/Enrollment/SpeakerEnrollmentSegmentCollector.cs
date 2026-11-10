@@ -35,8 +35,7 @@ internal sealed class SpeakerEnrollmentSegmentCollector
     {
         if (requiredSpeechSamples <= 0)
             throw new ArgumentOutOfRangeException(nameof(requiredSpeechSamples));
-        var completion = new TaskCompletionSource<SpeakerEnrollmentSegmentCapture>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        var completion = new TaskCompletionSource<SpeakerEnrollmentSegmentCapture>(TaskCreationOptions.RunContinuationsAsynchronously);
         lock (_lock)
         {
             ResetLocked();
@@ -86,8 +85,7 @@ internal sealed class SpeakerEnrollmentSegmentCollector
                 return;
 
             CaptureRange range = frame.SourceRange;
-            if (frame.HasDiscontinuity ||
-                (_previousRange.HasValue && !_previousRange.Value.IsContiguousWith(in range)))
+            if (frame.HasDiscontinuity || (_previousRange.HasValue && !_previousRange.Value.IsContiguousWith(in range)))
             {
                 failure = new SpeakerEnrollmentSegmentException(
                     SpeakerEnrollmentReasonCode.TimelineGap,
@@ -156,13 +154,7 @@ internal sealed class SpeakerEnrollmentSegmentCollector
     }
 
     private SpeakerEnrollmentSegmentCapture SnapshotLocked()
-        => new(
-            _speech.ToArray(),
-            _totalSamples,
-            _frameCount,
-            _renderActiveFrames,
-            _nearEndAcceptedFrames,
-            _nearEndObserved);
+        => new(_speech.ToArray(), _totalSamples, _frameCount, _renderActiveFrames, _nearEndAcceptedFrames, _nearEndObserved);
 
     private void ResetLocked()
     {

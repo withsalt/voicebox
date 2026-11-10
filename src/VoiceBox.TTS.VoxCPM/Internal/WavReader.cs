@@ -12,8 +12,7 @@ namespace VoiceBox.TTS.VoxCPM.Internal
         {
             byte[] bytes = File.ReadAllBytes(path);
             var span = bytes.AsSpan();
-            if (span.Length < 44 ||
-                !span[..4].SequenceEqual("RIFF"u8) || !span.Slice(8, 4).SequenceEqual("WAVE"u8))
+            if (span.Length < 44 || !span[..4].SequenceEqual("RIFF"u8) || !span.Slice(8, 4).SequenceEqual("WAVE"u8))
                 throw new InvalidDataException($"不是 RIFF/WAVE 文件: {path}");
 
             int fmtTag = 0, channels = 0, sampleRate = 0, bits = 0;

@@ -25,9 +25,7 @@ namespace VoiceBox.LLM.OnnxGenAI.Internal
         public GenAIPromptTemplate(string modelPath)
         {
             string templatePath = Path.Combine(modelPath, "chat_template.jinja");
-            _templateBody = File.Exists(templatePath)
-                ? File.ReadAllText(templatePath, Encoding.UTF8)
-                : string.Empty;
+            _templateBody = File.Exists(templatePath) ? File.ReadAllText(templatePath, Encoding.UTF8) : string.Empty;
         }
 
         /// <summary>
@@ -51,9 +49,7 @@ namespace VoiceBox.LLM.OnnxGenAI.Internal
 
             // 思考模式: Gemma 4 chat template 通过 tools 段的 "enable_thinking" 标志位控制,
             // 这里以约定字段透传; 模板若不识别会被忽略, 不破坏现有流程。
-            string toolsJson = enableThinking
-                ? "{\"enable_thinking\":true}"
-                : string.Empty;
+            string toolsJson = enableThinking ? "{\"enable_thinking\":true}" : string.Empty;
 
             string prompt = tokenizer.ApplyChatTemplate(
                 template_str: _templateBody,
@@ -89,11 +85,9 @@ namespace VoiceBox.LLM.OnnxGenAI.Internal
                         break;
                     case ToolCallContent:
                     case ToolResultContent:
-                        throw new NotSupportedException(
-                            "VoiceBox.LLM.OnnxGenAI does not support structured tool messages.");
+                        throw new NotSupportedException("VoiceBox.LLM.OnnxGenAI does not support structured tool messages.");
                     default:
-                        throw new NotSupportedException(
-                            $"Unsupported chat content type: {item.GetType().Name}.");
+                        throw new NotSupportedException($"Unsupported chat content type: {item.GetType().Name}.");
                 }
             }
 
@@ -105,8 +99,7 @@ namespace VoiceBox.LLM.OnnxGenAI.Internal
             ChatRole.System => "system",
             ChatRole.User => "user",
             ChatRole.Assistant => "assistant",
-            ChatRole.Tool => throw new NotSupportedException(
-                "VoiceBox.LLM.OnnxGenAI does not support structured tool messages."),
+            ChatRole.Tool => throw new NotSupportedException("VoiceBox.LLM.OnnxGenAI does not support structured tool messages."),
             _ => throw new ArgumentOutOfRangeException(nameof(role), role, null),
         };
     }

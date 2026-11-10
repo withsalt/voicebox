@@ -41,12 +41,8 @@ internal static class AssistantSignalKernelProjection
                 signal.TurnId,
                 signal.OperationId,
                 ProjectFailure(signal.Failure)),
-            AssistantSignalKind.ResponseSpeakableStarted => TurnSignal.PlaybackStarted(
-                signal.TurnId,
-                signal.OperationId),
-            AssistantSignalKind.BackgroundResponseStarted => TurnSignal.BackgroundResponseStarted(
-                signal.TurnId,
-                signal.OperationId),
+            AssistantSignalKind.ResponseSpeakableStarted => TurnSignal.PlaybackStarted(signal.TurnId, signal.OperationId),
+            AssistantSignalKind.BackgroundResponseStarted => TurnSignal.BackgroundResponseStarted(signal.TurnId, signal.OperationId),
             AssistantSignalKind.ResponseCompleted => TurnSignal.ResponseGenerated(
                 signal.TurnId,
                 signal.OperationId,
@@ -60,19 +56,13 @@ internal static class AssistantSignalKernelProjection
                 signal.TurnId,
                 signal.OperationId,
                 ProjectFailure(signal.Failure)),
-            AssistantSignalKind.OperationCanceled => TurnSignal.CancelRequested(
-                signal.TurnId,
-                signal.OperationId,
-                "response-cancelled"),
+            AssistantSignalKind.OperationCanceled => TurnSignal.CancelRequested(signal.TurnId, signal.OperationId, "response-cancelled"),
             AssistantSignalKind.ValidationCancelled => TurnSignal.CancelRequested(
                 signal.TurnId,
                 signal.OperationId,
                 "barge-in-validation-cancelled"),
             AssistantSignalKind.TurnCompleted when conversationState == AssistantState.Thinking =>
-                TurnSignal.CancelRequested(
-                    signal.TurnId,
-                    signal.OperationId,
-                    "response-completed-without-playback"),
+                TurnSignal.CancelRequested(signal.TurnId, signal.OperationId, "response-completed-without-playback"),
             AssistantSignalKind.TurnCompleted
                 when conversationState is not AssistantState.Idle and not AssistantState.Speaking =>
                 TurnSignal.CancelRequested(signal.TurnId, signal.OperationId, "turn-completed"),
@@ -85,9 +75,7 @@ internal static class AssistantSignalKernelProjection
             _ => null,
         };
 
-        return projected is { } value
-            ? value.WithSourceMetadata(sourceSequence, sourceTimestamp)
-            : null;
+        return projected is { } value ? value.WithSourceMetadata(sourceSequence, sourceTimestamp) : null;
     }
 
     public static KernelFailure ProjectFailure(AssistantFailure failure)

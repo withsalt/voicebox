@@ -138,13 +138,7 @@ namespace VoiceBox.AEC.DFSMN.Internal
             uint channels,
             uint sampleRate,
             DfsmnPipelineHopHandler? hopHandler = null)
-            => Process(
-                capture,
-                render,
-                channels,
-                sampleRate,
-                default,
-                hopHandler);
+            => Process(capture, render, channels, sampleRate, default, hopHandler);
 
         public void Process(
             Span<float> capture,
@@ -168,15 +162,12 @@ namespace VoiceBox.AEC.DFSMN.Internal
                 return;
             }
 
-            bool hasUsableCaptureRange =
-                captureRange.IsValid &&
-                captureRange.Length == capture.Length;
+            bool hasUsableCaptureRange = captureRange.IsValid && captureRange.Length == capture.Length;
             if (_captureFifo.Count > 0)
             {
                 bool timelineChanged =
                     _hasCaptureTimeline != hasUsableCaptureRange ||
-                    (_hasCaptureTimeline &&
-                     !_captureTimeline.IsContiguousWith(in captureRange));
+                    (_hasCaptureTimeline && !_captureTimeline.IsContiguousWith(in captureRange));
                 if (timelineChanged)
                 {
                     // A model hop must never combine samples from different stream epochs
@@ -216,9 +207,7 @@ namespace VoiceBox.AEC.DFSMN.Internal
                 _renderFifo.Read(_renderHop);
                 SanitizeInPlace(_captureHop);
                 SanitizeInPlace(_renderHop);
-                CaptureRange hopRange = _hasCaptureTimeline
-                    ? SliceRange(in _captureTimeline, 0, _hopLength)
-                    : default;
+                CaptureRange hopRange = _hasCaptureTimeline ? SliceRange(in _captureTimeline, 0, _hopLength) : default;
                 ProcessHop(hopHandler, in hopRange);
                 if (_hasCaptureTimeline)
                 {
@@ -301,8 +290,7 @@ namespace VoiceBox.AEC.DFSMN.Internal
             {
                 if (!_maskRunner.HasVadProbabilities)
                 {
-                    throw new InvalidOperationException(
-                        "The configured DFSMN runner cannot produce near-end VAD probabilities.");
+                    throw new InvalidOperationException("The configured DFSMN runner cannot produce near-end VAD probabilities.");
                 }
                 _maskRunner.Run(_feature, 1, _mask, _vadProbability);
             }
@@ -318,20 +306,12 @@ namespace VoiceBox.AEC.DFSMN.Internal
             _outputFifo.Write(_processedHop);
             UpdateMetrics(captureRange.TimestampTicks);
 
-            hopHandler?.Invoke(
-                _captureHop,
-                _linearHop,
-                _processedHop,
-                _vadProbability[0],
-                in captureRange);
+            hopHandler?.Invoke(_captureHop, _linearHop, _processedHop, _vadProbability[0], in captureRange);
         }
 
         private static CaptureRange SliceRange(in CaptureRange sourceRange, int offset, int length)
         {
-            if (!sourceRange.IsValid ||
-                offset < 0 ||
-                length <= 0 ||
-                offset > sourceRange.Length - length)
+            if (!sourceRange.IsValid || offset < 0 || length <= 0 || offset > sourceRange.Length - length)
             {
                 return default;
             }
@@ -360,9 +340,7 @@ namespace VoiceBox.AEC.DFSMN.Internal
                 DelayMedianMs: 0,
                 HasResidualEchoLikelihood: true,
                 ResidualEchoLikelihood: EstimateResidualEchoLikelihood(),
-                TimestampTicks: observationTimestampTicks > 0
-                    ? observationTimestampTicks
-                    : System.Diagnostics.Stopwatch.GetTimestamp(),
+                TimestampTicks: observationTimestampTicks > 0 ? observationTimestampTicks : System.Diagnostics.Stopwatch.GetTimestamp(),
                 HasProcessedCaptureRms: true,
                 ProcessedCaptureRms: Rms(_processedHop),
                 HasInputCaptureRms: true,

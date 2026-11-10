@@ -11,9 +11,7 @@ internal sealed class ToolCatalogSnapshot
         Comparer<ToolDefinition>.Create(static (left, right) =>
         {
             int alias = StringComparer.Ordinal.Compare(left.Id.ServerAlias, right.Id.ServerAlias);
-            return alias != 0
-                ? alias
-                : StringComparer.Ordinal.Compare(left.Id.ToolName, right.Id.ToolName);
+            return alias != 0 ? alias : StringComparer.Ordinal.Compare(left.Id.ToolName, right.Id.ToolName);
         });
 
     public static ToolCatalogSnapshot Empty { get; } = new(Array.Empty<ToolDefinition>());
@@ -61,8 +59,7 @@ internal sealed class ToolCatalogSnapshot
         if (value.Length <= maxProviderNameLength)
             return value;
 
-        string suffix = OwnedJsonValue.ComputeStableHash(
-            $"{id.ServerAlias}\0{id.ToolName}");
+        string suffix = OwnedJsonValue.ComputeStableHash($"{id.ServerAlias}\0{id.ToolName}");
         int prefixLength = maxProviderNameLength - suffix.Length - 2;
         return $"{value[..prefixLength]}__{suffix}";
     }
@@ -72,9 +69,7 @@ internal sealed class ToolCatalogSnapshot
         var result = new StringBuilder(value.Length);
         foreach (char character in value)
         {
-            result.Append(char.IsAsciiLetterOrDigit(character) || character == '_'
-                ? character
-                : '_');
+            result.Append(char.IsAsciiLetterOrDigit(character) || character == '_' ? character : '_');
         }
         return result.ToString();
     }

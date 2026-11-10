@@ -33,8 +33,7 @@ internal sealed class SpeechBoundaryIngress : ICommittedTurnObserver, IWakeupRep
     private readonly INearEndEndpointPort _nearEnd;
     private readonly ISpeakerGateCapturePort _speakerGate;
     private readonly VoiceAssistantListeningOptions _listeningOptions;
-    private readonly BoundedMpscQueue<DeferredSpeakingAudio> _deferredSpeakingAudio =
-        new(DeferredSpeakingAudioCapacity);
+    private readonly BoundedMpscQueue<DeferredSpeakingAudio> _deferredSpeakingAudio = new(DeferredSpeakingAudioCapacity);
     private long _speechAdmissionEpoch;
     private long _pendingSpeechStartProjection;
     private int _speechAudioDrainScheduled;
@@ -110,10 +109,7 @@ internal sealed class SpeechBoundaryIngress : ICommittedTurnObserver, IWakeupRep
             Stopwatch.GetTimestamp(),
             AssistantSignalSource.CaptureCallback,
             out _);
-        if (accepted &&
-            projectedState == AssistantState.Idle &&
-            _listeningOptions.MinDurationMs == 0 &&
-            _listeningOptions.MinRms == 0)
+        if (accepted && projectedState == AssistantState.Idle && _listeningOptions.MinDurationMs == 0 && _listeningOptions.MinRms == 0)
         {
             MarkPendingSpeechStart(admissionEpoch);
         }
@@ -146,11 +142,7 @@ internal sealed class SpeechBoundaryIngress : ICommittedTurnObserver, IWakeupRep
         if (!_deferredSpeakingAudio.TryWrite(new DeferredSpeakingAudio(admissionEpoch, e.Audio)))
         {
             _controlIngress.TryTerminate(
-                new AssistantFailure(
-                    "VBX-CTRL-007",
-                    "capacity",
-                    "speech-audio-data-plane",
-                    "deferred-speaking-overflow"),
+                new AssistantFailure("VBX-CTRL-007", "capacity", "speech-audio-data-plane", "deferred-speaking-overflow"),
                 Stopwatch.GetTimestamp(),
                 out _);
         }
@@ -172,11 +164,7 @@ internal sealed class SpeechBoundaryIngress : ICommittedTurnObserver, IWakeupRep
         _nearEnd.ObserveUnownedEndpointSpeechEnded();
 
         _controlIngress.TryEnqueueCritical(
-            AssistantSignal.SpeechEnded(
-                0,
-                e.Duration,
-                endpointObservationApplied: false,
-                admissionEpoch),
+            AssistantSignal.SpeechEnded(0, e.Duration, endpointObservationApplied: false, admissionEpoch),
             Stopwatch.GetTimestamp(),
             AssistantSignalSource.CaptureCallback,
             out _);
@@ -228,11 +216,7 @@ internal sealed class SpeechBoundaryIngress : ICommittedTurnObserver, IWakeupRep
 
         Volatile.Write(ref _speechAudioDrainScheduled, 0);
         _controlIngress.TryTerminate(
-            new AssistantFailure(
-                "VBX-CTRL-014",
-                "capacity",
-                "speech-audio-data-plane",
-                "audio-availability-admission-failed"),
+            new AssistantFailure("VBX-CTRL-014", "capacity", "speech-audio-data-plane", "audio-availability-admission-failed"),
             Stopwatch.GetTimestamp(),
             out _);
     }
@@ -244,8 +228,7 @@ internal sealed class SpeechBoundaryIngress : ICommittedTurnObserver, IWakeupRep
 
     void ICommittedTurnObserver.OnTurnCommitted(TurnSignal signal, AssistantState state)
     {
-        if (signal.Kind == TurnSignalKind.CancelRequested &&
-            string.Equals(signal.Reason, "wakeup-interrupt", StringComparison.Ordinal))
+        if (signal.Kind == TurnSignalKind.CancelRequested && string.Equals(signal.Reason, "wakeup-interrupt", StringComparison.Ordinal))
         {
             // Clear facts admitted by the interrupted speech epoch before cancellation or playback
             // effects make the wakeup commit externally visible. Capture callbacks submitted after
@@ -270,10 +253,7 @@ internal sealed class SpeechBoundaryIngress : ICommittedTurnObserver, IWakeupRep
         long observed = Volatile.Read(ref _pendingSpeechStartProjection);
         while (observed < token)
         {
-            long replaced = Interlocked.CompareExchange(
-                ref _pendingSpeechStartProjection,
-                token,
-                observed);
+            long replaced = Interlocked.CompareExchange(ref _pendingSpeechStartProjection, token, observed);
             if (replaced == observed)
                 return;
             observed = replaced;

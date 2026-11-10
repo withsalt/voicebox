@@ -56,9 +56,7 @@ internal sealed class MiniAudioDeviceSession : IDisposable
 
             ma_device_type deviceType = playbackDevice.HasValue && captureDevice.HasValue
                 ? ma_device_type.duplex
-                : playbackDevice.HasValue
-                    ? ma_device_type.playback
-                    : ma_device_type.capture;
+                : playbackDevice.HasValue ? ma_device_type.playback : ma_device_type.capture;
             ma_device_config config = MiniAudioNative.ma_device_config_init(deviceType);
             config.sampleRate = sampleRate;
             config.noFixedSizedCallback = fixedSizedCallback ? (byte)0 : (byte)1;
@@ -68,10 +66,7 @@ internal sealed class MiniAudioDeviceSession : IDisposable
             }
             else if (suggestedLatency.HasValue || maxFrameSize == -1)
             {
-                config.periodSizeInMilliseconds = (uint)Math.Clamp(
-                    Math.Round((suggestedLatency ?? 0.01) * 1000),
-                    1,
-                    1000);
+                config.periodSizeInMilliseconds = (uint)Math.Clamp(Math.Round((suggestedLatency ?? 0.01) * 1000), 1, 1000);
             }
 
             config.SetDataCallback(_dataCallback);

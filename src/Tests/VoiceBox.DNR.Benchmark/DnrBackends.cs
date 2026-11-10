@@ -92,8 +92,7 @@ namespace VoiceBox.DNR.Benchmark
                     drainedInput += work.Length;
                     if (drainedInput > drainBudget && outputCount < outBuf.Length)
                     {
-                        throw new InvalidOperationException(
-                            "DNR did not release its source-backed tail within the declared delay bound.");
+                        throw new InvalidOperationException("DNR did not release its source-backed tail within the declared delay bound.");
                     }
                 }
 

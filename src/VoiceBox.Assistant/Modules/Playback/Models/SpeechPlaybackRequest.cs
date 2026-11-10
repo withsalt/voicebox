@@ -14,11 +14,8 @@ internal sealed class SpeechPlaybackRequest : IDisposable
         RequestId = requestId;
         OwnerTurnId = ownerTurnId;
         Text = text ?? throw new ArgumentNullException(nameof(text));
-        Cancellation = CancellationTokenSource.CreateLinkedTokenSource(
-            callerCancellation,
-            runCancellation);
-        CompletionSource = new TaskCompletionSource<string>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        Cancellation = CancellationTokenSource.CreateLinkedTokenSource(callerCancellation, runCancellation);
+        CompletionSource = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
     }
 
     public long RequestId { get; }

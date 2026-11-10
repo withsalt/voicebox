@@ -33,28 +33,20 @@ namespace VoiceBox.Core.Services.AudioService.Models
             EndSampleExclusive,
             TimestampTicks);
 
-        public CaptureSignalTimeline CaptureRawTimeline =>
-            ResolveTimeline(Timeline.Raw, CaptureRaw.Length);
+        public CaptureSignalTimeline CaptureRawTimeline => ResolveTimeline(Timeline.Raw, CaptureRaw.Length);
 
-        public CaptureSignalTimeline CaptureBeforeAecTimeline =>
-            ResolveTimeline(Timeline.BeforeAec, CaptureBeforeAec.Length);
+        public CaptureSignalTimeline CaptureBeforeAecTimeline => ResolveTimeline(Timeline.BeforeAec, CaptureBeforeAec.Length);
 
-        public CaptureSignalTimeline CaptureAfterAecTimeline =>
-            ResolveTimeline(Timeline.AfterAec, CaptureAfterAec.Length);
+        public CaptureSignalTimeline CaptureAfterAecTimeline => ResolveTimeline(Timeline.AfterAec, CaptureAfterAec.Length);
 
-        public ReadOnlyMemory<float> CaptureRawValid =>
-            CaptureRawTimeline.Slice(CaptureRaw);
+        public ReadOnlyMemory<float> CaptureRawValid => CaptureRawTimeline.Slice(CaptureRaw);
 
-        public ReadOnlyMemory<float> CaptureBeforeAecValid =>
-            CaptureBeforeAecTimeline.Slice(CaptureBeforeAec);
+        public ReadOnlyMemory<float> CaptureBeforeAecValid => CaptureBeforeAecTimeline.Slice(CaptureBeforeAec);
 
-        public ReadOnlyMemory<float> CaptureAfterAecValid =>
-            CaptureAfterAecTimeline.Slice(CaptureAfterAec);
+        public ReadOnlyMemory<float> CaptureAfterAecValid => CaptureAfterAecTimeline.Slice(CaptureAfterAec);
 
         private CaptureSignalTimeline ResolveTimeline(in CaptureSignalTimeline timeline, int bufferLength)
-            => Timeline.HasAnyTimeline
-                ? timeline
-                : CaptureSignalTimeline.FromWholeBuffer(CaptureRange, bufferLength);
+            => Timeline.HasAnyTimeline ? timeline : CaptureSignalTimeline.FromWholeBuffer(CaptureRange, bufferLength);
     }
 
     public delegate void DuplexAudioFrameHandler(in DuplexAudioFrame frame);

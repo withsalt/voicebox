@@ -48,8 +48,7 @@ internal static class ActiveNearEndTestExtensions
 
     private static IRecognitionAudioTestDriver TestDriver(NearEndTestHarness harness)
         => harness.RecognitionAudio as IRecognitionAudioTestDriver
-            ?? throw new InvalidOperationException(
-                "The injected recognition audio port does not expose test session-admission helpers.");
+            ?? throw new InvalidOperationException("The injected recognition audio port does not expose test session-admission helpers.");
 
     private sealed class PumpState
     {

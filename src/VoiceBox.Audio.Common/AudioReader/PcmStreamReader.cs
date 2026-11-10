@@ -105,15 +105,10 @@ public sealed class PcmStreamReader : IAudioStreamReader
             }
 
             // 计算可处理的样本数
-            int samplesToProcess = Math.Min(
-                buffer.Length - samplesCopied,
-                (_bytesInBuffer - _bufferOffset) / _bytesPerSample
-            );
+            int samplesToProcess = Math.Min(buffer.Length - samplesCopied, (_bytesInBuffer - _bufferOffset) / _bytesPerSample);
 
             int bytesToProcess = samplesToProcess * _bytesPerSample;
-            ConvertSamples(
-                _internalBuffer.AsSpan(_bufferOffset, bytesToProcess),
-                buffer.Slice(samplesCopied, samplesToProcess));
+            ConvertSamples(_internalBuffer.AsSpan(_bufferOffset, bytesToProcess), buffer.Slice(samplesCopied, samplesToProcess));
             _bufferOffset += bytesToProcess;
             samplesCopied += samplesToProcess;
         }

@@ -24,8 +24,7 @@ namespace VoiceBox.TTS.Kokoro.Internal
             _tokensInputName = _session.InputMetadata.ContainsKey("input_ids") ? "input_ids" : "tokens";
 
             // 按 speed 输入的真实元素类型决定写入 float 还是 int，避免 (int)0.8 被截成 0 之类的 bug。
-            _speedIsFloat = !_session.InputMetadata.TryGetValue("speed", out var speedMeta)
-                || speedMeta.ElementType == typeof(float);
+            _speedIsFloat = !_session.InputMetadata.TryGetValue("speed", out var speedMeta) || speedMeta.ElementType == typeof(float);
 
             _outputNames = [.. _session.OutputMetadata.Keys];
         }
@@ -52,10 +51,8 @@ namespace VoiceBox.TTS.Kokoro.Internal
                 long[] styleShape64 = new long[styleShape.Length];
                 for (int i = 0; i < styleShape.Length; i++) styleShape64[i] = styleShape[i];
 
-                using var tokensValue = OrtValue.CreateTensorValueFromMemory(
-                    paddedTokens, [1L, paddedLen]);
-                using var styleValue = OrtValue.CreateTensorValueFromMemory(
-                    voiceStyle, styleShape64);
+                using var tokensValue = OrtValue.CreateTensorValueFromMemory(paddedTokens, [1L, paddedLen]);
+                using var styleValue = OrtValue.CreateTensorValueFromMemory(voiceStyle, styleShape64);
 
                 OrtValue speedValue;
                 if (_speedIsFloat)

@@ -20,14 +20,11 @@ namespace VoiceBox.LLM.LLamaSharp
             bool addGenerationPrompt,
             bool enableThinking)
         {
-            string prompt = base.BuildPrompt(
-                weights, messages, addGenerationPrompt, enableThinking);
+            string prompt = base.BuildPrompt(weights, messages, addGenerationPrompt, enableThinking);
             if (!addGenerationPrompt)
                 return prompt;
 
-            return enableThinking
-                ? prompt + "<think>\n"
-                : prompt + "<think>\n\n</think>\n\n";
+            return enableThinking ? prompt + "<think>\n" : prompt + "<think>\n\n</think>\n\n";
         }
 
         public override bool StartsInsideThinking(bool enableThinking) => enableThinking;

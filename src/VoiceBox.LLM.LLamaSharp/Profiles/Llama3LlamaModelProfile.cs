@@ -9,8 +9,7 @@ namespace VoiceBox.LLM.LLamaSharp
     /// <summary>Llama 3/3.x header 模板。</summary>
     public sealed class Llama3LlamaModelProfile : DefaultLlamaModelProfile
     {
-        private static readonly string[] Strip =
-        ["<|begin_of_text|>", "<|start_header_id|>", "<|end_header_id|>", "<|eot_id|>"];
+        private static readonly string[] Strip = ["<|begin_of_text|>", "<|start_header_id|>", "<|end_header_id|>", "<|eot_id|>"];
 
         public override string Name => "llama3";
 

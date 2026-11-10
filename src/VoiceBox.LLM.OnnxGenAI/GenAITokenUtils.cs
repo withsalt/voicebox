@@ -10,7 +10,6 @@ namespace VoiceBox.LLM.OnnxGenAI
         /// <summary>
         /// 两个 token 序列的最长公共前缀长度。会话据此决定 <c>RewindTo</c> 的边界 (复用多少既有前缀)。
         /// </summary>
-        public static int CommonPrefixLength(ReadOnlySpan<int> a, ReadOnlySpan<int> b) =>
-            a.CommonPrefixLength(b);
+        public static int CommonPrefixLength(ReadOnlySpan<int> a, ReadOnlySpan<int> b) => a.CommonPrefixLength(b);
     }
 }

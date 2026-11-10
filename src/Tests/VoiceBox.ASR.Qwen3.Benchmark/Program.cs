@@ -361,9 +361,7 @@ namespace VoiceBox.ASR.Qwen3.Benchmark
             }
 
             string ts = DateTime.Now.ToString("yyyyMMdd-HHmmss");
-            string fileName = string.IsNullOrEmpty(suffix)
-                ? $"qwen3-asr-benchmark-{ts}.json"
-                : $"qwen3-asr-benchmark-{suffix}-{ts}.json";
+            string fileName = string.IsNullOrEmpty(suffix) ? $"qwen3-asr-benchmark-{ts}.json" : $"qwen3-asr-benchmark-{suffix}-{ts}.json";
 
             // 从两个起点向上爬, 找仓库内的 TestResults 目录:
             //   1) bin\Debug\net10.0\ —— 从 dll 实际位置反推, 与 CWD 无关 (--no-build 时也准)

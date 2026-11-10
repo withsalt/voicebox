@@ -28,11 +28,7 @@ namespace VoiceBox.Assistant
             ILogger<VoiceAssistant>? logger = null)
         {
             ArgumentNullException.ThrowIfNull(composition);
-            _runtime = AssistantRuntimeFactory.Create(
-                composition,
-                options,
-                logger,
-                eventSender: this);
+            _runtime = AssistantRuntimeFactory.Create(composition, options, logger, eventSender: this);
         }
 
         internal VoiceAssistant(

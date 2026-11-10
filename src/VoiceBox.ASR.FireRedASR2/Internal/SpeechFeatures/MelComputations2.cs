@@ -334,9 +334,7 @@ namespace VoiceBox.ASR.FireRedASR2.Internal.SpeechFeatures
 
                     if (hz > leftHz && hz < rightHz)
                     {
-                        float weight = hz <= centerHz
-                            ? (hz - leftHz) / (centerHz - leftHz)
-                            : (rightHz - hz) / (rightHz - centerHz);
+                        float weight = hz <= centerHz ? (hz - leftHz) / (centerHz - leftHz) : (rightHz - hz) / (rightHz - centerHz);
 
                         // Slaney归一化
                         if (slaneyNorm)

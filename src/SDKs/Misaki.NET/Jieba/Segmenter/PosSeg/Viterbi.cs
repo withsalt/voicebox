@@ -143,8 +143,7 @@ namespace Misaki.NET.Jieba.Segmenter.PosSeg
                         tranp = v[i - 1][y0] + tranp + emp;
                         // TODO: compare two very small values;
                         // TODO: how to deal with negative infinity
-                        if (prob < tranp ||
-                            (prob == tranp && string.Compare(state, y0, StringComparison.InvariantCulture) < 0))
+                        if (prob < tranp || (prob == tranp && string.Compare(state, y0, StringComparison.InvariantCulture) < 0))
                         {
                             prob = tranp;
                             state = y0;

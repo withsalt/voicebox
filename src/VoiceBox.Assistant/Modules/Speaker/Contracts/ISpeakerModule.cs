@@ -10,11 +10,7 @@ namespace VoiceBox.Assistant.Modules.Speaker.Contracts;
 /// (<see cref="ISpeakerCaptureFrameSink"/>), never the final processed capture, and owns the
 /// timeline ring, prefetch gate, inference scheduler, evidence cache and verification policy.
 /// </summary>
-internal interface ISpeakerModule :
-    ISpeakerEvidenceProvider,
-    ISpeakerVerificationStatePort,
-    ISpeakerCaptureFrameSink,
-    IDisposable
+internal interface ISpeakerModule : ISpeakerEvidenceProvider, ISpeakerVerificationStatePort, ISpeakerCaptureFrameSink, IDisposable
 {
     AssistantTimelineRequirement TimelineRequirement { get; }
 

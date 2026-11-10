@@ -25,12 +25,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
         private int _disposed;
 
         public string? BuildStreamingPrefix(int chunkId, string accumulatedRaw, int unfixedChunkNum, int unfixedTokenNum)
-            => StreamingPromptPlanner.BuildPrefix(
-                chunkId,
-                accumulatedRaw,
-                unfixedChunkNum,
-                unfixedTokenNum,
-                _tokenizer);
+            => StreamingPromptPlanner.BuildPrefix(chunkId, accumulatedRaw, unfixedChunkNum, unfixedTokenNum, _tokenizer);
 
         public Qwen3AsrRuntime(Qwen3ASROptions options, ILogger logger)
         {
@@ -147,8 +142,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
         {
             EnsureNotDisposed();
             if (waveform.IsEmpty)
-                return new Qwen3AsrTranscription(string.Empty, language ?? string.Empty,
-                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0);
+                return new Qwen3AsrTranscription(string.Empty, language ?? string.Empty, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0);
 
             var totalSw = System.Diagnostics.Stopwatch.StartNew();
             ct.ThrowIfCancellationRequested();
@@ -158,8 +152,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
                     audio.AudioSeconds, audio.EncodeSeconds, audio.MelSeconds,
                     0.0, 0.0, totalSw.Elapsed.TotalSeconds, 0, 0);
 
-            int[] inputIds = _tokenizer.BuildPromptTokens(
-                _metadata.AudioToken, audio.Rows, context, language, prefixText);
+            int[] inputIds = _tokenizer.BuildPromptTokens(_metadata.AudioToken, audio.Rows, context, language, prefixText);
 
             ct.ThrowIfCancellationRequested();
             DecodeResult decode = _decoder.Decode(inputIds, audio, _maxNewTokens, ct);
@@ -187,9 +180,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
                     decode.Tokens.Length);
 
             if (_logger.IsEnabled(LogLevel.Debug))
-                _logger.LogDebug(
-                    "Qwen3-ASR 单次识别原文: rows={Rows} raw=\"{Raw}\"",
-                    audio.Rows, raw);
+                _logger.LogDebug("Qwen3-ASR 单次识别原文: rows={Rows} raw=\"{Raw}\"", audio.Rows, raw);
 
             return new Qwen3AsrTranscription(
                 Text: text,
@@ -333,11 +324,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
                 OrtArenaCfg? arenaCfg = null;
                 try
                 {
-                    memInfo = new OrtMemoryInfo(
-                        OrtMemoryInfo.allocatorCUDA,
-                        OrtAllocatorType.ArenaAllocator,
-                        deviceId,
-                        OrtMemType.Default);
+                    memInfo = new OrtMemoryInfo(OrtMemoryInfo.allocatorCUDA, OrtAllocatorType.ArenaAllocator, deviceId, OrtMemType.Default);
                     // (maxMemory=0 → unlimited, extendStrategy=-1/initChunk=-1/maxDead=-1 → defaults;
                     //  the actual strategy is overridden by provider_options below.)
                     arenaCfg = new OrtArenaCfg(0, -1, -1, -1);
@@ -346,8 +333,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
                         ["device_id"] = deviceId.ToString(System.Globalization.CultureInfo.InvariantCulture),
                         ["arena_extend_strategy"] = arenaExtendStrategy,
                     };
-                    OrtEnv.Instance().CreateAndRegisterAllocator(
-                        "CUDAExecutionProvider", memInfo, arenaCfg, providerOptions);
+                    OrtEnv.Instance().CreateAndRegisterAllocator("CUDAExecutionProvider", memInfo, arenaCfg, providerOptions);
                     _sharedAllocatorState[deviceId] = true;
                     return true;
                 }

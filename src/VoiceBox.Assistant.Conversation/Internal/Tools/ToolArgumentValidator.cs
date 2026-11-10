@@ -86,9 +86,7 @@ internal sealed class ToolArgumentValidator(bool validateSchema = true)
             {
                 if (violations.Count >= MaxReportedViolations)
                     return;
-                violations.Add(new Violation(
-                    results.InstanceLocation.ToString(),
-                    $"{keyword}: {message}"));
+                violations.Add(new Violation(results.InstanceLocation.ToString(), $"{keyword}: {message}"));
             }
         }
 

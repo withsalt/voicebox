@@ -78,9 +78,7 @@ internal sealed class SpeakerEnrollmentQualityEvaluator
         if (windowEmbeddings.Count == 0)
             return new(SpeakerEnrollmentReasonCode.InvalidEmbedding, quality, null);
 
-        double withinMedian = windowEmbeddings.Count < 2
-            ? 1.0
-            : Median(PairwiseScores(windowEmbeddings));
+        double withinMedian = windowEmbeddings.Count < 2 ? 1.0 : Median(PairwiseScores(windowEmbeddings));
         quality = quality with
         {
             EmbeddingWindowCount = windowEmbeddings.Count,
@@ -152,8 +150,6 @@ internal sealed class SpeakerEnrollmentQualityEvaluator
         var sorted = values.ToArray();
         Array.Sort(sorted);
         int middle = sorted.Length / 2;
-        return sorted.Length % 2 == 0
-            ? (sorted[middle - 1] + sorted[middle]) / 2.0
-            : sorted[middle];
+        return sorted.Length % 2 == 0 ? (sorted[middle - 1] + sorted[middle]) / 2.0 : sorted[middle];
     }
 }

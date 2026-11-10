@@ -183,9 +183,7 @@ internal sealed class NearEndCaptureStateMachine
             _feedsInFlight++;
         }
 
-        if (State == Status.Draining &&
-            _nextSample >= _drainTargetSample &&
-            !_drainForced)
+        if (State == Status.Draining && _nextSample >= _drainTargetSample && !_drainForced)
         {
             _drainReason = "aligned";
         }
@@ -266,10 +264,7 @@ internal sealed class NearEndCaptureStateMachine
     /// <summary>Invalidates a provisional endpoint when newer speech arrives before finalization.</summary>
     public bool TryResumeFromDrain(long streamEpoch)
     {
-        if (State != Status.Draining ||
-            _drainForced ||
-            _finalizationClaimed ||
-            streamEpoch != _drainStreamEpoch)
+        if (State != Status.Draining || _drainForced || _finalizationClaimed || streamEpoch != _drainStreamEpoch)
         {
             return false;
         }

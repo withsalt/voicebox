@@ -20,8 +20,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         cancellation.Cancel();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => active.Completion.WaitAsync(TimeSpan.FromSeconds(2)));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => active.Completion.WaitAsync(TimeSpan.FromSeconds(2)));
         Assert.Equal(1, services.Audio.ClearQueueCount);
         await pending.Completion.WaitAsync(TimeSpan.FromSeconds(2));
         Assert.Equal(["当前播放", "后续播放"], services.Tts.SynthesizedTexts);
@@ -55,8 +54,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     public async Task EnqueueSpeechAsync_StopCancelsActiveAndQueuedRequests()
     {
         var services = TestServices.Create();
-        services.Tts.BlockBeforeFirstChunk = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        services.Tts.BlockBeforeFirstChunk = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         using var assistant = services.CreateAssistant();
 
         await assistant.StartAsync();
@@ -66,10 +64,8 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         await assistant.StopAsync().WaitAsync(TimeSpan.FromSeconds(2));
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            async () => await active.Completion);
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            async () => await queued.Completion);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await active.Completion);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await queued.Completion);
         Assert.Equal(["第一段"], services.Tts.SynthesizedTexts);
     }
 
@@ -78,12 +74,10 @@ public sealed partial class VoiceAssistantLifecycleTests
     {
         var services = TestServices.Create();
         services.Asr.CompleteStart("session-1");
-        var firstSpeechGate = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        var firstSpeechGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         services.Tts.BlockBeforeFirstChunk = firstSpeechGate;
         using var assistant = services.CreateAssistant();
-        var replied = new TaskCompletionSource<string>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        var replied = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
         assistant.AssistantReplied += (_, e) => replied.TrySetResult(e.Text);
 
         await assistant.StartAsync();
@@ -107,8 +101,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     public async Task EnqueueSpeechAsync_HeadIsPlayedBeforeWaitingTail()
     {
         var services = TestServices.Create();
-        var firstGate = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        var firstGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         services.Tts.BlockBeforeFirstChunk = firstGate;
         using var assistant = services.CreateAssistant();
 
@@ -116,9 +109,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         var active = await assistant.EnqueueSpeechAsync("当前播放");
         await WaitUntilAsync(() => services.Tts.SynthesizedTexts.Count == 1);
         var tail = await assistant.EnqueueSpeechAsync("队尾");
-        var head = await assistant.EnqueueSpeechAsync(
-            "队头",
-            SpeechPlaybackQueuePosition.Head);
+        var head = await assistant.EnqueueSpeechAsync("队头", SpeechPlaybackQueuePosition.Head);
 
         Assert.Equal(["当前播放"], services.Tts.SynthesizedTexts);
         services.Tts.BlockBeforeFirstChunk = null;
@@ -132,8 +123,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     public async Task StopCurrentSpeechPlayback_StopsOnlyCurrentAndContinuesPendingQueue()
     {
         var services = TestServices.Create();
-        var firstGate = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        var firstGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         services.Tts.BlockBeforeFirstChunk = firstGate;
         using var assistant = services.CreateAssistant();
 

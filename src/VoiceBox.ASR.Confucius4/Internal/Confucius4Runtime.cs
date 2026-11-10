@@ -23,8 +23,7 @@ internal sealed class Confucius4Runtime : IConfucius4Runtime
         string json = File.ReadAllText(Path.Combine(options.ModelPath, "metadata.json"));
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
-        if (root.GetProperty("schema_version").GetInt32() != 1 ||
-            root.GetProperty("model_family").GetString() != "confucius4-r2t2")
+        if (root.GetProperty("schema_version").GetInt32() != 1 || root.GetProperty("model_family").GetString() != "confucius4-r2t2")
             throw new InvalidDataException("Unsupported Confucius4 package schema.");
         if (options.Language is not null && !root.GetProperty("languages").EnumerateArray()
             .Any(x => string.Equals(x.GetString(), options.Language, StringComparison.Ordinal)))
@@ -103,8 +102,7 @@ internal sealed class Confucius4Runtime : IConfucius4Runtime
         cancellationToken.ThrowIfCancellationRequested();
         AudioFeatures features = _encoder.Encode(audio, melState);
         if (features.IsEmpty) return prefix;
-        int[] prompt = _tokenizer.BuildPromptTokens(_metadata.AudioToken, features.Rows,
-            _options.Context, _options.Language, prefix);
+        int[] prompt = _tokenizer.BuildPromptTokens(_metadata.AudioToken, features.Rows, _options.Context, _options.Language, prefix);
         cancellationToken.ThrowIfCancellationRequested();
         if (prompt.Length + maxTokens > _metadata.StaticCacheLen)
             throw new InvalidOperationException($"Prompt ({prompt.Length}) + decode budget ({maxTokens}) exceeds " +

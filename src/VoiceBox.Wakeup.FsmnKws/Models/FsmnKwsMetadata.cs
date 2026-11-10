@@ -51,9 +51,7 @@ namespace VoiceBox.Wakeup.FsmnKws.Models
         {
             if (string.IsNullOrWhiteSpace(modelPathOrDir))
                 throw new ArgumentException("modelPathOrDir must not be empty.", nameof(modelPathOrDir));
-            string dir = Directory.Exists(modelPathOrDir)
-                ? modelPathOrDir
-                : Path.GetDirectoryName(modelPathOrDir) ?? ".";
+            string dir = Directory.Exists(modelPathOrDir) ? modelPathOrDir : Path.GetDirectoryName(modelPathOrDir) ?? ".";
             return Path.Combine(dir, FileName);
         }
 
@@ -66,9 +64,7 @@ namespace VoiceBox.Wakeup.FsmnKws.Models
             if (string.IsNullOrWhiteSpace(metaFilePath))
                 throw new ArgumentException("metaFilePath must not be empty.", nameof(metaFilePath));
             if (!File.Exists(metaFilePath))
-                throw new FileNotFoundException(
-                    $"kws_meta.json not found: {metaFilePath}. 模型目录必须包含 {FileName} (由导出脚本生成)。",
-                    metaFilePath);
+                throw new FileNotFoundException($"kws_meta.json not found: {metaFilePath}. 模型目录必须包含 {FileName} (由导出脚本生成)。", metaFilePath);
 
             JsonDocument doc;
             try
@@ -98,31 +94,26 @@ namespace VoiceBox.Wakeup.FsmnKws.Models
         private static string ReadKeyword(JsonElement root, string path)
         {
             if (!root.TryGetProperty("keyword", out JsonElement el) || el.ValueKind != JsonValueKind.String)
-                throw new InvalidDataException(
-                    $"kws_meta.json missing required string field 'keyword': {path}");
+                throw new InvalidDataException($"kws_meta.json missing required string field 'keyword': {path}");
             string? keyword = el.GetString();
             if (string.IsNullOrWhiteSpace(keyword))
-                throw new InvalidDataException(
-                    $"kws_meta.json field 'keyword' must not be empty: {path}");
+                throw new InvalidDataException($"kws_meta.json field 'keyword' must not be empty: {path}");
             return keyword;
         }
 
         private static int[] ReadTokenIds(JsonElement root, string path)
         {
             if (!root.TryGetProperty("keyword_token_ids", out JsonElement el) || el.ValueKind != JsonValueKind.Array)
-                throw new InvalidDataException(
-                    $"kws_meta.json missing required array field 'keyword_token_ids': {path}");
+                throw new InvalidDataException($"kws_meta.json missing required array field 'keyword_token_ids': {path}");
             var ids = new List<int>(el.GetArrayLength());
             foreach (JsonElement item in el.EnumerateArray())
             {
                 if (item.ValueKind != JsonValueKind.Number || !item.TryGetInt32(out int id))
-                    throw new InvalidDataException(
-                        $"kws_meta.json field 'keyword_token_ids' must contain only integers: {path}");
+                    throw new InvalidDataException($"kws_meta.json field 'keyword_token_ids' must contain only integers: {path}");
                 ids.Add(id);
             }
             if (ids.Count == 0)
-                throw new InvalidDataException(
-                    $"kws_meta.json field 'keyword_token_ids' must not be empty: {path}");
+                throw new InvalidDataException($"kws_meta.json field 'keyword_token_ids' must not be empty: {path}");
             return ids.ToArray();
         }
 
@@ -151,8 +142,7 @@ namespace VoiceBox.Wakeup.FsmnKws.Models
         {
             if (!cmvn.TryGetProperty(name, out JsonElement values) || values.ValueKind != JsonValueKind.Array
                 || values.GetArrayLength() != CmvnDimension)
-                throw new InvalidDataException(
-                    $"kws_meta.json field 'cmvn.{name}' must contain {CmvnDimension} numbers: {path}");
+                throw new InvalidDataException($"kws_meta.json field 'cmvn.{name}' must contain {CmvnDimension} numbers: {path}");
 
             var result = new float[CmvnDimension];
             int index = 0;

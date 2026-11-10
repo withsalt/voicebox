@@ -81,20 +81,12 @@ internal static class OracleActivityAnalyzer
         if (samples.IsEmpty || sampleRate <= 0 || !double.IsFinite(scale) || scale <= 0)
             return OracleActivity.Unavailable;
 
-        ComputeActivityFrames(
-            samples,
-            scale,
-            sampleRate,
-            out int frameSamples,
-            out bool[] active,
-            out double threshold);
+        ComputeActivityFrames(samples, scale, sampleRate, out int frameSamples, out bool[] active, out double threshold);
 
         int minimumFrames = Math.Max(1, (minimumSpeechMs + FrameMs - 1) / FrameMs);
         // A frame may only become eligible once the complete startup guard has elapsed.
         // Round up so a guard that is not frame-aligned cannot admit an early frame.
-        int guardFrame = startupGuardMs <= 0
-            ? 0
-            : (startupGuardMs - 1) / FrameMs + 1;
+        int guardFrame = startupGuardMs <= 0 ? 0 : (startupGuardMs - 1) / FrameMs + 1;
         int firstSpeech = -1;
         int eligible = -1;
         int lastSpeech = -1;

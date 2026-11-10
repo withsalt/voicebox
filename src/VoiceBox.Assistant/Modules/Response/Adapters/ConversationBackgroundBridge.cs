@@ -18,14 +18,10 @@ internal sealed class ConversationBackgroundBridge(
     IAssistantTextStreamSink textStream,
     ILogger logger)
 {
-    private readonly IConversationBackgroundOutput _output = output
-        ?? throw new ArgumentNullException(nameof(output));
-    private readonly ConversationResponseAdapter _conversation = conversation
-        ?? throw new ArgumentNullException(nameof(conversation));
-    private readonly IBackgroundResponsePlaybackPort _playback = playback
-        ?? throw new ArgumentNullException(nameof(playback));
-    private readonly IAssistantTextStreamSink _textStream = textStream
-        ?? throw new ArgumentNullException(nameof(textStream));
+    private readonly IConversationBackgroundOutput _output = output ?? throw new ArgumentNullException(nameof(output));
+    private readonly ConversationResponseAdapter _conversation = conversation ?? throw new ArgumentNullException(nameof(conversation));
+    private readonly IBackgroundResponsePlaybackPort _playback = playback ?? throw new ArgumentNullException(nameof(playback));
+    private readonly IAssistantTextStreamSink _textStream = textStream ?? throw new ArgumentNullException(nameof(textStream));
     private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -40,10 +36,7 @@ internal sealed class ConversationBackgroundBridge(
                 cancellationToken.ThrowIfCancellationRequested();
                 if (string.IsNullOrWhiteSpace(message.Text))
                     continue;
-                if (!string.Equals(
-                    message.ConversationId,
-                    _conversation.ConversationId,
-                    StringComparison.Ordinal))
+                if (!string.Equals(message.ConversationId, _conversation.ConversationId, StringComparison.Ordinal))
                 {
                     _logger.LogWarning(
                         "Dropping a background conversation message from another session: {ConversationId}.",

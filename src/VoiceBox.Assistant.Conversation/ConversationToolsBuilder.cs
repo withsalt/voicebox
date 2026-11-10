@@ -72,24 +72,17 @@ public sealed class ConversationToolsBuilder
             {
                 if (string.Equals(alias, "local", StringComparison.Ordinal))
                 {
-                    throw new ArgumentException(
-                        "Tool provider alias 'local' is reserved for AddTool registrations.",
-                        nameof(provider));
+                    throw new ArgumentException("Tool provider alias 'local' is reserved for AddTool registrations.", nameof(provider));
                 }
                 if (!aliases.Add(alias))
                 {
-                    throw new InvalidOperationException(
-                        $"Tool provider alias '{alias}' is already registered.");
+                    throw new InvalidOperationException($"Tool provider alias '{alias}' is already registered.");
                 }
             }
         }
 
         ConversationToolOptions options = _options.Clone();
-        return new ToolConfiguration(
-            _tools.ToArray(),
-            _providers.ToArray(),
-            _approvalPolicy,
-            options);
+        return new ToolConfiguration(_tools.ToArray(), _providers.ToArray(), _approvalPolicy, options);
     }
 }
 

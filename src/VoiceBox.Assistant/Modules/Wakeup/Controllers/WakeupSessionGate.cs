@@ -80,11 +80,7 @@ internal sealed class WakeupSessionGate : IDisposable, IWakeupDetectorActivation
         _timeline = new WakeupPreRollTimeline(preRollSamples, sampleRate, channels, replayLeadInMs);
         _authorization = speakerEvidence is null
             ? null
-            : new WakeupSpeakerAuthorization(
-                speakerEvidence,
-                clock,
-                wakeupStrongScoreMargin,
-                postTriggerEvidenceSamples);
+            : new WakeupSpeakerAuthorization(speakerEvidence, clock, wakeupStrongScoreMargin, postTriggerEvidenceSamples);
         _detector = new WakeupDetectorAdapter(wakeup, this);
         _detector.Subscribe(OnWakeup);
     }
@@ -136,17 +132,9 @@ internal sealed class WakeupSessionGate : IDisposable, IWakeupDetectorActivation
         if (audio.IsEmpty)
         {
             AssistantWakeMode mode = Mode;
-            return new WakeupAudioDecision(
-                WakeupAudioRoute.WakeDetectorOnly,
-                null,
-                null,
-                WakeupTriggerKind.None,
-                mode,
-                mode,
-                false);
+            return new WakeupAudioDecision(WakeupAudioRoute.WakeDetectorOnly, null, null, WakeupTriggerKind.None, mode, mode, false);
         }
-        if (frame.SampleRate != _sampleRate || frame.Channels != _channels ||
-            frame.SourceRange.Length != audio.Length)
+        if (frame.SampleRate != _sampleRate || frame.Channels != _channels || frame.SourceRange.Length != audio.Length)
         {
             throw new InvalidOperationException("Wakeup audio does not match its capture timeline or configured format.");
         }
@@ -166,8 +154,7 @@ internal sealed class WakeupSessionGate : IDisposable, IWakeupDetectorActivation
             {
                 _timeline.SetOrigin(in sourceRange);
             }
-            else if (frame.HasDiscontinuity ||
-                frame.SourceRange.StreamEpoch != _timeline.WakeDetectorStreamEpoch)
+            else if (frame.HasDiscontinuity || frame.SourceRange.StreamEpoch != _timeline.WakeDetectorStreamEpoch)
             {
                 _pendingWakeup = null;
                 _authorization?.Reset();
@@ -202,8 +189,7 @@ internal sealed class WakeupSessionGate : IDisposable, IWakeupDetectorActivation
                 }
                 else
                 {
-                    feedWakeDetector = _pendingWakeup is null &&
-                        _modeState.IsListeningForWakeWordOrInSession;
+                    feedWakeDetector = _pendingWakeup is null && _modeState.IsListeningForWakeWordOrInSession;
                     routeBeforeFeed = _modeState.Mode == AssistantWakeMode.ContinuousConversation
                         ? WakeupAudioRoute.Conversation
                         : WakeupAudioRoute.WakeDetectorOnly;
@@ -228,23 +214,14 @@ internal sealed class WakeupSessionGate : IDisposable, IWakeupDetectorActivation
             ObjectDisposedException.ThrowIf(_disposed, this);
             if (!_started)
                 return CreateStoppedDecisionLocked();
-            completedAfterFeed = TryConsumeWakeupLocked(
-                frame.SourceRange.EndSampleExclusive,
-                frame.SourceRange.TimestampTicks);
+            completedAfterFeed = TryConsumeWakeupLocked(frame.SourceRange.EndSampleExclusive, frame.SourceRange.TimestampTicks);
             if (completedAfterFeed.HasValue)
                 completedAfterFeed = TouchAcceptedWakeupLocked(completedAfterFeed.Value);
 
             WakeupAudioRoute route = _modeState.Mode == AssistantWakeMode.ContinuousConversation
                 ? WakeupAudioRoute.Conversation
                 : routeBeforeFeed;
-            noWakeupDecision = new WakeupAudioDecision(
-                route,
-                null,
-                null,
-                WakeupTriggerKind.None,
-                _modeState.Mode,
-                _modeState.Mode,
-                false);
+            noWakeupDecision = new WakeupAudioDecision(route, null, null, WakeupTriggerKind.None, _modeState.Mode, _modeState.Mode, false);
         }
 
         if (!completedAfterFeed.HasValue)
@@ -401,14 +378,7 @@ internal sealed class WakeupSessionGate : IDisposable, IWakeupDetectorActivation
     }
 
     private WakeupAudioDecision CreateStoppedDecisionLocked()
-        => new(
-            WakeupAudioRoute.WakeDetectorOnly,
-            null,
-            null,
-            WakeupTriggerKind.None,
-            _modeState.Mode,
-            _modeState.Mode,
-            false);
+        => new(WakeupAudioRoute.WakeDetectorOnly, null, null, WakeupTriggerKind.None, _modeState.Mode, _modeState.Mode, false);
 
     private bool IsDetectorActive()
     {
@@ -422,10 +392,7 @@ internal sealed class WakeupSessionGate : IDisposable, IWakeupDetectorActivation
         AssistantWakeMode mode;
         lock (_lock)
         {
-            if (_disposed ||
-                !_started ||
-                !_modeState.IsListeningForWakeWordOrInSession ||
-                _pendingWakeup != null)
+            if (_disposed || !_started || !_modeState.IsListeningForWakeWordOrInSession || _pendingWakeup != null)
             {
                 return;
             }

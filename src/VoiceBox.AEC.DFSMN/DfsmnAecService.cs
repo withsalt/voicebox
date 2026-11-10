@@ -9,9 +9,7 @@ namespace VoiceBox.AEC.DFSMN
     /// <summary>
     /// Streaming DFSMN acoustic echo cancellation service.
     /// </summary>
-    public sealed class DfsmnAecService :
-        IAcousticEchoCancellationService,
-        IAcousticProcessingMetricsSource
+    public sealed class DfsmnAecService : IAcousticEchoCancellationService, IAcousticProcessingMetricsSource
     {
         private readonly object _lock = new();
         private readonly DfsmnAecPipeline _pipeline;

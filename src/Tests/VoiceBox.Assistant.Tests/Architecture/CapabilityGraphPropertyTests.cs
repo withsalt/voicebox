@@ -110,12 +110,9 @@ public sealed partial class VoiceAssistantLifecycleTests
                     .UseSpeechRecognition(services.Asr)
                     .UseConversation(TestConversation.Create(services.Llm))
                     .UseSpeechSynthesis(services.Tts)
-                    .AddBargeIn(
-                        new VoiceAssistantBargeInOptions(),
-                        TestAcousticPathDelayEstimatorFactory.Instance);
+                    .AddBargeIn(new VoiceAssistantBargeInOptions(), TestAcousticPathDelayEstimatorFactory.Instance);
                 expectedCode = "VBX-COMP-008";
-                AssistantCompositionException split =
-                    Assert.Throws<AssistantCompositionException>(builder.Build);
+                AssistantCompositionException split = Assert.Throws<AssistantCompositionException>(builder.Build);
                 Assert.Equal(expectedCode, split.Code);
                 Assert.Equal(0, record.StartCount);
                 Assert.Equal(0, playback.StartCount);
@@ -124,8 +121,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 throw new InvalidOperationException($"Unexpected failure kind {kind}.");
         }
 
-        AssistantCompositionException failure =
-            Assert.Throws<AssistantCompositionException>(builder.Build);
+        AssistantCompositionException failure = Assert.Throws<AssistantCompositionException>(builder.Build);
         Assert.Equal(expectedCode, failure.Code);
         Assert.Equal(0, services.Audio.StartCount);
     }
@@ -149,9 +145,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         if (wakeup || rng.Next(2) == 1)
             builder.AddSpeakerVerification(services.Speaker);
         if (rng.Next(2) == 1)
-            builder.AddBargeIn(
-                new VoiceAssistantBargeInOptions(),
-                TestAcousticPathDelayEstimatorFactory.Instance);
+            builder.AddBargeIn(new VoiceAssistantBargeInOptions(), TestAcousticPathDelayEstimatorFactory.Instance);
         return builder;
     }
 }

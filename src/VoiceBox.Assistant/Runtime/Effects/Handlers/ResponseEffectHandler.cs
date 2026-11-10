@@ -44,10 +44,7 @@ internal sealed class ResponseEffectHandler : IResponseEffectHandler
     public ValueTask GenerateResponseAsync(GenerateResponseEffect effect, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        _scheduler.Schedule(
-            "response.generate",
-            effect.TurnId,
-            () => RunAsync(effect, cancellationToken));
+        _scheduler.Schedule("response.generate", effect.TurnId, () => RunAsync(effect, cancellationToken));
         return ValueTask.CompletedTask;
     }
 
@@ -61,10 +58,7 @@ internal sealed class ResponseEffectHandler : IResponseEffectHandler
 
     private async Task RunAsync(GenerateResponseEffect effect, CancellationToken cancellationToken)
     {
-        _turnContexts.TryGetRecognitionMetadata(
-            effect.TurnId,
-            out string? rawText,
-            out TimeSpan speechDuration);
+        _turnContexts.TryGetRecognitionMetadata(effect.TurnId, out string? rawText, out TimeSpan speechDuration);
 
         bool endConversationRequested = false;
         bool operationAdmitted = true;

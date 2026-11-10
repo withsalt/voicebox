@@ -16,12 +16,9 @@ namespace VoiceBox.TTS.DoubaoOnline.Session
     internal sealed class SeedTtsSession : IDisposable
     {
         private readonly Channel<TtsAudioChunk> _audioChannel;
-        private readonly TaskCompletionSource _connectionStarted =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private readonly TaskCompletionSource _sessionStarted =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private readonly TaskCompletionSource _sessionFinished =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _connectionStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _sessionStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _sessionFinished = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly CancellationTokenSource _cts = new();
         private readonly ILogger _logger;
 

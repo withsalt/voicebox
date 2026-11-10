@@ -28,10 +28,7 @@ public sealed class RenderAlignmentStageTests
     [Fact]
     public void HasRecentRefinedEstimate_UsesInclusiveHoldoverWindow()
     {
-        var stage = new RenderAlignmentStage(
-            new TickTimeProvider(),
-            delayHintMaxAgeMs: 500,
-            refinedEstimateHoldoverSamples: 100);
+        var stage = new RenderAlignmentStage(new TickTimeProvider(), delayHintMaxAgeMs: 500, refinedEstimateHoldoverSamples: 100);
 
         Assert.False(stage.HasRecentRefinedEstimate(0));
         stage.LastRefinedEstimateSample = 50;
@@ -46,10 +43,7 @@ public sealed class RenderAlignmentStageTests
     [Fact]
     public void SelectDelayEstimate_FollowsRefinedThenFallbackThenHoldoverThenHints()
     {
-        var stage = new RenderAlignmentStage(
-            new TickTimeProvider(),
-            delayHintMaxAgeMs: 500,
-            refinedEstimateHoldoverSamples: 1000);
+        var stage = new RenderAlignmentStage(new TickTimeProvider(), delayHintMaxAgeMs: 500, refinedEstimateHoldoverSamples: 1000);
 
         var refined = new RenderDelayEstimate(true, 32, 0.9, IsRefined: true);
         Assert.Equal(refined, stage.SelectDelayEstimate(in refined, 10));

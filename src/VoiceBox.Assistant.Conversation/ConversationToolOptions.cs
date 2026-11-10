@@ -58,24 +58,14 @@ public sealed class ConversationToolOptions
                 nameof(options.ToolTranscriptRetentionTurns),
                 "ToolTranscriptRetentionTurns must be >= 0.");
         if (options.MaxPersistedToolResultBytes < 1)
-            throw new ArgumentOutOfRangeException(
-                nameof(options.MaxPersistedToolResultBytes),
-                "MaxPersistedToolResultBytes must be >= 1.");
+            throw new ArgumentOutOfRangeException(nameof(options.MaxPersistedToolResultBytes), "MaxPersistedToolResultBytes must be >= 1.");
         if (options.MaxParallelToolCalls < 1)
-            throw new ArgumentOutOfRangeException(
-                nameof(options.MaxParallelToolCalls),
-                "MaxParallelToolCalls must be >= 1.");
+            throw new ArgumentOutOfRangeException(nameof(options.MaxParallelToolCalls), "MaxParallelToolCalls must be >= 1.");
         if (options.MaxToolRetryAttempts < 0)
-            throw new ArgumentOutOfRangeException(
-                nameof(options.MaxToolRetryAttempts),
-                "MaxToolRetryAttempts must be >= 0.");
+            throw new ArgumentOutOfRangeException(nameof(options.MaxToolRetryAttempts), "MaxToolRetryAttempts must be >= 0.");
         if (options.ToolRetryBaseDelayMs < 0)
-            throw new ArgumentOutOfRangeException(
-                nameof(options.ToolRetryBaseDelayMs),
-                "ToolRetryBaseDelayMs must be >= 0.");
+            throw new ArgumentOutOfRangeException(nameof(options.ToolRetryBaseDelayMs), "ToolRetryBaseDelayMs must be >= 0.");
         if (options.MaxToolRetryBudgetMs < 0)
-            throw new ArgumentOutOfRangeException(
-                nameof(options.MaxToolRetryBudgetMs),
-                "MaxToolRetryBudgetMs must be >= 0.");
+            throw new ArgumentOutOfRangeException(nameof(options.MaxToolRetryBudgetMs), "MaxToolRetryBudgetMs must be >= 0.");
     }
 }

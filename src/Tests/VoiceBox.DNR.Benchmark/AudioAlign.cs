@@ -17,8 +17,7 @@ namespace VoiceBox.DNR.Benchmark
         /// </summary>
         public static int EstimateNominalLag(ReadOnlySpan<float> reference, ReadOnlySpan<float> estimate, int maxLag, int window = 24000)
         {
-            if (!SafeWindow(reference.Length, estimate.Length, PeakIndex(reference), window, maxLag,
-                    out int start, out int w))
+            if (!SafeWindow(reference.Length, estimate.Length, PeakIndex(reference), window, maxLag, out int start, out int w))
                 return 0;
             return ArgmaxNormXcorr(reference, estimate, start, w, -maxLag, maxLag);
         }
@@ -33,8 +32,7 @@ namespace VoiceBox.DNR.Benchmark
         {
             int lo = center - radius, hi = center + radius;
             int margin = Math.Max(Math.Abs(lo), Math.Abs(hi));
-            if (!SafeWindow(reference.Length, estimate.Length, PeakIndex(reference), window, margin,
-                    out int start, out int w))
+            if (!SafeWindow(reference.Length, estimate.Length, PeakIndex(reference), window, margin, out int start, out int w))
                 return center;
 
             int bestLag = center;

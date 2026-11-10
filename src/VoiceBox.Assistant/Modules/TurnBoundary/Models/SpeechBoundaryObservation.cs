@@ -30,28 +30,10 @@ internal readonly record struct SpeechBoundaryObservation(
     BargeInIdentityContext Identity = default)
 {
     public static SpeechBoundaryObservation StartListening(TurnSignal signal, long turnId)
-        => new(
-            SpeechBoundaryObservationKind.StartListening,
-            signal,
-            default,
-            default,
-            null,
-            null,
-            turnId,
-            null,
-            default);
+        => new(SpeechBoundaryObservationKind.StartListening, signal, default, default, null, null, turnId, null, default);
 
     public static SpeechBoundaryObservation ConfirmedListening(TurnSignal signal, SpeakingDecision decision)
-        => new(
-            SpeechBoundaryObservationKind.ConfirmedListening,
-            signal,
-            decision,
-            default,
-            null,
-            null,
-            decision.TurnId,
-            null,
-            default);
+        => new(SpeechBoundaryObservationKind.ConfirmedListening, signal, decision, default, null, null, decision.TurnId, null, default);
 
     public static SpeechBoundaryObservation ConfirmedBargeIn(
         SpeakingDecision decision,
@@ -72,26 +54,8 @@ internal readonly record struct SpeechBoundaryObservation(
             identity);
 
     public static SpeechBoundaryObservation BeginRecognition(long turnId, string sessionId, TimeSpan speechDuration)
-        => new(
-            SpeechBoundaryObservationKind.BeginRecognition,
-            null,
-            default,
-            default,
-            null,
-            null,
-            turnId,
-            sessionId,
-            speechDuration);
+        => new(SpeechBoundaryObservationKind.BeginRecognition, null, default, default, null, null, turnId, sessionId, speechDuration);
 
     public static SpeechBoundaryObservation SingleTalkAuthorization(TurnSignal signal, long turnId)
-        => new(
-            SpeechBoundaryObservationKind.SingleTalkAuthorization,
-            signal,
-            default,
-            default,
-            null,
-            null,
-            turnId,
-            null,
-            default);
+        => new(SpeechBoundaryObservationKind.SingleTalkAuthorization, signal, default, default, null, null, turnId, null, default);
 }

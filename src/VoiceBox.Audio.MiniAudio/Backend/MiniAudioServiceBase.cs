@@ -41,8 +41,7 @@ public abstract class MiniAudioServiceBase : IAudioService
 
         if (deviceIndex >= 0)
         {
-            MiniAudioDeviceSelection selected = catalog.Devices.FirstOrDefault(
-                selection => selection.AudioDevice.Id == deviceIndex);
+            MiniAudioDeviceSelection selected = catalog.Devices.FirstOrDefault(selection => selection.AudioDevice.Id == deviceIndex);
             if (selected.AudioDevice is null)
             {
                 throw new InvalidOperationException($"Audio device index {deviceIndex} was not found in the current device list.");

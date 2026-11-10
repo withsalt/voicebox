@@ -27,8 +27,7 @@ namespace VoiceBox.Core.Services.AudioService.Models
                 throw new ArgumentOutOfRangeException(nameof(range), "Capture source range must be non-empty and valid.");
             if (_pendingSamples > 0 && !_lastEnqueuedRange.IsContiguousWith(in range))
             {
-                throw new InvalidOperationException(
-                    "Capture source ranges must be contiguous and belong to one stream epoch.");
+                throw new InvalidOperationException("Capture source ranges must be contiguous and belong to one stream epoch.");
             }
 
             long pendingSamples = checked(_pendingSamples + range.Length);
@@ -68,13 +67,7 @@ namespace VoiceBox.Core.Services.AudioService.Models
             }
 
             _pendingSamples -= sampleCount;
-            range = new CaptureRange(
-                first.StreamEpoch,
-                startSequence,
-                endSequence,
-                startSample,
-                endSample,
-                first.TimestampTicks);
+            range = new CaptureRange(first.StreamEpoch, startSequence, endSequence, startSample, endSample, first.TimestampTicks);
             return true;
         }
 

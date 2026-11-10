@@ -70,11 +70,8 @@ public sealed class ControlLoopContractTests
             typeof(BargeInRecognitionOutcomeCoordinator),
         })
         {
-            FieldInfo[] fields = module.GetFields(
-                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-            Assert.DoesNotContain(
-                fields,
-                field => Array.Exists(turnOwners, owner => field.FieldType == owner));
+            FieldInfo[] fields = module.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            Assert.DoesNotContain(fields, field => Array.Exists(turnOwners, owner => field.FieldType == owner));
             Assert.DoesNotContain(fields, field => field.FieldType == eventDispatcher);
         }
     }
@@ -86,15 +83,9 @@ public sealed class ControlLoopContractTests
         Assert.Null(assembly.GetType("VoiceBox.Assistant.Runtime.Control.ITurnSemanticRequestPort"));
         Assert.Null(assembly.GetType("VoiceBox.Assistant.Runtime.Control.TurnSemanticRequestPort"));
 
-        Type commitPort = Require(
-            assembly,
-            "VoiceBox.Assistant.Runtime.Control.Contracts.ITurnSemanticCommitPort");
-        Type writer = Require(
-            assembly,
-            "VoiceBox.Assistant.Runtime.Control.Controllers.AssistantControlLoopTurnWriter");
-        Type router = Require(
-            assembly,
-            "VoiceBox.Assistant.Runtime.Control.Controllers.AssistantControlLoopRouter");
+        Type commitPort = Require(assembly, "VoiceBox.Assistant.Runtime.Control.Contracts.ITurnSemanticCommitPort");
+        Type writer = Require(assembly, "VoiceBox.Assistant.Runtime.Control.Controllers.AssistantControlLoopTurnWriter");
+        Type router = Require(assembly, "VoiceBox.Assistant.Runtime.Control.Controllers.AssistantControlLoopRouter");
         Type[] featureCoordinators =
         [
             typeof(SpeechBoundaryCoordinator),
@@ -105,25 +96,18 @@ public sealed class ControlLoopContractTests
 
         foreach (Type feature in featureCoordinators)
         {
-            FieldInfo[] fields = feature.GetFields(
-                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            FieldInfo[] fields = feature.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
             Assert.DoesNotContain(fields, field => field.FieldType == commitPort || field.FieldType == writer);
         }
 
-        Assert.Contains(
-            router.GetFields(BindingFlags.Instance | BindingFlags.NonPublic),
-            field => field.FieldType == commitPort);
-        Assert.Equal(
-            ["Commit"],
-            commitPort.GetMethods().Select(static method => method.Name).ToArray());
+        Assert.Contains(router.GetFields(BindingFlags.Instance | BindingFlags.NonPublic), field => field.FieldType == commitPort);
+        Assert.Equal(["Commit"], commitPort.GetMethods().Select(static method => method.Name).ToArray());
     }
 
     [Fact]
     public void Runtime_OwnsExactlyOneControlLoopWithoutDynamicRoutingSurfaces()
     {
-        Assert.NotNull(Require(
-            typeof(VoiceAssistant).Assembly,
-            "VoiceBox.Assistant.Runtime.Control.Controllers.AssistantControlLoop"));
+        Assert.NotNull(Require(typeof(VoiceAssistant).Assembly, "VoiceBox.Assistant.Runtime.Control.Controllers.AssistantControlLoop"));
 
         // Collaborators may share a reference to the loop and the effect runner, so "exactly one"
         // is a construction fact: the whole assembly creates each of them in a single place.
@@ -153,9 +137,7 @@ public sealed class ControlLoopContractTests
             BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly);
         Assert.DoesNotContain(
             runtimeFields,
-            field => field.FieldType == candidates ||
-                field.FieldType == validation ||
-                field.FieldType == recognitionTurn);
+            field => field.FieldType == candidates || field.FieldType == validation || field.FieldType == recognitionTurn);
 
         // Every interruption outcome still observes before it commits, now on its owner.
         AssertCalls(
@@ -163,21 +145,9 @@ public sealed class ControlLoopContractTests
             "ProcessInterruptionRequested",
             typeof(BargeInTurnCoordinator),
             "TryConfirmFromNearEndWindow");
-        AssertCalls(
-            typeof(BargeInTurnCoordinator),
-            "CommitInterruptionRequested",
-            typeof(ConfirmedBargeInApplier),
-            "Apply");
-        AssertCalls(
-            typeof(WakeupInterruptOwner),
-            "ObserveInterrupt",
-            typeof(TurnCompletionCoordinator),
-            "TryObserveWakeupInterrupt");
-        AssertCalls(
-            typeof(WakeupInterruptOwner),
-            "CommitInterrupt",
-            typeof(TurnCompletionCoordinator),
-            "CommitWakeupInterrupt");
+        AssertCalls(typeof(BargeInTurnCoordinator), "CommitInterruptionRequested", typeof(ConfirmedBargeInApplier), "Apply");
+        AssertCalls(typeof(WakeupInterruptOwner), "ObserveInterrupt", typeof(TurnCompletionCoordinator), "TryObserveWakeupInterrupt");
+        AssertCalls(typeof(WakeupInterruptOwner), "CommitInterrupt", typeof(TurnCompletionCoordinator), "CommitWakeupInterrupt");
         AssertCalls(
             typeof(RecognitionTurnCoordinator),
             "ObserveResetAfterAsrStartFailure",
@@ -198,26 +168,10 @@ public sealed class ControlLoopContractTests
             "CommitResetAfterAsrStartFailure",
             typeof(INearEndCaptureControlPort),
             "StopCapture");
-        AssertCalls(
-            typeof(BargeInTurnCoordinator),
-            "ObserveValidatedBargeIn",
-            validation,
-            "TryObserveValidated");
-        AssertCalls(
-            typeof(BargeInTurnCoordinator),
-            "CommitValidationPlan",
-            validation,
-            "CommitAccepted");
-        AssertCalls(
-            typeof(BargeInTurnCoordinator),
-            "ObserveRejectedBargeIn",
-            validation,
-            "TryObserveRejection");
-        AssertCalls(
-            typeof(BargeInTurnCoordinator),
-            "CommitValidationPlan",
-            validation,
-            "CommitRejected");
+        AssertCalls(typeof(BargeInTurnCoordinator), "ObserveValidatedBargeIn", validation, "TryObserveValidated");
+        AssertCalls(typeof(BargeInTurnCoordinator), "CommitValidationPlan", validation, "CommitAccepted");
+        AssertCalls(typeof(BargeInTurnCoordinator), "ObserveRejectedBargeIn", validation, "TryObserveRejection");
+        AssertCalls(typeof(BargeInTurnCoordinator), "CommitValidationPlan", validation, "CommitRejected");
         AssertDoesNotCall(
             typeof(BargeInTurnCoordinator),
             "ObserveConfirmedBargeIn",
@@ -228,41 +182,18 @@ public sealed class ControlLoopContractTests
             "CommitInterruptionRequested",
             typeof(BargeInDiagnosticsCoordinator),
             "RecordConfirmed");
-        AssertDoesNotCall(
-            typeof(BargeInTurnCoordinator),
-            "ObserveValidatedBargeIn",
-            typeof(TurnContextStore),
-            "TryCreate");
-        AssertCalls(
-            typeof(BargeInTurnCoordinator),
-            "CommitValidationPlan",
-            typeof(TurnContextStore),
-            "TryCreate");
-        AssertDoesNotCall(
-            typeof(RecognitionTurnCoordinator),
-            "ObserveSessionStarted",
-            typeof(TurnContextStore),
-            "TryAttachAsrSession");
-        AssertCalls(
-            typeof(RecognitionTurnCoordinator),
-            "CommitSessionStarted",
-            typeof(TurnContextStore),
-            "TryAttachAsrSession");
-        AssertCalls(
-            typeof(RecognitionTurnCoordinator),
-            "CommitSemanticPlan",
-            typeof(RecognitionTurnOwner),
-            "CommitEnterRecognizing");
+        AssertDoesNotCall(typeof(BargeInTurnCoordinator), "ObserveValidatedBargeIn", typeof(TurnContextStore), "TryCreate");
+        AssertCalls(typeof(BargeInTurnCoordinator), "CommitValidationPlan", typeof(TurnContextStore), "TryCreate");
+        AssertDoesNotCall(typeof(RecognitionTurnCoordinator), "ObserveSessionStarted", typeof(TurnContextStore), "TryAttachAsrSession");
+        AssertCalls(typeof(RecognitionTurnCoordinator), "CommitSessionStarted", typeof(TurnContextStore), "TryAttachAsrSession");
+        AssertCalls(typeof(RecognitionTurnCoordinator), "CommitSemanticPlan", typeof(RecognitionTurnOwner), "CommitEnterRecognizing");
     }
 
     [Fact]
     public void ResponseModule_UsesTypedControlSignalsAndOnlyTheAssistantTextStreamEndpoint()
     {
-        FieldInfo[] fields = typeof(ResponseModule).GetFields(
-            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-        string[] fieldTypes = fields
-            .Select(static field => field.FieldType.FullName ?? field.FieldType.Name)
-            .ToArray();
+        FieldInfo[] fields = typeof(ResponseModule).GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+        string[] fieldTypes = fields.Select(static field => field.FieldType.FullName ?? field.FieldType.Name).ToArray();
 
         Assert.Contains("VoiceBox.Assistant.Runtime.Control.Contracts.IResponseControlSignalPort", fieldTypes);
         Assert.Contains("VoiceBox.Assistant.Runtime.Publications.Contracts.IAssistantTextStreamSink", fieldTypes);
@@ -273,11 +204,8 @@ public sealed class ControlLoopContractTests
     [Fact]
     public void RecognitionModule_ReportsTypedCompletionWithoutOwningTurnOrPublicationPorts()
     {
-        FieldInfo[] fields = typeof(RecognitionModule).GetFields(
-            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-        string[] fieldTypes = fields
-            .Select(static field => field.FieldType.FullName ?? field.FieldType.Name)
-            .ToArray();
+        FieldInfo[] fields = typeof(RecognitionModule).GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+        string[] fieldTypes = fields.Select(static field => field.FieldType.FullName ?? field.FieldType.Name).ToArray();
 
         Assert.Contains("VoiceBox.Assistant.Runtime.Control.Contracts.IRecognitionControlSignalPort", fieldTypes);
         Assert.DoesNotContain("VoiceBox.Assistant.State.IRecognitionTurnControlPort", fieldTypes);
@@ -289,9 +217,7 @@ public sealed class ControlLoopContractTests
     {
         FieldInfo[] fields = typeof(BargeInRecognitionOutcomeCoordinator).GetFields(
             BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-        string[] fieldTypes = fields
-            .Select(static field => field.FieldType.FullName ?? field.FieldType.Name)
-            .ToArray();
+        string[] fieldTypes = fields.Select(static field => field.FieldType.FullName ?? field.FieldType.Name).ToArray();
 
         Assert.Contains("VoiceBox.Assistant.Runtime.Control.Contracts.IBargeInValidationControlSignalPort", fieldTypes);
         Assert.DoesNotContain(typeof(ResponseModule).FullName!, fieldTypes);
@@ -304,15 +230,11 @@ public sealed class ControlLoopContractTests
     {
         // The response effect now lives in its own typed capability handler; it must still be
         // unable to reach the turn observation store directly.
-        MethodInfo pipeline = typeof(ResponseEffectHandler).GetMethod(
-            "RunAsync",
-            BindingFlags.Instance | BindingFlags.NonPublic)
+        MethodInfo pipeline = typeof(ResponseEffectHandler).GetMethod("RunAsync", BindingFlags.Instance | BindingFlags.NonPublic)
             ?? throw new Xunit.Sdk.XunitException("ResponseEffectHandler.RunAsync was not found.");
         var stateMachine = pipeline.GetCustomAttribute<AsyncStateMachineAttribute>()?.StateMachineType
             ?? throw new Xunit.Sdk.XunitException("ResponseEffectHandler.RunAsync must be an async state machine.");
-        MethodInfo moveNext = stateMachine.GetMethod(
-            "MoveNext",
-            BindingFlags.Instance | BindingFlags.NonPublic)
+        MethodInfo moveNext = stateMachine.GetMethod("MoveNext", BindingFlags.Instance | BindingFlags.NonPublic)
             ?? throw new Xunit.Sdk.XunitException("ResponseEffectHandler.RunAsync state machine MoveNext was not found.");
 
         Assembly assembly = typeof(VoiceAssistant).Assembly;
@@ -322,9 +244,7 @@ public sealed class ControlLoopContractTests
             Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.Controllers.BargeInValidationTurnOwner"),
             Require(assembly, "VoiceBox.Assistant.Modules.Recognition.Controllers.RecognitionTurnOwner"),
         ];
-        Assert.DoesNotContain(
-            GetCalledMethods(moveNext),
-            method => Array.Exists(owners, owner => method.DeclaringType == owner));
+        Assert.DoesNotContain(GetCalledMethods(moveNext), method => Array.Exists(owners, owner => method.DeclaringType == owner));
     }
 
     [Fact]
@@ -350,9 +270,7 @@ public sealed class ControlLoopContractTests
     {
         // The callbacks moved off the facade onto the turn-boundary ingress, and still only
         // normalise, stamp and admit: none of them reaches a turn-observation owner.
-        Assert.Null(typeof(AssistantRuntime).GetMethod(
-            callbackName,
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic));
+        Assert.Null(typeof(AssistantRuntime).GetMethod(callbackName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic));
         AssertOwnsNoTurnObservation(typeof(SpeechBoundaryIngress), callbackName);
     }
 
@@ -362,8 +280,7 @@ public sealed class ControlLoopContractTests
     /// </summary>
     private static int CountConstructions(string typeName)
     {
-        var pattern = new System.Text.RegularExpressions.Regex(
-            $@"(new\s+{typeName}\s*\()|({typeName}\s+\w+\s*=\s*new\s*\()");
+        var pattern = new System.Text.RegularExpressions.Regex($@"(new\s+{typeName}\s*\()|({typeName}\s+\w+\s*=\s*new\s*\()");
         string root = Path.Combine(RepositoryRoot(), "src", "VoiceBox.Assistant");
         return Directory.EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
             .Sum(file => pattern.Matches(File.ReadAllText(file)).Count);
@@ -375,34 +292,24 @@ public sealed class ControlLoopContractTests
         while (directory is not null && !Directory.Exists(Path.Combine(directory.FullName, "src")))
             directory = directory.Parent;
 
-        return directory?.FullName
-            ?? throw new Xunit.Sdk.XunitException("Repository root was not found.");
+        return directory?.FullName ?? throw new Xunit.Sdk.XunitException("Repository root was not found.");
     }
 
     private static Type Require(Assembly assembly, string name)
-        => assembly.GetType(name)
-            ?? throw new Xunit.Sdk.XunitException($"Required control-plane contract type '{name}' was not found.");
+        => assembly.GetType(name) ?? throw new Xunit.Sdk.XunitException($"Required control-plane contract type '{name}' was not found.");
 
     private static void AssertCalls(Type ownerType, string ownerMethodName, Type calleeType, string calleeMethodName)
     {
-        MethodInfo ownerMethod = ownerType.GetMethod(
-            ownerMethodName,
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            ?? throw new Xunit.Sdk.XunitException(
-                $"{ownerType.Name} method '{ownerMethodName}' was not found.");
+        MethodInfo ownerMethod = ownerType.GetMethod(ownerMethodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+            ?? throw new Xunit.Sdk.XunitException($"{ownerType.Name} method '{ownerMethodName}' was not found.");
 
-        Assert.Contains(
-            GetCalledMethods(ownerMethod),
-            method => method.DeclaringType == calleeType && method.Name == calleeMethodName);
+        Assert.Contains(GetCalledMethods(ownerMethod), method => method.DeclaringType == calleeType && method.Name == calleeMethodName);
     }
 
     private static void AssertDoesNotCall(Type ownerType, string ownerMethodName, Type calleeType, string calleeMethodName)
     {
-        MethodInfo ownerMethod = ownerType.GetMethod(
-            ownerMethodName,
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            ?? throw new Xunit.Sdk.XunitException(
-                $"{ownerType.Name} method '{ownerMethodName}' was not found.");
+        MethodInfo ownerMethod = ownerType.GetMethod(ownerMethodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+            ?? throw new Xunit.Sdk.XunitException($"{ownerType.Name} method '{ownerMethodName}' was not found.");
 
         Assert.DoesNotContain(
             GetCalledMethods(ownerMethod),
@@ -418,14 +325,10 @@ public sealed class ControlLoopContractTests
             Require(assembly, "VoiceBox.Assistant.Modules.BargeIn.Controllers.BargeInValidationTurnOwner"),
             Require(assembly, "VoiceBox.Assistant.Modules.Recognition.Controllers.RecognitionTurnOwner"),
         ];
-        MethodInfo method = type.GetMethod(
-            methodName,
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+        MethodInfo method = type.GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
             ?? throw new Xunit.Sdk.XunitException($"{type.Name}.{methodName} was not found.");
 
-        Assert.DoesNotContain(
-            GetCalledMethods(method),
-            called => Array.Exists(owners, owner => called.DeclaringType == owner));
+        Assert.DoesNotContain(GetCalledMethods(method), called => Array.Exists(owners, owner => called.DeclaringType == owner));
     }
 
     private static IEnumerable<MethodBase> GetCalledMethods(MethodInfo method)
@@ -444,8 +347,7 @@ public sealed class ControlLoopContractTests
                 int token = BitConverter.ToInt32(il, offset);
                 offset += sizeof(int);
                 yield return method.Module.ResolveMethod(token, typeArguments, methodArguments)
-                    ?? throw new Xunit.Sdk.XunitException(
-                        $"Unable to resolve IL method token 0x{token:X8} in '{method.Name}'.");
+                    ?? throw new Xunit.Sdk.XunitException($"Unable to resolve IL method token 0x{token:X8} in '{method.Name}'.");
                 continue;
             }
 

@@ -423,8 +423,7 @@ namespace VoiceBox.Audio.PortAudio
                     ResetRealtimeCaptureProcessorsAfterInputGap();
                 }
 
-                bool outputUnderflow =
-                    (statusFlags & StreamCallbackFlags.OutputUnderflow) != 0;
+                bool outputUnderflow = (statusFlags & StreamCallbackFlags.OutputUnderflow) != 0;
                 if (outputUnderflow)
                 {
                     Task.Run(() => OnXrun?.Invoke(this, new AudioXrunEventArgs(AudioXrunType.OutputUnderflow, frameCount)));
@@ -484,12 +483,7 @@ namespace VoiceBox.Audio.PortAudio
                     algorithmicDelaySamples: captureProcessorDelaySamples,
                     hasDiscontinuity: inputDiscontinuity || captureProcessorChanged);
 
-                PublishDuplexFrame(
-                    ref duplexFrame,
-                    input,
-                    frameCount,
-                    captureProcessed,
-                    in captureOutput);
+                PublishDuplexFrame(ref duplexFrame, input, frameCount, captureProcessed, in captureOutput);
 
                 // 处理录音输入（AEC 已在回调内完成，DNR 会在录音派发线程上完成）
                 ProcessInput(
@@ -586,13 +580,7 @@ namespace VoiceBox.Audio.PortAudio
             long sampleCount = checked((long)frameCount * _options.Value.ChannelCount);
             long sequence = ++_captureSequence;
             _captureSamplePosition = checked(startSample + sampleCount);
-            return new CaptureRange(
-                _captureStreamEpoch,
-                sequence,
-                sequence,
-                startSample,
-                _captureSamplePosition,
-                Stopwatch.GetTimestamp());
+            return new CaptureRange(_captureStreamEpoch, sequence, sequence, startSample, _captureSamplePosition, Stopwatch.GetTimestamp());
         }
 
         internal static RenderSignalTimeline AdvanceRenderTimeline(
@@ -613,9 +601,7 @@ namespace VoiceBox.Audio.PortAudio
                 throw new ArgumentOutOfRangeException(nameof(status));
             if (status == RenderTimelineStatus.Gap && hasDiscontinuity)
             {
-                throw new ArgumentException(
-                    "A render gap must remain on the current render timeline.",
-                    nameof(hasDiscontinuity));
+                throw new ArgumentException("A render gap must remain on the current render timeline.", nameof(hasDiscontinuity));
             }
 
             if (hasDiscontinuity)
@@ -627,12 +613,7 @@ namespace VoiceBox.Audio.PortAudio
             long startSample = samplePosition;
             long sampleCount = checked((long)frameCount * channels);
             samplePosition = checked(startSample + sampleCount);
-            return new RenderSignalTimeline(
-                streamEpoch,
-                startSample,
-                samplePosition,
-                status,
-                hasDiscontinuity);
+            return new RenderSignalTimeline(streamEpoch, startSample, samplePosition, status, hasDiscontinuity);
         }
 
         private unsafe DuplexAudioFrameBuffer? CreateDuplexFrameBufferIfNeeded(
@@ -715,12 +696,8 @@ namespace VoiceBox.Audio.PortAudio
                 new ReadOnlySpan<float>(input.ToPointer(), totalSamples).CopyTo(buffer.CaptureAfterAec);
                 buffer.CaptureProcessed = captureProcessed;
                 CaptureRange callbackRange = buffer.CaptureRange;
-                CaptureSignalTimeline callbackTimeline =
-                    CaptureSignalTimeline.FromWholeBuffer(in callbackRange, totalSamples);
-                buffer.Timeline = new DuplexCaptureTimeline(
-                    callbackTimeline,
-                    callbackTimeline,
-                    captureOutput.Timeline);
+                CaptureSignalTimeline callbackTimeline = CaptureSignalTimeline.FromWholeBuffer(in callbackRange, totalSamples);
+                buffer.Timeline = new DuplexCaptureTimeline(callbackTimeline, callbackTimeline, captureOutput.Timeline);
                 buffer.HasDiscontinuity |= captureOutput.MappingReset;
 
                 var channel = _duplexFrameChannel;
@@ -932,8 +909,7 @@ namespace VoiceBox.Audio.PortAudio
                                     dnrResetRequired = !ResetNoiseReduction(dnr);
                                     dnrSourceRanges.Clear();
                                     forceDiscontinuity = true;
-                                    Debug.WriteLine(
-                                        "[Warning] DNR exceeded its declared source backlog; state was reset.");
+                                    Debug.WriteLine("[Warning] DNR exceeded its declared source backlog; state was reset.");
                                     continue;
                                 }
                                 if (!TryApplyNoiseReduction(
@@ -1033,8 +1009,7 @@ namespace VoiceBox.Audio.PortAudio
                             previousFrame = currentRange;
 
                             RenderSignalTimeline currentRender = buffer.RenderTimeline;
-                            if (previousRender.HasValue &&
-                                !previousRender.Value.IsContiguousWith(in currentRender))
+                            if (previousRender.HasValue && !previousRender.Value.IsContiguousWith(in currentRender))
                             {
                                 buffer.RenderTimeline = currentRender with
                                 {
@@ -1276,9 +1251,7 @@ namespace VoiceBox.Audio.PortAudio
                 cts?.Dispose();
             else
             {
-                _ = Task.WhenAll(
-                    processingTask ?? Task.CompletedTask,
-                    frameDispatchTask ?? Task.CompletedTask).ContinueWith(
+                _ = Task.WhenAll(processingTask ?? Task.CompletedTask, frameDispatchTask ?? Task.CompletedTask).ContinueWith(
                     _ => cts?.Dispose(),
                     CancellationToken.None,
                     TaskContinuationOptions.ExecuteSynchronously,

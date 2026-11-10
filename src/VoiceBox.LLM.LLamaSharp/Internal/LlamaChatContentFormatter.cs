@@ -23,8 +23,7 @@ internal static class LlamaChatContentFormatter
         if (calls.Length > 0)
         {
             if (message.Role != ChatRole.Assistant || calls.Length != message.Content.Count)
-                throw new NotSupportedException(
-                    "LLamaSharp tool-call history must be an assistant message containing only tool calls.");
+                throw new NotSupportedException("LLamaSharp tool-call history must be an assistant message containing only tool calls.");
             return SerializeToolCalls(calls);
         }
 
@@ -32,8 +31,7 @@ internal static class LlamaChatContentFormatter
         if (results.Length > 0)
         {
             if (message.Role != ChatRole.Tool || results.Length != 1 || message.Content.Count != 1)
-                throw new NotSupportedException(
-                    "LLamaSharp tool-result history must contain one tool result in a tool-role message.");
+                throw new NotSupportedException("LLamaSharp tool-result history must contain one tool result in a tool-role message.");
             return SerializeToolResult(results[0]);
         }
 

@@ -24,9 +24,7 @@ public sealed class ConsoleDisplaySpecs
         Assert.DoesNotContain("信息", output.ToString());
         display.CompleteResponse(string.Empty);
 
-        Assert.Equal(
-            "  [思考] 思考内容\n  助手：第一段第二段\n\n09:12:34 dbug: 诊断\n09:12:35 info: 信息\n",
-            Normalize(output));
+        Assert.Equal("  [思考] 思考内容\n  助手：第一段第二段\n\n09:12:34 dbug: 诊断\n09:12:35 info: 信息\n", Normalize(output));
     }
 
     [Fact]
@@ -42,9 +40,7 @@ public sealed class ConsoleDisplaySpecs
         display.AppendReply("后半段");
         display.CompleteResponse(string.Empty);
 
-        Assert.Equal(
-            "  助手：前半段\n\n09:12:34 dbug: 先前日志\n09:12:35 warn: 警告\n  助手：后半段\n\n",
-            Normalize(output));
+        Assert.Equal("  助手：前半段\n\n09:12:34 dbug: 先前日志\n09:12:35 warn: 警告\n  助手：后半段\n\n", Normalize(output));
     }
 
     [Fact]

@@ -31,10 +31,8 @@ internal sealed class RenderAwareDtdOnnxRunner : IDisposable
     private readonly OrtValue _stateAValue;
     private readonly OrtValue _stateBValue;
     private readonly OrtValue _probabilityValue;
-    private readonly string[] _inputNames =
-        [MicrophoneInputName, RenderInputName, StateInputName];
-    private readonly string[] _outputNames =
-        [ProbabilityOutputName, StateOutputName];
+    private readonly string[] _inputNames = [MicrophoneInputName, RenderInputName, StateInputName];
+    private readonly string[] _outputNames = [ProbabilityOutputName, StateOutputName];
     private readonly OrtValue[] _inputValues;
     private readonly OrtValue[] _outputValues;
     private readonly OrtIoBinding? _bindingAtoB;
@@ -51,16 +49,12 @@ internal sealed class RenderAwareDtdOnnxRunner : IDisposable
 
         if (microphoneWindow.Length != WindowLengthSamples)
         {
-            throw new ArgumentException(
-                $"Microphone window length must be {WindowLengthSamples}.",
-                nameof(microphoneWindow));
+            throw new ArgumentException($"Microphone window length must be {WindowLengthSamples}.", nameof(microphoneWindow));
         }
 
         if (renderWindow.Length != WindowLengthSamples)
         {
-            throw new ArgumentException(
-                $"Render window length must be {WindowLengthSamples}.",
-                nameof(renderWindow));
+            throw new ArgumentException($"Render window length must be {WindowLengthSamples}.", nameof(renderWindow));
         }
 
         if (!File.Exists(modelPath))
@@ -99,8 +93,7 @@ internal sealed class RenderAwareDtdOnnxRunner : IDisposable
             // Persistent CPU bindings see changes to the pinned managed buffers and eliminate
             // per-run marshalling. With a GPU/custom session, ORT may copy mismatched memory only
             // at bind time; use the regular OrtValue Run API there so every hop is current.
-            if (options.ExecutionProvider == OnnxExecutionProvider.Cpu &&
-                options.SessionOptionsFactory is null)
+            if (options.ExecutionProvider == OnnxExecutionProvider.Cpu && options.SessionOptionsFactory is null)
             {
                 bindingAtoB = session.CreateIoBinding();
                 Bind(bindingAtoB, microphoneValue, renderValue, stateAValue, probabilityValue, stateBValue);
@@ -146,9 +139,7 @@ internal sealed class RenderAwareDtdOnnxRunner : IDisposable
 
         if (_bindingAtoB is not null)
         {
-            _session.RunWithBinding(
-                _runOptions,
-                _currentStateIsA ? _bindingAtoB : _bindingBtoA!);
+            _session.RunWithBinding(_runOptions, _currentStateIsA ? _bindingAtoB : _bindingBtoA!);
         }
         else
         {
@@ -189,9 +180,7 @@ internal sealed class RenderAwareDtdOnnxRunner : IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (destination.Length != StateLength)
         {
-            throw new ArgumentException(
-                $"State destination length must be {StateLength}.",
-                nameof(destination));
+            throw new ArgumentException($"State destination length must be {StateLength}.", nameof(destination));
         }
 
         (_currentStateIsA ? _stateA : _stateB).CopyTo(destination);
@@ -246,23 +235,14 @@ internal sealed class RenderAwareDtdOnnxRunner : IDisposable
         // code changes; C# only requires the streaming form [layers, 1, hidden].
         int[] stateShape = RequireStateShape(session.InputMetadata, StateInputName, "input", modelPath);
         RequireFloatTensor(session.OutputMetadata, ProbabilityOutputName, [1, 1, 1], "output", modelPath);
-        RequireFloatTensor(
-            session.OutputMetadata,
-            StateOutputName,
-            stateShape,
-            "output",
-            modelPath);
+        RequireFloatTensor(session.OutputMetadata, StateOutputName, stateShape, "output", modelPath);
 
         IReadOnlyDictionary<string, string> metadata = session.ModelMetadata.CustomMetadataMap;
         RequireMetadata(metadata, "model_type", "render-aware-nearend-dtd", modelPath);
         RequireMetadata(metadata, "sample_rate", "16000", modelPath);
         RequireMetadata(metadata, "frame_length", "640", modelPath);
         RequireMetadata(metadata, "hop_length", "320", modelPath);
-        RequireMetadata(
-            metadata,
-            "state_shape",
-            string.Join(",", stateShape),
-            modelPath);
+        RequireMetadata(metadata, "state_shape", string.Join(",", stateShape), modelPath);
         return stateShape;
     }
 
@@ -270,16 +250,11 @@ internal sealed class RenderAwareDtdOnnxRunner : IDisposable
     {
         if (!metadata.TryGetValue(name, out NodeMetadata? node))
         {
-            throw new InvalidOperationException(
-                $"Render-aware DTD {kind} '{name}' is missing from '{modelPath}'.");
+            throw new InvalidOperationException($"Render-aware DTD {kind} '{name}' is missing from '{modelPath}'.");
         }
 
         int[] dimensions = node.Dimensions;
-        if (node.ElementType != typeof(float) ||
-            dimensions.Length != 3 ||
-            dimensions[0] < 1 ||
-            dimensions[1] != 1 ||
-            dimensions[2] < 1)
+        if (node.ElementType != typeof(float) || dimensions.Length != 3 || dimensions[0] < 1 || dimensions[1] != 1 || dimensions[2] < 1)
         {
             throw new InvalidOperationException(
                 $"Render-aware DTD {kind} '{name}' must be a float32 streaming state " +
@@ -299,8 +274,7 @@ internal sealed class RenderAwareDtdOnnxRunner : IDisposable
     {
         if (!metadata.TryGetValue(name, out NodeMetadata? node))
         {
-            throw new InvalidOperationException(
-                $"Render-aware DTD {kind} '{name}' is missing from '{modelPath}'.");
+            throw new InvalidOperationException($"Render-aware DTD {kind} '{name}' is missing from '{modelPath}'.");
         }
 
         if (node.ElementType != typeof(float) || !node.Dimensions.SequenceEqual(expectedShape))
@@ -314,8 +288,7 @@ internal sealed class RenderAwareDtdOnnxRunner : IDisposable
 
     private static void RequireMetadata(IReadOnlyDictionary<string, string> metadata, string key, string expected, string modelPath)
     {
-        if (!metadata.TryGetValue(key, out string? actual) ||
-            !string.Equals(actual, expected, StringComparison.Ordinal))
+        if (!metadata.TryGetValue(key, out string? actual) || !string.Equals(actual, expected, StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
                 $"Render-aware DTD metadata '{key}' must be '{expected}', got " +

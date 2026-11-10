@@ -20,9 +20,7 @@ namespace VoiceBox.LLM.LLamaSharp
                 foreach (var profile in additionalProfiles)
                 {
                     if (profile is null)
-                        throw new ArgumentException(
-                            "Model profile collection cannot contain null.",
-                            nameof(additionalProfiles));
+                        throw new ArgumentException("Model profile collection cannot contain null.", nameof(additionalProfiles));
                     profiles.Add(profile);
                 }
             }
@@ -35,8 +33,7 @@ namespace VoiceBox.LLM.LLamaSharp
         public IReadOnlyList<ILlamaModelProfile> Profiles => _profiles;
 
         /// <summary>库内置适配器，按从具体到通用的顺序排列。</summary>
-        public static IReadOnlyList<ILlamaModelProfile> BuiltInProfiles =>
-            BuiltInLlamaModelProfiles.All;
+        public static IReadOnlyList<ILlamaModelProfile> BuiltInProfiles => BuiltInLlamaModelProfiles.All;
 
         public ILlamaModelProfile Resolve(LlamaModelInfo info, ILlamaModelProfile? explicitProfile = null)
         {

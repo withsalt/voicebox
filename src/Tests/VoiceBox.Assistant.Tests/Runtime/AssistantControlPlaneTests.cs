@@ -48,9 +48,7 @@ public sealed class AssistantControlPlaneTests
     public async Task PostBarrierCriticalSignal_IsRepresentedByAnOrderedAbandonEnvelope()
     {
         using var ingress = new AssistantControlIngress();
-        long barrier = await ingress.EnqueueAsync(
-            new RuntimeCommand(RuntimeCommandKind.Stop, 1),
-            sourceTimestamp: 1);
+        long barrier = await ingress.EnqueueAsync(new RuntimeCommand(RuntimeCommandKind.Stop, 1), sourceTimestamp: 1);
 
         Assert.False(ingress.TryEnqueueCritical(
             AssistantSignal.InterruptionRequested(1, 2),
@@ -115,10 +113,7 @@ public sealed class AssistantControlPlaneTests
         var disposed = new AssistantControlIngress();
         disposed.Dispose();
         disposed.Dispose();
-        Assert.False(disposed.TryTerminate(
-            new AssistantFailure("VBX-CTRL-TEST", "lifecycle", "test", "disposed"),
-            1,
-            out _));
+        Assert.False(disposed.TryTerminate(new AssistantFailure("VBX-CTRL-TEST", "lifecycle", "test", "disposed"), 1, out _));
         Assert.False(disposed.TryEnqueueCritical(
             AssistantSignal.SpeechStarted(enableBargeIn: false),
             1,
@@ -126,14 +121,8 @@ public sealed class AssistantControlPlaneTests
             out _));
 
         using var terminal = new AssistantControlIngress();
-        Assert.True(terminal.TryTerminate(
-            new AssistantFailure("VBX-CTRL-TEST", "fault", "test", "terminal"),
-            1,
-            out _));
-        Assert.False(terminal.TryTerminate(
-            new AssistantFailure("VBX-CTRL-TEST", "fault", "test", "duplicate"),
-            2,
-            out _));
+        Assert.True(terminal.TryTerminate(new AssistantFailure("VBX-CTRL-TEST", "fault", "test", "terminal"), 1, out _));
+        Assert.False(terminal.TryTerminate(new AssistantFailure("VBX-CTRL-TEST", "fault", "test", "duplicate"), 2, out _));
         Assert.False(terminal.TryEnqueueCritical(
             AssistantSignal.SpeechEnded(1, TimeSpan.Zero),
             2,
@@ -207,10 +196,7 @@ public sealed class AssistantControlPlaneTests
             Stopwatch.GetTimestamp(),
             AssistantSignalSource.CaptureCallback,
             out long speechSequence));
-        long stopSequence = await ingress.EnqueueAsync(
-            new RuntimeCommand(RuntimeCommandKind.Stop),
-            Stopwatch.GetTimestamp(),
-            stop.Token);
+        long stopSequence = await ingress.EnqueueAsync(new RuntimeCommand(RuntimeCommandKind.Stop), Stopwatch.GetTimestamp(), stop.Token);
         Assert.False(ingress.TryEnqueueCritical(
             AssistantSignal.SpeechEnded(1, TimeSpan.FromMilliseconds(20)),
             Stopwatch.GetTimestamp(),
@@ -233,9 +219,7 @@ public sealed class AssistantControlPlaneTests
         var handler = new RecordingHandler(expectedHandled: 2);
         var loop = new AssistantControlLoop(ingress, handler);
 
-        long stopSequence = await ingress.EnqueueAsync(
-            new RuntimeCommand(RuntimeCommandKind.Stop, 1),
-            1);
+        long stopSequence = await ingress.EnqueueAsync(new RuntimeCommand(RuntimeCommandKind.Stop, 1), 1);
         Assert.True(ingress.TryTerminate(
             new AssistantFailure("VBX-CTRL-TEST", "fault", "test", "fatal-plus-stop"),
             2,
@@ -260,8 +244,7 @@ public sealed class AssistantControlPlaneTests
 
         Task consumer = Task.Run(() =>
         {
-            while (Volatile.Read(ref completedProducers) != ProducerCount ||
-                   consumed.Count != ProducerCount * ItemsPerProducer)
+            while (Volatile.Read(ref completedProducers) != ProducerCount || consumed.Count != ProducerCount * ItemsPerProducer)
             {
                 timeout.Token.ThrowIfCancellationRequested();
                 if (queue.TryRead(out long value))
@@ -312,9 +295,7 @@ public sealed class AssistantControlPlaneTests
         }
         for (int index = 0; index < 8; index++)
         {
-            await ingress.EnqueueAsync(
-                new RuntimeCommand(RuntimeCommandKind.Start, index + 1),
-                index + 1);
+            await ingress.EnqueueAsync(new RuntimeCommand(RuntimeCommandKind.Start, index + 1), index + 1);
         }
 
         var drained = new List<ControlEnvelope>();
@@ -324,8 +305,7 @@ public sealed class AssistantControlPlaneTests
         Assert.Equal(32, drained.Count);
         Assert.Equal(24, drained.Count(static value => value.Kind == ControlEnvelopeKind.AssistantSignal));
         Assert.Equal(8, drained.Count(static value => value.Kind == ControlEnvelopeKind.RuntimeCommand));
-        Assert.Equal(Enumerable.Range(1, 32).Select(static value => (long)value),
-            drained.Select(static value => value.IngressSequence));
+        Assert.Equal(Enumerable.Range(1, 32).Select(static value => (long)value), drained.Select(static value => value.IngressSequence));
     }
 
     [Fact]
@@ -333,14 +313,8 @@ public sealed class AssistantControlPlaneTests
     {
         using var ingress = new AssistantControlIngress();
 
-        await ingress.EnqueueSignalAsync(
-            AssistantSignal.RecognitionCompleted(1, 1, "first"),
-            10,
-            AssistantSignalSource.Recognition);
-        await ingress.EnqueueSignalAsync(
-            AssistantSignal.RecognitionCompleted(1, 2, "second"),
-            10,
-            AssistantSignalSource.Recognition);
+        await ingress.EnqueueSignalAsync(AssistantSignal.RecognitionCompleted(1, 1, "first"), 10, AssistantSignalSource.Recognition);
+        await ingress.EnqueueSignalAsync(AssistantSignal.RecognitionCompleted(1, 2, "second"), 10, AssistantSignalSource.Recognition);
 
         InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(
             async () => await ingress.EnqueueSignalAsync(
@@ -395,21 +369,13 @@ public sealed class AssistantControlPlaneTests
     {
         using var ingress = new AssistantControlIngress();
         AssistantSignal signal = AssistantSignal.SpeechStarted(enableBargeIn: false);
-        Assert.True(ingress.TryEnqueueCritical(
-            signal,
-            1,
-            AssistantSignalSource.DuplexCallback,
-            out _));
+        Assert.True(ingress.TryEnqueueCritical(signal, 1, AssistantSignalSource.DuplexCallback, out _));
         Assert.True(ingress.TryRead(out _));
 
         long before = GC.GetAllocatedBytesForCurrentThread();
         for (int index = 0; index < 1_000; index++)
         {
-            Assert.True(ingress.TryEnqueueCritical(
-                signal,
-                index + 2,
-                AssistantSignalSource.DuplexCallback,
-                out _));
+            Assert.True(ingress.TryEnqueueCritical(signal, index + 2, AssistantSignalSource.DuplexCallback, out _));
             Assert.True(ingress.TryRead(out _));
         }
         long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
@@ -427,23 +393,14 @@ public sealed class AssistantControlPlaneTests
         const int Iterations = 1_000;
         using var ingress = new AssistantControlIngress();
         AssistantSignal signal = AssistantSignal.InterruptionRequested(1, 1);
-        Assert.True(ingress.TryEnqueueCritical(
-            signal,
-            1,
-            AssistantSignalSource.DuplexCallback,
-            out _));
+        Assert.True(ingress.TryEnqueueCritical(signal, 1, AssistantSignalSource.DuplexCallback, out _));
         Assert.True(ingress.TryRead(out _));
 
         var elapsedTicks = new long[Iterations];
         for (int index = 0; index < Iterations; index++)
         {
             long started = Stopwatch.GetTimestamp();
-            if (!ingress.TryEnqueueCritical(
-                    signal,
-                    index + 2,
-                    AssistantSignalSource.DuplexCallback,
-                    out _) ||
-                !ingress.TryRead(out _))
+            if (!ingress.TryEnqueueCritical(signal, index + 2, AssistantSignalSource.DuplexCallback, out _) || !ingress.TryRead(out _))
             {
                 throw new Xunit.Sdk.XunitException("Critical ingress steady-state admission failed.");
             }
@@ -553,16 +510,9 @@ public sealed class AssistantControlPlaneTests
     public async Task SequenceGap_ConvergesToOneTerminalFault()
     {
         var ingress = new FakeIngressReader(
-            ControlEnvelope.FromSignal(
-                2,
-                2,
-                AssistantSignalSource.Recognition,
-                AssistantSignal.RecognitionCompleted(1, 1, "late")));
+            ControlEnvelope.FromSignal(2, 2, AssistantSignalSource.Recognition, AssistantSignal.RecognitionCompleted(1, 1, "late")));
         var handler = new RecordingHandler(expectedHandled: 1);
-        var loop = new AssistantControlLoop(
-            ingress,
-            handler,
-            gapTimeout: TimeSpan.FromMilliseconds(20));
+        var loop = new AssistantControlLoop(ingress, handler, gapTimeout: TimeSpan.FromMilliseconds(20));
 
         await loop.Start(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(1));
 
@@ -577,16 +527,9 @@ public sealed class AssistantControlPlaneTests
         var ingress = new DelayedWakeIngressReader(
             wakeDelay: TimeSpan.FromMilliseconds(15),
             wakeCount: 3,
-            ControlEnvelope.FromSignal(
-                2,
-                2,
-                AssistantSignalSource.Recognition,
-                AssistantSignal.RecognitionCompleted(1, 1, "late")));
+            ControlEnvelope.FromSignal(2, 2, AssistantSignalSource.Recognition, AssistantSignal.RecognitionCompleted(1, 1, "late")));
         var handler = new RecordingHandler(expectedHandled: 1);
-        var loop = new AssistantControlLoop(
-            ingress,
-            handler,
-            gapTimeout: TimeSpan.FromMilliseconds(30));
+        var loop = new AssistantControlLoop(ingress, handler, gapTimeout: TimeSpan.FromMilliseconds(30));
         long started = Stopwatch.GetTimestamp();
 
         await loop.Start(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(1));
@@ -601,17 +544,9 @@ public sealed class AssistantControlPlaneTests
         var time = new ManualTimerTimeProvider();
         time.Advance(TimeSpan.FromTicks(1));
         var ingress = new PulsedIngressReader(
-            ControlEnvelope.FromSignal(
-                2,
-                2,
-                AssistantSignalSource.Recognition,
-                AssistantSignal.RecognitionCompleted(1, 1, "late")));
+            ControlEnvelope.FromSignal(2, 2, AssistantSignalSource.Recognition, AssistantSignal.RecognitionCompleted(1, 1, "late")));
         var handler = new RecordingHandler(expectedHandled: 1);
-        var loop = new AssistantControlLoop(
-            ingress,
-            handler,
-            timeProvider: time,
-            gapTimeout: TimeSpan.FromMilliseconds(20));
+        var loop = new AssistantControlLoop(ingress, handler, timeProvider: time, gapTimeout: TimeSpan.FromMilliseconds(20));
         Task run = loop.Start(CancellationToken.None);
 
         await time.WaitForTimerCountAsync(1).WaitAsync(TimeSpan.FromSeconds(1));
@@ -628,11 +563,7 @@ public sealed class AssistantControlPlaneTests
     public async Task ControlLoop_HandlerFaultIsConvertedToTerminalFailure()
     {
         var ingress = new FakeIngressReader(
-            ControlEnvelope.FromSignal(
-                1,
-                1,
-                AssistantSignalSource.Recognition,
-                AssistantSignal.RecognitionCompleted(1, 1, "fault")));
+            ControlEnvelope.FromSignal(1, 1, AssistantSignalSource.Recognition, AssistantSignal.RecognitionCompleted(1, 1, "fault")));
         var handler = new ThrowingHandler(throwCancellation: false);
         var loop = new AssistantControlLoop(ingress, handler);
 
@@ -646,16 +577,11 @@ public sealed class AssistantControlPlaneTests
     {
         using var cancellation = new CancellationTokenSource();
         var ingress = new FakeIngressReader(
-            ControlEnvelope.FromSignal(
-                1,
-                1,
-                AssistantSignalSource.Recognition,
-                AssistantSignal.RecognitionCompleted(1, 1, "cancel")));
+            ControlEnvelope.FromSignal(1, 1, AssistantSignalSource.Recognition, AssistantSignal.RecognitionCompleted(1, 1, "cancel")));
         var handler = new ThrowingHandler(throwCancellation: true, cancellation);
         var loop = new AssistantControlLoop(ingress, handler);
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => loop.Start(cancellation.Token).WaitAsync(TimeSpan.FromSeconds(1)));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => loop.Start(cancellation.Token).WaitAsync(TimeSpan.FromSeconds(1)));
         Assert.Empty(handler.Faults);
     }
 

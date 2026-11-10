@@ -102,8 +102,7 @@ internal static class Program
         if (reader.FormatChunk.SampleRate != SampleRate || reader.FormatChunk.NumChannels != ChannelCount)
         {
             reader.Dispose();
-            throw new InvalidDataException(
-                $"{Path.GetFileName(path)} 必须是 {SampleRate} Hz、{ChannelCount} 声道音频。");
+            throw new InvalidDataException($"{Path.GetFileName(path)} 必须是 {SampleRate} Hz、{ChannelCount} 声道音频。");
         }
 
         return reader;

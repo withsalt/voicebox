@@ -52,9 +52,7 @@ public sealed class ArchitectureTests
         ];
 
         Assert.All(toolContracts, type => Assert.Same(abstractions, type.Assembly));
-        Assert.Equal(
-            "VoiceBox.Assistant.Conversation.Abstractions.Tools",
-            typeof(IConversationTool).Namespace);
+        Assert.Equal("VoiceBox.Assistant.Conversation.Abstractions.Tools", typeof(IConversationTool).Namespace);
     }
 
     [Fact]
@@ -91,8 +89,7 @@ public sealed class ArchitectureTests
 
     private static IEnumerable<Type> EnumerateSignatureTypes(Type type)
     {
-        const BindingFlags flags =
-            BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
+        const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
 
         foreach (MethodBase method in type.GetMethods(flags).Cast<MethodBase>()
             .Concat(type.GetConstructors(flags)))
@@ -121,7 +118,6 @@ public sealed class ArchitectureTests
             current = current.Parent;
         }
 
-        throw new DirectoryNotFoundException(
-            $"Repository root containing '{segments[0]}' was not found.");
+        throw new DirectoryNotFoundException($"Repository root containing '{segments[0]}' was not found.");
     }
 }

@@ -115,8 +115,7 @@ namespace KokoroTtsDemo
                 line = line.Trim();
                 if (line.Length == 0) continue;
 
-                if (line.Equals(":q", StringComparison.OrdinalIgnoreCase) ||
-                    line.Equals(":quit", StringComparison.OrdinalIgnoreCase))
+                if (line.Equals(":q", StringComparison.OrdinalIgnoreCase) || line.Equals(":quit", StringComparison.OrdinalIgnoreCase))
                     break;
 
                 if (line.Equals(":stop", StringComparison.OrdinalIgnoreCase))
@@ -220,9 +219,7 @@ namespace KokoroTtsDemo
             }
 
             double duration = (double)totalSamples / SampleRate;
-            string latency = firstAudioUtc.HasValue
-                ? $"{(firstAudioUtc.Value - startUtc).TotalMilliseconds:F0}ms"
-                : "n/a";
+            string latency = firstAudioUtc.HasValue ? $"{(firstAudioUtc.Value - startUtc).TotalMilliseconds:F0}ms" : "n/a";
             Console.WriteLine($"[完成] 块={chunkCount} 时长={duration:F2}s 首包延迟={latency}");
         }
     }

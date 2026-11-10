@@ -19,8 +19,7 @@ internal static class DemoLoggingConfiguration
             null or "" => defaultEnabled,
             "true" or "1" or "on" => true,
             "false" or "0" or "off" => false,
-            _ => throw new InvalidOperationException(
-                "VOICEBOX_DEBUG must be one of: true, false, 1, 0, on, off."),
+            _ => throw new InvalidOperationException("VOICEBOX_DEBUG must be one of: true, false, 1, 0, on, off."),
         };
         return new LoggingOptions
         {

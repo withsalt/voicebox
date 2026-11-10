@@ -22,12 +22,10 @@ public sealed class TtsPlaybackPumpTests
         using var stop = new CancellationTokenSource();
         var released = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var pump = CreatePump(tts, resampler);
-        Task<string> run = pump.RunAsync(
-            WaitingSource(released, throwingCancellationCallback, stop.Token), stop.Token);
+        Task<string> run = pump.RunAsync(WaitingSource(released, throwingCancellationCallback, stop.Token), stop.Token);
         try
         {
-            Exception actual = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => run.WaitAsync(TimeSpan.FromSeconds(2)));
+            Exception actual = await Assert.ThrowsAsync<InvalidOperationException>(() => run.WaitAsync(TimeSpan.FromSeconds(2)));
             Assert.Same(failure, actual);
             Assert.True(released.Task.IsCompletedSuccessfully);
         }
@@ -49,8 +47,7 @@ public sealed class TtsPlaybackPumpTests
         Task<string> run = pump.RunAsync(FailingSource(tts.FirstSynthesis.Task, failure), stop.Token);
         try
         {
-            Exception actual = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => run.WaitAsync(TimeSpan.FromSeconds(2)));
+            Exception actual = await Assert.ThrowsAsync<InvalidOperationException>(() => run.WaitAsync(TimeSpan.FromSeconds(2)));
             Assert.Same(failure, actual);
             Assert.True(tts.Released.Task.IsCompletedSuccessfully);
         }
@@ -99,8 +96,7 @@ public sealed class TtsPlaybackPumpTests
     {
         var tts = new RecordingSynthesisPort();
         var playback = new AcceptingPlaybackPort();
-        var releaseSource = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseSource = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         using var resampler = new PassthroughResampler();
         var pump = new TtsPlaybackPump(
             tts,
@@ -114,9 +110,7 @@ public sealed class TtsPlaybackPumpTests
             new NullPlaybackStartedSink(),
             new NullScheduledSpeechSink());
 
-        Task<string> run = pump.RunAsync(
-            PromptThenWaitAsync(releaseSource.Task),
-            CancellationToken.None);
+        Task<string> run = pump.RunAsync(PromptThenWaitAsync(releaseSource.Task), CancellationToken.None);
 
         string firstSynthesis = await tts.FirstSynthesis.Task.WaitAsync(TimeSpan.FromSeconds(1));
         await playback.FirstEnqueue.Task.WaitAsync(TimeSpan.FromSeconds(1));
@@ -145,11 +139,7 @@ public sealed class TtsPlaybackPumpTests
             new NullScheduledSpeechSink());
 
         InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => pump.RunAsync(
-                OneDeltaAsync(new SpeakableTextDelta(
-                    "正在查询",
-                    ForceSpeechBoundary: true)),
-                CancellationToken.None));
+            () => pump.RunAsync(OneDeltaAsync(new SpeakableTextDelta("正在查询", ForceSpeechBoundary: true)), CancellationToken.None));
 
         Assert.Contains("did not produce any audio", exception.Message, StringComparison.Ordinal);
     }
@@ -183,8 +173,7 @@ public sealed class TtsPlaybackPumpTests
 
         public List<string> Texts { get; } = [];
 
-        public TaskCompletionSource<string> FirstSynthesis { get; } = new(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource<string> FirstSynthesis { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public async IAsyncEnumerable<SynthesizedAudioChunk> SynthesizeAsync(
             string text,
@@ -226,8 +215,7 @@ public sealed class TtsPlaybackPumpTests
 
     private sealed class AcceptingPlaybackPort : IBoundedPlaybackPort
     {
-        public TaskCompletionSource FirstEnqueue { get; } = new(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource FirstEnqueue { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public bool IsActive => true;
 

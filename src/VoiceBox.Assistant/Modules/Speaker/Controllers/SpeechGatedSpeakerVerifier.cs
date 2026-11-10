@@ -135,8 +135,7 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
             return;
 
         if (_timeline.TryGetBounds(out long epoch, out _, out long retainedStart, out _) &&
-            (epoch != _lastTrimEpoch || _lastTrimStart == long.MinValue ||
-             retainedStart - _lastTrimStart >= _policy.HopSamples))
+            (epoch != _lastTrimEpoch || _lastTrimStart == long.MinValue || retainedStart - _lastTrimStart >= _policy.HopSamples))
         {
             _lastTrimEpoch = epoch;
             _lastTrimStart = retainedStart;
@@ -184,8 +183,7 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
         if (query.CandidateEndSampleExclusive <= query.CandidateStartSample)
             return SpeakerVerificationResult.Unavailable(policy.Threshold, in query, SpeakerVerificationReason.CandidateRangeInvalid, policy.RequiredMatches);
         if (query.HasFocusInterval &&
-            (query.FocusStartSample < query.CandidateStartSample ||
-             query.FocusEndSampleExclusive > query.CandidateEndSampleExclusive))
+            (query.FocusStartSample < query.CandidateStartSample || query.FocusEndSampleExclusive > query.CandidateEndSampleExclusive))
         {
             return SpeakerVerificationResult.Unavailable(policy.Threshold, in query, SpeakerVerificationReason.CandidateRangeInvalid, policy.RequiredMatches);
         }
@@ -244,11 +242,7 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
         // even though a usable speech window existed nearby.
         Span<long> windowEnds = stackalloc long[Math.Max(1, policy.WindowCount)];
         int windowCount = query.Purpose == SpeakerVerificationPurpose.Wakeup
-            ? SelectWakeupWindowEndsBySpeech(
-                in query,
-                segmentStart,
-                retainedEnd,
-                windowEnds)
+            ? SelectWakeupWindowEndsBySpeech(in query, segmentStart, retainedEnd, windowEnds)
             : SelectRecentSpeechWindowEnds(in query, in selection, segmentStart, windowEnds);
         if (windowCount > 0)
             selection = selection with { FirstWindowStart = windowEnds[0] - _policy.WindowSamples, WindowCount = windowCount };
@@ -508,17 +502,13 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
     private int SelectWakeupWindowEndsBySpeech(in SpeakerEvidenceQuery query, long segmentStart, long retainedEnd, Span<long> destination)
     {
         long availableEnd = Math.Min(query.CandidateEndSampleExclusive, retainedEnd);
-        long firstStart = SpeakerEvidenceWindowSelector.AlignUp(
-            query.CandidateStartSample,
-            segmentStart,
-            _policy.HopSamples);
+        long firstStart = SpeakerEvidenceWindowSelector.AlignUp(query.CandidateStartSample, segmentStart, _policy.HopSamples);
         long firstEnd = checked(firstStart + _policy.WindowSamples);
         if (availableEnd < firstEnd || destination.IsEmpty)
             return 0;
 
         long focusCenter = query.HasFocusInterval
-            ? checked(query.FocusStartSample +
-                (query.FocusEndSampleExclusive - query.FocusStartSample) / 2)
+            ? checked(query.FocusStartSample + (query.FocusEndSampleExclusive - query.FocusStartSample) / 2)
             : query.CandidateStartSample;
         Span<WakeupWindowCandidate> best = stackalloc WakeupWindowCandidate[destination.Length];
         int bestCount = 0;
@@ -530,10 +520,7 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
             double speechRatio = GetWindowSpeechRatio(query.StreamEpoch, start, end);
             if (speechRatio >= 0)
             {
-                var candidate = new WakeupWindowCandidate(
-                    end,
-                    speechRatio,
-                    Distance(end, focusCenter));
+                var candidate = new WakeupWindowCandidate(end, speechRatio, Distance(end, focusCenter));
                 int insert = 0;
                 while (insert < bestCount && IsBetter(best[insert], candidate))
                     insert++;
@@ -574,13 +561,7 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
         if (_cache.TryGet(streamEpoch, start, end, out SpeakerWindowEvidence evidence))
             return evidence.Quality.SpeechRatio;
 
-        if (!_timeline.TryCountSpeechSamples(
-                streamEpoch,
-                start,
-                end,
-                _policy.MinFrameRms,
-                out int speechSamples,
-                out _))
+        if (!_timeline.TryCountSpeechSamples(streamEpoch, start, end, _policy.MinFrameRms, out int speechSamples, out _))
         {
             return -1;
         }
@@ -589,8 +570,7 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
     }
 
     private static bool IsBetter(in WakeupWindowCandidate left, in WakeupWindowCandidate right)
-        => left.SpeechRatio > right.SpeechRatio ||
-           (left.SpeechRatio == right.SpeechRatio && left.FocusDistance <= right.FocusDistance);
+        => left.SpeechRatio > right.SpeechRatio || (left.SpeechRatio == right.SpeechRatio && left.FocusDistance <= right.FocusDistance);
 
     private static long Distance(long value, long target)
         => value >= target ? value - target : target - value;

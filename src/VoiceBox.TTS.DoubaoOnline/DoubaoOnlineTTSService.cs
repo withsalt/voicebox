@@ -136,8 +136,7 @@ namespace VoiceBox.TTS.DoubaoOnline
             if (reserved > _options.MaxConcurrentSessions)
             {
                 Interlocked.Decrement(ref _activeSessionCount);
-                throw new InvalidOperationException(
-                    $"Reached the maximum concurrent session limit: {_options.MaxConcurrentSessions}.");
+                throw new InvalidOperationException($"Reached the maximum concurrent session limit: {_options.MaxConcurrentSessions}.");
             }
 
             var linked = CancellationTokenSource.CreateLinkedTokenSource(ct, _shutdownCts.Token);
@@ -344,15 +343,13 @@ namespace VoiceBox.TTS.DoubaoOnline
         private static void ValidateOptions(DoubaoOnlineTTSOptions o)
         {
             if (string.IsNullOrWhiteSpace(o.ApiKey))
-                throw new ArgumentException(
-                    "Authentication is not configured: set ApiKey.");
+                throw new ArgumentException("Authentication is not configured: set ApiKey.");
             if (string.IsNullOrWhiteSpace(o.ResourceId))
                 throw new ArgumentException("DoubaoOnlineTTSOptions.ResourceId must be set.");
             if (string.IsNullOrWhiteSpace(o.Host))
                 throw new ArgumentException("DoubaoOnlineTTSOptions.Host must be set.");
             if (o.SampleRate is not (8000 or 16000 or 22050 or 24000 or 32000 or 44100 or 48000))
-                throw new ArgumentOutOfRangeException(nameof(o),
-                    "SampleRate must be one of 8000/16000/22050/24000/32000/44100/48000.");
+                throw new ArgumentOutOfRangeException(nameof(o), "SampleRate must be one of 8000/16000/22050/24000/32000/44100/48000.");
             if (o.ChannelCount != 1)
                 throw new ArgumentOutOfRangeException(nameof(o), "Channels must be 1 (the interface outputs mono).");
             if (o.SpeechRate is < -50 or > 100)

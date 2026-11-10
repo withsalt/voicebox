@@ -33,8 +33,7 @@ namespace VoiceBox.LLM.LLamaSharp
             var prompt = new StringBuilder();
 
             int messageStart = 0;
-            bool hasLeadingSystem = messages.Count > 0 &&
-                messages[0].Role is "system" or "developer";
+            bool hasLeadingSystem = messages.Count > 0 && messages[0].Role is "system" or "developer";
             if (enableThinking || hasLeadingSystem)
             {
                 prompt.Append("<|turn>system\n");
@@ -52,9 +51,7 @@ namespace VoiceBox.LLM.LLamaSharp
             {
                 LlamaChatMessage message = messages[i];
                 string role = message.Role == "assistant" ? "model" : message.Role;
-                string text = role == "model"
-                    ? StripThinkingChannels(message.Text)
-                    : message.Text.Trim();
+                string text = role == "model" ? StripThinkingChannels(message.Text) : message.Text.Trim();
                 prompt.Append("<|turn>").Append(role).Append('\n')
                     .Append(text).Append("<turn|>\n");
             }
@@ -78,8 +75,7 @@ namespace VoiceBox.LLM.LLamaSharp
                 }
 
                 visible.Append(remaining, offset, start - offset);
-                int end = remaining.IndexOf(
-                    ChannelEnd, start + ChannelStart.Length, StringComparison.Ordinal);
+                int end = remaining.IndexOf(ChannelEnd, start + ChannelStart.Length, StringComparison.Ordinal);
                 if (end < 0)
                     break;
                 offset = end + ChannelEnd.Length;

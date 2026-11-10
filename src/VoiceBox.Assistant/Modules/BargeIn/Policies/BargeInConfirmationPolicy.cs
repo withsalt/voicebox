@@ -45,8 +45,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Policies
             int initialSuppressionMs = Math.Max(_speaking.InitialSuppressionMs, startupSuppressionMs);
             int recognitionSuppressionMs = Math.Max(_speaking.RecognitionSuppressionMs, startupSuppressionMs);
 
-            if (initialSuppressionMs == _speaking.InitialSuppressionMs &&
-                recognitionSuppressionMs == _speaking.RecognitionSuppressionMs)
+            if (initialSuppressionMs == _speaking.InitialSuppressionMs && recognitionSuppressionMs == _speaking.RecognitionSuppressionMs)
                 return _speaking;
 
             return new BargeInConfirmationSettings(

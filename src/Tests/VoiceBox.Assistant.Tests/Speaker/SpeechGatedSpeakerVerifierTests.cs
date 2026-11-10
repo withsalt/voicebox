@@ -62,8 +62,7 @@ public sealed class SpeechGatedSpeakerVerifierTests : IDisposable
         FeedFrames(verifier, count: 7, ownerScore: 0.6f);
         try
         {
-            SpeakerVerificationResult pending = verifier.Evaluate(
-                BargeInQuery(candidateId: 101, end: Window + 2 * Hop));
+            SpeakerVerificationResult pending = verifier.Evaluate(BargeInQuery(candidateId: 101, end: Window + 2 * Hop));
             await _speaker.ExtractEntered.Task.WaitAsync(TimeSpan.FromSeconds(2));
             Assert.Equal(SpeakerVerificationStatus.Pending, pending.Status);
             Assert.Equal(0, verifier.Scheduler.QueueDepth);
@@ -226,8 +225,7 @@ public sealed class SpeechGatedSpeakerVerifierTests : IDisposable
         await WaitUntilAsync(() => verifier.Cache.Count >= 2);
 
         // The endpoint has arrived before the identity tap's remaining owner speech.
-        SpeakerEvidenceQuery query = SingleTalkQuery(
-            candidateId: 24, start: 0, end: 13 * Hop, inputComplete: true);
+        SpeakerEvidenceQuery query = SingleTalkQuery(candidateId: 24, start: 0, end: 13 * Hop, inputComplete: true);
         SpeakerVerificationResult pending = verifier.Evaluate(in query);
         Assert.Equal(SpeakerVerificationStatus.Pending, pending.Status);
         Assert.Equal(2, pending.RejectedWindows);
@@ -245,8 +243,7 @@ public sealed class SpeechGatedSpeakerVerifierTests : IDisposable
         FeedFrames(verifier, count: 5, ownerScore: 0.9f);
         await WaitUntilAsync(() => verifier.Cache.Count >= 1);
 
-        SpeakerVerificationResult result = verifier.Evaluate(
-            SingleTalkQuery(candidateId: 25, start: 0, end: Window));
+        SpeakerVerificationResult result = verifier.Evaluate(SingleTalkQuery(candidateId: 25, start: 0, end: Window));
 
         Assert.Equal(SpeakerVerificationStatus.Match, result.Status);
         Assert.Equal(SpeakerVerificationReason.HighConfidenceMatch, result.Reason);
@@ -260,8 +257,7 @@ public sealed class SpeechGatedSpeakerVerifierTests : IDisposable
         FeedFrames(verifier, count: 7, ownerScore: 0.47f);
         await WaitUntilAsync(() => verifier.Cache.Count >= 3);
 
-        SpeakerVerificationResult result = verifier.Evaluate(
-            BargeInQuery(candidateId: 7, end: Window + 2 * Hop, inputComplete: true));
+        SpeakerVerificationResult result = verifier.Evaluate(BargeInQuery(candidateId: 7, end: Window + 2 * Hop, inputComplete: true));
         Assert.Equal(SpeakerVerificationStatus.InsufficientEvidence, result.Status);
         Assert.Equal(3, result.AmbiguousWindows);
         Assert.Equal(0, result.RejectedWindows);
@@ -419,8 +415,7 @@ public sealed class SpeechGatedSpeakerVerifierTests : IDisposable
             _speaker.ExtractBlock.TrySetResult();
         }
 
-        await WaitUntilAsync(() => logger.Entries.Any(entry => entry.ContainsKey("EmbeddingMs") &&
-            Equals(entry["Start"], (long)Hop)));
+        await WaitUntilAsync(() => logger.Entries.Any(entry => entry.ContainsKey("EmbeddingMs") && Equals(entry["Start"], (long)Hop)));
         IReadOnlyDictionary<string, object?> completed = Assert.Single(logger.Entries, entry =>
             entry.ContainsKey("EmbeddingMs") && Equals(entry["Start"], (long)Hop));
         Assert.True(Assert.IsType<double>(completed["QueueWaitMs"]) >= 0);
@@ -490,11 +485,7 @@ public sealed class SpeechGatedSpeakerVerifierTests : IDisposable
 
         verifier.Prefetch.SetEnabled(false);
         FeedFrames(verifier, count: 5, ownerScore: 0.9f, startFrame: 6);
-        SpeakerEvidenceQuery query = SingleTalkQuery(
-            candidateId: 21,
-            start: 6 * Hop,
-            end: 11 * Hop,
-            inputComplete: false);
+        SpeakerEvidenceQuery query = SingleTalkQuery(candidateId: 21, start: 6 * Hop, end: 11 * Hop, inputComplete: false);
 
         SpeakerVerificationResult result = verifier.Evaluate(in query);
         Assert.Equal(SpeakerVerificationStatus.Pending, result.Status);

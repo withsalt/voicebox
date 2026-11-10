@@ -31,11 +31,7 @@ public sealed class BargeInDecisionAccumulatorTests
         var accumulator = new BargeInDecisionAccumulator(64);
         foreach (NearEndFrameDecision frame in frames)
             accumulator.Add(frame);
-        return accumulator.AggregateRecent(
-            WindowMs,
-            RequiredMs,
-            minRms: 0f,
-            BargeInDecisionParameters.Default);
+        return accumulator.AggregateRecent(WindowMs, RequiredMs, minRms: 0f, BargeInDecisionParameters.Default);
     }
 
     private static NearEndFrameDecision[] Pattern(string pattern, double rejectDecay = 0.35)
@@ -123,11 +119,7 @@ public sealed class BargeInDecisionAccumulatorTests
         foreach (NearEndFrameDecision frame in Pattern("AARAARAARAARAARAA"))
             accumulator.Add(frame);
 
-        BargeInDecision strict = accumulator.AggregateRecent(
-            WindowMs,
-            RequiredMs,
-            minRms: 0f,
-            BargeInDecisionParameters.Default);
+        BargeInDecision strict = accumulator.AggregateRecent(WindowMs, RequiredMs, minRms: 0f, BargeInDecisionParameters.Default);
 
         Assert.Equal(BargeInAction.Continue, strict.Action);
         Assert.Equal("insufficient-contiguous-nearend-evidence", strict.Reason);

@@ -21,8 +21,7 @@ internal sealed class NearEndEffectExecutor
     private readonly INearEndRecognitionAudioSink _recognitionAudio;
     private readonly ISpeakerEvidenceProvider? _speakerEvidence;
     private readonly object _playbackGate = new();
-    private readonly PlaybackOwnerSequence[] _playbackSequences =
-        new PlaybackOwnerSequence[MaxTrackedPlaybackOwners];
+    private readonly PlaybackOwnerSequence[] _playbackSequences = new PlaybackOwnerSequence[MaxTrackedPlaybackOwners];
     private int _playbackSequenceCount;
 
     private readonly record struct PlaybackOwnerSequence(long OwnerTurnId, long Sequence);
@@ -47,11 +46,7 @@ internal sealed class NearEndEffectExecutor
         => _speakerEvidence?.NewCandidateId() ?? SpeakerCandidateId.None;
 
     public SpeakerVerificationResult EvaluateSpeaker(in SpeakerEvidenceQuery query)
-        => _speakerEvidence?.Evaluate(in query)
-            ?? SpeakerVerificationResult.Unavailable(
-                0,
-                in query,
-                SpeakerVerificationReason.NotReady);
+        => _speakerEvidence?.Evaluate(in query) ?? SpeakerVerificationResult.Unavailable(0, in query, SpeakerVerificationReason.NotReady);
 
     public TimeSpan GetInferenceTimeout(SpeakerVerificationPurpose purpose)
         => _speakerEvidence?.GetInferenceTimeout(purpose) ?? TimeSpan.Zero;
@@ -79,9 +74,7 @@ internal sealed class NearEndEffectExecutor
     public NearEndEffectResult FeedRecognition(long turnId, ReadOnlySpan<float> audio)
     {
         bool accepted = _recognitionAudio.TryFeed(turnId, audio);
-        return accepted
-            ? new NearEndEffectResult(true)
-            : new NearEndEffectResult(false, _recognitionAudio.HasAttachedSession(turnId));
+        return accepted ? new NearEndEffectResult(true) : new NearEndEffectResult(false, _recognitionAudio.HasAttachedSession(turnId));
     }
 
     private NearEndEffectResult ExecuteDuck(NearEndEffect.DuckPlayback duck)
@@ -90,8 +83,7 @@ internal sealed class NearEndEffectExecutor
         {
             if (!TryAdvancePlaybackSequenceLocked(duck.OwnerTurnId, duck.Sequence))
                 return NearEndEffectResult.Ok;
-            return new NearEndEffectResult(
-                _playback.TryDuckPlayback(duck.OwnerTurnId, duck.Gain, duck.OriginalGain));
+            return new NearEndEffectResult(_playback.TryDuckPlayback(duck.OwnerTurnId, duck.Gain, duck.OriginalGain));
         }
     }
 

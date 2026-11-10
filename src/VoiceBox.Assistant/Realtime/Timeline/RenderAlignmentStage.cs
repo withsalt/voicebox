@@ -46,9 +46,7 @@ internal sealed class RenderAlignmentStage
     /// </summary>
     public bool IsFreshDelayHint(RenderDelayHint? hint, long frameTimestampTicks)
     {
-        if (hint is not { IsValid: true } value ||
-            value.TimestampTicks <= 0 ||
-            frameTimestampTicks <= 0)
+        if (hint is not { IsValid: true } value || value.TimestampTicks <= 0 || frameTimestampTicks <= 0)
         {
             return false;
         }

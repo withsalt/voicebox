@@ -33,8 +33,7 @@ internal sealed class BoundedPlaybackWriter
             cancellationToken.ThrowIfCancellationRequested();
             if (_playback.TryEnqueue(buffer.AsSpan(0, count), out int droppedSamples))
             {
-                if (_ownerTurnId is { } turnId &&
-                    Interlocked.Exchange(ref _playbackStartedNotified, 1) == 0)
+                if (_ownerTurnId is { } turnId && Interlocked.Exchange(ref _playbackStartedNotified, 1) == 0)
                 {
                     _playbackStarted.OnPlaybackStarted(turnId);
                 }
@@ -43,8 +42,7 @@ internal sealed class BoundedPlaybackWriter
 
             if (!_playback.IsActive)
             {
-                throw new InvalidOperationException(
-                    $"播放服务当前状态为 {_playback.StateName}, 无法入队 {count} 个样本。");
+                throw new InvalidOperationException($"播放服务当前状态为 {_playback.StateName}, 无法入队 {count} 个样本。");
             }
 
             long nowTicks = Stopwatch.GetTimestamp();
@@ -58,8 +56,7 @@ internal sealed class BoundedPlaybackWriter
                 TimeSpan stalled = Stopwatch.GetElapsedTime(firstFailureTicks, nowTicks);
                 if (stalled >= EnqueueStallTimeout)
                 {
-                    throw new TimeoutException(
-                        $"播放队列连续 {stalled.TotalSeconds:F1}s 未能接收音频块, 最近一次拒绝 {droppedSamples} 个样本。");
+                    throw new TimeoutException($"播放队列连续 {stalled.TotalSeconds:F1}s 未能接收音频块, 最近一次拒绝 {droppedSamples} 个样本。");
                 }
 
                 if (Stopwatch.GetElapsedTime(lastLogTicks, nowTicks) >= TimeSpan.FromSeconds(1))

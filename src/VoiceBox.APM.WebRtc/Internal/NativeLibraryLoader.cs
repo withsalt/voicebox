@@ -113,8 +113,7 @@ namespace VoiceBox.APM.WebRtc.Internal
                 };
             }
 
-            throw new PlatformNotSupportedException(
-                $"Unsupported operating system: {RuntimeInformation.OSDescription}");
+            throw new PlatformNotSupportedException($"Unsupported operating system: {RuntimeInformation.OSDescription}");
         }
 
         private static string GetNativeLibraryFileName()

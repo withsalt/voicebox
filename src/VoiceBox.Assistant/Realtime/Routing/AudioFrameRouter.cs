@@ -30,9 +30,7 @@ internal sealed class AudioFrameRouter
         _speakerCapture = speakerCapture is null ? [] : speakerCapture.ToArray();
         if (_speakerCapture.Length > 0 && speakerFrames is null)
         {
-            throw new ArgumentException(
-                "Speaker capture sinks require the identity tap frame factory.",
-                nameof(speakerFrames));
+            throw new ArgumentException("Speaker capture sinks require the identity tap frame factory.", nameof(speakerFrames));
         }
         _speakerFrames = speakerFrames;
     }
@@ -49,8 +47,7 @@ internal sealed class AudioFrameRouter
     public void RouteDuplexFrame(in DuplexAudioFrame frame)
     {
         ISpeakerCaptureFrameSink[] speakerSinks = _speakerCapture;
-        if (speakerSinks.Length > 0 &&
-            _speakerFrames!.TryCreate(in frame, out SpeakerCaptureFrame identity))
+        if (speakerSinks.Length > 0 && _speakerFrames!.TryCreate(in frame, out SpeakerCaptureFrame identity))
         {
             for (int i = 0; i < speakerSinks.Length; i++)
                 speakerSinks[i].OnSpeakerCapture(in identity);

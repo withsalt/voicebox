@@ -22,25 +22,16 @@ internal sealed class BaiduWeatherClient(HttpClient httpClient)
             new("coor", "bd09ll"),
             new("ak", Ak),
         ];
-        using JsonDocument json = await GetJsonAsync(
-            path,
-            parameters,
-            cancellationToken).ConfigureAwait(false);
+        using JsonDocument json = await GetJsonAsync(path, parameters, cancellationToken).ConfigureAwait(false);
         EnsureSuccess(json.RootElement, isIpLocationRequest: true);
 
         JsonElement content = RequiredObject(json.RootElement, "content");
         JsonElement point = RequiredObject(content, "point");
         string longitude = RequiredText(point, "x");
         string latitude = RequiredText(point, "y");
-        string coordinates = CoordinateParser.Normalize(
-            $"{longitude},{latitude}",
-            "bd09ll");
+        string coordinates = CoordinateParser.Normalize($"{longitude},{latitude}", "bd09ll");
         string address = OptionalText(content, "address") ?? "当前公网 IP 所在区域";
-        return WeatherPosition.ForCoordinate(
-            coordinates,
-            "bd09ll",
-            $"{address}（IP 定位为大致位置）",
-            "ip");
+        return WeatherPosition.ForCoordinate(coordinates, "bd09ll", $"{address}（IP 定位为大致位置）", "ip");
     }
 
     public async Task<CurrentWeatherReport> QueryCurrentWeatherAsync(WeatherPosition position, CancellationToken cancellationToken)
@@ -64,10 +55,7 @@ internal sealed class BaiduWeatherClient(HttpClient httpClient)
         parameters.Add(new("output", "json"));
         parameters.Add(new("ak", Ak));
 
-        using JsonDocument json = await GetJsonAsync(
-            path,
-            parameters,
-            cancellationToken).ConfigureAwait(false);
+        using JsonDocument json = await GetJsonAsync(path, parameters, cancellationToken).ConfigureAwait(false);
         EnsureSuccess(json.RootElement, isIpLocationRequest: false);
         return ParseCurrentWeather(json.RootElement, position);
     }
@@ -82,8 +70,7 @@ internal sealed class BaiduWeatherClient(HttpClient httpClient)
             requestUri,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken).ConfigureAwait(false);
-        string body = await response.Content.ReadAsStringAsync(cancellationToken)
-            .ConfigureAwait(false);
+        string body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         return JsonDocument.Parse(body);
     }
@@ -91,8 +78,7 @@ internal sealed class BaiduWeatherClient(HttpClient httpClient)
     private static CurrentWeatherReport ParseCurrentWeather(JsonElement root, WeatherPosition position)
     {
         JsonElement result = RequiredObject(root, "result");
-        JsonElement location = TryObject(result, "location", out JsonElement value) ||
-            TryObject(result, "address", out value)
+        JsonElement location = TryObject(result, "location", out JsonElement value) || TryObject(result, "address", out value)
                 ? value
                 : throw new JsonException("Weather response has no location object.");
         JsonElement now = RequiredObject(result, "now");
@@ -134,9 +120,7 @@ internal sealed class BaiduWeatherClient(HttpClient httpClient)
         int status = ReadStatus(root);
         if (status == 0)
             return;
-        string message = OptionalText(root, "message") ??
-            OptionalText(root, "msg") ??
-            "未知错误";
+        string message = OptionalText(root, "message") ?? OptionalText(root, "msg") ?? "未知错误";
         throw new BaiduWeatherApiException(status, message, isIpLocationRequest);
     }
 
@@ -147,11 +131,7 @@ internal sealed class BaiduWeatherClient(HttpClient httpClient)
         if (status.ValueKind == JsonValueKind.Number && status.TryGetInt32(out int number))
             return number;
         if (status.ValueKind == JsonValueKind.String &&
-            int.TryParse(
-                status.GetString(),
-                NumberStyles.Integer,
-                CultureInfo.InvariantCulture,
-                out number))
+            int.TryParse(status.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out number))
         {
             return number;
         }
@@ -183,68 +163,46 @@ internal sealed class BaiduWeatherClient(HttpClient httpClient)
     private static bool TryObject(JsonElement parent, string name, out JsonElement value) =>
         parent.TryGetProperty(name, out value) && value.ValueKind == JsonValueKind.Object;
 
-    private static string? NormalizeUnavailable(string? value) =>
-        value is null or "999999" ? null : value;
+    private static string? NormalizeUnavailable(string? value) => value is null or "999999" ? null : value;
 
     private static string JoinNonEmpty(params string?[] values) =>
-        string.Join(
-            ' ',
-            values.Where(static value => !string.IsNullOrWhiteSpace(value)).Distinct());
+        string.Join(' ', values.Where(static value => !string.IsNullOrWhiteSpace(value)).Distinct());
 }
 
 internal static class CoordinateParser
 {
-    private static readonly HashSet<string> CoordinateTypes = new(
-        ["wgs84", "bd09ll", "bd09mc", "gcj02"],
-        StringComparer.OrdinalIgnoreCase);
+    private static readonly HashSet<string> CoordinateTypes = new(["wgs84", "bd09ll", "bd09mc", "gcj02"], StringComparer.OrdinalIgnoreCase);
 
     public static string ValidateType(string? value)
     {
-        string coordinateType = string.IsNullOrWhiteSpace(value)
-            ? "wgs84"
-            : value.Trim().ToLowerInvariant();
+        string coordinateType = string.IsNullOrWhiteSpace(value) ? "wgs84" : value.Trim().ToLowerInvariant();
         return CoordinateTypes.Contains(coordinateType)
             ? coordinateType
-            : throw new WeatherLocationException(
-                $"不支持坐标类型“{coordinateType}”。可用 wgs84、gcj02、bd09ll 或 bd09mc。");
+            : throw new WeatherLocationException($"不支持坐标类型“{coordinateType}”。可用 wgs84、gcj02、bd09ll 或 bd09mc。");
     }
 
     public static string Normalize(string value, string coordinateType)
     {
         string[] parts = value.Split(',', StringSplitOptions.TrimEntries);
         if (parts.Length != 2 ||
-            !decimal.TryParse(
-                parts[0],
-                NumberStyles.Float,
-                CultureInfo.InvariantCulture,
-                out decimal longitude) ||
-            !decimal.TryParse(
-                parts[1],
-                NumberStyles.Float,
-                CultureInfo.InvariantCulture,
-                out decimal latitude))
+            !decimal.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out decimal longitude) ||
+            !decimal.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out decimal latitude))
         {
-            throw new WeatherLocationException(
-                "经纬度应采用“经度,纬度”格式，例如 116.310316,39.956074。");
+            throw new WeatherLocationException("经纬度应采用“经度,纬度”格式，例如 116.310316,39.956074。");
         }
         if (!coordinateType.Equals("bd09mc", StringComparison.OrdinalIgnoreCase) &&
             (longitude is < -180 or > 180 || latitude is < -90 or > 90))
         {
             throw new WeatherLocationException("经度范围应为 -180~180，纬度范围应为 -90~90。");
         }
-        return string.Create(
-            CultureInfo.InvariantCulture,
-            $"{longitude:G29},{latitude:G29}");
+        return string.Create(CultureInfo.InvariantCulture, $"{longitude:G29},{latitude:G29}");
     }
 }
 
 internal static partial class BaiduSnSigner
 {
     public static string BuildQueryString(IEnumerable<KeyValuePair<string, string>> parameters) =>
-        string.Join(
-            '&',
-            parameters.Select(static item =>
-                $"{UrlEncode(item.Key)}={UrlEncode(item.Value)}"));
+        string.Join('&', parameters.Select(static item => $"{UrlEncode(item.Key)}={UrlEncode(item.Value)}"));
 
     public static string Calculate(string path, string encodedQueryString, string sk)
     {
@@ -256,9 +214,7 @@ internal static partial class BaiduSnSigner
     private static string UrlEncode(string value)
     {
         string encoded = WebUtility.UrlEncode(value);
-        return PercentEscapeRegex().Replace(
-            encoded,
-            static match => match.Value.ToUpperInvariant());
+        return PercentEscapeRegex().Replace(encoded, static match => match.Value.ToUpperInvariant());
     }
 
     [GeneratedRegex("%[0-9a-fA-F]{2}")]
@@ -274,8 +230,7 @@ internal sealed record WeatherPosition(string? DistrictId, string? Coordinates, 
         string coordinates,
         string coordinateType,
         string description,
-        string source = "specified") =>
-        new(null, coordinates, coordinateType, description, source);
+        string source = "specified") => new(null, coordinates, coordinateType, description, source);
 }
 
 internal sealed record CurrentWeatherReport(

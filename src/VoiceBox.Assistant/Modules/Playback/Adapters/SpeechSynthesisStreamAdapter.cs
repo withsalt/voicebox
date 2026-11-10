@@ -31,10 +31,7 @@ internal sealed class SpeechSynthesisStreamAdapter : ISpeechSynthesisStreamPort
             .WithCancellation(cancellationToken)
             .ConfigureAwait(false))
         {
-            yield return new SynthesizedAudioChunk(
-                chunk.Samples,
-                chunk.SampleRate,
-                chunk.Channels);
+            yield return new SynthesizedAudioChunk(chunk.Samples, chunk.SampleRate, chunk.Channels);
         }
     }
 }

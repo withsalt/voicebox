@@ -29,10 +29,7 @@ namespace VoiceBox.Audio.Common.Resampling.Service
             if (_options.SourceChannels is <= 0)
                 throw new ArgumentException("SourceChannels must be null or > 0.", nameof(options));
 
-            _converter = new StreamingAudioFormatConverter(
-                _options.TargetSampleRate,
-                _options.TargetChannels,
-                _options.Quality);
+            _converter = new StreamingAudioFormatConverter(_options.TargetSampleRate, _options.TargetChannels, _options.Quality);
         }
 
         public int Convert(ReadOnlySpan<float> samples, int sourceSampleRate, int sourceChannels, ref float[] output)
@@ -75,19 +72,15 @@ namespace VoiceBox.Audio.Common.Resampling.Service
         private int ResolveSourceRate(int sourceSampleRate) => sourceSampleRate > 0
             ? sourceSampleRate
             : _options.SourceSampleRate
-                ?? throw new InvalidOperationException(
-                    "无法确定来源采样率：Convert 未传入有效值且 AudioResampleOptions.SourceSampleRate 未配置。");
+                ?? throw new InvalidOperationException("无法确定来源采样率：Convert 未传入有效值且 AudioResampleOptions.SourceSampleRate 未配置。");
 
         private int ResolveSourceChannels(int sourceChannels) => sourceChannels > 0
             ? sourceChannels
             : _options.SourceChannels
-                ?? throw new InvalidOperationException(
-                    "无法确定来源声道数：Convert 未传入有效值且 AudioResampleOptions.SourceChannels 未配置。");
+                ?? throw new InvalidOperationException("无法确定来源声道数：Convert 未传入有效值且 AudioResampleOptions.SourceChannels 未配置。");
 
         private static float[] ToExactArray(float[] buffer, int n)
-            => n == 0 ? Array.Empty<float>()
-             : n == buffer.Length ? buffer
-             : buffer.AsSpan(0, n).ToArray();
+            => n == 0 ? Array.Empty<float>() : n == buffer.Length ? buffer : buffer.AsSpan(0, n).ToArray();
 
         public void Reset()
         {

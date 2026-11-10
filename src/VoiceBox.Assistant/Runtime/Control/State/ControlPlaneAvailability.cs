@@ -22,10 +22,7 @@ internal sealed class ControlPlaneAvailability
     }
 
     public bool IsAcceptingSignals
-        => !_runScope.IsDisposed &&
-            !_runScope.IsCancelled &&
-            !_loopHost.IsTerminated &&
-            !_loopHost.IsCompleted;
+        => !_runScope.IsDisposed && !_runScope.IsCancelled && !_loopHost.IsTerminated && !_loopHost.IsCompleted;
 
     public bool IsShuttingDown => _ingress.HasTerminalFault || _runScope.IsCancelled;
 

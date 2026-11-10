@@ -50,8 +50,7 @@ namespace VoiceBox.Core.Services.DNRService
 
                     if (drainedInput > drainBudget && outputCount < output.Length)
                     {
-                        throw new InvalidOperationException(
-                            "DNR did not release its source-backed tail within the declared delay bound.");
+                        throw new InvalidOperationException("DNR did not release its source-backed tail within the declared delay bound.");
                     }
                 }
 

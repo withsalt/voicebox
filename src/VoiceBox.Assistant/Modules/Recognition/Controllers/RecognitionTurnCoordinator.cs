@@ -22,9 +22,7 @@ namespace VoiceBox.Assistant.Modules.Recognition.Controllers;
 /// recognition-ready ledger and the supervised session tasks, and returns typed semantic plans
 /// for the control-loop router to commit instead of applying global transitions itself.
 /// </summary>
-internal sealed class RecognitionTurnCoordinator :
-    IRecognitionPreparationPort,
-    IRecognitionSessionCleanupPort
+internal sealed class RecognitionTurnCoordinator : IRecognitionPreparationPort, IRecognitionSessionCleanupPort
 {
     private readonly RecognitionModule _recognition;
     private readonly RecognitionTurnOwner _recognitionTurn;
@@ -131,9 +129,7 @@ internal sealed class RecognitionTurnCoordinator :
 
         if (snapshot.Authorization == TurnAuthorizationStatus.PendingSpeaker)
             return RecognitionCompletionGate.Park;
-        return snapshot.Authorization.IsDenied()
-            ? RecognitionCompletionGate.Drop
-            : RecognitionCompletionGate.Proceed;
+        return snapshot.Authorization.IsDenied() ? RecognitionCompletionGate.Drop : RecognitionCompletionGate.Proceed;
     }
 
     /// <summary>Parks the Kernel projection of a completed recognition until the single-talk verdict.</summary>
@@ -144,10 +140,7 @@ internal sealed class RecognitionTurnCoordinator :
         if (_parkedCompletion is { } existing && existing.TurnId != completion.TurnId)
             _logger.LogWarning("丢弃过期的单讲识别结果: turnId={TurnId}。", existing.TurnId);
         _parkedCompletion = completion;
-        _logger.LogDebug(
-            "单讲识别结果已暂存, 等待说话人裁决: turnId={TurnId}, text=\"{Text}\"。",
-            completion.TurnId,
-            completion.Text);
+        _logger.LogDebug("单讲识别结果已暂存, 等待说话人裁决: turnId={TurnId}, text=\"{Text}\"。", completion.TurnId, completion.Text);
     }
 
     public bool TryTakeParkedCompletion(long turnId, out TurnSignal completion)
@@ -167,13 +160,7 @@ internal sealed class RecognitionTurnCoordinator :
         => _parkedCompletion is { } parked && parked.TurnId == turnId;
 
     public void PrepareRecognitionSession(long turnId)
-        => Track(
-            _recognition.PrepareAsync(
-                turnId,
-                _operations.NextOperationId(),
-                _runScope.Token),
-            "recognition.start",
-            turnId);
+        => Track(_recognition.PrepareAsync(turnId, _operations.NextOperationId(), _runScope.Token), "recognition.start", turnId);
 
     public Task StartAudioPump(CancellationToken cancellationToken)
         => Track(_recognition.StartAudioPump(cancellationToken), "recognition.audio-feed-pump", ownerTurnId: null);
@@ -234,24 +221,16 @@ internal sealed class RecognitionTurnCoordinator :
 
         TakeDeferred(started.TurnId);
 
-        if (!started.IsValidationTurn &&
-            !started.RecognitionReadyWasDeferred &&
-            !kernel.Accepted)
+        if (!started.IsValidationTurn && !started.RecognitionReadyWasDeferred && !kernel.Accepted)
         {
             _recognition.ReleaseCaptureTurn(started.TurnId);
             return default;
         }
 
-        if (!_turnContexts.TryAttachAsrSession(
-                started.TurnId,
-                started.OperationId,
-                started.SessionId))
+        if (!_turnContexts.TryAttachAsrSession(started.TurnId, started.OperationId, started.SessionId))
         {
             _recognition.ReleaseCaptureTurn(started.TurnId);
-            Track(
-                _recognition.CleanupAbandonedAsrSessionAsync(started.SessionId),
-                "recognition.cleanup-untracked-session",
-                started.TurnId);
+            Track(_recognition.CleanupAbandonedAsrSessionAsync(started.SessionId), "recognition.cleanup-untracked-session", started.TurnId);
             return default;
         }
         _logger.LogDebug("ASR 会话已启动: {SessionId}", started.SessionId);
@@ -270,10 +249,7 @@ internal sealed class RecognitionTurnCoordinator :
             _bargeIn.ForgetDecisionContext(turnId);
             if ((_turnState.IsCurrentTurn(turnId) || _bargeIn.IsValidating(turnId)) && _runScope.CanOpenInput)
                 _gate.Open();
-            Track(
-                _recognition.CleanupAbandonedAsrSessionAsync(asrSessionId),
-                "recognition.cleanup-abandoned-session",
-                turnId);
+            Track(_recognition.CleanupAbandonedAsrSessionAsync(asrSessionId), "recognition.cleanup-abandoned-session", turnId);
             return default;
         }
 
@@ -285,23 +261,15 @@ internal sealed class RecognitionTurnCoordinator :
                 ?? throw new InvalidOperationException(
                     "A playback interruption turn was observed without an installed barge-in recognition outcome runner.");
             _gate.Close();
-            if (!_recognitionTurn.CommitEnterRecognizing(
-                    turnId,
-                    asrSessionId,
-                    isValidationTurn: true))
+            if (!_recognitionTurn.CommitEnterRecognizing(turnId, asrSessionId, isValidationTurn: true))
             {
-                throw new InvalidOperationException(
-                    "Interruption recognition observation could not be committed.");
+                throw new InvalidOperationException("Interruption recognition observation could not be committed.");
             }
             _bargeIn.ClearValidationPendingAudio();
             _bargeIn.ClearCandidates();
             Track(
                 Task.Run(
-                    () => recognitionOutcome.RunRecognitionOutcomeAsync(
-                        turnId,
-                        asrSessionId,
-                        speechDuration,
-                        _runScope.Token),
+                    () => recognitionOutcome.RunRecognitionOutcomeAsync(turnId, asrSessionId, speechDuration, _runScope.Token),
                     _runScope.Token),
                 "recognition.barge-in-outcome",
                 turnId);
@@ -314,21 +282,15 @@ internal sealed class RecognitionTurnCoordinator :
                 turnId,
                 asrSessionId,
                 speechDuration,
-                TurnSignal.RecognitionSessionReady(
-                    turnId,
-                    _operations.NextOperationId()));
+                TurnSignal.RecognitionSessionReady(turnId, _operations.NextOperationId()));
         }
 
         // RecognitionStarted already crossed the Kernel boundary before an endpoint that raced
         // session startup was replayed. Commit the capture owner's private transition now.
         _gate.Close();
-        if (!_recognitionTurn.CommitEnterRecognizing(
-                turnId,
-                asrSessionId,
-                isValidationTurn: false))
+        if (!_recognitionTurn.CommitEnterRecognizing(turnId, asrSessionId, isValidationTurn: false))
         {
-            throw new InvalidOperationException(
-                "Recognition observation could not be committed after session-ready acceptance.");
+            throw new InvalidOperationException("Recognition observation could not be committed after session-ready acceptance.");
         }
         _bargeIn.ClearCandidates();
 
@@ -342,10 +304,7 @@ internal sealed class RecognitionTurnCoordinator :
             !StringComparer.Ordinal.Equals(attachedSessionId, asrSessionId))
         {
             _bargeIn.ForgetDecisionContext(turnId);
-            Track(
-                _recognition.CleanupAbandonedAsrSessionAsync(asrSessionId),
-                "recognition.cleanup-abandoned-session",
-                turnId);
+            Track(_recognition.CleanupAbandonedAsrSessionAsync(asrSessionId), "recognition.cleanup-abandoned-session", turnId);
             return default;
         }
 
@@ -365,31 +324,21 @@ internal sealed class RecognitionTurnCoordinator :
         if (!kernel.Accepted)
         {
             _recognition.ReleaseCaptureTurn(plan.TurnId);
-            Track(
-                _recognition.CleanupAbandonedAsrSessionAsync(plan.SessionId),
-                "recognition.cleanup-abandoned-session",
-                plan.TurnId);
+            Track(_recognition.CleanupAbandonedAsrSessionAsync(plan.SessionId), "recognition.cleanup-abandoned-session", plan.TurnId);
             _bargeIn.ForgetDecisionContext(plan.TurnId);
             return default;
         }
 
         if (plan.Kind == RecognitionSemanticPlanKind.SpeechEnded)
         {
-            _turnContexts.TrySetRecognitionMetadata(
-                plan.TurnId,
-                rawText: null,
-                plan.SpeechDuration);
+            _turnContexts.TrySetRecognitionMetadata(plan.TurnId, rawText: null, plan.SpeechDuration);
             return default;
         }
 
         _gate.Close();
-        if (!_recognitionTurn.CommitEnterRecognizing(
-                plan.TurnId,
-                plan.SessionId,
-                isValidationTurn: false))
+        if (!_recognitionTurn.CommitEnterRecognizing(plan.TurnId, plan.SessionId, isValidationTurn: false))
         {
-            throw new InvalidOperationException(
-                "Recognition observation could not be committed after Kernel acceptance.");
+            throw new InvalidOperationException("Recognition observation could not be committed after Kernel acceptance.");
         }
         _bargeIn.ClearCandidates();
 
@@ -450,8 +399,7 @@ internal sealed class RecognitionTurnCoordinator :
         {
             if (!_bargeIn.CommitAsrStartFailure(plan.TurnId))
             {
-                throw new InvalidOperationException(
-                    "ASR-start failure observation could not be committed after Kernel acceptance.");
+                throw new InvalidOperationException("ASR-start failure observation could not be committed after Kernel acceptance.");
             }
 
             _bargeIn.CompleteDecisionContext(plan.TurnId);

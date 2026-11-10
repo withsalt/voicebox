@@ -269,8 +269,7 @@ public class ChineseOptimizationTests
     // steps (full-width, number, date) don't mask regressions here.
     private static readonly MethodInfo ConvertT2SMethod =
         typeof(TextNormalizer)
-            .GetMethod("ConvertTraditionalToSimplified",
-                BindingFlags.Static | BindingFlags.NonPublic)
+            .GetMethod("ConvertTraditionalToSimplified", BindingFlags.Static | BindingFlags.NonPublic)
         ?? throw new InvalidOperationException("ConvertTraditionalToSimplified not found");
 
     private static string ConvertTraditionalToSimplified(string text)

@@ -129,8 +129,7 @@ internal sealed class FireRedSession : AsrSession
 
     internal void CompleteWriter()
     {
-        Interlocked.CompareExchange(ref _state, (int)FireRedSessionState.Finishing,
-            (int)FireRedSessionState.Active);
+        Interlocked.CompareExchange(ref _state, (int)FireRedSessionState.Finishing, (int)FireRedSessionState.Active);
         _audioChannel.Writer.TryComplete();
     }
 

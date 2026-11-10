@@ -10,9 +10,7 @@ internal static class MetricAggregator
     {
         CaseResult[] cases = source.ToArray();
         CaseResult[] valid = cases.Where(c => c.Error is null).ToArray();
-        CaseResult[] positives = valid
-            .Where(c => c.ExpectedNearEnd && (!c.Oracle.Available || c.Oracle.Eligible))
-            .ToArray();
+        CaseResult[] positives = valid.Where(c => c.ExpectedNearEnd && (!c.Oracle.Available || c.Oracle.Eligible)).ToArray();
         CaseResult[] negatives = valid.Where(c => !c.ExpectedNearEnd).ToArray();
         int truePositive = positives.Count(c => c.TruePositive);
         int falseNegative = positives.Count(c => c.FalseNegative);
@@ -35,11 +33,7 @@ internal static class MetricAggregator
             Wilson95(truePositive, positives.Length));
         (double? precisionLower, double? precisionUpper) = ClusteredRatio95(
             valid,
-            c => c.TruePositive
-                ? (1, 1)
-                : c.FalsePositive || c.EarlyFalseTrigger
-                    ? (0, 1)
-                    : (0, 0),
+            c => c.TruePositive ? (1, 1) : c.FalsePositive || c.EarlyFalseTrigger ? (0, 1) : (0, 0),
             name + "/precision",
             Wilson95(truePositive, precisionDenominator));
         (double? specificityLower, double? specificityUpper) = ClusteredRatio95(
@@ -136,10 +130,7 @@ internal static class MetricAggregator
         {
             string callback = $"callback:{callbackGroup.Key}";
             MetricSlice callbackMetrics = Aggregate(callback, callbackGroup);
-            gates.Add(RecallGate(
-                $"{callback}/acoustic-decision-recall",
-                callbackMetrics,
-                options));
+            gates.Add(RecallGate($"{callback}/acoustic-decision-recall", callbackMetrics, options));
 
             foreach (IGrouping<string, CaseResult> stratum in callbackGroup
                          .Where(IsGradeablePositive)
@@ -147,10 +138,7 @@ internal static class MetricAggregator
                          .OrderBy(g => g.Key, StringComparer.Ordinal))
             {
                 MetricSlice stratumMetrics = Aggregate(stratum.Key, stratum);
-                gates.Add(RecallGate(
-                    $"{callback}/recall:{stratum.Key}",
-                    stratumMetrics,
-                    options));
+                gates.Add(RecallGate($"{callback}/recall:{stratum.Key}", stratumMetrics, options));
             }
 
             foreach (IGrouping<string, CaseResult> serGroup in callbackGroup
@@ -159,20 +147,11 @@ internal static class MetricAggregator
                          .OrderBy(g => g.Key, StringComparer.Ordinal))
             {
                 MetricSlice serMetrics = Aggregate(serGroup.Key, serGroup);
-                gates.Add(RecallGate(
-                    $"{callback}/recall:ser:{serGroup.Key}",
-                    serMetrics,
-                    options));
+                gates.Add(RecallGate($"{callback}/recall:ser:{serGroup.Key}", serMetrics, options));
             }
 
-            gates.Add(FalseTriggerRateGate(
-                $"{callback}/farend-false-triggers-per-hour",
-                callbackMetrics,
-                options));
-            gates.Add(LatencyGate(
-                $"{callback}/eligible-onset-to-decision-p95-ms",
-                callbackMetrics,
-                options));
+            gates.Add(FalseTriggerRateGate($"{callback}/farend-false-triggers-per-hour", callbackMetrics, options));
+            gates.Add(LatencyGate($"{callback}/eligible-onset-to-decision-p95-ms", callbackMetrics, options));
 
             if (options.Suite == EvaluationSuite.DeviceSample)
                 AddDeviceGates(gates, callback, callbackGroup, options);
@@ -203,16 +182,12 @@ internal static class MetricAggregator
         CaseResult[] cases = callbackCases.ToArray();
         foreach (string deviceClass in DatasetCatalog.ExpectedDeviceClasses)
         {
-            CaseResult[] deviceCases = cases
-                .Where(c => string.Equals(c.DeviceClass, deviceClass, StringComparison.Ordinal))
-                .ToArray();
+            CaseResult[] deviceCases = cases.Where(c => string.Equals(c.DeviceClass, deviceClass, StringComparison.Ordinal)).ToArray();
             MetricSlice metrics = Aggregate(deviceClass, deviceCases);
             double coverage = Math.Min(
                 metrics.Positive / (double)options.MinimumGatePositiveCount,
                 metrics.Negative / (double)options.MinimumGateNegativeCount);
-            bool sufficient =
-                metrics.Positive >= options.MinimumGatePositiveCount &&
-                metrics.Negative >= options.MinimumGateNegativeCount;
+            bool sufficient = metrics.Positive >= options.MinimumGatePositiveCount && metrics.Negative >= options.MinimumGateNegativeCount;
             gates.Add(new QualityGate(
                 $"{callback}/device-coverage:{deviceClass}",
                 sufficient ? GateStatus.Passed : GateStatus.Inconclusive,
@@ -226,14 +201,8 @@ internal static class MetricAggregator
             if (deviceCases.Length == 0)
                 continue;
 
-            gates.Add(RecallGate(
-                $"{callback}/device:{deviceClass}/recall",
-                metrics,
-                options));
-            gates.Add(FalseTriggerRateGate(
-                $"{callback}/device:{deviceClass}/farend-false-triggers-per-hour",
-                metrics,
-                options));
+            gates.Add(RecallGate($"{callback}/device:{deviceClass}/recall", metrics, options));
+            gates.Add(FalseTriggerRateGate($"{callback}/device:{deviceClass}/farend-false-triggers-per-hour", metrics, options));
         }
     }
 
@@ -263,9 +232,7 @@ internal static class MetricAggregator
                 $"n={metrics.Positive}, clusters={metrics.ClusterCount}.");
         }
 
-        GateStatus status = metrics.RecallLower95 >= options.MinimumRecall
-            ? GateStatus.Passed
-            : GateStatus.Inconclusive;
+        GateStatus status = metrics.RecallLower95 >= options.MinimumRecall ? GateStatus.Passed : GateStatus.Inconclusive;
         return new QualityGate(
             name,
             status,
@@ -360,9 +327,7 @@ internal static class MetricAggregator
         => denominator > 0 ? numerator / (double)denominator : null;
 
     private static bool IsGradeablePositive(CaseResult result)
-        => result.Error is null &&
-           result.ExpectedNearEnd &&
-           (!result.Oracle.Available || result.Oracle.Eligible);
+        => result.Error is null && result.ExpectedNearEnd && (!result.Oracle.Available || result.Oracle.Eligible);
 
     private static void AddBooleanSlices(
         ICollection<MetricSlice> destination,
@@ -398,10 +363,7 @@ internal static class MetricAggregator
         double z2 = ConfidenceZ95 * ConfidenceZ95;
         double denominator = 1 + z2 / n;
         double center = (p + z2 / (2 * n)) / denominator;
-        double margin =
-            ConfidenceZ95 *
-            Math.Sqrt((p * (1 - p) + z2 / (4 * n)) / n) /
-            denominator;
+        double margin = ConfidenceZ95 * Math.Sqrt((p * (1 - p) + z2 / (4 * n)) / n) / denominator;
         return (Math.Max(0, center - margin), Math.Min(1, center + margin));
     }
 
@@ -481,9 +443,7 @@ internal static class MetricAggregator
                 estimates.Add(events / hours);
         }
         estimates.Sort();
-        return estimates.Count == 0
-            ? null
-            : EmpiricalPercentile(estimates, 0.95);
+        return estimates.Count == 0 ? null : EmpiricalPercentile(estimates, 0.95);
     }
 
     private static double EmpiricalPercentile(IReadOnlyList<double> sorted, double percentile)
@@ -568,7 +528,5 @@ internal static class MetricAggregator
     }
 
     private static string Interval(double? lower, double? upper)
-        => lower.HasValue && upper.HasValue
-            ? $"[{lower.Value:P2}, {upper.Value:P2}]"
-            : "n/a";
+        => lower.HasValue && upper.HasValue ? $"[{lower.Value:P2}, {upper.Value:P2}]" : "n/a";
 }

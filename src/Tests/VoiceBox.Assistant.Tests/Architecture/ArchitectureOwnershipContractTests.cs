@@ -34,17 +34,13 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseSpeechSynthesis(services.Tts)
             .BuildComposition();
 
-        Assert.Contains(composition.Snapshot.CapabilityEdges,
-            edge => edge == "AudioFrontend:Provides:AudioCapture:0");
-        Assert.Contains(composition.Snapshot.CapabilityEdges,
-            edge => edge == "Recognition:Requires:TurnBoundary:0");
+        Assert.Contains(composition.Snapshot.CapabilityEdges, edge => edge == "AudioFrontend:Provides:AudioCapture:0");
+        Assert.Contains(composition.Snapshot.CapabilityEdges, edge => edge == "Recognition:Requires:TurnBoundary:0");
         Assert.DoesNotContain("StructuredToolUse", Enum.GetNames<AssistantCapability>());
         Assert.Contains("ResponseGeneration", Enum.GetNames<AssistantCapability>());
         Assert.Contains(composition.Snapshot.Ownership,
-            value => value.ModuleId == "AudioFrontend.Record" &&
-                value.Ownership == ResourceOwnership.Borrowed);
-        Assert.DoesNotContain(composition.RuntimePlan.Ownership,
-            value => value.ModuleId == "AudioFrontend.Adapter");
+            value => value.ModuleId == "AudioFrontend.Record" && value.Ownership == ResourceOwnership.Borrowed);
+        Assert.DoesNotContain(composition.RuntimePlan.Ownership, value => value.ModuleId == "AudioFrontend.Adapter");
 
         var record = new FakeDuplexService();
         var playback = new FakeDuplexService();
@@ -56,8 +52,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseSpeechSynthesis(services.Tts)
             .BuildComposition();
         Assert.Contains(split.RuntimePlan.Ownership,
-            value => value.ModuleId == "AudioFrontend.Adapter" &&
-                value.Ownership == ResourceOwnership.AssistantOwned);
+            value => value.ModuleId == "AudioFrontend.Adapter" && value.Ownership == ResourceOwnership.AssistantOwned);
     }
 
     [Fact]
@@ -72,9 +67,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseSpeechSynthesis(services.Tts)
             .Build();
 
-        object runtime = typeof(VoiceAssistant)
-            .GetField("_runtime", BindingFlags.Instance | BindingFlags.NonPublic)!
-            .GetValue(assistant)!;
+        object runtime = typeof(VoiceAssistant).GetField("_runtime", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(assistant)!;
         object effectRunner = RuntimeGraphProbe.RequireField(runtime, "_effects");
         var handlers = (AssistantEffectHandlers)effectRunner.GetType()
             .GetField("_handlers", BindingFlags.Instance | BindingFlags.NonPublic)!
@@ -92,9 +85,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         Assert.DoesNotContain(handlerInstances, handler => handler is null);
         Assert.DoesNotContain(handlerInstances, handler => ReferenceEquals(handler, runtime));
-        Assert.Equal(
-            handlerInstances.Length,
-            handlerInstances.Distinct(ReferenceEqualityComparer.Instance).Count());
+        Assert.Equal(handlerInstances.Length, handlerInstances.Distinct(ReferenceEqualityComparer.Instance).Count());
     }
 
     [Fact]
@@ -116,15 +107,12 @@ public sealed partial class VoiceAssistantLifecycleTests
         Type metricsSource = typeof(IAcousticProcessingMetricsSource);
 
         Assert.DoesNotContain(metricsSource, processor.GetInterfaces());
-        Assert.DoesNotContain(
-            processor.GetMethods(),
-            method => method.Name.Contains("Metric", StringComparison.Ordinal));
+        Assert.DoesNotContain(processor.GetMethods(), method => method.Name.Contains("Metric", StringComparison.Ordinal));
         Assert.False(typeof(IDisposable).IsAssignableFrom(metricsSource));
         MethodInfo method = Assert.Single(metricsSource.GetMethods());
         Assert.Equal(nameof(IAcousticProcessingMetricsSource.TryGetLatestMetrics), method.Name);
 
-        MethodInfo registration = typeof(VoiceAssistantBuilder).GetMethod(
-            nameof(VoiceAssistantBuilder.AddAcousticDiagnostics))!;
+        MethodInfo registration = typeof(VoiceAssistantBuilder).GetMethod(nameof(VoiceAssistantBuilder.AddAcousticDiagnostics))!;
         ParameterInfo parameter = Assert.Single(registration.GetParameters());
         Assert.Equal(metricsSource, parameter.ParameterType);
     }
@@ -132,9 +120,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     [Fact]
     public void Runtime_ConsumesTypedAudioAndTurnBoundaryPortsInsteadOfProviders()
     {
-        string[] fieldTypes = ShellSurface.Fields
-            .Select(static field => field.FieldType.FullName ?? field.FieldType.Name)
-            .ToArray();
+        string[] fieldTypes = ShellSurface.Fields.Select(static field => field.FieldType.FullName ?? field.FieldType.Name).ToArray();
 
         // The shell must face the semantic ports, never a concrete audio or VAD provider.
         Assert.Contains("VoiceBox.Assistant.Modules.AudioFrontend.Contracts.IAssistantAudioFrontend", fieldTypes);
@@ -173,20 +159,16 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseSpeechRecognition(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
-            .AddBargeIn(
-                new VoiceAssistantBargeInOptions(),
-                TestAcousticPathDelayEstimatorFactory.Instance)
+            .AddBargeIn(new VoiceAssistantBargeInOptions(), TestAcousticPathDelayEstimatorFactory.Instance)
             .BuildComposition();
         Assert.NotNull(withBargeIn.RuntimePlan.PlaybackBargeInDetectorFactory);
         Assert.Contains(
             withBargeIn.RuntimePlan.Ownership,
-            value => value.ModuleId == "BargeIn.Module" &&
-                value.Ownership == ResourceOwnership.AssistantOwned);
+            value => value.ModuleId == "BargeIn.Module" && value.Ownership == ResourceOwnership.AssistantOwned);
 
         // The lifecycle coordinator decides disposal from the plan, not from a type test.
         Assert.Contains(
-            typeof(AssistantRuntimeLifecycleCoordinator).GetFields(
-                BindingFlags.Instance | BindingFlags.NonPublic),
+            typeof(AssistantRuntimeLifecycleCoordinator).GetFields(BindingFlags.Instance | BindingFlags.NonPublic),
             field => field.FieldType == typeof(IReadOnlyList<ModuleOwnership>));
     }
 
@@ -200,8 +182,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Null(assembly.GetType("VoiceBox.Assistant.Modules.BargeIn.State.NearEndCaptureSession"));
 
         Type dataPlane = assembly.GetType("VoiceBox.Assistant.Modules.BargeIn.Controllers.NearEndDataPlane")!;
-        Type detector = assembly.GetType(
-            "VoiceBox.Assistant.Modules.BargeIn.RenderAware.Controllers.RenderAwarePlaybackBargeInDetector")!;
+        Type detector = assembly.GetType("VoiceBox.Assistant.Modules.BargeIn.RenderAware.Controllers.RenderAwarePlaybackBargeInDetector")!;
 
         // Timeline, endpoint, candidate, capture, confirmation, replay, ducking and effects each
         // have exactly one owner type.
@@ -298,8 +279,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     [Fact]
     public void WakeupGate_SplitsModePreRollAuthorizationAndServiceAdapter()
     {
-        Type gate = typeof(VoiceAssistant).Assembly.GetType(
-            "VoiceBox.Assistant.Modules.Wakeup.Controllers.WakeupSessionGate")!;
+        Type gate = typeof(VoiceAssistant).Assembly.GetType("VoiceBox.Assistant.Modules.Wakeup.Controllers.WakeupSessionGate")!;
         string[] fieldTypes = gate
             .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
             .Select(static field => field.FieldType.Name)
@@ -326,9 +306,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         // Hosting is co-located with the core assembly. Its diagnostics references are confined
         // to the Hosting source boundary rather than a separate assembly.
-        Assert.Contains(
-            assembly.GetReferencedAssemblies(),
-            reference => reference.Name == "System.Diagnostics.DiagnosticSource");
+        Assert.Contains(assembly.GetReferencedAssemblies(), reference => reference.Name == "System.Diagnostics.DiagnosticSource");
 
         // Every runtime log call that carries an EventId must use the structured catalog.
         // The lifecycle owner logs start/stop; the turn owner logs completion.
@@ -373,9 +351,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseSpeechSynthesis(services.Tts)
             .Build();
 
-        object runtime = typeof(VoiceAssistant)
-            .GetField("_runtime", BindingFlags.Instance | BindingFlags.NonPublic)!
-            .GetValue(assistant)!;
+        object runtime = typeof(VoiceAssistant).GetField("_runtime", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(assistant)!;
         Assert.Null(RuntimeGraphProbe.FindField(runtime, "_dataPlane"));
         Assert.Null(RuntimeGraphProbe.FindField(runtime, "_validationRunner"));
         Assert.DoesNotContain(
@@ -412,33 +388,25 @@ public sealed partial class VoiceAssistantLifecycleTests
     public void TurnObservationOwners_KeepFeatureResourcesWithTheirSoleModuleOwner()
     {
         Assembly assembly = typeof(VoiceAssistant).Assembly;
-        Type recognitionRouter = assembly.GetType(
-            "VoiceBox.Assistant.Modules.Recognition.Controllers.RecognitionTurnOwner")!;
-        Type recognitionOwner = assembly.GetType(
-            "VoiceBox.Assistant.Modules.Recognition.Controllers.RecognitionModule")!;
-        Type validationOwner = assembly.GetType(
-            "VoiceBox.Assistant.Modules.BargeIn.Controllers.BargeInValidationTurnOwner")!;
+        Type recognitionRouter = assembly.GetType("VoiceBox.Assistant.Modules.Recognition.Controllers.RecognitionTurnOwner")!;
+        Type recognitionOwner = assembly.GetType("VoiceBox.Assistant.Modules.Recognition.Controllers.RecognitionModule")!;
+        Type validationOwner = assembly.GetType("VoiceBox.Assistant.Modules.BargeIn.Controllers.BargeInValidationTurnOwner")!;
 
         Assert.NotNull(recognitionRouter);
         Assert.NotNull(recognitionOwner);
         Assert.NotNull(validationOwner);
 
-        FieldInfo[] routerFields = recognitionRouter.GetFields(
-            BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo[] routerFields = recognitionRouter.GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.DoesNotContain(routerFields, field => field.FieldType == typeof(ITurnResource));
         Assert.DoesNotContain(routerFields, field => field.FieldType == typeof(CancellationTokenSource));
-        Assert.DoesNotContain(routerFields, field =>
-            field.FieldType == typeof(List<float[]>) ||
-            field.FieldType == typeof(Queue<float[]>));
+        Assert.DoesNotContain(routerFields, field => field.FieldType == typeof(List<float[]>) || field.FieldType == typeof(Queue<float[]>));
         Assert.Contains(routerFields, field => field.FieldType.Name == "IRecognitionCaptureOwner");
 
-        FieldInfo[] recognitionFields = recognitionOwner.GetFields(
-            BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo[] recognitionFields = recognitionOwner.GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.Contains(recognitionFields, field => field.Name == "_captureByTurn");
         Assert.Contains(recognitionFields, field => field.Name == "_sessionsByTurn");
 
-        Type capturePort = assembly.GetType(
-            "VoiceBox.Assistant.Modules.Recognition.Contracts.IRecognitionCaptureOwner")!;
+        Type capturePort = assembly.GetType("VoiceBox.Assistant.Modules.Recognition.Contracts.IRecognitionCaptureOwner")!;
         Assert.DoesNotContain(
             capturePort.GetMethods().SelectMany(static method => method.GetParameters()),
             parameter => typeof(Delegate).IsAssignableFrom(parameter.ParameterType));
@@ -446,8 +414,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             capturePort.GetMethods().SelectMany(static method => method.GetParameters()),
             parameter => parameter.ParameterType.Name == "ICandidatePreRollSource");
 
-        FieldInfo[] validationFields = validationOwner.GetFields(
-            BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo[] validationFields = validationOwner.GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.Contains(validationFields, field => field.Name == "_responseCts");
         Assert.Contains(validationFields, field => field.Name == "_pendingAudio");
         Assert.DoesNotContain(validationFields, field => field.FieldType == typeof(ITurnResource));
@@ -511,15 +478,12 @@ public sealed partial class VoiceAssistantLifecycleTests
             builder.AddSpeakerVerification(services.Speaker);
         if (bargeIn)
         {
-            builder.AddBargeIn(
-                new VoiceAssistantBargeInOptions(),
-                TestAcousticPathDelayEstimatorFactory.Instance);
+            builder.AddBargeIn(new VoiceAssistantBargeInOptions(), TestAcousticPathDelayEstimatorFactory.Instance);
         }
 
         if (expectedErrorCode is not null)
         {
-            AssistantCompositionException failure =
-                Assert.Throws<AssistantCompositionException>(builder.BuildComposition);
+            AssistantCompositionException failure = Assert.Throws<AssistantCompositionException>(builder.BuildComposition);
             Assert.Equal(expectedErrorCode, failure.Code);
             Assert.Equal(0, services.Audio.StartCount);
             Assert.Equal(0, record.StartCount);
@@ -528,9 +492,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         }
 
         AssistantComposition composition = builder.BuildComposition();
-        Assert.Equal(
-            splitAudio ? "BasicSplitAudioQa" : "BasicDuplexQa",
-            composition.Snapshot.ProfileId);
+        Assert.Equal(splitAudio ? "BasicSplitAudioQa" : "BasicDuplexQa", composition.Snapshot.ProfileId);
 
         // A module appears in the lifecycle plan and the capability snapshot only when registered.
         // Online speaker verification is off unless Confirmation.Enable is set; this matrix leaves
@@ -561,12 +523,9 @@ public sealed partial class VoiceAssistantLifecycleTests
     [Fact]
     public void PublicEventEffects_AreBoundToDedicatedTypedHandler()
     {
-        Assert.Contains(ShellSurface.Fields, field =>
-            field.FieldType == typeof(AssistantRuntimePublicEventEffectHandler));
+        Assert.Contains(ShellSurface.Fields, field => field.FieldType == typeof(AssistantRuntimePublicEventEffectHandler));
 
-        Assert.DoesNotContain(
-            typeof(AssistantRuntime).GetInterfaces(),
-            type => type == typeof(IPublicEventEffectHandler));
+        Assert.DoesNotContain(typeof(AssistantRuntime).GetInterfaces(), type => type == typeof(IPublicEventEffectHandler));
 
         string source = File.ReadAllText(Path.Combine(
             FindRepositoryRoot(),
@@ -589,8 +548,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Contains("public IPublicEventEffectHandler Events { get; }", source, StringComparison.Ordinal);
         // The aggregate handler interface must stay deleted so no single object can claim every
         // capability family again.
-        Assert.Null(typeof(VoiceAssistant).Assembly.GetType(
-            "VoiceBox.Assistant.Composition.IAssistantEffectHandlerSet"));
+        Assert.Null(typeof(VoiceAssistant).Assembly.GetType("VoiceBox.Assistant.Composition.IAssistantEffectHandlerSet"));
     }
 
     [Fact]

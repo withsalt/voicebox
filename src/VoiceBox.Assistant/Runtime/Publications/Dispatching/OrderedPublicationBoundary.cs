@@ -168,9 +168,7 @@ internal sealed class OrderedPublicationBoundary : IAssistantPublicEventSink, IA
                     return;
                 progress = (_progress ??= CreateProgressSource()).Task;
             }
-            Task completed = await Task.WhenAny(progress, _worker)
-                .WaitAsync(cancellationToken)
-                .ConfigureAwait(false);
+            Task completed = await Task.WhenAny(progress, _worker).WaitAsync(cancellationToken).ConfigureAwait(false);
             if (completed == _worker)
             {
                 await _worker.ConfigureAwait(false);
@@ -235,8 +233,7 @@ internal sealed class OrderedPublicationBoundary : IAssistantPublicEventSink, IA
 
     private void ReportFault(Exception exception)
     {
-        if (_faults is null || Volatile.Read(ref _completed) != 0 ||
-            Interlocked.Exchange(ref _faultReported, 1) != 0)
+        if (_faults is null || Volatile.Read(ref _completed) != 0 || Interlocked.Exchange(ref _faultReported, 1) != 0)
         {
             return;
         }
@@ -271,8 +268,7 @@ internal sealed class OrderedPublicationBoundary : IAssistantPublicEventSink, IA
                 while (_ingress.TryRead(out PublicationEnvelope envelope))
                 {
                     if (!_pending.TryAdd(envelope.PublicationSequence, envelope.Publication))
-                        throw new InvalidOperationException(
-                            $"Duplicate PublicationSequence {envelope.PublicationSequence}.");
+                        throw new InvalidOperationException($"Duplicate PublicationSequence {envelope.PublicationSequence}.");
                 }
 
                 while (_pending.Remove(nextExpected, out AssistantPublication? publication))
@@ -291,8 +287,7 @@ internal sealed class OrderedPublicationBoundary : IAssistantPublicEventSink, IA
                     TimeSpan remaining = _gapTimeout - _timeProvider.GetElapsedTime(gapStarted);
                     if (remaining <= TimeSpan.Zero)
                     {
-                        throw new InvalidOperationException(
-                            $"PublicationSequence gap at {nextExpected}.");
+                        throw new InvalidOperationException($"PublicationSequence gap at {nextExpected}.");
                     }
 
                     // The gap watchdog stays on the injected clock, so this rare recovery
@@ -301,8 +296,7 @@ internal sealed class OrderedPublicationBoundary : IAssistantPublicEventSink, IA
                     Task deadline = Task.Delay(remaining, _timeProvider);
                     if (Task.WhenAny(data, deadline).GetAwaiter().GetResult() != data)
                     {
-                        throw new InvalidOperationException(
-                            $"PublicationSequence gap at {nextExpected}.");
+                        throw new InvalidOperationException($"PublicationSequence gap at {nextExpected}.");
                     }
                     if (!data.GetAwaiter().GetResult())
                         break;
@@ -363,10 +357,7 @@ internal sealed class OrderedPublicationBoundary : IAssistantPublicEventSink, IA
                 _publisher.RaiseAssistantReplied(value.Args);
                 break;
             default:
-                throw new ArgumentOutOfRangeException(
-                    nameof(publication),
-                    publication.GetType().Name,
-                    null);
+                throw new ArgumentOutOfRangeException(nameof(publication), publication.GetType().Name, null);
         }
     }
 

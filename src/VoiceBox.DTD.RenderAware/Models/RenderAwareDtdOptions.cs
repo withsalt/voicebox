@@ -44,22 +44,14 @@ public sealed class RenderAwareDtdOptions : OnnxExecutionOptions
 
     internal void Validate()
     {
-        if (!float.IsFinite(Threshold) ||
-            Threshold < 0f ||
-            Threshold > 1f)
+        if (!float.IsFinite(Threshold) || Threshold < 0f || Threshold > 1f)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(Threshold),
-                Threshold,
-                "Threshold must be finite and in [0, 1].");
+            throw new ArgumentOutOfRangeException(nameof(Threshold), Threshold, "Threshold must be finite and in [0, 1].");
         }
 
         if (ThreadsNum < 0)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(ThreadsNum),
-                ThreadsNum,
-                "ThreadsNum must be non-negative.");
+            throw new ArgumentOutOfRangeException(nameof(ThreadsNum), ThreadsNum, "ThreadsNum must be non-negative.");
         }
     }
 }

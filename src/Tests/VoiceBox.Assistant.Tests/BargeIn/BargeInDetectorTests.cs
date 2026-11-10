@@ -69,11 +69,7 @@ public sealed class BargeInDetectorTests
         detector.BeginCandidate(
             interruptedTurnId: 7,
             responseCts: null,
-            new BargeInConfirmationSettings(
-                minDurationMs: 100,
-                minRms: 0.5f,
-                maxCandidateMs: 120,
-                recognitionAudioLimitMs: 500));
+            new BargeInConfirmationSettings(minDurationMs: 100, minRms: 0.5f, maxCandidateMs: 120, recognitionAudioLimitMs: 500));
 
         Assert.False(detector.AddAudio(ConstantSamples(0.1f, 180)));
 
@@ -105,11 +101,7 @@ public sealed class BargeInDetectorTests
         detector.BeginCandidate(
             interruptedTurnId: 42,
             responseCts: null,
-            new BargeInConfirmationSettings(
-                minDurationMs: 100,
-                minRms: 0,
-                initialSuppressionMs: 100,
-                recognitionSuppressionMs: 100));
+            new BargeInConfirmationSettings(minDurationMs: 100, minRms: 0, initialSuppressionMs: 100, recognitionSuppressionMs: 100));
 
         Assert.False(detector.AddAudio(ConstantSamples(0.1f, 60)));
         Assert.False(detector.AddAudio(ConstantSamples(0.2f, 40)));
@@ -129,10 +121,7 @@ public sealed class BargeInDetectorTests
         detector.BeginCandidate(
             interruptedTurnId: 42,
             responseCts: null,
-            new BargeInConfirmationSettings(
-                minDurationMs: 100,
-                minRms: 0.5f,
-                recognitionAudioLimitMs: 150));
+            new BargeInConfirmationSettings(minDurationMs: 100, minRms: 0.5f, recognitionAudioLimitMs: 150));
 
         Assert.False(detector.AddAudio(ConstantSamples(0.1f, 120)));
         Assert.True(detector.AddAudio(ConstantSamples(1.0f, 100)));
@@ -152,11 +141,7 @@ public sealed class BargeInDetectorTests
         detector.BeginCandidate(
             interruptedTurnId: 42,
             responseCts: null,
-            new BargeInConfirmationSettings(
-                minDurationMs: 100,
-                minRms: 0,
-                maxCandidateMs: 1200,
-                recognitionAudioLimitMs: 1000));
+            new BargeInConfirmationSettings(minDurationMs: 100, minRms: 0, maxCandidateMs: 1200, recognitionAudioLimitMs: 1000));
 
         Assert.True(detector.AddAudio(ConstantSamples(0.1f, 100)));
         Assert.True(detector.IsConfirmationMet);

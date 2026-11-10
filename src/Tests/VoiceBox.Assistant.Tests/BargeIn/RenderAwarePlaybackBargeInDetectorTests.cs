@@ -37,21 +37,10 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
         dtd.SmoothedProbability = 0.20f;
         dtd.IsNearEndSpeech = false;
 
-        PushFrames(
-            detector,
-            21,
-            320,
-            1,
-            16000,
-            afterAecScale: 0.35f,
-            decisionEnabled: false,
-            echoLearningEnabled: true);
+        PushFrames(detector, 21, 320, 1, 16000, afterAecScale: 0.35f, decisionEnabled: false, echoLearningEnabled: true);
 
         RenderAwareBargeInSnapshot snapshot = detector.GetSnapshot();
-        BargeInDecision decision = detector.GetRecentDecision(
-            TimeSpan.FromSeconds(1),
-            minDurationMs: 20,
-            minRms: 0);
+        BargeInDecision decision = detector.GetRecentDecision(TimeSpan.FromSeconds(1), minDurationMs: 20, minRms: 0);
         Assert.True(snapshot.EchoProfileReliability >= 0.75);
         Assert.True(snapshot.TrustedEchoObservationCount >= 16);
         Assert.True(snapshot.PredictedEchoPostAecRms > 0);
@@ -101,19 +90,12 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
         options.Dtd.DecisionHistoryMs = 1000;
         var dtd = new FakeDtd();
         var estimator = new SequenceDelayEstimator();
-        using var detector = new RenderAwarePlaybackBargeInDetector(
-            options.Dtd,
-            options.RenderAlignment,
-            dtd,
-            estimator);
+        using var detector = new RenderAwarePlaybackBargeInDetector(options.Dtd, options.RenderAlignment, dtd, estimator);
 
         var primaryHint = new RenderDelayHint(12, 1, IsStable: true);
         for (int index = 0; index < 10; index++)
         {
-            detector.Push(
-                CreateFrame(320, 1, 16000, startSample: index * 320L),
-                primaryHint,
-                decisionEnabled: true);
+            detector.Push(CreateFrame(320, 1, 16000, startSample: index * 320L), primaryHint, decisionEnabled: true);
         }
 
         RenderAwareBargeInSnapshot snapshot = detector.GetSnapshot();
@@ -310,10 +292,7 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
         Assert.True(dtd.ResetCount > resetsBefore);
         Assert.True(estimator.ResetCount > delayResetsBefore);
 
-        detector.Push(
-            CreateFrame(960, 2, 48000, epoch: 3, startSample: 0),
-            primaryAecDelay: null,
-            decisionEnabled: true);
+        detector.Push(CreateFrame(960, 2, 48000, epoch: 3, startSample: 0), primaryAecDelay: null, decisionEnabled: true);
         Assert.Equal(3, detector.GetSnapshot().StreamEpoch);
     }
 
@@ -344,8 +323,7 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
 
         Assert.Throws<InvalidOperationException>(() => PushFrames(detector, 2, 320, 1, 16000));
         Assert.True(detector.GetSnapshot().IsFaulted);
-        Assert.Throws<InvalidOperationException>(() => detector.Push(
-            CreateFrame(320, 1, 16000, startSample: 640), null, true));
+        Assert.Throws<InvalidOperationException>(() => detector.Push(CreateFrame(320, 1, 16000, startSample: 640), null, true));
     }
 
     [Fact]
@@ -353,20 +331,14 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
     {
         using var pureEcho = CreateDetector(out _, out _);
         PushFrames(pureEcho, 12, 320, 1, 16000, afterAecScale: 0.02f);
-        BargeInDecision echoDecision = pureEcho.GetRecentDecision(
-            TimeSpan.FromMilliseconds(1000),
-            minDurationMs: 180,
-            minRms: 0.03f);
+        BargeInDecision echoDecision = pureEcho.GetRecentDecision(TimeSpan.FromMilliseconds(1000), minDurationMs: 180, minRms: 0.03f);
 
         Assert.Equal(BargeInAction.Continue, echoDecision.Action);
         Assert.True(echoDecision.EchoLikeFrameCount > 0);
 
         using var nearEnd = CreateDetector(out _, out _);
         PushFrames(nearEnd, 12, 320, 1, 16000, afterAecScale: 0.4f);
-        BargeInDecision nearEndDecision = nearEnd.GetRecentDecision(
-            TimeSpan.FromMilliseconds(1000),
-            minDurationMs: 180,
-            minRms: 0.03f);
+        BargeInDecision nearEndDecision = nearEnd.GetRecentDecision(TimeSpan.FromMilliseconds(1000), minDurationMs: 180, minRms: 0.03f);
 
         Assert.Equal(BargeInAction.Interrupt, nearEndDecision.Action);
         Assert.Equal(0, nearEndDecision.EchoLikeFrameCount);
@@ -378,34 +350,15 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
         using var detector = CreateDetector(out FakeDtd dtd, out _);
         ConfigurePureEcho(dtd);
         long start = 0;
-        PushContinuous(
-            detector,
-            21,
-            320,
-            1,
-            16000,
-            ref start,
-            afterAecScale: 0.60f,
-            decisionEnabled: false);
+        PushContinuous(detector, 21, 320, 1, 16000, ref start, afterAecScale: 0.60f, decisionEnabled: false);
         Assert.True(detector.GetSnapshot().EchoProfileReliability >= 0.75);
 
         dtd.Probability = 0.60f;
         dtd.SmoothedProbability = 0.60f;
         dtd.IsNearEndSpeech = true;
-        PushContinuous(
-            detector,
-            10,
-            320,
-            1,
-            16000,
-            ref start,
-            afterAecScale: 0.75f,
-            echoLearningEnabled: false);
+        PushContinuous(detector, 10, 320, 1, 16000, ref start, afterAecScale: 0.75f, echoLearningEnabled: false);
 
-        BargeInDecision decision = detector.GetRecentDecision(
-            TimeSpan.FromSeconds(1),
-            minDurationMs: 180,
-            minRms: 0.03f);
+        BargeInDecision decision = detector.GetRecentDecision(TimeSpan.FromSeconds(1), minDurationMs: 180, minRms: 0.03f);
         Assert.Equal(BargeInAction.Continue, decision.Action);
         Assert.True(decision.EchoLikeFrameCount >= 9);
         Assert.True(detector.GetSnapshot().LastObservationEchoLike);
@@ -417,34 +370,15 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
         using var detector = CreateDetector(out FakeDtd dtd, out _);
         ConfigurePureEcho(dtd);
         long start = 0;
-        PushContinuous(
-            detector,
-            21,
-            320,
-            1,
-            16000,
-            ref start,
-            afterAecScale: 0.60f,
-            decisionEnabled: false);
+        PushContinuous(detector, 21, 320, 1, 16000, ref start, afterAecScale: 0.60f, decisionEnabled: false);
         Assert.True(detector.GetSnapshot().EchoProfileReliability >= 0.75);
 
         dtd.Probability = 0.60f;
         dtd.SmoothedProbability = 0.60f;
         dtd.IsNearEndSpeech = true;
-        PushContinuous(
-            detector,
-            10,
-            320,
-            1,
-            16000,
-            ref start,
-            afterAecScale: 0.40f,
-            echoLearningEnabled: false);
+        PushContinuous(detector, 10, 320, 1, 16000, ref start, afterAecScale: 0.40f, echoLearningEnabled: false);
 
-        BargeInDecision decision = detector.GetRecentDecision(
-            TimeSpan.FromSeconds(1),
-            minDurationMs: 180,
-            minRms: 0.03f);
+        BargeInDecision decision = detector.GetRecentDecision(TimeSpan.FromSeconds(1), minDurationMs: 180, minRms: 0.03f);
         Assert.Equal(BargeInAction.Interrupt, decision.Action);
         Assert.Equal(0, decision.EchoLikeFrameCount);
     }
@@ -455,35 +389,16 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
         using var detector = CreateDetector(out FakeDtd dtd, out _);
         ConfigurePureEcho(dtd);
         long start = 0;
-        PushContinuous(
-            detector,
-            21,
-            320,
-            1,
-            16000,
-            ref start,
-            afterAecScale: 0.02f,
-            decisionEnabled: false);
+        PushContinuous(detector, 21, 320, 1, 16000, ref start, afterAecScale: 0.02f, decisionEnabled: false);
         long trustedBefore = detector.GetSnapshot().TrustedEchoObservationCount;
 
         dtd.Probability = 0.90f;
         dtd.SmoothedProbability = 0.90f;
         dtd.IsNearEndSpeech = true;
-        PushContinuous(
-            detector,
-            10,
-            320,
-            1,
-            16000,
-            ref start,
-            afterAecScale: 0.10f,
-            echoLearningEnabled: true);
+        PushContinuous(detector, 10, 320, 1, 16000, ref start, afterAecScale: 0.10f, echoLearningEnabled: true);
 
         RenderAwareBargeInSnapshot snapshot = detector.GetSnapshot();
-        BargeInDecision decision = detector.GetRecentDecision(
-            TimeSpan.FromSeconds(1),
-            minDurationMs: 180,
-            minRms: 0.03f);
+        BargeInDecision decision = detector.GetRecentDecision(TimeSpan.FromSeconds(1), minDurationMs: 180, minRms: 0.03f);
         Assert.Equal(BargeInAction.Continue, decision.Action);
         Assert.True(snapshot.AcousticPathChangeGuardActive);
         Assert.Equal(1, snapshot.AcousticPathChangeCount);
@@ -535,14 +450,12 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
         dtd.SmoothedProbability = 0.95f;
         dtd.IsNearEndSpeech = true;
         long start = 0;
-        PushContinuous(detector, 5, 320, 1, 16000, ref start,
-            afterAecScale: 0.8f, playbackGain: 1f, renderCoherent: false);
+        PushContinuous(detector, 5, 320, 1, 16000, ref start, afterAecScale: 0.8f, playbackGain: 1f, renderCoherent: false);
         BargeInDecision before = detector.GetRecentDecision(TimeSpan.FromSeconds(1), 180, 0.03f);
         Assert.Equal(BargeInAction.Continue, before.Action);
         Assert.True(before.AcceptedFrameCount > 0);
 
-        PushContinuous(detector, 7, 320, 1, 16000, ref start,
-            afterAecScale: 0.8f, playbackGain: 0.15f, renderCoherent: false);
+        PushContinuous(detector, 7, 320, 1, 16000, ref start, afterAecScale: 0.8f, playbackGain: 0.15f, renderCoherent: false);
 
         BargeInDecision after = detector.GetRecentDecision(TimeSpan.FromSeconds(1), 180, 0.03f);
         Assert.Equal(BargeInAction.Interrupt, after.Action);
@@ -558,49 +471,22 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
         using var detector = CreateDetector(out FakeDtd dtd, out _, options);
         ConfigurePureEcho(dtd);
         long start = 0;
-        PushContinuous(
-            detector,
-            3,
-            320,
-            1,
-            16000,
-            ref start,
-            afterAecScale: 0.02f,
-            playbackGain: 0.15f);
+        PushContinuous(detector, 3, 320, 1, 16000, ref start, afterAecScale: 0.02f, playbackGain: 0.15f);
 
         dtd.Probability = 0.90f;
         dtd.SmoothedProbability = 0.90f;
         dtd.IsNearEndSpeech = true;
-        PushContinuous(
-            detector,
-            10,
-            320,
-            1,
-            16000,
-            ref start,
-            afterAecScale: 0.10f,
-            playbackGain: 1f);
+        PushContinuous(detector, 10, 320, 1, 16000, ref start, afterAecScale: 0.10f, playbackGain: 1f);
 
         RenderAwareBargeInSnapshot guarded = detector.GetSnapshot();
-        BargeInDecision guardedDecision = detector.GetRecentDecision(
-            TimeSpan.FromSeconds(1),
-            minDurationMs: 180,
-            minRms: 0.03f);
+        BargeInDecision guardedDecision = detector.GetRecentDecision(TimeSpan.FromSeconds(1), minDurationMs: 180, minRms: 0.03f);
         Assert.Equal(BargeInAction.Continue, guardedDecision.Action);
         Assert.True(guarded.AcousticPathChangeGuardActive);
         Assert.Equal(1, guarded.AcousticPathChangeCount);
         Assert.Equal("playback-gain-change", guarded.LastAcousticPathChangeReason);
         Assert.InRange(guarded.AcousticPathChangeGuardRemainingMs, 299, 301);
 
-        PushContinuous(
-            detector,
-            15,
-            320,
-            1,
-            16000,
-            ref start,
-            afterAecScale: 0.10f,
-            playbackGain: 1f);
+        PushContinuous(detector, 15, 320, 1, 16000, ref start, afterAecScale: 0.10f, playbackGain: 1f);
 
         RenderAwareBargeInSnapshot completed = detector.GetSnapshot();
         Assert.False(completed.AcousticPathChangeGuardActive);
@@ -613,35 +499,16 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
         using var detector = CreateDetector(out FakeDtd dtd, out _);
         ConfigurePureEcho(dtd);
         long start = 0;
-        PushContinuous(
-            detector,
-            21,
-            320,
-            1,
-            16000,
-            ref start,
-            afterAecScale: 0.02f,
-            decisionEnabled: false);
+        PushContinuous(detector, 21, 320, 1, 16000, ref start, afterAecScale: 0.02f, decisionEnabled: false);
         long trustedBefore = detector.GetSnapshot().TrustedEchoObservationCount;
 
         dtd.Probability = 0.90f;
         dtd.SmoothedProbability = 0.90f;
         dtd.IsNearEndSpeech = true;
-        PushContinuous(
-            detector,
-            2,
-            320,
-            1,
-            16000,
-            ref start,
-            afterAecScale: 0.10f,
-            renderCoherent: false);
+        PushContinuous(detector, 2, 320, 1, 16000, ref start, afterAecScale: 0.10f, renderCoherent: false);
 
         RenderAwareBargeInSnapshot snapshot = detector.GetSnapshot();
-        BargeInDecision decision = detector.GetRecentDecision(
-            TimeSpan.FromSeconds(1),
-            minDurationMs: 20,
-            minRms: 0);
+        BargeInDecision decision = detector.GetRecentDecision(TimeSpan.FromSeconds(1), minDurationMs: 20, minRms: 0);
         Assert.True(snapshot.LastObservationPreservedNearEnd);
         Assert.InRange(snapshot.TrustedEchoObservationCount, trustedBefore, trustedBefore + 1);
         Assert.Equal(1, decision.AcceptedFrameCount);
@@ -653,15 +520,7 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
         using var detector = CreateDetector(out FakeDtd dtd, out _);
         ConfigurePureEcho(dtd);
 
-        PushFrames(
-            detector,
-            21,
-            320,
-            1,
-            16000,
-            afterAecScale: 0.35f,
-            decisionEnabled: false,
-            echoLearningEnabled: false);
+        PushFrames(detector, 21, 320, 1, 16000, afterAecScale: 0.35f, decisionEnabled: false, echoLearningEnabled: false);
 
         RenderAwareBargeInSnapshot snapshot = detector.GetSnapshot();
         Assert.Equal(0, snapshot.TrustedEchoObservationCount);
@@ -674,27 +533,10 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
         using var detector = CreateDetector(out FakeDtd dtd, out _);
         ConfigurePureEcho(dtd);
         long start = 0;
-        PushContinuous(
-            detector,
-            21,
-            320,
-            1,
-            16000,
-            ref start,
-            afterAecScale: 0.35f,
-            decisionEnabled: false);
+        PushContinuous(detector, 21, 320, 1, 16000, ref start, afterAecScale: 0.35f, decisionEnabled: false);
         Assert.True(detector.GetSnapshot().TrustedEchoObservationCount > 0);
 
-        PushContinuous(
-            detector,
-            1,
-            320,
-            1,
-            16000,
-            ref start,
-            RenderTimelineStatus.Gap,
-            afterAecScale: 0.35f,
-            decisionEnabled: false);
+        PushContinuous(detector, 1, 320, 1, 16000, ref start, RenderTimelineStatus.Gap, afterAecScale: 0.35f, decisionEnabled: false);
 
         RenderAwareBargeInSnapshot snapshot = detector.GetSnapshot();
         Assert.Equal(0, snapshot.TrustedEchoObservationCount);
@@ -706,23 +548,11 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
     {
         using var detector = CreateDetector(out _, out _);
 
-        detector.Push(
-            CreateFrame(320, 1, 16000, startSample: 0, afterAecScale: 1f),
-            primaryAecDelay: null,
-            decisionEnabled: true);
-        detector.Push(
-            CreateFrame(320, 1, 16000, startSample: 320, afterAecScale: 0.02f),
-            primaryAecDelay: null,
-            decisionEnabled: true);
-        detector.Push(
-            CreateFrame(320, 1, 16000, startSample: 640, afterAecScale: 0.02f),
-            primaryAecDelay: null,
-            decisionEnabled: true);
+        detector.Push(CreateFrame(320, 1, 16000, startSample: 0, afterAecScale: 1f), primaryAecDelay: null, decisionEnabled: true);
+        detector.Push(CreateFrame(320, 1, 16000, startSample: 320, afterAecScale: 0.02f), primaryAecDelay: null, decisionEnabled: true);
+        detector.Push(CreateFrame(320, 1, 16000, startSample: 640, afterAecScale: 0.02f), primaryAecDelay: null, decisionEnabled: true);
 
-        BargeInDecision decision = detector.GetRecentDecision(
-            TimeSpan.FromSeconds(1),
-            minDurationMs: 20,
-            minRms: 0.03f);
+        BargeInDecision decision = detector.GetRecentDecision(TimeSpan.FromSeconds(1), minDurationMs: 20, minRms: 0.03f);
 
         Assert.Equal(1, decision.FrameCount);
         Assert.Equal(1, decision.EchoLikeFrameCount);
@@ -761,11 +591,7 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
         estimator = new FakeDelayEstimator();
         options ??= new VoiceAssistantBargeInOptions();
         options.Dtd.DecisionHistoryMs = 1000;
-        return new RenderAwarePlaybackBargeInDetector(
-            options.Dtd,
-            options.RenderAlignment,
-            dtd,
-            estimator);
+        return new RenderAwarePlaybackBargeInDetector(options.Dtd, options.RenderAlignment, dtd, estimator);
     }
 
     private static void PushFrames(
@@ -850,12 +676,8 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
         float[] afterAec = new float[length];
         for (int i = 0; i < length; i++)
         {
-            microphone[i] = renderCoherent
-                ? 0.2f
-                : 0.2f * MathF.Sin(2f * MathF.PI * 317f * (startSample + i) / sampleRate);
-            render[i] = renderCoherent
-                ? 0.05f
-                : 0.05f * MathF.Sin(2f * MathF.PI * 971f * (startSample + i) / sampleRate);
+            microphone[i] = renderCoherent ? 0.2f : 0.2f * MathF.Sin(2f * MathF.PI * 317f * (startSample + i) / sampleRate);
+            render[i] = renderCoherent ? 0.05f : 0.05f * MathF.Sin(2f * MathF.PI * 971f * (startSample + i) / sampleRate);
             afterAec[i] = microphone[i] * afterAecScale;
         }
 
@@ -941,11 +763,7 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
             _calls++;
             return _calls < 4
                 ? default
-                : new RenderDelayEstimate(
-                    HasEstimate: true,
-                    DelaySamples: 2880,
-                    Confidence: 0.9,
-                    IsCorrelationFallback: true);
+                : new RenderDelayEstimate(HasEstimate: true, DelaySamples: 2880, Confidence: 0.9, IsCorrelationFallback: true);
         }
 
         public void Reset() => _calls = 0;
@@ -972,11 +790,7 @@ public sealed class RenderAwarePlaybackBargeInDetectorTests
             _calls++;
             return _calls <= 2
                 ? new RenderDelayEstimate(true, 0, 0.95, IsRefined: true)
-                : new RenderDelayEstimate(
-                    true,
-                    640,
-                    0.90,
-                    IsCorrelationFallback: true);
+                : new RenderDelayEstimate(true, 640, 0.90, IsCorrelationFallback: true);
         }
 
         public void Reset() => _calls = 0;

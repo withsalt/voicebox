@@ -19,14 +19,12 @@ namespace VoiceBox.TTS.Kokoro
             {
                 services.AddService<IStreamTTSService, KokoroTTSService>(serviceName).Configure(configure);
                 services.AddService<ITTSService>(sc =>
-                    sc.AddKeyedSingleton<ITTSService>(serviceName, (sp, _) =>
-                        sp.GetRequiredKeyedService<IStreamTTSService>(serviceName)));
+                    sc.AddKeyedSingleton<ITTSService>(serviceName, (sp, _) => sp.GetRequiredKeyedService<IStreamTTSService>(serviceName)));
             }
             else
             {
                 services.AddService<IStreamTTSService, KokoroTTSService>().Configure(configure);
-                services.AddService<ITTSService>(sc =>
-                    sc.TryAddSingleton<ITTSService>(sp => sp.GetRequiredService<IStreamTTSService>()));
+                services.AddService<ITTSService>(sc => sc.TryAddSingleton<ITTSService>(sp => sp.GetRequiredService<IStreamTTSService>()));
             }
             return services;
         }

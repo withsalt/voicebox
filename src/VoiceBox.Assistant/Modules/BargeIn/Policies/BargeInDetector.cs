@@ -221,9 +221,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Policies
 
         private long SamplesFromMilliseconds(int milliseconds)
         {
-            return _sampleRate > 0 && _channels > 0
-                ? (long)milliseconds * _sampleRate * _channels / 1000
-                : 0;
+            return _sampleRate > 0 && _channels > 0 ? (long)milliseconds * _sampleRate * _channels / 1000 : 0;
         }
 
         private void AddPendingAudio(ReadOnlySpan<float> audio, bool trimToRecentLimit)

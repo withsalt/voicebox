@@ -28,9 +28,7 @@ internal sealed class SpeakableSentenceQueue
             return;
 
         foreach (string sentence in _splitter.Push(speakable))
-            await _sentences.Writer.WriteAsync(
-                new SentenceItem(sentence, Completion: null),
-                cancellationToken).ConfigureAwait(false);
+            await _sentences.Writer.WriteAsync(new SentenceItem(sentence, Completion: null), cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask CompleteAsync(CancellationToken cancellationToken)
@@ -44,17 +42,13 @@ internal sealed class SpeakableSentenceQueue
         string? tail = _splitter.Flush();
         if (!string.IsNullOrWhiteSpace(tail))
         {
-            await _sentences.Writer.WriteAsync(
-                new SentenceItem(tail, completion),
-                cancellationToken).ConfigureAwait(false);
+            await _sentences.Writer.WriteAsync(new SentenceItem(tail, completion), cancellationToken).ConfigureAwait(false);
             return;
         }
 
         if (completion is not null)
         {
-            await _sentences.Writer.WriteAsync(
-                new SentenceItem(Text: null, completion),
-                cancellationToken).ConfigureAwait(false);
+            await _sentences.Writer.WriteAsync(new SentenceItem(Text: null, completion), cancellationToken).ConfigureAwait(false);
         }
     }
 

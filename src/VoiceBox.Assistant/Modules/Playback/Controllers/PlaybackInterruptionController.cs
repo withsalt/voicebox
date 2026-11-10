@@ -14,10 +14,7 @@ namespace VoiceBox.Assistant.Modules.Playback.Controllers
     /// belongs to the expected owner turn. There is no fallback to an unscoped
     /// <c>ClearQueue()</c>. Temporary gain changes also go through the logical playback owner.
     /// </summary>
-    internal sealed class PlaybackInterruptionController :
-        IActiveNearEndPlaybackPort,
-        IPlaybackInterruptionPort,
-        IPlaybackActivityView
+    internal sealed class PlaybackInterruptionController : IActiveNearEndPlaybackPort, IPlaybackInterruptionPort, IPlaybackActivityView
     {
         private readonly IAssistantAudioOutput _audio;
         private readonly PlaybackStartupGuard _startupGuard;

@@ -53,10 +53,7 @@ public sealed class ToolPolicyTests
 
         await using IConversationSession session = new ConversationBuilder(llm)
             .UseOptions(new LlmConversationOptions())
-            .UseTools(tools => tools
-                .UseOptions(new ConversationToolOptions { MaxParallelToolCalls = 2 })
-                .AddTool(first)
-                .AddTool(second))
+            .UseTools(tools => tools.UseOptions(new ConversationToolOptions { MaxParallelToolCalls = 2 }).AddTool(first).AddTool(second))
             .Build();
         await ((IConversationLifecycle)session).StartAsync();
         try
@@ -95,9 +92,7 @@ public sealed class ToolPolicyTests
         };
         llm.ToolTurnScript = (call, request) => call switch
         {
-            1 => Events(
-                new LlmToolCallEvent("c1", OnlyToolName(request), "{}"),
-                new LlmTurnCompletedEvent()),
+            1 => Events(new LlmToolCallEvent("c1", OnlyToolName(request), "{}"), new LlmTurnCompletedEvent()),
             2 => Events(new LlmTurnTextDelta("完成"), new LlmTurnCompletedEvent()),
             _ => throw new InvalidOperationException("unexpected round"),
         };
@@ -151,8 +146,7 @@ public sealed class ToolPolicyTests
         {
             await ConversationEvents.CollectAsync(session.StreamAsync(Request("重试")));
             Assert.Equal(2, tool.ExecuteCount);
-            ChatMessage result = Assert.Single(
-                llm.Prompts[1], message => message.Role == ChatRole.Tool);
+            ChatMessage result = Assert.Single(llm.Prompts[1], message => message.Role == ChatRole.Tool);
             string json = ((ToolResultContent)Assert.Single(result.Content)).ResultJson;
             Assert.Contains("recovered", json, StringComparison.Ordinal);
             Assert.DoesNotContain("transient", json, StringComparison.Ordinal);
@@ -175,9 +169,7 @@ public sealed class ToolPolicyTests
             _ => throw new InvalidOperationException("unexpected round"),
         };
 
-        await using IConversationSession session = new ConversationBuilder(llm)
-            .UseTools(tools => tools.AddTool(tool))
-            .Build();
+        await using IConversationSession session = new ConversationBuilder(llm).UseTools(tools => tools.AddTool(tool)).Build();
         await ((IConversationLifecycle)session).StartAsync();
         try
         {
@@ -197,10 +189,7 @@ public sealed class ToolPolicyTests
     public async Task UnknownOutcomeIsNeverReplayedByTheModel()
     {
         var llm = new RecordingLlmService();
-        var provider = new StaticToolProvider(
-            "remote",
-            ConversationToolRisk.SideEffecting,
-            ConversationToolResultKind.UnknownOutcome);
+        var provider = new StaticToolProvider("remote", ConversationToolRisk.SideEffecting, ConversationToolResultKind.UnknownOutcome);
         llm.ToolTurnScript = (call, request) => call switch
         {
             1 => Events(new LlmToolCallEvent("c1", OnlyToolName(request), "{\"x\":1}"), new LlmTurnCompletedEvent()),
@@ -210,9 +199,7 @@ public sealed class ToolPolicyTests
         };
 
         await using IConversationSession session = new ConversationBuilder(llm)
-            .UseTools(tools => tools
-                .UseApprovalPolicy(new AllowAllPolicy())
-                .AddToolProvider(provider))
+            .UseTools(tools => tools.UseApprovalPolicy(new AllowAllPolicy()).AddToolProvider(provider))
             .Build();
         await ((IConversationLifecycle)session).StartAsync();
         try
@@ -222,12 +209,10 @@ public sealed class ToolPolicyTests
             ChatMessage[] secondRound = llm.Prompts[1];
             Assert.Contains(secondRound,
                 message => message.Content.OfType<ToolResultContent>()
-                    .Any(result => result.ResultJson.Contains(
-                        "UnknownOutcome", StringComparison.Ordinal)));
+                    .Any(result => result.ResultJson.Contains("UnknownOutcome", StringComparison.Ordinal)));
             Assert.Contains(llm.Prompts[2],
                 message => message.Content.OfType<ToolResultContent>()
-                    .Any(result => result.ResultJson.Contains(
-                        "retry_blocked_after_unknown_outcome", StringComparison.Ordinal)));
+                    .Any(result => result.ResultJson.Contains("retry_blocked_after_unknown_outcome", StringComparison.Ordinal)));
         }
         finally
         {
@@ -269,27 +254,19 @@ public sealed class ToolPolicyTests
     [Fact]
     public void ToolOptionsRejectOutOfRangeValues()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new ConversationToolOptions { ToolTranscriptRetentionTurns = -1 }.Clone());
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new ConversationToolOptions { MaxPersistedToolResultBytes = 0 }.Clone());
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new ConversationToolOptions { MaxParallelToolCalls = 0 }.Clone());
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new ConversationToolOptions { MaxToolRetryAttempts = -1 }.Clone());
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new ConversationToolOptions { ToolRetryBaseDelayMs = -1 }.Clone());
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new ConversationToolOptions { MaxToolRetryBudgetMs = -1 }.Clone());
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ConversationToolOptions { ToolTranscriptRetentionTurns = -1 }.Clone());
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ConversationToolOptions { MaxPersistedToolResultBytes = 0 }.Clone());
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ConversationToolOptions { MaxParallelToolCalls = 0 }.Clone());
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ConversationToolOptions { MaxToolRetryAttempts = -1 }.Clone());
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ConversationToolOptions { ToolRetryBaseDelayMs = -1 }.Clone());
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ConversationToolOptions { MaxToolRetryBudgetMs = -1 }.Clone());
     }
 
     [Fact]
     public void LlmConversationOptionsRejectInvalidValues()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new LlmConversationOptions { MaxHistoryTurns = 0 }.Clone());
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new LlmConversationOptions { MaxResponseTokens = 0 }.Clone());
+        Assert.Throws<ArgumentOutOfRangeException>(() => new LlmConversationOptions { MaxHistoryTurns = 0 }.Clone());
+        Assert.Throws<ArgumentOutOfRangeException>(() => new LlmConversationOptions { MaxResponseTokens = 0 }.Clone());
     }
 
     [Fact]
@@ -298,8 +275,7 @@ public sealed class ToolPolicyTests
         var llm = new RecordingLlmService();
         Assert.Throws<ArgumentException>(() =>
             new ConversationBuilder(llm)
-                .UseTools(tools => tools.AddToolProvider(
-                    new AliasProvider("local")))
+                .UseTools(tools => tools.AddToolProvider(new AliasProvider("local")))
                 .Build());
     }
 
@@ -317,9 +293,7 @@ public sealed class ToolPolicyTests
                 .Build());
     }
 
-    private sealed class AliasProvider(string alias) :
-        IConversationToolProvider,
-        IConversationToolProviderMetadata
+    private sealed class AliasProvider(string alias) : IConversationToolProvider, IConversationToolProviderMetadata
     {
         public IReadOnlyList<string> ServerAliases { get; } = [alias];
 
@@ -327,8 +301,7 @@ public sealed class ToolPolicyTests
             => Task.CompletedTask;
 
         public ValueTask<IReadOnlyList<ConversationToolDefinition>> GetToolsAsync(CancellationToken cancellationToken = default)
-            => ValueTask.FromResult<IReadOnlyList<ConversationToolDefinition>>(
-                Array.Empty<ConversationToolDefinition>());
+            => ValueTask.FromResult<IReadOnlyList<ConversationToolDefinition>>(Array.Empty<ConversationToolDefinition>());
 
         public ValueTask<ConversationToolResult> InvokeAsync(ConversationToolCall call, CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
@@ -367,9 +340,7 @@ public sealed class ToolPolicyTests
             CancellationToken cancellationToken)
         {
             ExecuteCount++;
-            return OnExecute is null
-                ? ValueTask.FromResult(ConversationToolExecutionResult.Success("ok"))
-                : OnExecute(cancellationToken);
+            return OnExecute is null ? ValueTask.FromResult(ConversationToolExecutionResult.Success("ok")) : OnExecute(cancellationToken);
         }
 
         public void Dispose()
@@ -413,10 +384,7 @@ public sealed class ToolPolicyTests
         public ValueTask<ConversationToolResult> InvokeAsync(ConversationToolCall call, CancellationToken cancellationToken = default)
         {
             Interlocked.Increment(ref _invokeCount);
-            return ValueTask.FromResult(new ConversationToolResult(
-                call.CallId,
-                resultKind,
-                ErrorCode: "unknown"));
+            return ValueTask.FromResult(new ConversationToolResult(call.CallId, resultKind, ErrorCode: "unknown"));
         }
 
         public Task StopAsync() => Task.CompletedTask;

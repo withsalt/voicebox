@@ -56,8 +56,7 @@ internal static class AcousticSceneRenderer
         // function of SER. A fixed absolute threshold (BargeIn.MinRms, 0.03) then cut in below
         // 0 dB SER, so the low-SER end of the sweep measured whether the near-end signal cleared a
         // level floor rather than whether the detector could separate two overlapping talkers.
-        double echoActiveTarget =
-            NearEndActiveSpeechLevel / Math.Pow(10, testCase.SignalToEchoRatioDb / 20);
+        double echoActiveTarget = NearEndActiveSpeechLevel / Math.Pow(10, testCase.SignalToEchoRatioDb / 20);
 
         // Loudspeaker drive level and echo return loss.
         //
@@ -76,19 +75,11 @@ internal static class AcousticSceneRenderer
         double speakerActiveTarget = testCase.EchoReturnLossDb is double pinnedEchoReturnLossDb
             ? echoActiveTarget * Math.Pow(10, pinnedEchoReturnLossDb / 20)
             : SpeakerActiveDriveLevel;
-        double echoReturnLossDb = echoActiveTarget > 1e-12
-            ? 20 * Math.Log10(speakerActiveTarget / echoActiveTarget)
-            : 0;
-        double renderActiveLevel = OracleActivityAnalyzer.ActiveSpeechLevel(
-            nominalRender,
-            SampleRate);
-        double speakerGain = renderActiveLevel > 1e-9
-            ? speakerActiveTarget / renderActiveLevel
-            : 1;
+        double echoReturnLossDb = echoActiveTarget > 1e-12 ? 20 * Math.Log10(speakerActiveTarget / echoActiveTarget) : 0;
+        double renderActiveLevel = OracleActivityAnalyzer.ActiveSpeechLevel(nominalRender, SampleRate);
+        double speakerGain = renderActiveLevel > 1e-9 ? speakerActiveTarget / renderActiveLevel : 1;
 
-        float[] nominalSpeaker = ApplyClockDrift(
-            nominalRender,
-            testCase.ClockDriftPpm);
+        float[] nominalSpeaker = ApplyClockDrift(nominalRender, testCase.ClockDriftPpm);
         for (int i = 0; i < nominalSpeaker.Length; i++)
             nominalSpeaker[i] = (float)(nominalSpeaker[i] * speakerGain);
         if (testCase.FarEndNonlinear)
@@ -98,9 +89,7 @@ internal static class AcousticSceneRenderer
         // is produced through the same speaker-gain-then-nonlinearity path the realtime scene uses,
         // so the calibration remains valid after tanh has compressed the loud cases.
         float[] nominalEcho = Convolve(nominalSpeaker, echoImpulse);
-        double nominalEchoActive = OracleActivityAnalyzer.ActiveSpeechLevel(
-            nominalEcho,
-            SampleRate);
+        double nominalEchoActive = OracleActivityAnalyzer.ActiveSpeechLevel(nominalEcho, SampleRate);
         if (nominalEchoActive > 1e-9)
         {
             double echoScale = echoActiveTarget / nominalEchoActive;
@@ -116,15 +105,11 @@ internal static class AcousticSceneRenderer
             float[] nearImpulse = nearRir is null ? [1] : PrepareImpulse(nearRir);
             float[] reverberantNear = Convolve(nearEnd, nearImpulse);
             ScaleToActiveSpeechLevel(reverberantNear, NearEndActiveSpeechLevel);
-            nearActiveLevel = OracleActivityAnalyzer.ActiveSpeechLevel(
-                reverberantNear,
-                SampleRate);
+            nearActiveLevel = OracleActivityAnalyzer.ActiveSpeechLevel(reverberantNear, SampleRate);
             nearTrack = Delay(reverberantNear, onset);
         }
 
-        int totalSamples = Math.Max(
-            checked(nominalRender.Length + echoImpulse.Length),
-            nearTrack.Length);
+        int totalSamples = Math.Max(checked(nominalRender.Length + echoImpulse.Length), nearTrack.Length);
         totalSamples = checked(totalSamples + TailSamples);
         float[] noiseTrack = [];
         if (noise is { Length: > 0 })
@@ -141,17 +126,14 @@ internal static class AcousticSceneRenderer
                 if (noiseImpulse.Length > 1)
                 {
                     float[] reverberantNoise = Convolve(noiseTrack, noiseImpulse);
-                    noiseTrack = reverberantNoise.Length >= totalSamples
-                        ? reverberantNoise[..totalSamples]
-                        : reverberantNoise;
+                    noiseTrack = reverberantNoise.Length >= totalSamples ? reverberantNoise[..totalSamples] : reverberantNoise;
                 }
             }
 
             // SNR is referenced to the fixed near-end anchor rather than to the realized near-end
             // track. Referencing the track would drag the noise level along with SER and make SNR a
             // second, hidden function of SER.
-            double desiredNoiseRms =
-                NearEndActiveSpeechLevel / Math.Pow(10, testCase.SignalToNoiseRatioDb / 20);
+            double desiredNoiseRms = NearEndActiveSpeechLevel / Math.Pow(10, testCase.SignalToNoiseRatioDb / 20);
             ScaleToRms(noiseTrack, desiredNoiseRms);
         }
 
@@ -161,12 +143,7 @@ internal static class AcousticSceneRenderer
         // later by however much leading silence the corpus recording carries, and that offset was
         // previously being charged to the product as detection latency.
         OracleActivity nearActivity = nearTrack.Length > 0
-            ? OracleActivityAnalyzer.Analyze(
-                nearTrack,
-                scale: 1,
-                SampleRate,
-                startupGuardMs,
-                minimumSpeechMs)
+            ? OracleActivityAnalyzer.Analyze(nearTrack, scale: 1, SampleRate, startupGuardMs, minimumSpeechMs)
             : OracleActivity.Unavailable;
 
         return new RealtimeScene(
@@ -245,8 +222,7 @@ internal static class AcousticSceneRenderer
         /// First sample at which near-end speech energy is actually present in the microphone
         /// signal. Firing before this is a genuine false trigger; -1 when there is no near-end.
         /// </summary>
-        public long NearEndSpeechOnsetSample =>
-            NearEndActivity.Available ? NearEndActivity.FirstSpeechSample : -1;
+        public long NearEndSpeechOnsetSample => NearEndActivity.Available ? NearEndActivity.FirstSpeechSample : -1;
 
         /// <summary>
         /// Earliest sample at which the product is permitted to report a barge-in: the first point
@@ -268,17 +244,13 @@ internal static class AcousticSceneRenderer
         /// Fraction of microphone samples that hit the +/-0.98 clip. Reported so that a loud-echo
         /// case cannot silently become a clipping experiment.
         /// </summary>
-        public double ClippedSampleRatio =>
-            _renderedSamples > 0 ? _clippedSamples / (double)_renderedSamples : 0;
+        public double ClippedSampleRatio => _renderedSamples > 0 ? _clippedSamples / (double)_renderedSamples : 0;
 
         public void Process(int offset, ReadOnlySpan<float> render, Span<float> microphone, Span<float> echo)
         {
-            if (render.Length != CallbackSamples ||
-                microphone.Length != CallbackSamples ||
-                echo.Length != CallbackSamples)
+            if (render.Length != CallbackSamples || microphone.Length != CallbackSamples || echo.Length != CallbackSamples)
             {
-                throw new ArgumentException(
-                    "Realtime scene buffers must match the configured callback size.");
+                throw new ArgumentException("Realtime scene buffers must match the configured callback size.");
             }
 
             for (int i = 0; i < render.Length; i++)
@@ -286,8 +258,7 @@ internal static class AcousticSceneRenderer
             var speaker = new float[CallbackSamples];
             for (int i = 0; i < speaker.Length; i++)
             {
-                double sourcePosition =
-                    (_outputSamplePosition + i - DriftLookaheadSamples) * _clockRatio;
+                double sourcePosition = (_outputSamplePosition + i - DriftLookaheadSamples) * _clockRatio;
                 int left = (int)Math.Floor(sourcePosition);
                 float sample;
                 if (left < 0 || left >= _renderHistory.Count)
@@ -347,9 +318,7 @@ internal static class AcousticSceneRenderer
             _fftSize = 1;
             while (_fftSize < checked(blockSize * 2))
                 _fftSize = checked(_fftSize << 1);
-            int partitionCount = Math.Max(
-                1,
-                (impulse.Length + blockSize - 1) / blockSize);
+            int partitionCount = Math.Max(1, (impulse.Length + blockSize - 1) / blockSize);
             _impulsePartitions = new Complex[partitionCount][];
             _inputHistory = new Complex[partitionCount][];
             _overlap = new float[blockSize];

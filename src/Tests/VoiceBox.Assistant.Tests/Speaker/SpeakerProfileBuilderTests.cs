@@ -134,7 +134,6 @@ public sealed class SpeakerProfileBuilderTests
             var embedding = new float[8];
             embedding[0] = (float)Math.Cos(radians);
             embedding[1] = (float)Math.Sin(radians);
-            return new SpeakerEnrollmentSegmentEmbedding(
-                condition, index, embedding, [embedding], SpeakerEnrollmentSegmentQuality.Empty);
+            return new SpeakerEnrollmentSegmentEmbedding(condition, index, embedding, [embedding], SpeakerEnrollmentSegmentQuality.Empty);
         }).ToArray();
 }

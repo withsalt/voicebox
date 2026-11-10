@@ -223,8 +223,7 @@ internal sealed class AssistantRuntimeLifecycleCoordinator
             case AssistantLifecycleParticipant.ResponseGeneration:
                 if (_conversation is not IConversationLifecycle conversationLifecycle)
                 {
-                    throw new InvalidOperationException(
-                        "The conversation session does not implement its lifecycle contract.");
+                    throw new InvalidOperationException("The conversation session does not implement its lifecycle contract.");
                 }
                 await conversationLifecycle.StartAsync(cancellationToken).ConfigureAwait(false);
                 break;

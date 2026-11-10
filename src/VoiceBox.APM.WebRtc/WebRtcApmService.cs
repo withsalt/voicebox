@@ -20,9 +20,7 @@ namespace VoiceBox.APM.WebRtc
     /// <para>当前仅支持单声道。<see cref="Process"/> 须在单一(实时)线程调用，不应与 <see cref="Reset"/>/
     /// <see cref="Dispose"/> 并发。<see cref="TryGetStats"/> 可跨线程调用(APM 内部加锁)。</para>
     /// </summary>
-    public sealed class WebRtcApmService :
-        IAcousticEchoCancellationService,
-        IAcousticProcessingMetricsSource
+    public sealed class WebRtcApmService : IAcousticEchoCancellationService, IAcousticProcessingMetricsSource
     {
         private readonly uint _sampleRate;
         private readonly uint _channels;
@@ -313,8 +311,7 @@ namespace VoiceBox.APM.WebRtc
             string detail = rc == ApmInterop.ErrModel
                 ? "The TFLite model is incompatible with this libwebrtc build or failed estimator validation."
                 : "See native status codes in apm_shim.h.";
-            throw new InvalidOperationException(
-                $"Failed to create WebRTC APM during {operation} (rc={rc}). {detail}");
+            throw new InvalidOperationException($"Failed to create WebRTC APM during {operation} (rc={rc}). {detail}");
         }
 
         private void Dispose(bool disposing)

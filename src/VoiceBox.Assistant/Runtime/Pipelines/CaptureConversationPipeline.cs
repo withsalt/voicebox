@@ -51,11 +51,9 @@ internal sealed class CaptureConversationPipeline : IProcessedCaptureFrameSink
         _aecMetrics = aecMetrics ?? throw new ArgumentNullException(nameof(aecMetrics));
         _turns = turns ?? throw new ArgumentNullException(nameof(turns));
         _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
-        _playbackStartupGuard = playbackStartupGuard
-            ?? throw new ArgumentNullException(nameof(playbackStartupGuard));
+        _playbackStartupGuard = playbackStartupGuard ?? throw new ArgumentNullException(nameof(playbackStartupGuard));
         _wakeupDecisions = wakeupDecisions ?? throw new ArgumentNullException(nameof(wakeupDecisions));
-        _wakeupReplayAuthorization = wakeupReplayAuthorization
-            ?? throw new ArgumentNullException(nameof(wakeupReplayAuthorization));
+        _wakeupReplayAuthorization = wakeupReplayAuthorization ?? throw new ArgumentNullException(nameof(wakeupReplayAuthorization));
         _nearEnd = nearEnd ?? throw new ArgumentNullException(nameof(nearEnd));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }

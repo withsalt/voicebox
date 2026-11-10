@@ -46,8 +46,7 @@ internal sealed class AssistantRuntimeHostSurface
     public AssistantState State
         => _lifecycle.State is AssistantRuntimeLifecycleState.Stopped or AssistantRuntimeLifecycleState.Disposed
             ? AssistantState.Stopped
-            : _turnState.ConversationState == AssistantState.Idle &&
-              _speechBoundary.HasPendingListeningProjection
+            : _turnState.ConversationState == AssistantState.Idle && _speechBoundary.HasPendingListeningProjection
                 ? AssistantState.Listening
                 : _turnState.ConversationState;
 

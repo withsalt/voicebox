@@ -21,18 +21,15 @@ public sealed class SpeakerVerificationPolicyTests
             SpeakerVerificationPolicy.Create(speaker, options, audioSampleRate: 16000, audioChannels: 2, all));
 
         options.Confirmation.Threshold = 1.5f;
-        Assert.Throws<InvalidOperationException>(() =>
-            SpeakerVerificationPolicy.Create(speaker, options, 16000, 1, all));
+        Assert.Throws<InvalidOperationException>(() => SpeakerVerificationPolicy.Create(speaker, options, 16000, 1, all));
 
         options.Confirmation.Threshold = 0.5f;
         options.Confirmation.HighConfidenceThreshold = 0.4f;
-        Assert.Throws<InvalidOperationException>(() =>
-            SpeakerVerificationPolicy.Create(speaker, options, 16000, 1, all));
+        Assert.Throws<InvalidOperationException>(() => SpeakerVerificationPolicy.Create(speaker, options, 16000, 1, all));
 
         options.Confirmation.HighConfidenceThreshold = null;
         options.Confirmation.IndeterminateScoreMargin = 3f;
-        Assert.Throws<InvalidOperationException>(() =>
-            SpeakerVerificationPolicy.Create(speaker, options, 16000, 1, all));
+        Assert.Throws<InvalidOperationException>(() => SpeakerVerificationPolicy.Create(speaker, options, 16000, 1, all));
     }
 
     [Fact]

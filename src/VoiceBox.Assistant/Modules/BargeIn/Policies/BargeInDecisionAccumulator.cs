@@ -148,23 +148,15 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Policies
                     hasDiscontinuity |= frame.HasDiscontinuity;
                 }
 
-                bool accepted =
-                    frame.Accepted &&
-                    !frame.ProvisionalPlaybackReferenceGap;
+                bool accepted = frame.Accepted && !frame.ProvisionalPlaybackReferenceGap;
                 double rejectDecay = frame.RejectDecay;
-                string frameReason = frame.ProvisionalPlaybackReferenceGap
-                    ? "transient-playback-reference-gap"
-                    : frame.Reason;
-                double effectiveMinRms = frame.RenderActive
-                    ? minRms * ModelEvidenceMinRmsFraction
-                    : minRms;
+                string frameReason = frame.ProvisionalPlaybackReferenceGap ? "transient-playback-reference-gap" : frame.Reason;
+                double effectiveMinRms = frame.RenderActive ? minRms * ModelEvidenceMinRmsFraction : minRms;
                 if (effectiveMinRms > 0 && accepted && frame.CaptureRms < effectiveMinRms)
                 {
                     accepted = false;
                     rejectDecay = Math.Max(rejectDecay, 0.22);
-                    frameReason = frame.RenderActive
-                        ? "below-model-backed-min-rms"
-                        : "below-min-rms";
+                    frameReason = frame.RenderActive ? "below-model-backed-min-rms" : "below-min-rms";
                 }
 
                 double frameStartMs = totalMs;
@@ -180,9 +172,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Policies
                     acceptedMs += durationMs;
                     scoreMs += durationMs;
                     contiguousAcceptedMs += durationMs;
-                    longestContiguousAcceptedMs = Math.Max(
-                        longestContiguousAcceptedMs,
-                        contiguousAcceptedMs);
+                    longestContiguousAcceptedMs = Math.Max(longestContiguousAcceptedMs, contiguousAcceptedMs);
                     if (!hasAcceptedTimeline && frame.StreamEpoch > 0 && frame.StartSample >= 0)
                     {
                         firstAcceptedStartSample = frame.StartSample;
@@ -198,9 +188,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Policies
                 }
 
                 double tailStartMs = Math.Max(0, selectedDurationMs - ConfirmationTailMs);
-                double tailOverlapMs = Math.Max(
-                    0,
-                    Math.Min(totalMs, selectedDurationMs) - Math.Max(frameStartMs, tailStartMs));
+                double tailOverlapMs = Math.Max(0, Math.Min(totalMs, selectedDurationMs) - Math.Max(frameStartMs, tailStartMs));
                 tailDurationMs += tailOverlapMs;
                 if (accepted)
                     tailAcceptedMs += tailOverlapMs;
@@ -215,12 +203,8 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Policies
                 if (double.IsFinite(frame.PostAecResidualRatio) && frame.PostAecResidualRatio >= 0)
                 {
                     postAecEvidenceFrameCount++;
-                    minPostAecResidualRatio = Math.Min(
-                        minPostAecResidualRatio,
-                        frame.PostAecResidualRatio);
-                    maxPostAecResidualRatio = Math.Max(
-                        maxPostAecResidualRatio,
-                        frame.PostAecResidualRatio);
+                    minPostAecResidualRatio = Math.Min(minPostAecResidualRatio, frame.PostAecResidualRatio);
+                    maxPostAecResidualRatio = Math.Max(maxPostAecResidualRatio, frame.PostAecResidualRatio);
                     postAecResidualRatioSum += frame.PostAecResidualRatio;
                 }
 
@@ -245,8 +229,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Policies
                 acceptedMs >= requiredDurationMs * parameters.MinNearendFraction &&
                 longestContiguousAcceptedMs >=
                     requiredDurationMs * parameters.MinContiguousNearendFraction;
-            bool echoWithinLimit =
-                totalMs <= 0 || echoMs <= totalMs * parameters.MaxEchoFraction;
+            bool echoWithinLimit = totalMs <= 0 || echoMs <= totalMs * parameters.MaxEchoFraction;
             bool tailStillNearEnd =
                 latestFrameAccepted &&
                 tailDurationMs > 0 &&

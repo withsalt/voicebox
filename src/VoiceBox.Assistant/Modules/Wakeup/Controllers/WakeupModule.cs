@@ -42,8 +42,7 @@ internal sealed class WakeupModule : IWakeupModule
 
     public AssistantWakeMode Mode => _gate.Mode;
 
-    public AssistantTimelineRequirement TimelineRequirement =>
-        AssistantTimelineRequirement.ProcessedCaptureTimeline;
+    public AssistantTimelineRequirement TimelineRequirement => AssistantTimelineRequirement.ProcessedCaptureTimeline;
 
     public WakeupAuthorizationOutcome LastDeniedOutcome => _gate.LastDeniedOutcome;
 

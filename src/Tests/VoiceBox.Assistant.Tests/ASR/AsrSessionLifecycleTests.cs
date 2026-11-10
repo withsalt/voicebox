@@ -21,12 +21,9 @@ public sealed class AsrSessionLifecycleTests
         await session.ReleaseTask.WaitAsync(Timeout);
 
         Assert.Same(failure, session.FailureException);
-        Assert.Same(failure, await Assert.ThrowsAsync<InvalidDataException>(
-            () => session.Results.Reader.Completion));
-        Assert.Same(failure, await Assert.ThrowsAsync<InvalidDataException>(
-            () => service.FinishSessionAsync(info.SessionId)));
-        Assert.Same(failure, Assert.Throws<InvalidDataException>(
-            () => service.GetSession(info.SessionId)));
+        Assert.Same(failure, await Assert.ThrowsAsync<InvalidDataException>(() => session.Results.Reader.Completion));
+        Assert.Same(failure, await Assert.ThrowsAsync<InvalidDataException>(() => service.FinishSessionAsync(info.SessionId)));
+        Assert.Same(failure, Assert.Throws<InvalidDataException>(() => service.GetSession(info.SessionId)));
         await service.CancelSessionAsync(info.SessionId);
         await service.StartSessionAsync();
         Assert.Equal(1, session.CancelCount);
@@ -96,8 +93,7 @@ public sealed class AsrSessionLifecycleTests
         var failure = new IOException("original failure");
 
         Task cleanup = session.FailAsync(failure);
-        Assert.Same(hookError, await Assert.ThrowsAsync<InvalidOperationException>(
-            () => cleanup.WaitAsync(Timeout)));
+        Assert.Same(hookError, await Assert.ThrowsAsync<InvalidOperationException>(() => cleanup.WaitAsync(Timeout)));
         Assert.Same(failure, session.FailureException);
         Assert.Same(failure, await Assert.ThrowsAsync<IOException>(() => session.FinishAsync(default)));
         Assert.Equal(1, session.CancelCount);
@@ -124,13 +120,11 @@ public sealed class AsrSessionLifecycleTests
         {
             await session.CancelEntered.Task.WaitAsync(Timeout);
             Assert.False(session.ReleaseEntered.Task.IsCompleted);
-            await Assert.ThrowsAsync<InvalidOperationException>(
-                () => manager.StartAsync(id => new TestSession(id), default));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => manager.StartAsync(id => new TestSession(id), default));
             start.SetResult();
             await session.ReleaseEntered.Task.WaitAsync(Timeout);
             Assert.False(starting.IsCompleted);
-            await Assert.ThrowsAsync<InvalidOperationException>(
-                () => manager.StartAsync(id => new TestSession(id), default));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => manager.StartAsync(id => new TestSession(id), default));
             worker.SetResult();
             Assert.Same(failure, await Assert.ThrowsAsync<IOException>(() => starting.WaitAsync(Timeout)));
             await manager.StartAsync(id => new TestSession(id), default);

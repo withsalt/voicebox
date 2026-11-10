@@ -19,8 +19,7 @@ namespace VoiceBox.Core.Services.WakeupService
         /// 对包含多个唤醒词的服务, 该值作用于全部唤醒词。
         /// 未实现此能力的第三方服务会抛出 <see cref="NotSupportedException"/>。
         /// </remarks>
-        void SetThreshold(float threshold) =>
-            throw new NotSupportedException("Dynamic wakeup threshold is not supported by this service.");
+        void SetThreshold(float threshold) => throw new NotSupportedException("Dynamic wakeup threshold is not supported by this service.");
 
         void FeedAudio(ReadOnlySpan<float> audioData);
 

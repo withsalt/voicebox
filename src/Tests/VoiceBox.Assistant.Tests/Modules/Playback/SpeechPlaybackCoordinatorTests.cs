@@ -38,11 +38,9 @@ public sealed class SpeechPlaybackCoordinatorTests
 
     private sealed class BlockingDeviceQueue : IPlaybackDeviceQueuePort
     {
-        public TaskCompletionSource Entered { get; } =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        public TaskCompletionSource Release { get; } =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public void ClearQueue()
         {
@@ -95,8 +93,7 @@ public sealed class SpeechPlaybackCoordinatorTests
         }
 
         cancellation.Cancel();
-        Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(
-            () => worker.WaitAsync(TimeSpan.FromSeconds(2))));
+        Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(() => worker.WaitAsync(TimeSpan.FromSeconds(2))));
         Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(
             () => active.Completion.WaitAsync(TimeSpan.FromSeconds(2))));
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending.Completion);
@@ -104,8 +101,7 @@ public sealed class SpeechPlaybackCoordinatorTests
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() => submission.Completion);
         if (blockedAdmission is not null)
         {
-            Exception? error = await Record.ExceptionAsync(
-                () => blockedAdmission.WaitAsync(TimeSpan.FromSeconds(2)));
+            Exception? error = await Record.ExceptionAsync(() => blockedAdmission.WaitAsync(TimeSpan.FromSeconds(2)));
             Assert.True(error is OperationCanceledException or InvalidOperationException);
         }
         Assert.Throws<ObjectDisposedException>(() => executed!.Cancellation.Token);
@@ -196,8 +192,7 @@ public sealed class SpeechPlaybackCoordinatorTests
             device.Release.TrySetResult();
         }
         await stop.WaitAsync(TimeSpan.FromSeconds(2));
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => request.Completion.WaitAsync(TimeSpan.FromSeconds(2)));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => request.Completion.WaitAsync(TimeSpan.FromSeconds(2)));
         Assert.Equal(1f, device.Gain);
     }
 
@@ -265,20 +260,10 @@ public sealed class SpeechPlaybackCoordinatorTests
         }), new CountingDeviceQueue());
 
         _ = coordinator.Start(CancellationToken.None);
-        var active = await coordinator.EnqueueAsync(
-            null,
-            TextStream("active"),
-            CancellationToken.None);
+        var active = await coordinator.EnqueueAsync(null, TextStream("active"), CancellationToken.None);
         await activeStarted.Task.WaitAsync(TimeSpan.FromSeconds(1));
-        var tail = await coordinator.EnqueueAsync(
-            null,
-            TextStream("tail"),
-            CancellationToken.None);
-        var head = await coordinator.EnqueueAsync(
-            null,
-            TextStream("head"),
-            CancellationToken.None,
-            SpeechPlaybackQueuePosition.Head);
+        var tail = await coordinator.EnqueueAsync(null, TextStream("tail"), CancellationToken.None);
+        var head = await coordinator.EnqueueAsync(null, TextStream("head"), CancellationToken.None, SpeechPlaybackQueuePosition.Head);
 
         Assert.Equal(["active"], order.ToArray());
         release.TrySetResult();
@@ -415,15 +400,9 @@ public sealed class SpeechPlaybackCoordinatorTests
             deviceQueue);
 
         _ = coordinator.Start(CancellationToken.None);
-        SpeechEnqueueResult active = await coordinator.EnqueueAsync(
-            null,
-            TextStream("active"),
-            CancellationToken.None);
+        SpeechEnqueueResult active = await coordinator.EnqueueAsync(null, TextStream("active"), CancellationToken.None);
         await activeStarted.Task.WaitAsync(TimeSpan.FromSeconds(1));
-        SpeechEnqueueResult pending = await coordinator.EnqueueAsync(
-            null,
-            TextStream("pending"),
-            CancellationToken.None);
+        SpeechEnqueueResult pending = await coordinator.EnqueueAsync(null, TextStream("pending"), CancellationToken.None);
 
         Task<bool> stop = Task.Run(coordinator.TryStopActivePlayback);
         await deviceQueue.Entered.Task.WaitAsync(TimeSpan.FromSeconds(1));
@@ -562,8 +541,7 @@ public sealed class SpeechPlaybackCoordinatorTests
                 if (exitBeforeClear)
                 {
                     release.TrySetResult();
-                    Assert.True(SpinWait.SpinUntil(
-                        () => coordinator!.ActiveOwnerTurnId is null, TimeSpan.FromSeconds(2)));
+                    Assert.True(SpinWait.SpinUntil(() => coordinator!.ActiveOwnerTurnId is null, TimeSpan.FromSeconds(2)));
                 }
                 throw failure;
             }));
@@ -577,8 +555,7 @@ public sealed class SpeechPlaybackCoordinatorTests
 
         Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(
             () => active.Completion.WaitAsync(TimeSpan.FromSeconds(2))));
-        Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(
-            () => worker.WaitAsync(TimeSpan.FromSeconds(2))));
+        Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(() => worker.WaitAsync(TimeSpan.FromSeconds(2))));
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending.Completion);
         Assert.Equal(1, executionCount);
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -613,8 +590,7 @@ public sealed class SpeechPlaybackCoordinatorTests
             ? await Record.ExceptionAsync(() => coordinator.StopAsync().WaitAsync(TimeSpan.FromSeconds(2)))
             : Record.Exception(() => coordinator.TryStopActivePlayback(1));
         Assert.Contains(failure, Assert.IsType<AggregateException>(error).Flatten().InnerExceptions);
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => active.Completion.WaitAsync(TimeSpan.FromSeconds(2)));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => active.Completion.WaitAsync(TimeSpan.FromSeconds(2)));
         Assert.Equal(1, device.ClearCount);
         if (shutdown)
         {

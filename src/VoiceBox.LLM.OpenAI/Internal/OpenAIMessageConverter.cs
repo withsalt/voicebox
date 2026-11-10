@@ -43,10 +43,7 @@ namespace VoiceBox.LLM.OpenAI.Internal
                 if (msg.Role == ChatRole.Assistant && toolCalls.Length == msg.Content.Count)
                 {
                     return new AssistantChatMessage(toolCalls.Select(static call =>
-                        ChatToolCall.CreateFunctionToolCall(
-                            call.CallId,
-                            call.ToolName,
-                            BinaryData.FromString(call.ArgumentsJson))));
+                        ChatToolCall.CreateFunctionToolCall(call.CallId, call.ToolName, BinaryData.FromString(call.ArgumentsJson))));
                 }
 
                 if (msg.Role == ChatRole.Tool && toolResults.Length == 1 && msg.Content.Count == 1)
@@ -55,8 +52,7 @@ namespace VoiceBox.LLM.OpenAI.Internal
                     return new ToolChatMessage(result.CallId, result.ResultJson);
                 }
 
-                throw new NotSupportedException(
-                    "OpenAI tool messages must contain only assistant tool calls or one tool result.");
+                throw new NotSupportedException("OpenAI tool messages must contain only assistant tool calls or one tool result.");
             }
 
             // 按原始顺序收集 parts (多模态时文本与图片的相对顺序对模型有意义),
@@ -94,11 +90,8 @@ namespace VoiceBox.LLM.OpenAI.Internal
                 ChatRole.Assistant => new AssistantChatMessage(textSb.ToString()),
 
                 // 含图片时按多模态 part 数组发送; 纯文本则用更通用的字符串形式 (兼容性更好、负载更小)。
-                ChatRole.User => hasImage
-                    ? new UserChatMessage(parts)
-                    : new UserChatMessage(textSb.ToString()),
-                ChatRole.Tool => throw new NotSupportedException(
-                    "A tool-role message must contain one ToolResultContent value."),
+                ChatRole.User => hasImage ? new UserChatMessage(parts) : new UserChatMessage(textSb.ToString()),
+                ChatRole.Tool => throw new NotSupportedException("A tool-role message must contain one ToolResultContent value."),
                 _ => throw new ArgumentOutOfRangeException(nameof(msg), msg.Role, "Unsupported chat role."),
             };
         }
@@ -107,8 +100,7 @@ namespace VoiceBox.LLM.OpenAI.Internal
         {
             if (image.Bytes is { Length: > 0 } bytes)
             {
-                return ChatMessageContentPart.CreateImagePart(
-                    BinaryData.FromBytes(bytes), GuessImageMediaType(bytes, image.Path));
+                return ChatMessageContentPart.CreateImagePart(BinaryData.FromBytes(bytes), GuessImageMediaType(bytes, image.Path));
             }
 
             if (!string.IsNullOrEmpty(image.Path))
@@ -116,8 +108,7 @@ namespace VoiceBox.LLM.OpenAI.Internal
                 if (!File.Exists(image.Path))
                     throw new FileNotFoundException($"Image file not found: {image.Path}", image.Path);
                 var fileBytes = File.ReadAllBytes(image.Path);
-                return ChatMessageContentPart.CreateImagePart(
-                    BinaryData.FromBytes(fileBytes), GuessImageMediaType(fileBytes, image.Path));
+                return ChatMessageContentPart.CreateImagePart(BinaryData.FromBytes(fileBytes), GuessImageMediaType(fileBytes, image.Path));
             }
 
             throw new ArgumentException("ImageContent must have either Path or Bytes set.");
@@ -128,16 +119,13 @@ namespace VoiceBox.LLM.OpenAI.Internal
         /// </summary>
         private static string GuessImageMediaType(byte[] bytes, string? path)
         {
-            if (bytes.Length >= 8 &&
-                bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47)
+            if (bytes.Length >= 8 && bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47)
                 return "image/png";
 
-            if (bytes.Length >= 3 &&
-                bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF)
+            if (bytes.Length >= 3 && bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF)
                 return "image/jpeg";
 
-            if (bytes.Length >= 6 &&
-                bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46) // GIF
+            if (bytes.Length >= 6 && bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46) // GIF
                 return "image/gif";
 
             if (bytes.Length >= 12 &&

@@ -13,9 +13,7 @@ namespace VoiceAssistantDemo;
 /// </summary>
 internal sealed class TtsCalibrationStimulusPlayer : ISpeakerEnrollmentStimulusPlayer, IDisposable
 {
-    private const string CalibrationText =
-        "现在我来念一段校准语音，请你在我说话的同时自然地朗读屏幕上的句子，不用等我停下来。" +
-        "天气预报说明天多云转晴，气温十八到二十六度，适合出门散步。";
+    private const string CalibrationText = "现在我来念一段校准语音，请你在我说话的同时自然地朗读屏幕上的句子，不用等我停下来。" + "天气预报说明天多云转晴，气温十八到二十六度，适合出门散步。";
 
     private readonly IAudioDuplexService _audio;
     private readonly ITTSService _tts;

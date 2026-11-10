@@ -54,11 +54,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     [Fact]
     public void KernelSourceDoesNotDependOnRuntimeCompositionOrProviders()
     {
-        string kernelRoot = Path.Combine(
-            FindRepositoryRoot(),
-            "src",
-            "VoiceBox.Assistant",
-            "Kernel");
+        string kernelRoot = Path.Combine(FindRepositoryRoot(), "src", "VoiceBox.Assistant", "Kernel");
         (string Marker, string Boundary)[] forbidden =
         [
             ("VoiceBox.Assistant.Runtime", "Runtime"),
@@ -86,8 +82,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 string source = File.ReadAllText(path);
                 return forbidden
                     .Where(rule => source.Contains(rule.Marker, StringComparison.Ordinal))
-                    .Select(rule =>
-                        $"{Path.GetRelativePath(kernelRoot, path)} references {rule.Boundary} via '{rule.Marker}'.");
+                    .Select(rule => $"{Path.GetRelativePath(kernelRoot, path)} references {rule.Boundary} via '{rule.Marker}'.");
             })
             .Order(StringComparer.Ordinal)
             .ToArray();
@@ -100,8 +95,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     [Fact]
     public void RuntimeUsesOnlyTypedPlansAndHasNoLocatorOrGraphOwnership()
     {
-        FieldInfo[] fields = typeof(AssistantRuntime).GetFields(
-            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+        FieldInfo[] fields = typeof(AssistantRuntime).GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
         Assert.DoesNotContain(fields, field =>
             field.FieldType == typeof(IServiceProvider) ||
             field.FieldType.Name is "IAudioServiceManager" or "AssistantCapabilityGraph" ||
@@ -120,33 +114,19 @@ public sealed partial class VoiceAssistantLifecycleTests
     public void AssistantDependsOnAcousticDelayContract_NotWebRtcProvider()
     {
         AssemblyName[] references = typeof(VoiceAssistant).Assembly.GetReferencedAssemblies();
-        Assert.DoesNotContain(
-            references,
-            reference => string.Equals(
-                reference.Name,
-                "VoiceBox.APM.WebRtc",
-                StringComparison.Ordinal));
+        Assert.DoesNotContain(references, reference => string.Equals(reference.Name, "VoiceBox.APM.WebRtc", StringComparison.Ordinal));
 
-        string project = ReadSource(
-            "src",
-            "VoiceBox.Assistant",
-            "VoiceBox.Assistant.csproj");
+        string project = ReadSource("src", "VoiceBox.Assistant", "VoiceBox.Assistant.csproj");
         Assert.DoesNotContain("VoiceBox.APM.WebRtc", project, StringComparison.Ordinal);
 
-        string builder = ReadSource(
-            "src",
-            "VoiceBox.Assistant",
-            "Composition",
-            "Builder",
-            "VoiceAssistantBuilder.cs");
+        string builder = ReadSource("src", "VoiceBox.Assistant", "Composition", "Builder", "VoiceAssistantBuilder.cs");
         Assert.Contains("IAcousticPathDelayEstimatorFactory", builder, StringComparison.Ordinal);
     }
 
     [Fact]
     public void RuntimePlanCarriesOnlyModulePortsAndAdapterFactories()
     {
-        FieldInfo[] fields = typeof(AssistantRuntimePlan).GetFields(
-            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+        FieldInfo[] fields = typeof(AssistantRuntimePlan).GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
         PropertyInfo[] properties = typeof(AssistantRuntimePlan).GetProperties(
             BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 
@@ -188,8 +168,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             string source = File.ReadAllText(path);
             if (source.Contains("IServiceProvider", StringComparison.Ordinal))
             {
-                Assert.EndsWith("VoiceAssistantServiceCollectionExtensions.cs", path,
-                    StringComparison.OrdinalIgnoreCase);
+                Assert.EndsWith("VoiceAssistantServiceCollectionExtensions.cs", path, StringComparison.OrdinalIgnoreCase);
                 Assert.Contains("CreateHostInstance(IServiceProvider provider)", source, StringComparison.Ordinal);
                 Assert.Contains("CreateBuilder(IServiceProvider provider)", source, StringComparison.Ordinal);
             }
@@ -245,14 +224,10 @@ public sealed partial class VoiceAssistantLifecycleTests
     public void EffectProtocolHasOneCanonicalKindEnumAndNoStructuredToolCapability()
     {
         Assembly assistant = typeof(VoiceAssistant).Assembly;
-        Type[] effectKindEnums = assistant.GetTypes()
-            .Where(type => type.IsEnum && type.Name == typeof(KernelEffectKind).Name)
-            .ToArray();
+        Type[] effectKindEnums = assistant.GetTypes().Where(type => type.IsEnum && type.Name == typeof(KernelEffectKind).Name).ToArray();
 
         Assert.Equal(typeof(KernelEffectKind), Assert.Single(effectKindEnums));
-        Assert.DoesNotContain(
-            "StructuredToolUse",
-            Enum.GetNames<AssistantCapability>());
+        Assert.DoesNotContain("StructuredToolUse", Enum.GetNames<AssistantCapability>());
     }
 
     [Fact]
@@ -332,9 +307,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         if (speaker)
             builder.AddSpeakerVerification(services.Speaker);
         if (bargeIn)
-            builder.AddBargeIn(
-                options.BargeIn,
-                TestAcousticPathDelayEstimatorFactory.Instance);
+            builder.AddBargeIn(options.BargeIn, TestAcousticPathDelayEstimatorFactory.Instance);
 
         // Online identity is off unless Confirmation.Enable is set; this matrix leaves it at the
         // default (false), so a keyword-only composition is legal and a registered provider
@@ -376,11 +349,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         string architecture = File.ReadAllText(Path.Combine(repository, "docs", "voicebox-assistant-architecture.md"));
         Assert.Contains("BasicDuplexQa", architecture, StringComparison.Ordinal);
         Assert.Contains("BasicSplitAudioQa", architecture, StringComparison.Ordinal);
-        string demoProfiles = ReadSource(
-            "src",
-            "Demos",
-            "VoiceAssistantDemo",
-            "Program.cs");
+        string demoProfiles = ReadSource("src", "Demos", "VoiceAssistantDemo", "Program.cs");
         foreach (string entryPoint in new[]
         {
             "VoiceAssistant.CreateBuilder()", ".UseAudio(", ".UseTurnBoundary(",
@@ -404,8 +373,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     }
 
     internal static string ReadRuntimeSource(params string[] relativePath)
-        => File.ReadAllText(Path.Combine(
-            [FindRepositoryRoot(), "src", "VoiceBox.Assistant", "Runtime", .. relativePath]));
+        => File.ReadAllText(Path.Combine([FindRepositoryRoot(), "src", "VoiceBox.Assistant", "Runtime", .. relativePath]));
 
     private static string FindRepositoryRoot()
     {

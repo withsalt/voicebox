@@ -23,8 +23,7 @@ namespace VoiceBox.TTS.VoxCPM.Internal
             if (!fi.Exists)
                 throw new FileNotFoundException($"缺少文本嵌入表: {binPath}");
             if (fi.Length != expect)
-                throw new InvalidDataException(
-                    $"text_embedding.bin 大小不符: 期望 {expect} 字节 ([{vocab},{hidden}] fp32), 实际 {fi.Length}。");
+                throw new InvalidDataException($"text_embedding.bin 大小不符: 期望 {expect} 字节 ([{vocab},{hidden}] fp32), 实际 {fi.Length}。");
             _file = File.OpenHandle(binPath, FileMode.Open, FileAccess.Read, FileShare.Read);
         }
 

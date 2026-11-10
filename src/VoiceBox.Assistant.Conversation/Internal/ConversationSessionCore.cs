@@ -115,10 +115,7 @@ internal sealed class ConversationSessionCore : IAsyncDisposable
             turnId = Interlocked.Increment(ref _turnOrdinal);
 
             IReadOnlyList<ChatMessage> committedHistory = _history.GetCommittedTranscriptCopy();
-            string? additionalContext = await CollectContextAsync(
-                request,
-                committedHistory,
-                token).ConfigureAwait(false);
+            string? additionalContext = await CollectContextAsync(request, committedHistory, token).ConfigureAwait(false);
 
             _history.AddUserMessage(turnId, request.Text, additionalContext, out ChatMessage[] prompt);
             var executionContext = new TurnExecutionContext(
@@ -126,9 +123,7 @@ internal sealed class ConversationSessionCore : IAsyncDisposable
                 request.RequestId,
                 ConversationId,
                 prompt,
-                new ModelGenerationOptions(
-                    _options.MaxResponseTokens,
-                    _options.EnableThinking));
+                new ModelGenerationOptions(_options.MaxResponseTokens, _options.EnableThinking));
 
             var visible = new StringBuilder();
             bool finished = false;
@@ -153,8 +148,7 @@ internal sealed class ConversationSessionCore : IAsyncDisposable
                     case TurnFinished finishedUpdate:
                         if (finished)
                         {
-                            throw new InvalidOperationException(
-                                "The conversation executor completed the turn more than once.");
+                            throw new InvalidOperationException("The conversation executor completed the turn more than once.");
                         }
                         finished = true;
 
@@ -164,8 +158,7 @@ internal sealed class ConversationSessionCore : IAsyncDisposable
                         string answer = visible.ToString();
                         if (!_history.CommitGeneratedResponse(turnId, answer))
                         {
-                            throw new InvalidOperationException(
-                                "The conversation turn was not pending when it completed.");
+                            throw new InvalidOperationException("The conversation turn was not pending when it completed.");
                         }
                         committed = true;
                         commitGate = finishedUpdate.CommitGate;
@@ -175,14 +168,12 @@ internal sealed class ConversationSessionCore : IAsyncDisposable
                         yield return new ConversationCompleted(answer);
                         yield break;
                     default:
-                        throw new InvalidOperationException(
-                            $"Unsupported turn event '{turnEvent.GetType().Name}'.");
+                        throw new InvalidOperationException($"Unsupported turn event '{turnEvent.GetType().Name}'.");
                 }
             }
 
             token.ThrowIfCancellationRequested();
-            throw new InvalidOperationException(
-                "The conversation executor ended without completing the turn.");
+            throw new InvalidOperationException("The conversation executor ended without completing the turn.");
         }
         finally
         {

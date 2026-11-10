@@ -14,6 +14,5 @@ public sealed record SpeakerEnrollmentSegmentQuality(
     double WithinSegmentSimilarityMedian,
     double SimilarityToBankMedoid)
 {
-    public static SpeakerEnrollmentSegmentQuality Empty { get; } =
-        new(TimeSpan.Zero, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    public static SpeakerEnrollmentSegmentQuality Empty { get; } = new(TimeSpan.Zero, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }

@@ -94,8 +94,7 @@ namespace VoiceBox.TTS.DoubaoOnline.SpeakerCatalog
             string json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
-                throw new DoubaoOnlineTTSException(
-                    $"ListSpeakers failed: HTTP {(int)response.StatusCode}. Body: {Truncate(json, 512)}");
+                throw new DoubaoOnlineTTSException($"ListSpeakers failed: HTTP {(int)response.StatusCode}. Body: {Truncate(json, 512)}");
 
             ListSpeakersResponse? parsed;
             try { parsed = JsonSerializer.Deserialize<ListSpeakersResponse>(json, JsonOptions); }

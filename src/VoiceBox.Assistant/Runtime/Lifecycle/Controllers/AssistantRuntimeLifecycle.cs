@@ -181,10 +181,7 @@ internal sealed class AssistantRuntimeLifecycle : IRuntimeStopPort
             {
                 long operationId = _operations.NextOperationId();
                 await _controlSignals.EnqueueAsync(
-                    AssistantSignal.WakeupModeChanged(
-                        operationId,
-                        AssistantWakeMode.Disabled,
-                        AssistantWakeMode.WaitingForWakeWord),
+                    AssistantSignal.WakeupModeChanged(operationId, AssistantWakeMode.Disabled, AssistantWakeMode.WaitingForWakeWord),
                     AssistantSignalSource.HostLifecycle,
                     startupCts.Token).ConfigureAwait(false);
             }
@@ -287,9 +284,7 @@ internal sealed class AssistantRuntimeLifecycle : IRuntimeStopPort
         stopCompletion = null;
         if (_stopTask is not null)
             return _stopTask;
-        if (!_runScope.IsStarted ||
-            _stateMirror.Current == AssistantState.Stopped ||
-            !_modules.BeginStop())
+        if (!_runScope.IsStarted || _stateMirror.Current == AssistantState.Stopped || !_modules.BeginStop())
         {
             return Task.CompletedTask;
         }
@@ -334,8 +329,7 @@ internal sealed class AssistantRuntimeLifecycle : IRuntimeStopPort
         {
             lock (_lifecycleLock)
             {
-                if (ReferenceEquals(_stopTask, stopCompletion.Task) &&
-                    _stateMirror.Current != AssistantState.Stopped)
+                if (ReferenceEquals(_stopTask, stopCompletion.Task) && _stateMirror.Current != AssistantState.Stopped)
                 {
                     _stopTask = null;
                 }

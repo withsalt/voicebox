@@ -20,20 +20,16 @@ namespace VoiceBox.Assistant.Modules.Playback.Controllers
         public int RemainingMilliseconds => GetRemainingMilliseconds();
 
         public bool IsActiveAt(long timestampTicks)
-            => GetRemainingMillisecondsAt(
-                timestampTicks > 0 ? timestampTicks : _timeProvider.GetTimestamp()) > 0;
+            => GetRemainingMillisecondsAt(timestampTicks > 0 ? timestampTicks : _timeProvider.GetTimestamp()) > 0;
 
         public void Start(int durationMs)
         {
             if (durationMs <= 0)
                 return;
 
-            long durationTicks = checked((long)Math.Ceiling(
-                durationMs * _timeProvider.TimestampFrequency / 1000.0));
+            long durationTicks = checked((long)Math.Ceiling(durationMs * _timeProvider.TimestampFrequency / 1000.0));
             long now = _timeProvider.GetTimestamp();
-            long until = now > long.MaxValue - durationTicks
-                ? long.MaxValue
-                : now + durationTicks;
+            long until = now > long.MaxValue - durationTicks ? long.MaxValue : now + durationTicks;
             Interlocked.Exchange(ref _suppressionUntilTicks, until);
         }
 
@@ -46,8 +42,7 @@ namespace VoiceBox.Assistant.Modules.Playback.Controllers
             if (until <= timestampTicks)
                 return 0;
 
-            double remainingMs =
-                (until - timestampTicks) * 1000.0 / _timeProvider.TimestampFrequency;
+            double remainingMs = (until - timestampTicks) * 1000.0 / _timeProvider.TimestampFrequency;
             if (remainingMs >= int.MaxValue)
                 return int.MaxValue;
             return Math.Max(1, (int)Math.Ceiling(remainingMs));

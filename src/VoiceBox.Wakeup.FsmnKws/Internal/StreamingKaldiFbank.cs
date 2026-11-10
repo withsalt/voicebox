@@ -171,8 +171,7 @@ namespace VoiceBox.Wakeup.FsmnKws.Internal
             _frames.Add(mel);
         }
 
-        private float[] RentFrameBuffer() =>
-            _freeFrames.Count > 0 ? _freeFrames.Pop() : new float[NumBins];
+        private float[] RentFrameBuffer() => _freeFrames.Count > 0 ? _freeFrames.Pop() : new float[NumBins];
 
         private void RecycleFrameBuffer(float[] frame)
         {
@@ -226,9 +225,7 @@ namespace VoiceBox.Wakeup.FsmnKws.Internal
                     float freq = fftBinWidth * j;
                     float mel = MelScale(freq);
                     if (mel <= left || mel >= right) { dense[j] = 0f; continue; }
-                    dense[j] = mel <= center
-                        ? (mel - left) / (center - left)
-                        : (right - mel) / (right - center);
+                    dense[j] = mel <= center ? (mel - left) / (center - left) : (right - mel) / (right - center);
                     if (first < 0) first = j;
                     last = j;
                 }

@@ -11,9 +11,7 @@ namespace Misaki.NET.Lang.Chinese;
 /// </summary>
 public static class InlinePhonemeParser
 {
-    private static readonly Regex AnnotationRegex = new(
-        @"\[([^\[\]\|]+)\|([^\[\]]+)\]",
-        RegexOptions.Compiled);
+    private static readonly Regex AnnotationRegex = new(@"\[([^\[\]\|]+)\|([^\[\]]+)\]", RegexOptions.Compiled);
 
     /// <summary>
     /// Parses <paramref name="text"/>, replacing every <c>[word|tone3 pinyin]</c> annotation

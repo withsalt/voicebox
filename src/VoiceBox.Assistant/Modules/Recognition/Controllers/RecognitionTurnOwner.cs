@@ -52,19 +52,11 @@ internal sealed class RecognitionTurnOwner : IRecognitionBoundaryPort
     {
         TurnSnapshot turn = _turnState.Snapshot;
         BargeInValidationCaptureSnapshot validation = _validation.CaptureSnapshot;
-        return _capture.ObserveCaptureAudio(
-            turn.TurnId,
-            turn.ConversationState,
-            audio,
-            validation);
+        return _capture.ObserveCaptureAudio(turn.TurnId, turn.ConversationState, audio, validation);
     }
 
     public SpeechEndedDecision ObserveSpeechEnded(TimeSpan duration)
-        => _capture.ObserveCaptureSpeechEnded(
-            _turnState.TurnId,
-            _validation.ValidationTurnId,
-            _turnState.ConversationState,
-            duration);
+        => _capture.ObserveCaptureSpeechEnded(_turnState.TurnId, _validation.ValidationTurnId, _turnState.ConversationState, duration);
 
     /// <summary>
     /// Attaches a provider session after its RecognitionStarted signal is admitted. Validation
@@ -78,8 +70,7 @@ internal sealed class RecognitionTurnOwner : IRecognitionBoundaryPort
         TurnSnapshot turn = _turnState.Snapshot;
         BargeInValidationCaptureSnapshot validation = _validation.CaptureSnapshot;
         bool isValidationTurn = validation.TurnId == turnId;
-        if (!isValidationTurn &&
-            (turn.TurnId != turnId || turn.ConversationState != AssistantState.Listening))
+        if (!isValidationTurn && (turn.TurnId != turnId || turn.ConversationState != AssistantState.Listening))
         {
             return false;
         }
@@ -106,19 +97,14 @@ internal sealed class RecognitionTurnOwner : IRecognitionBoundaryPort
             return false;
         }
 
-        return _capture.CanEnterCaptureRecognizing(
-            turnId,
-            asrSessionId,
-            _turnState.ConversationState,
-            out isValidationTurn);
+        return _capture.CanEnterCaptureRecognizing(turnId, asrSessionId, _turnState.ConversationState, out isValidationTurn);
     }
 
     public bool CommitEnterRecognizing(long turnId, string asrSessionId, bool isValidationTurn)
         => _capture.CommitEnterCaptureRecognizing(turnId, asrSessionId, isValidationTurn);
 
     public bool CanObserveActiveAsrStartFailure(long turnId)
-        => _turnState.IsCurrentTurn(turnId) &&
-            _capture.CanObserveCaptureStartFailure(turnId, _turnState.ConversationState);
+        => _turnState.IsCurrentTurn(turnId) && _capture.CanObserveCaptureStartFailure(turnId, _turnState.ConversationState);
 
     public bool CommitAsrStartFailure(long turnId)
         => _turnState.IsCurrentTurn(turnId) && _capture.CommitCaptureStartFailure(turnId);
@@ -142,7 +128,5 @@ internal sealed class RecognitionTurnOwner : IRecognitionBoundaryPort
     }
 
     public string? TakeActiveSessionAndClearPending()
-        => _capture.TakeAbandonedCaptureSession(
-            _turnState.TurnId,
-            _validation.ValidationTurnId);
+        => _capture.TakeAbandonedCaptureSession(_turnState.TurnId, _validation.ValidationTurnId);
 }

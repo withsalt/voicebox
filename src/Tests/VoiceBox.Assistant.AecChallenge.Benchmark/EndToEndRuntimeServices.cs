@@ -39,12 +39,8 @@ internal sealed class BootstrapThenRealVadService : IVoiceActivityDetectService
         var audio = new float[EvaluationOptions.TargetSampleRate * 400 / 1000];
         Array.Fill(audio, 0.1f);
         OnSpeechStarted?.Invoke(this, EventArgs.Empty);
-        OnSpeaking?.Invoke(
-            this,
-            new VADEventArgs(audio, VADEventDataType.Chunk));
-        OnSpeechEnded?.Invoke(
-            this,
-            new VADEventArgs([], VADEventDataType.End, TimeSpan.FromMilliseconds(400)));
+        OnSpeaking?.Invoke(this, new VADEventArgs(audio, VADEventDataType.Chunk));
+        OnSpeechEnded?.Invoke(this, new VADEventArgs([], VADEventDataType.End, TimeSpan.FromMilliseconds(400)));
     }
 
     public void Dispose() => _inner.Dispose();
@@ -53,8 +49,7 @@ internal sealed class BootstrapThenRealVadService : IVoiceActivityDetectService
 internal sealed class BootstrapThenRealAsrService : IASRService
 {
     private readonly IASRService _inner;
-    private readonly ConcurrentDictionary<string, byte> _bootstrapSessions =
-        new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, byte> _bootstrapSessions = new(StringComparer.Ordinal);
     private int _nextSessionIsBootstrap;
     private long _bootstrapSession;
 
@@ -87,8 +82,7 @@ internal sealed class BootstrapThenRealAsrService : IASRService
         if (_bootstrapSessions.TryRemove(sessionId, out _))
         {
             ct.ThrowIfCancellationRequested();
-            return Task.FromResult<AsrResult?>(
-                new AsrResult { Text = "开始端到端测试" });
+            return Task.FromResult<AsrResult?>(new AsrResult { Text = "开始端到端测试" });
         }
         return _inner.FinishSessionAsync(sessionId, ct);
     }
@@ -126,16 +120,12 @@ internal sealed class PreparedTtsService : IStreamTTSService
 
     public void BeginCase(TtsResult prepared)
     {
-        if (prepared.SampleRate != OutputSampleRate ||
-            prepared.Channels != OutputChannels)
+        if (prepared.SampleRate != OutputSampleRate || prepared.Channels != OutputChannels)
         {
-            throw new InvalidDataException(
-                "The prepared TTS result format changed within one evaluator run.");
+            throw new InvalidDataException("The prepared TTS result format changed within one evaluator run.");
         }
         _prepared = prepared;
-        Interlocked.Exchange(
-            ref _release,
-            new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously));
+        Interlocked.Exchange(ref _release, new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously));
     }
 
     public void ReleaseCase()
@@ -150,9 +140,7 @@ internal sealed class PreparedTtsService : IStreamTTSService
     public Task<TtsResult> GetAudioAsync(string text, TtsSynthesisOptions? options = null, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
-        return Task.FromResult(
-            _prepared ?? throw new InvalidOperationException(
-                "No VoxCPM TTS result was prepared for this case."));
+        return Task.FromResult(_prepared ?? throw new InvalidOperationException("No VoxCPM TTS result was prepared for this case."));
     }
 
     public async IAsyncEnumerable<TtsAudioChunk> GetStreamAudioAsync(
@@ -160,8 +148,7 @@ internal sealed class PreparedTtsService : IStreamTTSService
         TtsSynthesisOptions? options = null,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
-        TtsResult prepared = _prepared ?? throw new InvalidOperationException(
-            "No VoxCPM TTS result was prepared for this case.");
+        TtsResult prepared = _prepared ?? throw new InvalidOperationException("No VoxCPM TTS result was prepared for this case.");
         Task release = Volatile.Read(ref _release).Task;
         for (int offset = 0; offset < prepared.Samples.Length; offset += _chunkSamples)
         {
@@ -188,8 +175,7 @@ internal sealed class PreparedTtsService : IStreamTTSService
 
     private static TaskCompletionSource CompletedRelease()
     {
-        var result = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        var result = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         result.SetResult();
         return result;
     }
@@ -214,9 +200,7 @@ internal sealed class EndToEndLlmService : IStreamLLMService
         CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
-        string text = Interlocked.Increment(ref _generation) == 1
-            ? _response
-            : string.Empty;
+        string text = Interlocked.Increment(ref _generation) == 1 ? _response : string.Empty;
         return Task.FromResult(new LlmCompletionResult { Text = text });
     }
 

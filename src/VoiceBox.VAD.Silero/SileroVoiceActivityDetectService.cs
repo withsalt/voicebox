@@ -250,13 +250,7 @@ namespace VoiceBox.VAD.Silero
             double secondsPerFrame = _windowSizeSample / (double)_vadOptions.SampleRate;
             var timestamp = TimeSpan.FromSeconds((_frameCount - 1) * secondsPerFrame);
             var frameDuration = TimeSpan.FromSeconds(secondsPerFrame);
-            SafeInvoke(handler, new VadProbabilityEventArgs(
-                probability,
-                probability,
-                isSpeech,
-                _frameCount,
-                timestamp,
-                frameDuration));
+            SafeInvoke(handler, new VadProbabilityEventArgs(probability, probability, isSpeech, _frameCount, timestamp, frameDuration));
         }
     }
 }

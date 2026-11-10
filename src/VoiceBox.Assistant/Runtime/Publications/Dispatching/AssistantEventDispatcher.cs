@@ -138,10 +138,7 @@ namespace VoiceBox.Assistant.Runtime.Publications.Dispatching
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(
-                        ex,
-                        "Faulted event handler threw (Component={Component}).",
-                        args.Component);
+                    _logger.LogError(ex, "Faulted event handler threw (Component={Component}).", args.Component);
                 }
             }
         }

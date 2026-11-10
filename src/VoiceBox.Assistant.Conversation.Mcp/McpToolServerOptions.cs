@@ -19,8 +19,7 @@ public abstract class McpToolServerOptions
 
     public ConversationToolRisk DefaultRisk { get; set; } = ConversationToolRisk.Sensitive;
 
-    public ConversationToolExecutionPolicy ExecutionPolicy { get; set; } =
-        ConversationToolExecutionPolicy.ModelChoice;
+    public ConversationToolExecutionPolicy ExecutionPolicy { get; set; } = ConversationToolExecutionPolicy.ModelChoice;
 
     /// <summary>Use the MCP Tasks extension and poll task-backed tool calls to completion.</summary>
     public bool UseMcpTasks { get; set; }
@@ -56,18 +55,13 @@ public abstract class McpToolServerOptions
     private static void ValidateAlias(string alias)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(alias);
-        if (alias.Length > 64 || alias.Any(static character =>
-            !char.IsAsciiLetterOrDigit(character) && character is not '_' and not '-'))
+        if (alias.Length > 64 || alias.Any(static character => !char.IsAsciiLetterOrDigit(character) && character is not '_' and not '-'))
         {
-            throw new ArgumentException(
-                "Server alias must be 1-64 ASCII letters, digits, underscores, or hyphens.",
-                nameof(alias));
+            throw new ArgumentException("Server alias must be 1-64 ASCII letters, digits, underscores, or hyphens.", nameof(alias));
         }
         if (string.Equals(alias, "local", StringComparison.Ordinal))
         {
-            throw new ArgumentException(
-                "MCP server alias 'local' is reserved for AddTool registrations.",
-                nameof(alias));
+            throw new ArgumentException("MCP server alias 'local' is reserved for AddTool registrations.", nameof(alias));
         }
     }
 }

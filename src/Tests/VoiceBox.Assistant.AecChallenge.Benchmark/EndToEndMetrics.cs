@@ -18,10 +18,7 @@ internal static class ChineseTextMetrics
             normalizedReference.Length > 0
                 ? errors / (double)normalizedReference.Length
                 : null,
-            string.Equals(
-                normalizedReference,
-                normalizedHypothesis,
-                StringComparison.Ordinal));
+            string.Equals(normalizedReference, normalizedHypothesis, StringComparison.Ordinal));
     }
 
     public static string Normalize(string text)
@@ -32,10 +29,7 @@ internal static class ChineseTextMetrics
         var builder = new StringBuilder(compatibility.Length);
         foreach (char c in compatibility)
         {
-            if (char.IsWhiteSpace(c) ||
-                char.IsPunctuation(c) ||
-                char.IsSymbol(c) ||
-                char.IsControl(c))
+            if (char.IsWhiteSpace(c) || char.IsPunctuation(c) || char.IsSymbol(c) || char.IsControl(c))
             {
                 continue;
             }
@@ -61,9 +55,7 @@ internal static class ChineseTextMetrics
             for (int j = 1; j <= right.Length; j++)
             {
                 int substitution = left[i - 1] == right[j - 1] ? 0 : 1;
-                current[j] = Math.Min(
-                    Math.Min(current[j - 1] + 1, previous[j] + 1),
-                    previous[j - 1] + substitution);
+                current[j] = Math.Min(Math.Min(current[j - 1] + 1, previous[j] + 1), previous[j - 1] + substitution);
             }
             (previous, current) = (current, previous);
         }
@@ -83,66 +75,32 @@ internal static class EndToEndMetrics
         ClusterObservation[] valid = clusters.Where(c => !c.HasError).ToArray();
         ClusterObservation[] positive = valid.Where(c => c.ExpectHeard).ToArray();
         ClusterObservation[] negative = valid.Where(c => !c.ExpectHeard).ToArray();
-        ClusterObservation[] acceptedExpected = valid
-            .Where(c => c.ExpectAccepted)
-            .ToArray();
+        ClusterObservation[] acceptedExpected = valid.Where(c => c.ExpectAccepted).ToArray();
         ClusterObservation[] duckExpected = valid.Where(c => c.ExpectDuck).ToArray();
-        ClusterObservation[] stopExpected = valid
-            .Where(c => c.ExpectPlaybackStop)
-            .ToArray();
-        ClusterObservation[] resumeExpected = valid
-            .Where(c => c.ExpectPlaybackResume)
-            .ToArray();
+        ClusterObservation[] stopExpected = valid.Where(c => c.ExpectPlaybackStop).ToArray();
+        ClusterObservation[] resumeExpected = valid.Where(c => c.ExpectPlaybackResume).ToArray();
         // Latency percentiles are taken over the clusters that produced an observation; the censored
         // counts alongside them record how many did not. Folding misses into the percentile as well
         // charges one failure twice and, past a handful of misses, collapses the percentile to "no
         // value" - which reports nothing about latency at all while the recall metric has already
         // reported the misses.
-        double? heardP50 = ObservedPercentile(
-            positive,
-            observation => observation.MaxLatency(c => c.HeardLatencyMs),
-            0.50);
-        double? heardP95 = ObservedPercentile(
-            positive,
-            observation => observation.MaxLatency(c => c.HeardLatencyMs),
-            0.95);
-        double? stopP95 = ObservedPercentile(
-            stopExpected,
-            observation => observation.MaxLatency(c => c.StopLatencyMs),
-            0.95);
-        double? audibleStopP95 = ObservedPercentile(
-            stopExpected,
-            observation => observation.MaxLatency(c => c.AudibleStopLatencyMs),
-            0.95);
-        double? audibleTailP95 = ObservedPercentile(
-            stopExpected,
-            observation => observation.MaxLatency(c => c.AudibleTailLatencyMs),
-            0.95);
+        double? heardP50 = ObservedPercentile(positive, observation => observation.MaxLatency(c => c.HeardLatencyMs), 0.50);
+        double? heardP95 = ObservedPercentile(positive, observation => observation.MaxLatency(c => c.HeardLatencyMs), 0.95);
+        double? stopP95 = ObservedPercentile(stopExpected, observation => observation.MaxLatency(c => c.StopLatencyMs), 0.95);
+        double? audibleStopP95 = ObservedPercentile(stopExpected, observation => observation.MaxLatency(c => c.AudibleStopLatencyMs), 0.95);
+        double? audibleTailP95 = ObservedPercentile(stopExpected, observation => observation.MaxLatency(c => c.AudibleTailLatencyMs), 0.95);
         int heardCensored = CensoredCount(positive, observation => observation.HeardSuccess);
         int stopCensored = CensoredCount(stopExpected, observation => observation.StopSuccess);
-        int audibleStopCensored = CensoredCount(
-            stopExpected,
-            observation => observation.AudibleStopSuccess);
-        int audibleTailCensored = CensoredCount(
-            stopExpected,
-            observation => observation.AudibleTailSuccess);
-        EndToEndCaseResult[] acceptedCases = valid
-            .SelectMany(observation => observation.Cases)
-            .Where(c => c.Accepted)
-            .ToArray();
-        EndToEndCaseResult[] negativeCases = negative
-            .SelectMany(observation => observation.Cases)
-            .ToArray();
+        int audibleStopCensored = CensoredCount(stopExpected, observation => observation.AudibleStopSuccess);
+        int audibleTailCensored = CensoredCount(stopExpected, observation => observation.AudibleTailSuccess);
+        EndToEndCaseResult[] acceptedCases = valid.SelectMany(observation => observation.Cases).Where(c => c.Accepted).ToArray();
+        EndToEndCaseResult[] negativeCases = negative.SelectMany(observation => observation.Cases).ToArray();
         int negativeFalseAccepts = negativeCases.Count(c => c.Accepted);
         double negativeHours = negativeCases.Sum(c => c.AudioDurationMs) / 3_600_000.0;
         double[] clusterCer = acceptedExpected
-            .Select(observation => observation.Cases
-                .Where(c => c.ExpectAccepted && c.ReferenceCharacters > 0)
-                .ToArray())
+            .Select(observation => observation.Cases.Where(c => c.ExpectAccepted && c.ReferenceCharacters > 0).ToArray())
             .Where(scored => scored.Length > 0)
-            .Select(scored =>
-                scored.Sum(c => c.CharacterErrors) /
-                (double)scored.Sum(c => c.ReferenceCharacters))
+            .Select(scored => scored.Sum(c => c.CharacterErrors) / (double)scored.Sum(c => c.ReferenceCharacters))
             .ToArray();
         return new EndToEndSummary
         {
@@ -164,27 +122,15 @@ internal static class EndToEndMetrics
                 .Count(c => c.Cases.Any(item => item.Accepted)),
             HeardRecall = Ratio(positive.Count(c => c.HeardSuccess), positive.Length),
             DuckRecall = Ratio(duckExpected.Count(c => c.DuckSuccess), duckExpected.Length),
-            AcceptedRecall = Ratio(
-                acceptedExpected.Count(c => c.AcceptedSuccess),
-                acceptedExpected.Length),
-            PlaybackStopRecall = Ratio(
-                stopExpected.Count(c => c.StopSuccess),
-                stopExpected.Length),
-            PlaybackResumeRecall = Ratio(
-                resumeExpected.Count(c => c.ResumeSuccess),
-                resumeExpected.Length),
-            AggregateCharacterErrorRate = clusterCer.Length > 0
-                ? clusterCer.Average()
-                : null,
+            AcceptedRecall = Ratio(acceptedExpected.Count(c => c.AcceptedSuccess), acceptedExpected.Length),
+            PlaybackStopRecall = Ratio(stopExpected.Count(c => c.StopSuccess), stopExpected.Length),
+            PlaybackResumeRecall = Ratio(resumeExpected.Count(c => c.ResumeSuccess), resumeExpected.Length),
+            AggregateCharacterErrorRate = clusterCer.Length > 0 ? clusterCer.Average() : null,
             ExactMatchRate = Ratio(
-                acceptedExpected.Count(c => c.Cases
-                    .Where(item => item.ExpectAccepted)
-                    .All(item => item.ExactMatch)),
+                acceptedExpected.Count(c => c.Cases.Where(item => item.ExpectAccepted).All(item => item.ExactMatch)),
                 acceptedExpected.Length),
             EmptyRecognitionRate = Ratio(
-                acceptedExpected.Count(c => c.Cases
-                    .Where(item => item.ExpectAccepted)
-                    .Any(item => item.EmptyRecognition)),
+                acceptedExpected.Count(c => c.Cases.Where(item => item.ExpectAccepted).Any(item => item.EmptyRecognition)),
                 acceptedExpected.Length),
             HeardLatencyP50Ms = heardP50,
             HeardLatencyP95Ms = heardP95,
@@ -201,10 +147,7 @@ internal static class EndToEndMetrics
             // miss, collapses the percentile to "censored" - which reports nothing at all about
             // latency. Reporting recall and conditional latency separately is strictly more
             // informative, and the *Censored counts stay in the report so the conditioning is visible.
-            DuckLatencyP95Ms = ObservedPercentile(
-                duckExpected,
-                observation => observation.MaxLatency(c => c.DuckLatencyMs),
-                0.95),
+            DuckLatencyP95Ms = ObservedPercentile(duckExpected, observation => observation.MaxLatency(c => c.DuckLatencyMs), 0.95),
             AudibleDuckLatencyP95Ms = ObservedPercentile(
                 duckExpected,
                 observation => observation.MaxLatency(c => c.AudibleDuckLatencyMs),
@@ -217,15 +160,9 @@ internal static class EndToEndMetrics
                 stopExpected,
                 observation => observation.MaxLatency(c => c.DeviceTailLatencyMs),
                 0.95),
-            TextValidatedAcceptRate = Ratio(
-                acceptedCases.Count(c => IsSpeakerAuthorized(c)),
-                acceptedCases.Length),
-            TimeoutAcceptRate = Ratio(
-                acceptedCases.Count(c => IsAcousticallyAuthorized(c)),
-                acceptedCases.Length),
-            FalseAcceptPerHour = negativeHours > 0
-                ? negativeFalseAccepts / negativeHours
-                : null,
+            TextValidatedAcceptRate = Ratio(acceptedCases.Count(c => IsSpeakerAuthorized(c)), acceptedCases.Length),
+            TimeoutAcceptRate = Ratio(acceptedCases.Count(c => IsAcousticallyAuthorized(c)), acceptedCases.Length),
+            FalseAcceptPerHour = negativeHours > 0 ? negativeFalseAccepts / negativeHours : null,
             NegativeAudioHours = negativeHours,
         };
     }
@@ -236,12 +173,10 @@ internal static class EndToEndMetrics
     /// Recognition text never carries the stop decision any more.
     /// </summary>
     private static bool IsSpeakerAuthorized(EndToEndCaseResult result)
-        => result.Accepted &&
-           string.Equals(result.ValidationReason, "speaker-match", StringComparison.Ordinal);
+        => result.Accepted && string.Equals(result.ValidationReason, "speaker-match", StringComparison.Ordinal);
 
     private static bool IsAcousticallyAuthorized(EndToEndCaseResult result)
-        => result.Accepted &&
-           string.Equals(result.ValidationReason, "audio-confirmed", StringComparison.Ordinal);
+        => result.Accepted && string.Equals(result.ValidationReason, "audio-confirmed", StringComparison.Ordinal);
 
     public static IReadOnlyList<EndToEndSummarySlice> BuildSlices(IReadOnlyList<EndToEndCaseResult> cases)
     {
@@ -341,12 +276,7 @@ internal static class EndToEndMetrics
             // the same decision as Heard and in every observed run they carry an identical value, so
             // gating them added three gates and zero information. They remain in the summary and in
             // every slice.
-            RatioGate(
-                "e2e/heard-recall",
-                summary.HeardRecall,
-                summary.Positive,
-                minimumCount: 30,
-                required: 0.85),
+            RatioGate("e2e/heard-recall", summary.HeardRecall, summary.Positive, minimumCount: 30, required: 0.85),
 
             // Latency, conditional on the event occurring. Misses are accounted for by heard-recall.
             ObservedLatencyGate(
@@ -368,12 +298,7 @@ internal static class EndToEndMetrics
 
             // False accepts as a rate, so the figure does not move with dataset size. Matches the
             // acoustic suite's farend-false-triggers-per-hour target. These are adversarial hours.
-            MaximumGate(
-                "e2e/false-accept-per-hour",
-                summary.FalseAcceptPerHour,
-                required: 1,
-                summary.Negative,
-                minimumCount: 10),
+            MaximumGate("e2e/false-accept-per-hour", summary.FalseAcceptPerHour, required: 1, summary.Negative, minimumCount: 10),
         ];
     }
 
@@ -522,42 +447,26 @@ internal static class EndToEndMetrics
         public bool ExpectAccepted => Cases.Any(c => c.ExpectAccepted);
         public bool ExpectPlaybackStop => Cases.Any(c => c.ExpectPlaybackStop);
         public bool ExpectPlaybackResume => Cases.Any(c => c.ExpectPlaybackResume);
-        public bool HeardSuccess =>
-            ExpectHeard &&
-            Cases.Where(c => c.ExpectHeard)
-                .All(c => c.Heard && !c.EarlyFalseTrigger);
-        public bool DuckSuccess =>
-            ExpectDuck &&
-            Cases.Where(c => c.ExpectDuck)
-                .All(c => c.PlaybackDucked && !c.EarlyFalseTrigger);
-        public bool AcceptedSuccess =>
-            ExpectAccepted &&
-            Cases.Where(c => c.ExpectAccepted)
-                .All(c => c.Accepted && !c.EarlyFalseTrigger);
+        public bool HeardSuccess => ExpectHeard && Cases.Where(c => c.ExpectHeard).All(c => c.Heard && !c.EarlyFalseTrigger);
+        public bool DuckSuccess => ExpectDuck && Cases.Where(c => c.ExpectDuck).All(c => c.PlaybackDucked && !c.EarlyFalseTrigger);
+        public bool AcceptedSuccess => ExpectAccepted && Cases.Where(c => c.ExpectAccepted).All(c => c.Accepted && !c.EarlyFalseTrigger);
         public bool StopSuccess =>
             ExpectPlaybackStop &&
             Cases.Where(c => c.ExpectPlaybackStop)
                 .All(c => c.PlaybackStopped && !c.EarlyFalseTrigger);
-        public bool AudibleStopSuccess =>
-            StopSuccess &&
-            Cases.Where(c => c.ExpectPlaybackStop)
-                .All(c => c.AudibleStopLatencyMs.HasValue);
+        public bool AudibleStopSuccess => StopSuccess && Cases.Where(c => c.ExpectPlaybackStop).All(c => c.AudibleStopLatencyMs.HasValue);
         public bool AudibleTailSuccess =>
             AudibleStopSuccess &&
             Cases.Where(c => c.ExpectPlaybackStop)
                 .All(c => c.AudibleTailLatencyMs.HasValue);
-        public bool ResumeSuccess =>
-            ExpectPlaybackResume &&
-            Cases.Where(c => c.ExpectPlaybackResume).All(c => c.PlaybackResumed);
+        public bool ResumeSuccess => ExpectPlaybackResume && Cases.Where(c => c.ExpectPlaybackResume).All(c => c.PlaybackResumed);
 
         public double? MaxLatency(Func<EndToEndCaseResult, double?> selector)
         {
             if (Cases.Any(c => c.EarlyFalseTrigger))
                 return null;
             double?[] values = Cases.Select(selector).ToArray();
-            return values.All(value => value.HasValue)
-                ? values.Max(value => value!.Value)
-                : null;
+            return values.All(value => value.HasValue) ? values.Max(value => value!.Value) : null;
         }
     }
 }
@@ -575,17 +484,12 @@ internal static class EndToEndReportWriter
     public static (string JsonPath, string CsvPath) Write(EndToEndReport report, string? requestedPath)
     {
         string jsonPath = string.IsNullOrWhiteSpace(requestedPath)
-            ? Path.Combine(
-                Environment.CurrentDirectory,
-                $"barge-in-e2e-{DateTime.Now:yyyyMMdd-HHmmss}.json")
+            ? Path.Combine(Environment.CurrentDirectory, $"barge-in-e2e-{DateTime.Now:yyyyMMdd-HHmmss}.json")
             : Path.GetFullPath(requestedPath);
         if (!string.Equals(Path.GetExtension(jsonPath), ".json", StringComparison.OrdinalIgnoreCase))
             jsonPath += ".json";
         Directory.CreateDirectory(Path.GetDirectoryName(jsonPath)!);
-        File.WriteAllText(
-            jsonPath,
-            JsonSerializer.Serialize(report, JsonOptions),
-            new UTF8Encoding(false));
+        File.WriteAllText(jsonPath, JsonSerializer.Serialize(report, JsonOptions), new UTF8Encoding(false));
 
         string csvPath = Path.ChangeExtension(jsonPath, ".cases.csv");
         using var writer = new StreamWriter(csvPath, append: false, new UTF8Encoding(false));

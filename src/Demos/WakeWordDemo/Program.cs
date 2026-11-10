@@ -39,11 +39,7 @@ namespace WakeWordDemo
                 {
                     options.SampleRate = 16000;
                     options.ChannelCount = 1;
-                    options.AddWakeWord(
-                        keyword: "Alexa",
-                        modelPath: ModelDir,
-                        threshold: 0.5f,
-                        debounceMs: 1500);
+                    options.AddWakeWord(keyword: "Alexa", modelPath: ModelDir, threshold: 0.5f, debounceMs: 1500);
                 })
                 .Build();
 

@@ -13,16 +13,11 @@ public sealed class LocalToolContractTests
         ConversationToolInvocation invocation;
         using (JsonDocument document = JsonDocument.Parse("""{"text":"hello"}"""))
         {
-            invocation = new ConversationToolInvocation(
-                "call-1",
-                document.RootElement,
-                ConversationToolExecutionPreference.Background);
+            invocation = new ConversationToolInvocation("call-1", document.RootElement, ConversationToolExecutionPreference.Background);
         }
 
         // The JsonDocument has been disposed; the invocation must still own its arguments.
-        ConversationToolExecutionResult result = await tool.ExecuteAsync(
-            invocation,
-            CancellationToken.None);
+        ConversationToolExecutionResult result = await tool.ExecuteAsync(invocation, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.True(invocation.Arguments.TryGetProperty("text", out JsonElement text));
@@ -62,26 +57,16 @@ public sealed class LocalToolContractTests
             ConversationToolDefinition definition = Assert.Single(tools);
             Assert.Equal("fake", definition.Id.ServerAlias);
 
-            var call = new ConversationToolCall(
-                "call-1",
-                definition.Id,
-                """{"text":"world"}""");
+            var call = new ConversationToolCall("call-1", definition.Id, """{"text":"world"}""");
             ConversationToolResult result = await provider.InvokeAsync(call);
             Assert.Equal(ConversationToolResultKind.Success, result.Kind);
             Assert.Contains("world", result.ValueJson, StringComparison.Ordinal);
 
             using JsonDocument document = JsonDocument.Parse(call.ArgumentsJson);
-            var invocation = new ConversationToolInvocation(
-                call.CallId,
-                document.RootElement,
-                call.ExecutionPreference);
+            var invocation = new ConversationToolInvocation(call.CallId, document.RootElement, call.ExecutionPreference);
             var approval = new AllowAllPolicy();
             ConversationToolApproval decision = await approval.AuthorizeAsync(
-                new ConversationToolApprovalContext(
-                    definition.Id.ServerAlias,
-                    definition.Descriptor,
-                    invocation,
-                    "hash"),
+                new ConversationToolApprovalContext(definition.Id.ServerAlias, definition.Descriptor, invocation, "hash"),
                 CancellationToken.None);
             Assert.Equal(ConversationToolApproval.Allow, decision);
         }
@@ -99,9 +84,7 @@ public sealed class LocalToolContractTests
             new ConversationToolId("srv", "tool"),
             "{}",
             (ConversationToolExecutionPreference)99));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new ConversationToolResult(
-            "call",
-            (ConversationToolResultKind)99));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ConversationToolResult("call", (ConversationToolResultKind)99));
     }
 
     private sealed class EchoTool : IConversationTool
@@ -169,10 +152,7 @@ public sealed class LocalToolContractTests
         }
 
         public ValueTask<ConversationToolResult> InvokeAsync(ConversationToolCall call, CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(new ConversationToolResult(
-                call.CallId,
-                ConversationToolResultKind.Success,
-                call.ArgumentsJson));
+            => ValueTask.FromResult(new ConversationToolResult(call.CallId, ConversationToolResultKind.Success, call.ArgumentsJson));
 
         public Task StopAsync()
         {

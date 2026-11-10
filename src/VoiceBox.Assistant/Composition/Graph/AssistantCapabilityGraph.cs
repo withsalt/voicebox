@@ -90,10 +90,7 @@ internal sealed class AssistantCapabilityGraph
     /// </summary>
     internal SpeakerPurposeSet EffectiveSpeakerPurposes
         => _options.Speaker.Confirmation?.Enable == true
-            ? new SpeakerPurposeSet(
-                Wakeup: _options.Wakeup.Enable,
-                BargeInCommand: _options.BargeIn.Enable,
-                SingleTalk: true)
+            ? new SpeakerPurposeSet(Wakeup: _options.Wakeup.Enable, BargeInCommand: _options.BargeIn.Enable, SingleTalk: true)
             : SpeakerPurposeSet.None;
 
     private bool OnlineSpeakerInstalled => EffectiveSpeakerPurposes.Any;
@@ -105,18 +102,11 @@ internal sealed class AssistantCapabilityGraph
         ValidateOptionalCapabilities();
         if (OnlineSpeakerInstalled)
         {
-            VoiceAssistantOptionsValidator.ValidateSpeakerGeometry(
-                _options,
-                _speaker!,
-                EffectiveSpeakerPurposes,
-                "options");
+            VoiceAssistantOptionsValidator.ValidateSpeakerGeometry(_options, _speaker!, EffectiveSpeakerPurposes, "options");
         }
         ValidateCapabilityEdges(CreateCapabilityEdges());
 
-        var speechSynthesis = new SpeechSynthesisStreamAdapter(
-            _speechSynthesis,
-            _options.TtsVoice,
-            _options.TtsSpeed);
+        var speechSynthesis = new SpeechSynthesisStreamAdapter(_speechSynthesis, _options.TtsVoice, _options.TtsSpeed);
         var audioFormat = new AssistantAudioFormat(_audio.Input, speechSynthesis);
         var runtime = new AssistantRuntimePlan(
             _audio,
@@ -143,19 +133,14 @@ internal sealed class AssistantCapabilityGraph
         runtime.Ownership = CreateOwnershipPlan();
         ModuleWiring wiring = ModuleWiring.CreateDefault(runtime);
         IReadOnlyList<AssistantLifecycleParticipant> lifecycle = CreateLifecyclePlan();
-        return new AssistantComposition(
-            runtime,
-            wiring,
-            new ModuleLifecyclePlan(lifecycle),
-            CreateSnapshot());
+        return new AssistantComposition(runtime, wiring, new ModuleLifecyclePlan(lifecycle), CreateSnapshot());
     }
 
     private void ValidateAudioFormat()
     {
         IAssistantAudioInput input = _audio.Input;
         IAssistantAudioOutput output = _audio.Output;
-        if (input.SampleRate == 0 || input.ChannelCount == 0 ||
-            output.SampleRate == 0 || output.ChannelCount == 0)
+        if (input.SampleRate == 0 || input.ChannelCount == 0 || output.SampleRate == 0 || output.ChannelCount == 0)
         {
             throw new AssistantCompositionException(
                 "VBX-COMP-005",
@@ -199,9 +184,7 @@ internal sealed class AssistantCapabilityGraph
         }
 
         if (_options.BargeIn.Enable &&
-            (!_audio.SupportsSimultaneousCapturePlayback ||
-             !_audio.SupportsRenderReference ||
-             !_audio.SupportsProcessedCaptureTimeline))
+            (!_audio.SupportsSimultaneousCapturePlayback || !_audio.SupportsRenderReference || !_audio.SupportsProcessedCaptureTimeline))
         {
             throw new AssistantCompositionException(
                 "VBX-COMP-008",
@@ -224,9 +207,7 @@ internal sealed class AssistantCapabilityGraph
 
         if (_wakeup is not null && !_audio.SupportsProcessedCaptureTimeline)
         {
-            throw new AssistantCompositionException(
-                "VBX-COMP-009",
-                "Wakeup requires the declared processed capture timeline.");
+            throw new AssistantCompositionException("VBX-COMP-009", "Wakeup requires the declared processed capture timeline.");
         }
     }
 
@@ -290,8 +271,7 @@ internal sealed class AssistantCapabilityGraph
             ComputeCapabilityGraphHash(diagnosticCapabilities))
         {
             CapabilityEdges = Array.AsReadOnly(edges
-                .Select(static edge =>
-                    $"{edge.ModuleId}:{edge.Kind}:{edge.Capability}:{edge.Order}")
+                .Select(static edge => $"{edge.ModuleId}:{edge.Kind}:{edge.Capability}:{edge.Order}")
                 .ToArray()),
             Ownership = CreateOwnershipPlan(),
         };
@@ -399,8 +379,7 @@ internal sealed class AssistantCapabilityGraph
         ];
         foreach (AssistantCapability capability in uniqueCapabilities)
         {
-            int providers = edges.Count(edge =>
-                edge.Kind == CapabilityEdgeKind.Provides && edge.Capability == capability);
+            int providers = edges.Count(edge => edge.Kind == CapabilityEdgeKind.Provides && edge.Capability == capability);
             if (providers > 1)
             {
                 throw new AssistantCompositionException(

@@ -46,8 +46,7 @@ namespace VoiceBox.ASR.FireRedASR2.Internal
 
             return RunSession(_encoder, container =>
             {
-                BindByName(_encoder, container, "input", padded,
-                    new[] { batchSize, padded.Length / featureDim / batchSize, featureDim });
+                BindByName(_encoder, container, "input", padded, new[] { batchSize, padded.Length / featureDim / batchSize, featureDim });
                 BindByName(_encoder, container, "input_lengths", inputLengths, new[] { batchSize });
             }, results =>
             {
@@ -84,8 +83,7 @@ namespace VoiceBox.ASR.FireRedASR2.Internal
                 BindByName(_decoder!, container, "encoder_outputs", encoderOutputs,
                     new[] { batchSize, encoderOutputs.Length / encoderHidden / batchSize, encoderHidden });
 
-                BindByName(_decoder!, container, "src_mask", srcMask,
-                    new[] { batchSize, 1, srcMask.Length / batchSize });
+                BindByName(_decoder!, container, "src_mask", srcMask, new[] { batchSize, 1, srcMask.Length / batchSize });
 
                 for (int i = 0; i < _metadata.DecoderCacheLayers; i++)
                 {
@@ -105,9 +103,7 @@ namespace VoiceBox.ASR.FireRedASR2.Internal
                 // softmax is monotonic and dividing by a positive temperature preserves order,
                 // so argmax(logits) == argmax(softmax(logits / T)). Read the raw logits through
                 // the dense-tensor buffer to avoid the per-element indexer.
-                ReadOnlySpan<float> logitsSpan = (logits is DenseTensor<float> dense)
-                    ? dense.Buffer.Span
-                    : logits.ToArray().AsSpan();
+                ReadOnlySpan<float> logitsSpan = (logits is DenseTensor<float> dense) ? dense.Buffer.Span : logits.ToArray().AsSpan();
                 var tokensOut = new List<List<long>>(rows);
                 for (int i = 0; i < rows; i++)
                 {

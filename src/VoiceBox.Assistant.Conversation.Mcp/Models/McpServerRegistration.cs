@@ -38,8 +38,7 @@ internal sealed record McpServerRegistration(
         Uri endpoint,
         IReadOnlyDictionary<string, string> headers,
         McpToolServerOptions options) =>
-        Create(alias, McpServerTransport.StreamableHttp, null, [],
-            new Dictionary<string, string?>(), null, endpoint, headers, options);
+        Create(alias, McpServerTransport.StreamableHttp, null, [], new Dictionary<string, string?>(), null, endpoint, headers, options);
 
     private static McpServerRegistration Create(
         string alias,

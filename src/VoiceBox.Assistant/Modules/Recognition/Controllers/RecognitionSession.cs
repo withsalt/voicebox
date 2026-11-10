@@ -52,9 +52,7 @@ internal sealed class RecognitionSession
         get { lock (_lock) return _finishing || _terminal; }
     }
 
-    internal bool IsFeedActive =>
-        Volatile.Read(ref _drainActive) != 0 ||
-        Volatile.Read(ref _directFeedActive) != 0;
+    internal bool IsFeedActive => Volatile.Read(ref _drainActive) != 0 || Volatile.Read(ref _directFeedActive) != 0;
 
     internal Exception? AudioFeedFailure
     {
@@ -95,8 +93,7 @@ internal sealed class RecognitionSession
         {
             if (_finishing || _terminal)
                 return false;
-            if (capacity is { } limit &&
-                _bootstrapAudio.Count + _pendingAudio.Count >= limit)
+            if (capacity is { } limit && _bootstrapAudio.Count + _pendingAudio.Count >= limit)
                 return false;
 
             _pendingAudio.Enqueue(audio.ToArray());
@@ -213,10 +210,7 @@ internal sealed class RecognitionSession
 
         lock (_lock)
         {
-            if (_terminal ||
-                _providerSessionId is null ||
-                !_audioAdmissionOpen ||
-                Volatile.Read(ref _directFeedActive) != 0)
+            if (_terminal || _providerSessionId is null || !_audioAdmissionOpen || Volatile.Read(ref _directFeedActive) != 0)
             {
                 Volatile.Write(ref _drainActive, 0);
                 return false;

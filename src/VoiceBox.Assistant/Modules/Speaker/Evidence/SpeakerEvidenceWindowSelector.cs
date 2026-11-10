@@ -30,8 +30,7 @@ internal sealed class SpeakerEvidenceWindowSelector
         if (query.HasFocusInterval)
         {
             long coverage = checked(_policy.WindowSamples + (long)(windowCount - 1) * _policy.HopSamples);
-            long focusCenter = checked(query.FocusStartSample +
-                (query.FocusEndSampleExclusive - query.FocusStartSample) / 2);
+            long focusCenter = checked(query.FocusStartSample + (query.FocusEndSampleExclusive - query.FocusStartSample) / 2);
             desiredStart = Math.Max(focusCenter - coverage / 2, query.CandidateStartSample);
         }
 
@@ -41,12 +40,7 @@ internal sealed class SpeakerEvidenceWindowSelector
         long availableEnd = Math.Min(query.CandidateEndSampleExclusive, retainedEnd);
         int availableCount = ComputeAvailableWindowCount(firstWindowStart, availableEnd, windowCount);
         int candidateCount = ComputeAvailableWindowCount(firstWindowStart, query.CandidateEndSampleExclusive, windowCount);
-        return new EvidenceWindowSelection(
-            firstWindowStart,
-            availableCount,
-            candidateCount,
-            availableCount,
-            requiredEnd);
+        return new EvidenceWindowSelection(firstWindowStart, availableCount, candidateCount, availableCount, requiredEnd);
     }
 
     /// <summary>The most recent complete windows inside the candidate; the selection slides as audio arrives.</summary>
@@ -55,10 +49,7 @@ internal sealed class SpeakerEvidenceWindowSelector
         long earliestWindowStart = AlignUp(query.CandidateStartSample, segmentOrigin, _policy.HopSamples);
         long earliestWindowEnd = checked(earliestWindowStart + _policy.WindowSamples);
         long requiredEnd = checked(earliestWindowEnd + (long)(windowCount - 1) * _policy.HopSamples);
-        int candidateCount = ComputeAvailableWindowCount(
-            earliestWindowStart,
-            query.CandidateEndSampleExclusive,
-            int.MaxValue);
+        int candidateCount = ComputeAvailableWindowCount(earliestWindowStart, query.CandidateEndSampleExclusive, int.MaxValue);
         int retainedCount = ComputeAvailableWindowCount(
             earliestWindowStart,
             Math.Min(query.CandidateEndSampleExclusive, retainedEnd),
@@ -67,12 +58,7 @@ internal sealed class SpeakerEvidenceWindowSelector
         long firstSelectedStart = selectedCount == 0
             ? earliestWindowStart
             : checked(earliestWindowStart + (long)(retainedCount - selectedCount) * _policy.HopSamples);
-        return new EvidenceWindowSelection(
-            firstSelectedStart,
-            selectedCount,
-            candidateCount,
-            retainedCount,
-            requiredEnd);
+        return new EvidenceWindowSelection(firstSelectedStart, selectedCount, candidateCount, retainedCount, requiredEnd);
     }
 
     /// <summary>All complete hop-aligned windows whose end lies in <c>(afterEnd, retainedEnd]</c>, newest last.</summary>

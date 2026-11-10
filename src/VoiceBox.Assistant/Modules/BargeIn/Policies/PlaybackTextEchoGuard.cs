@@ -46,9 +46,7 @@ internal sealed class PlaybackTextEchoGuard : IScheduledSpeechSink, Contracts.IP
             _scheduledSpeech.Append(normalized);
             if (_scheduledSpeech.Length > MaxRememberedCharacters)
             {
-                _scheduledSpeech.Remove(
-                    0,
-                    _scheduledSpeech.Length - MaxRememberedCharacters);
+                _scheduledSpeech.Remove(0, _scheduledSpeech.Length - MaxRememberedCharacters);
             }
         }
     }
@@ -74,22 +72,14 @@ internal sealed class PlaybackTextEchoGuard : IScheduledSpeechSink, Contracts.IP
 
         int longest = LongestCommonSubstringLength(recognized, scheduled);
         double contiguousCoverage = longest / (double)recognized.Length;
-        if (longest >= MinimumExactMatchCharacters &&
-            contiguousCoverage >= MinimumContiguousCoverage)
+        if (longest >= MinimumExactMatchCharacters && contiguousCoverage >= MinimumContiguousCoverage)
         {
             return new PlaybackTextEchoMatch(true, "contiguous-coverage");
         }
 
-        double bigramCoverage = recognized.Length >= MinimumFuzzyMatchCharacters
-            ? BigramCoverage(recognized, scheduled)
-            : 0;
-        bool fuzzyMatch =
-            recognized.Length >= MinimumFuzzyMatchCharacters &&
-            longest >= 4 &&
-            bigramCoverage >= MinimumBigramCoverage;
-        return new PlaybackTextEchoMatch(
-            fuzzyMatch,
-            fuzzyMatch ? "bigram-coverage" : "different-text");
+        double bigramCoverage = recognized.Length >= MinimumFuzzyMatchCharacters ? BigramCoverage(recognized, scheduled) : 0;
+        bool fuzzyMatch = recognized.Length >= MinimumFuzzyMatchCharacters && longest >= 4 && bigramCoverage >= MinimumBigramCoverage;
+        return new PlaybackTextEchoMatch(fuzzyMatch, fuzzyMatch ? "bigram-coverage" : "different-text");
     }
 
     private static PlaybackTextEchoMatch NoMatch(string reason)
@@ -117,9 +107,7 @@ internal sealed class PlaybackTextEchoGuard : IScheduledSpeechSink, Contracts.IP
         {
             for (int j = 1; j <= right.Length; j++)
             {
-                int length = left[i - 1] == right[j - 1]
-                    ? previous[j - 1] + 1
-                    : 0;
+                int length = left[i - 1] == right[j - 1] ? previous[j - 1] + 1 : 0;
                 current[j] = length;
                 longest = Math.Max(longest, length);
             }

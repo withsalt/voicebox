@@ -129,21 +129,13 @@ public sealed class ChineseG2P : IG2P
 
     #endregion
 
-    private static readonly Regex ChineseCharRegex = new(
-        @"[\u4E00-\u9FFF]+|[^\u4E00-\u9FFF]+",
-        RegexOptions.Compiled);
+    private static readonly Regex ChineseCharRegex = new(@"[\u4E00-\u9FFF]+|[^\u4E00-\u9FFF]+", RegexOptions.Compiled);
 
-    private static readonly Regex EnglishSegmentRegex = new(
-        @"([A-Za-z \'-]*[A-Za-z][A-Za-z \'-]*)|([^A-Za-z]+)",
-        RegexOptions.Compiled);
+    private static readonly Regex EnglishSegmentRegex = new(@"([A-Za-z \'-]*[A-Za-z][A-Za-z \'-]*)|([^A-Za-z]+)", RegexOptions.Compiled);
 
-    private static readonly Regex SingleIFinalRegex = new(
-        @"^i\d$",
-        RegexOptions.Compiled);
+    private static readonly Regex SingleIFinalRegex = new(@"^i\d$", RegexOptions.Compiled);
 
-    private static readonly Regex BeforeDigitRegex = new(
-        @"(?=\d)",
-        RegexOptions.Compiled);
+    private static readonly Regex BeforeDigitRegex = new(@"(?=\d)", RegexOptions.Compiled);
 
     /// <summary>
     /// Creates a new Chinese G2P instance.
@@ -324,8 +316,7 @@ public sealed class ChineseG2P : IG2P
                 continue;
             }
 
-            if (tokens.Count > 0 && tokens[^1].Tag is not "x" and not "eng"
-                && string.IsNullOrEmpty(tokens[^1].Whitespace))
+            if (tokens.Count > 0 && tokens[^1].Tag is not "x" and not "eng" && string.IsNullOrEmpty(tokens[^1].Whitespace))
             {
                 tokens[^1].Whitespace = "/";
             }
@@ -375,13 +366,11 @@ public sealed class ChineseG2P : IG2P
             phoneStr = BeforeDigitRegex.Replace(phoneStr, "_");
             var phoneParts = phoneStr.Split('_', StringSplitOptions.RemoveEmptyEntries);
 
-            tk.Phonemes = string.Concat(phoneParts.Select(p =>
-                ZhMap.TryGetValue(p, out var mapped) ? mapped : _unk));
+            tk.Phonemes = string.Concat(phoneParts.Select(p => ZhMap.TryGetValue(p, out var mapped) ? mapped : _unk));
             tokens.Add(tk);
         }
 
-        var result = string.Concat(tokens.Select(tk =>
-            (tk.Phonemes ?? _unk) + tk.Whitespace));
+        var result = string.Concat(tokens.Select(tk => (tk.Phonemes ?? _unk) + tk.Whitespace));
 
         return (result, tokens);
     }

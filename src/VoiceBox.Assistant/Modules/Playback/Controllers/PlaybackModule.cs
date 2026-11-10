@@ -83,10 +83,7 @@ internal sealed class PlaybackModule :
             throw new ArgumentOutOfRangeException(nameof(turnId), "Turn id must be positive.");
         ArgumentNullException.ThrowIfNull(text);
 
-        SpeechEnqueueResult submission = await _coordinator.EnqueueAsync(
-            turnId,
-            text,
-            cancellationToken).ConfigureAwait(false);
+        SpeechEnqueueResult submission = await _coordinator.EnqueueAsync(turnId, text, cancellationToken).ConfigureAwait(false);
         return await AwaitTextAsync(submission).ConfigureAwait(false);
     }
 

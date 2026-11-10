@@ -40,10 +40,7 @@ namespace VoiceBox.TTS.DoubaoOnline.SpeakerCatalog
 
             // 签名头固定为 host;x-content-sha256;x-date (与官方示例一致)。
             const string signedHeaders = "host;x-content-sha256;x-date";
-            string canonicalHeaders =
-                $"host:{req.Host}\n" +
-                $"x-content-sha256:{payloadHash}\n" +
-                $"x-date:{xDate}\n";
+            string canonicalHeaders = $"host:{req.Host}\n" + $"x-content-sha256:{payloadHash}\n" + $"x-date:{xDate}\n";
 
             string canonicalRequest = string.Join('\n',
                 req.Method.ToUpperInvariant(),
@@ -54,11 +51,7 @@ namespace VoiceBox.TTS.DoubaoOnline.SpeakerCatalog
                 payloadHash);
 
             string credentialScope = $"{shortDate}/{req.Region}/{req.Service}/request";
-            string stringToSign = string.Join('\n',
-                Algorithm,
-                xDate,
-                credentialScope,
-                HexSha256(Encoding.UTF8.GetBytes(canonicalRequest)));
+            string stringToSign = string.Join('\n', Algorithm, xDate, credentialScope, HexSha256(Encoding.UTF8.GetBytes(canonicalRequest)));
 
             byte[] signingKey = DeriveSigningKey(req.SecretAccessKey, shortDate, req.Region, req.Service);
             string signature = ToHex(HmacSha256(signingKey, Encoding.UTF8.GetBytes(stringToSign)));

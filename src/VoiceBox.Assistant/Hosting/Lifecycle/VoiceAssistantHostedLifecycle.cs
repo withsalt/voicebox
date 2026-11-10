@@ -48,10 +48,7 @@ internal sealed class VoiceAssistantHostedLifecycle : IHostedService
             _diagnostics.SetLifecycleStatus("Faulted");
             VoiceAssistantHostingTelemetry.Faulted.Add(1);
             activity?.SetStatus(ActivityStatusCode.Error, exception.GetType().Name);
-            _logger.LogError(
-                VoiceAssistantHostingEventIds.StartFailed,
-                exception,
-                "VoiceBox Assistant failed during hosted startup.");
+            _logger.LogError(VoiceAssistantHostingEventIds.StartFailed, exception, "VoiceBox Assistant failed during hosted startup.");
             DisposeRuntimeTelemetry();
             throw;
         }
@@ -68,19 +65,14 @@ internal sealed class VoiceAssistantHostedLifecycle : IHostedService
             await _assistant.StopAsync().ConfigureAwait(false);
             _diagnostics.SetLifecycleStatus("Stopped");
             VoiceAssistantHostingTelemetry.Stopped.Add(1);
-            _logger.LogInformation(
-                VoiceAssistantHostingEventIds.Stopped,
-                "VoiceBox Assistant stopped.");
+            _logger.LogInformation(VoiceAssistantHostingEventIds.Stopped, "VoiceBox Assistant stopped.");
         }
         catch (Exception exception)
         {
             _diagnostics.SetLifecycleStatus("Faulted");
             VoiceAssistantHostingTelemetry.Faulted.Add(1);
             activity?.SetStatus(ActivityStatusCode.Error, exception.GetType().Name);
-            _logger.LogError(
-                VoiceAssistantHostingEventIds.StopFailed,
-                exception,
-                "VoiceBox Assistant failed during hosted shutdown.");
+            _logger.LogError(VoiceAssistantHostingEventIds.StopFailed, exception, "VoiceBox Assistant failed during hosted shutdown.");
             throw;
         }
         finally

@@ -16,9 +16,7 @@ internal static class RealtimeAudioChannel
         };
 
     internal static Channel<T> CreateDropOldest<T>(int capacity, bool singleReader, bool singleWriter, Action<T>? itemDropped = null)
-        => Channel.CreateBounded<T>(
-            CreateDropOldestOptions(capacity, singleReader, singleWriter),
-            itemDropped);
+        => Channel.CreateBounded<T>(CreateDropOldestOptions(capacity, singleReader, singleWriter), itemDropped);
 
     internal static bool WaitToReadBlocking<T>(ChannelReader<T> reader, CancellationToken cancellationToken)
     {

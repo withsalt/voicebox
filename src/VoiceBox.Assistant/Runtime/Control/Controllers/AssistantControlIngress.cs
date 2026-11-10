@@ -32,8 +32,7 @@ internal sealed class AssistantControlIngress :
     public AssistantControlIngress()
     {
         _critical = new BoundedMpscQueue<ControlEnvelope>(CriticalLaneCapacity);
-        _completionAndLifecycle = new BoundedMpscQueue<ControlEnvelope>(
-            CompletionAndLifecycleLaneCapacity);
+        _completionAndLifecycle = new BoundedMpscQueue<ControlEnvelope>(CompletionAndLifecycleLaneCapacity);
     }
 
     public static int CriticalCapacity => CriticalLaneCapacity;
@@ -72,11 +71,7 @@ internal sealed class AssistantControlIngress :
             RecordTerminalFault(
                 NextSequence(),
                 sourceTimestamp,
-                new AssistantFailure(
-                    "VBX-CTRL-002",
-                    "ordering",
-                    source.ToString(),
-                    "non-monotonic-source-timestamp"));
+                new AssistantFailure("VBX-CTRL-002", "ordering", source.ToString(), "non-monotonic-source-timestamp"));
             return false;
         }
 
@@ -87,11 +82,7 @@ internal sealed class AssistantControlIngress :
             // Taking a sequence is a commitment. Preserve it as an abandoned envelope so the
             // single consumer can advance FIFO without mistaking a post-barrier rejection for a
             // missing ingress item.
-            ControlEnvelope abandoned = ControlEnvelope.FromSignal(
-                sequence,
-                sourceTimestamp,
-                source,
-                signal);
+            ControlEnvelope abandoned = ControlEnvelope.FromSignal(sequence, sourceTimestamp, source, signal);
             if (_critical.TryWrite(abandoned))
             {
                 _available.Release();
@@ -101,11 +92,7 @@ internal sealed class AssistantControlIngress :
                 RecordTerminalFault(
                     sequence,
                     sourceTimestamp,
-                    new AssistantFailure(
-                        "VBX-CTRL-001",
-                        "capacity",
-                        "AssistantControlIngress",
-                        "post-barrier-abandon-overflow"));
+                    new AssistantFailure("VBX-CTRL-001", "capacity", "AssistantControlIngress", "post-barrier-abandon-overflow"));
             }
             ingressSequence = sequence;
             return false;
@@ -117,11 +104,7 @@ internal sealed class AssistantControlIngress :
             RecordTerminalFault(
                 sequence,
                 sourceTimestamp,
-                new AssistantFailure(
-                    "VBX-CTRL-001",
-                    "capacity",
-                    "AssistantControlIngress",
-                    "critical-lane-overflow"));
+                new AssistantFailure("VBX-CTRL-001", "capacity", "AssistantControlIngress", "critical-lane-overflow"));
             return false;
         }
 
@@ -141,11 +124,7 @@ internal sealed class AssistantControlIngress :
             sequence = NextSequence();
             if (command.IsBarrier)
                 SetBarrier(sequence);
-            ControlEnvelope envelope = ControlEnvelope.FromCommand(
-                sequence,
-                sourceTimestamp,
-                AssistantSignalSource.HostLifecycle,
-                command);
+            ControlEnvelope envelope = ControlEnvelope.FromCommand(sequence, sourceTimestamp, AssistantSignalSource.HostLifecycle, command);
             if (!_completionAndLifecycle.TryWrite(envelope))
                 throw new InvalidOperationException("Reserved lifecycle admission was unavailable.");
             _available.Release();
@@ -159,11 +138,7 @@ internal sealed class AssistantControlIngress :
                 RecordTerminalFault(
                     sequence,
                     sourceTimestamp,
-                    new AssistantFailure(
-                        "VBX-CTRL-003",
-                        "lifecycle",
-                        "AssistantControlIngress",
-                        "lifecycle-admission-failed"));
+                    new AssistantFailure("VBX-CTRL-003", "lifecycle", "AssistantControlIngress", "lifecycle-admission-failed"));
             }
             throw;
         }
@@ -185,11 +160,7 @@ internal sealed class AssistantControlIngress :
             long barrier = BarrierSequence;
             if (barrier != 0 && sequence > barrier)
                 throw new InvalidOperationException("Assistant control signal was rejected after the lifecycle barrier.");
-            ControlEnvelope envelope = ControlEnvelope.FromSignal(
-                sequence,
-                sourceTimestamp,
-                source,
-                signal);
+            ControlEnvelope envelope = ControlEnvelope.FromSignal(sequence, sourceTimestamp, source, signal);
             if (!_completionAndLifecycle.TryWrite(envelope))
                 throw new InvalidOperationException("Reserved completion admission was unavailable.");
             _available.Release();
@@ -203,11 +174,7 @@ internal sealed class AssistantControlIngress :
                 RecordTerminalFault(
                     sequence,
                     sourceTimestamp,
-                    new AssistantFailure(
-                        "VBX-CTRL-004",
-                        "completion",
-                        source.ToString(),
-                        "completion-admission-failed"));
+                    new AssistantFailure("VBX-CTRL-004", "completion", source.ToString(), "completion-admission-failed"));
             }
             throw;
         }
@@ -217,8 +184,7 @@ internal sealed class AssistantControlIngress :
     {
         bool hasCritical = _critical.TryPeek(out ControlEnvelope critical);
         bool hasCompletion = _completionAndLifecycle.TryPeek(out ControlEnvelope completion);
-        bool hasFault = Volatile.Read(ref _hasTerminalFault) == 2 &&
-            Volatile.Read(ref _terminalConsumed) == 0;
+        bool hasFault = Volatile.Read(ref _hasTerminalFault) == 2 && Volatile.Read(ref _terminalConsumed) == 0;
         long faultSequence = hasFault ? _terminalFault.IngressSequence : long.MaxValue;
         long criticalSequence = hasCritical ? critical.IngressSequence : long.MaxValue;
         long completionSequence = hasCompletion ? completion.IngressSequence : long.MaxValue;
@@ -271,9 +237,7 @@ internal sealed class AssistantControlIngress :
     public bool IsAfterBarrier(in ControlEnvelope envelope)
     {
         long barrier = BarrierSequence;
-        return barrier != 0 &&
-            envelope.IngressSequence > barrier &&
-            envelope.Kind == ControlEnvelopeKind.AssistantSignal;
+        return barrier != 0 && envelope.IngressSequence > barrier && envelope.Kind == ControlEnvelopeKind.AssistantSignal;
     }
 
     public void Dispose()
@@ -314,13 +278,8 @@ internal sealed class AssistantControlIngress :
         RecordTerminalFault(
             NextSequence(),
             timestamp,
-            new AssistantFailure(
-                "VBX-CTRL-002",
-                "ordering",
-                source.ToString(),
-                "non-monotonic-source-timestamp"));
-        throw new InvalidOperationException(
-            $"Assistant control source timestamp decreased for '{source}'.");
+            new AssistantFailure("VBX-CTRL-002", "ordering", source.ToString(), "non-monotonic-source-timestamp"));
+        throw new InvalidOperationException($"Assistant control source timestamp decreased for '{source}'.");
     }
 
     private void ConsumeAvailabilitySignal()

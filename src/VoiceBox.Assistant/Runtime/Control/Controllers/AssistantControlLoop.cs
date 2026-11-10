@@ -105,9 +105,7 @@ internal sealed class AssistantControlLoop
                 Task deadline = Task.Delay(remaining, _timeProvider);
                 if (Task.WhenAny(data, deadline).GetAwaiter().GetResult() != data)
                 {
-                    HandleGapFault(
-                        _timeProvider.GetElapsedTime(gapStarted),
-                        cancellationToken);
+                    HandleGapFault(_timeProvider.GetElapsedTime(gapStarted), cancellationToken);
                     return;
                 }
                 data.GetAwaiter().GetResult();
@@ -137,10 +135,7 @@ internal sealed class AssistantControlLoop
         {
             faultSequence = latchedSequence;
         }
-        ControlEnvelope fault = ControlEnvelope.FromTerminalFault(
-            faultSequence,
-            _timeProvider.GetTimestamp(),
-            failure);
+        ControlEnvelope fault = ControlEnvelope.FromTerminalFault(faultSequence, _timeProvider.GetTimestamp(), failure);
         Complete(_handler.HandleTerminalFaultAsync(failure, fault, cancellationToken));
     }
 
@@ -151,18 +146,9 @@ internal sealed class AssistantControlLoop
 
         return envelope.Kind switch
         {
-            ControlEnvelopeKind.RuntimeCommand => _handler.HandleRuntimeCommandAsync(
-                envelope.Command,
-                envelope,
-                cancellationToken),
-            ControlEnvelopeKind.AssistantSignal => _handler.HandleAssistantSignalAsync(
-                envelope.Signal,
-                envelope,
-                cancellationToken),
-            ControlEnvelopeKind.TerminalFault => _handler.HandleTerminalFaultAsync(
-                envelope.Failure,
-                envelope,
-                cancellationToken),
+            ControlEnvelopeKind.RuntimeCommand => _handler.HandleRuntimeCommandAsync(envelope.Command, envelope, cancellationToken),
+            ControlEnvelopeKind.AssistantSignal => _handler.HandleAssistantSignalAsync(envelope.Signal, envelope, cancellationToken),
+            ControlEnvelopeKind.TerminalFault => _handler.HandleTerminalFaultAsync(envelope.Failure, envelope, cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(envelope), envelope.Kind, null),
         };
     }
@@ -180,15 +166,8 @@ internal sealed class AssistantControlLoop
         }
         catch (Exception exception)
         {
-            var failure = new AssistantFailure(
-                "VBX-CTRL-010",
-                "handler",
-                "AssistantControlLoop",
-                exception.GetType().Name);
-            ControlEnvelope fault = ControlEnvelope.FromTerminalFault(
-                envelope.IngressSequence,
-                _timeProvider.GetTimestamp(),
-                failure);
+            var failure = new AssistantFailure("VBX-CTRL-010", "handler", "AssistantControlLoop", exception.GetType().Name);
+            ControlEnvelope fault = ControlEnvelope.FromTerminalFault(envelope.IngressSequence, _timeProvider.GetTimestamp(), failure);
             Complete(_handler.HandleTerminalFaultAsync(failure, fault, cancellationToken));
             return false;
         }

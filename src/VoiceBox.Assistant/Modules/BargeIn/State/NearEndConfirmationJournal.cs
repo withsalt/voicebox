@@ -80,9 +80,7 @@ internal sealed class NearEndConfirmationJournal
     /// <summary>Commits exactly the current lease and releases it. Stale leases are ignored.</summary>
     public bool TryCommit(in NearEndConfirmationLease lease)
     {
-        if (_taken is not { } taken ||
-            taken.OperationId != lease.OperationId ||
-            taken.CandidateId != lease.CandidateId)
+        if (_taken is not { } taken || taken.OperationId != lease.OperationId || taken.CandidateId != lease.CandidateId)
         {
             return false;
         }
@@ -94,9 +92,7 @@ internal sealed class NearEndConfirmationJournal
     /// <summary>Aborts exactly the current lease. Stale or repeated aborts are ignored.</summary>
     public bool TryAbort(in NearEndConfirmationLease lease)
     {
-        if (_taken is not { } taken ||
-            taken.OperationId != lease.OperationId ||
-            taken.CandidateId != lease.CandidateId)
+        if (_taken is not { } taken || taken.OperationId != lease.OperationId || taken.CandidateId != lease.CandidateId)
         {
             return false;
         }

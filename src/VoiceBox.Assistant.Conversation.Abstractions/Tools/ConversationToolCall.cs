@@ -15,12 +15,10 @@ public sealed record ConversationToolCall(
 
     public ConversationToolId ToolId { get; } =
         string.IsNullOrWhiteSpace(ToolId.ServerAlias) || string.IsNullOrWhiteSpace(ToolId.ToolName)
-            ? throw new ArgumentException(
-                "Tool identity must contain a server alias and tool name.", nameof(ToolId))
+            ? throw new ArgumentException("Tool identity must contain a server alias and tool name.", nameof(ToolId))
             : ToolId;
 
-    public string ArgumentsJson { get; } = ArgumentsJson
-        ?? throw new ArgumentNullException(nameof(ArgumentsJson));
+    public string ArgumentsJson { get; } = ArgumentsJson ?? throw new ArgumentNullException(nameof(ArgumentsJson));
 
     public ConversationToolExecutionPreference ExecutionPreference { get; } =
         Enum.IsDefined(ExecutionPreference)

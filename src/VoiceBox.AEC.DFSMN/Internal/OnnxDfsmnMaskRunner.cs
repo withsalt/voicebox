@@ -57,8 +57,7 @@ namespace VoiceBox.AEC.DFSMN.Internal
                 throw new InvalidOperationException("DFSMN model has a cache input but no cache output; streaming cache cannot be maintained.");
 
             _featureBuffer = new float[_chunkFrames * _featureDim];
-            _featureValue = OrtValue.CreateTensorValueFromMemory(
-                _featureBuffer, new long[] { 1, _chunkFrames, _featureDim });
+            _featureValue = OrtValue.CreateTensorValueFromMemory(_featureBuffer, new long[] { 1, _chunkFrames, _featureDim });
 
             if (cacheInputName is not null)
             {
@@ -115,8 +114,7 @@ namespace VoiceBox.AEC.DFSMN.Internal
             string[] outputNames = requireVad
                 ? _outputNamesWithVad ?? throw new InvalidOperationException("The DFSMN model does not expose a VAD probability output.")
                 : _outputNames;
-            using IDisposableReadOnlyCollection<OrtValue> results =
-                _session.Run(_runOptions, _inputNames, _inputValues, outputNames);
+            using IDisposableReadOnlyCollection<OrtValue> results = _session.Run(_runOptions, _inputNames, _inputValues, outputNames);
 
             // results follow outputNames order: [mask, vad_prob?, cache_out?].
             ReadOnlySpan<float> maskData = results[0].GetTensorDataAsSpan<float>();

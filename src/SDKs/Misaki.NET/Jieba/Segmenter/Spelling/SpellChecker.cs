@@ -51,13 +51,9 @@ namespace Misaki.NET.Jieba.Segmenter.Spelling
                 splits.Add(new WordSplit() { Left = word.Substring(0, i), Right = word.Substring(i) });
             }
 
-            var deletes = splits
-                .Where(s => !string.IsNullOrEmpty(s.Right))
-                .Select(s => s.Left + s.Right.Substring(1));
+            var deletes = splits.Where(s => !string.IsNullOrEmpty(s.Right)).Select(s => s.Left + s.Right.Substring(1));
 
-            var transposes = splits
-                .Where(s => s.Right.Length > 1)
-                .Select(s => s.Left + s.Right[1] + s.Right[0] + s.Right.Substring(2));
+            var transposes = splits.Where(s => s.Right.Length > 1).Select(s => s.Left + s.Right[1] + s.Right[0] + s.Right.Substring(2));
 
             var replaces = new HashSet<string>();
             if (word.Length > 1)

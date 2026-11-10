@@ -41,9 +41,7 @@ internal sealed class SpeakerEnrollmentConsoleInteraction : ISpeakerEnrollmentPa
         cancellationToken.ThrowIfCancellationRequested();
         if (enrollment.HasUsableProfile(requireDoubleTalkBank: true))
         {
-            _display.WriteLines(
-                $"  [Speaker] 已加载本人声纹 (前端指纹 {enrollment.FrontendFingerprint}): {enrollment.ProfilePath}",
-                string.Empty);
+            _display.WriteLines($"  [Speaker] 已加载本人声纹 (前端指纹 {enrollment.FrontendFingerprint}): {enrollment.ProfilePath}", string.Empty);
             return;
         }
 
@@ -57,8 +55,7 @@ internal sealed class SpeakerEnrollmentConsoleInteraction : ISpeakerEnrollmentPa
                 {
                     if (!calibrationPrepared)
                     {
-                        _display.WriteLines(string.Empty,
-                            "  [Speaker] 正在准备双讲校准语音（首次使用会加载 TTS 模型），请稍候...");
+                        _display.WriteLines(string.Empty, "  [Speaker] 正在准备双讲校准语音（首次使用会加载 TTS 模型），请稍候...");
                         await calibrationStimulus.PrepareAsync(cancellationToken);
                         calibrationPrepared = true;
                     }

@@ -163,9 +163,7 @@ namespace VoiceBox.Speaker.CampPlus.Internal
         /// </summary>
         public void ComputeFeatures(ReadOnlySpan<float> samples, Span<float> destination)
         {
-            int frames = samples.Length < FrameLength
-                ? 0
-                : (samples.Length - FrameLength) / FrameShift + 1;
+            int frames = samples.Length < FrameLength ? 0 : (samples.Length - FrameLength) / FrameShift + 1;
             if (destination.Length < frames * _numBins)
                 throw new ArgumentException("Destination is too small for the input audio.", nameof(destination));
             if (frames == 0) return;
@@ -179,10 +177,7 @@ namespace VoiceBox.Speaker.CampPlus.Internal
 
                 for (int i = 0; i < frames; i++)
                 {
-                    ProduceFrameCore(
-                        scaled.Slice(i * FrameShift, FrameLength),
-                        destination.Slice(i * _numBins, _numBins),
-                        out _);
+                    ProduceFrameCore(scaled.Slice(i * FrameShift, FrameLength), destination.Slice(i * _numBins, _numBins), out _);
                 }
             }
             finally
@@ -239,10 +234,7 @@ namespace VoiceBox.Speaker.CampPlus.Internal
             EnsureFrameCapacity(_frameCount + 1);
             int slot = (_frameHead + _frameCount) % _frameRms.Length;
             Span<float> mel = _frameData.AsSpan(slot * _numBins, _numBins);
-            ProduceFrameCore(
-                _samples.AsSpan((int)(startSample - _sampleStart), FrameLength),
-                mel,
-                out _frameRms[slot]);
+            ProduceFrameCore(_samples.AsSpan((int)(startSample - _sampleStart), FrameLength), mel, out _frameRms[slot]);
             _frameCount++;
         }
 
@@ -382,9 +374,7 @@ namespace VoiceBox.Speaker.CampPlus.Internal
                     float freq = fftBinWidth * j;
                     float mel = MelScale(freq);
                     if (mel <= left || mel >= right) { dense[j] = 0f; continue; }
-                    dense[j] = mel <= center
-                        ? (mel - left) / (center - left)
-                        : (right - mel) / (right - center);
+                    dense[j] = mel <= center ? (mel - left) / (center - left) : (right - mel) / (right - center);
                     if (first < 0) first = j;
                     last = j;
                 }

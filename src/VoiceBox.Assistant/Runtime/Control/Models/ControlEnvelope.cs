@@ -39,14 +39,7 @@ internal readonly record struct ControlEnvelope
         long sourceTimestamp,
         AssistantSignalSource source,
         RuntimeCommand command)
-        => new(
-            ingressSequence,
-            sourceTimestamp,
-            source,
-            ControlEnvelopeKind.RuntimeCommand,
-            command,
-            default,
-            default);
+        => new(ingressSequence, sourceTimestamp, source, ControlEnvelopeKind.RuntimeCommand, command, default, default);
 
     public static ControlEnvelope FromSignal(
         long ingressSequence,

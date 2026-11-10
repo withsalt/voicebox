@@ -60,8 +60,7 @@ internal sealed class AssistantRequiredServices : IDisposable
     {
         ArgumentNullException.ThrowIfNull(manager);
 
-        IAcousticProcessingMetricsSource acousticDiagnostics =
-            manager.GetAcousticProcessingMetricsSource();
+        IAcousticProcessingMetricsSource acousticDiagnostics = manager.GetAcousticProcessingMetricsSource();
 
         return new AssistantRequiredServices(
             manager,

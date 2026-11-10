@@ -112,12 +112,7 @@ namespace VoiceBox.Audio.Common.Resampling
                 int inLen = remaining.Length;
                 int outLen = output.Length - producedTotal;
 
-                _resampler.Process(
-                    channel_index: 0,
-                    AsWritableSpan(remaining),
-                    ref inLen,
-                    output.AsSpan(producedTotal),
-                    ref outLen);
+                _resampler.Process(channel_index: 0, AsWritableSpan(remaining), ref inLen, output.AsSpan(producedTotal), ref outLen);
 
                 if (inLen < 0 || outLen < 0)
                     throw new InvalidOperationException("Concentus resampler returned a negative consumed or produced count.");

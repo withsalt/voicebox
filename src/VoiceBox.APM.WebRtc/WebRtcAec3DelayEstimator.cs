@@ -64,8 +64,7 @@ namespace VoiceBox.APM.WebRtc
             int rc = ApmInterop.DelayCreate(sampleRate, channels, out _handle);
             if (rc != ApmInterop.Ok || _handle == nint.Zero)
             {
-                throw new InvalidOperationException(
-                    $"apm_delay_create failed (rc={rc}). See native status codes in apm_shim.h.");
+                throw new InvalidOperationException($"apm_delay_create failed (rc={rc}). See native status codes in apm_shim.h.");
             }
         }
 
@@ -78,9 +77,7 @@ namespace VoiceBox.APM.WebRtc
             ObjectDisposedException.ThrowIf(_disposed || _handle == nint.Zero, this);
             if (render.Length != capture.Length)
             {
-                throw new ArgumentException(
-                    "Render and capture sample counts must match.",
-                    nameof(capture));
+                throw new ArgumentException("Render and capture sample counts must match.", nameof(capture));
             }
 
             estimate = default;
@@ -94,24 +91,15 @@ namespace VoiceBox.APM.WebRtc
                 {
                     int delay = 0;
                     int quality = 0;
-                    int rc = ApmInterop.DelayProcess(
-                        _handle,
-                        r,
-                        c,
-                        render.Length,
-                        &delay,
-                        &quality);
+                    int rc = ApmInterop.DelayProcess(_handle, r, c, render.Length, &delay, &quality);
                     if (rc == 0)
                         return false;
                     if (rc != 1)
                     {
-                        throw new InvalidOperationException(
-                            $"WebRTC AEC3 delay estimation failed with native status {rc}.");
+                        throw new InvalidOperationException($"WebRTC AEC3 delay estimation failed with native status {rc}.");
                     }
 
-                    estimate = new AcousticPathDelayEstimate(
-                        Math.Max(0, delay),
-                        quality != 0);
+                    estimate = new AcousticPathDelayEstimate(Math.Max(0, delay), quality != 0);
                     return true;
                 }
             }

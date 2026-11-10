@@ -94,8 +94,7 @@ internal sealed class TurnObservationRelease
     public bool CommitWakeupInterrupt(WakeupInterruptDecision decision)
     {
         if (decision.TurnId <= 0 ||
-            (!_turnState.IsCurrentTurn(decision.InterruptedTurnId) &&
-             _validation.InterruptedTurnId != decision.InterruptedTurnId))
+            (!_turnState.IsCurrentTurn(decision.InterruptedTurnId) && _validation.InterruptedTurnId != decision.InterruptedTurnId))
         {
             return false;
         }

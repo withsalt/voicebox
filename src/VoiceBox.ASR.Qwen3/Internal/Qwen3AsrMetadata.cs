@@ -25,8 +25,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
 
         /// <summary>Resolve the prefill ONNX file name, falling back to legacy <c>decoder_model</c>.</summary>
         public string ResolvePrefillModel()
-            => PrefillModel ?? DecoderModel
-               ?? throw new InvalidOperationException("metadata.json missing prefill_model / decoder_model.");
+            => PrefillModel ?? DecoderModel ?? throw new InvalidOperationException("metadata.json missing prefill_model / decoder_model.");
 
         /// <summary>Resolve the decode ONNX file name, falling back to prefill if shared.</summary>
         public string ResolveDecodeModel()

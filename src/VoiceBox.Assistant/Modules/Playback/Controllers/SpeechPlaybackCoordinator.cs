@@ -77,8 +77,7 @@ internal sealed class SpeechPlaybackCoordinator : IDisposable
 
             if (ownerTurnId is > 0 && !_admittedTurnIds.Add(ownerTurnId.Value))
             {
-                throw new InvalidOperationException(
-                    $"Playback operation for turn '{ownerTurnId.Value}' is already queued or active.");
+                throw new InvalidOperationException($"Playback operation for turn '{ownerTurnId.Value}' is already queued or active.");
             }
 
             request = new SpeechPlaybackRequest(
@@ -149,8 +148,7 @@ internal sealed class SpeechPlaybackCoordinator : IDisposable
                 return false;
             if (active.RestoreGain.HasValue)
                 return true;
-            if (!float.IsFinite(gain) || !float.IsFinite(originalGain) ||
-                gain < 0 || originalGain > 1 || gain >= originalGain)
+            if (!float.IsFinite(gain) || !float.IsFinite(originalGain) || gain < 0 || originalGain > 1 || gain >= originalGain)
                 return false;
 
             // Gain setters only update the device's target. Serialize that update with owner changes
@@ -215,9 +213,7 @@ internal sealed class SpeechPlaybackCoordinator : IDisposable
         try { _deviceQueue.ClearQueue(); }
         catch (Exception exception)
         {
-            Exception failure = cancellationFailure is null
-                ? exception
-                : new AggregateException(cancellationFailure, exception);
+            Exception failure = cancellationFailure is null ? exception : new AggregateException(cancellationFailure, exception);
             completion.TrySetException(failure);
             ExceptionDispatchInfo.Throw(failure);
         }
@@ -268,9 +264,7 @@ internal sealed class SpeechPlaybackCoordinator : IDisposable
         try { CancelActivePlayback(); }
         catch (Exception exception)
         {
-            cancellationFailure = cancellationFailure is null
-                ? exception
-                : new AggregateException(cancellationFailure, exception);
+            cancellationFailure = cancellationFailure is null ? exception : new AggregateException(cancellationFailure, exception);
         }
 
         try

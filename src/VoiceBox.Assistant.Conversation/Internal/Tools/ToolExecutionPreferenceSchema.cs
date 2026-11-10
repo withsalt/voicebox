@@ -78,8 +78,7 @@ internal static class ToolExecutionPreferenceSchema
         }
         writer.WriteEndArray();
         writer.WritePropertyName("description");
-        writer.WriteStringValue(
-            "Choose whether to run this tool in the foreground (the reply waits) or in the background.");
+        writer.WriteStringValue("Choose whether to run this tool in the foreground (the reply waits) or in the background.");
         writer.WriteEndObject();
     }
 
@@ -89,8 +88,7 @@ internal static class ToolExecutionPreferenceSchema
     {
         ArgumentNullException.ThrowIfNull(arguments);
         JsonElement element = arguments.ToJsonElement();
-        if (element.ValueKind != JsonValueKind.Object ||
-            !element.TryGetProperty(PropertyName, out JsonElement preferenceElement))
+        if (element.ValueKind != JsonValueKind.Object || !element.TryGetProperty(PropertyName, out JsonElement preferenceElement))
         {
             return (arguments, DefaultPreference(policy));
         }

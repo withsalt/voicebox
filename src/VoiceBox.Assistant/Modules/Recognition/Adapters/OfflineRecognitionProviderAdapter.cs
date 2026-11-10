@@ -22,9 +22,7 @@ internal sealed class OfflineRecognitionProviderAdapter : IRecognitionProviderAd
 
     public async Task<string?> FinishSessionAsync(string sessionId, CancellationToken cancellationToken)
     {
-        AsrResult? result = await _service.FinishSessionAsync(
-            sessionId,
-            cancellationToken).ConfigureAwait(false);
+        AsrResult? result = await _service.FinishSessionAsync(sessionId, cancellationToken).ConfigureAwait(false);
         return result?.Text;
     }
 

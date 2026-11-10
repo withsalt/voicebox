@@ -66,10 +66,7 @@ internal sealed class ActiveNearEndControlHandler
             _confirmations.TryCommit(in lease, in confirmed);
         if (confirmedNearEnd)
         {
-            _benchmarkProbe?.ObserveControlTrace(
-                "near-end.confirmation.reduced",
-                confirmed.TurnId,
-                operationId);
+            _benchmarkProbe?.ObserveControlTrace("near-end.confirmation.reduced", confirmed.TurnId, operationId);
             ObserveBenchmarkProgress();
             return _bargeInTurns.ObserveConfirmedBargeIn(
                 confirmed,

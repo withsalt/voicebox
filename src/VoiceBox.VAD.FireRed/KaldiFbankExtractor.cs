@@ -136,9 +136,7 @@ namespace VoiceBox.VAD.FireRed
                     float freq = fftBinWidth * j;
                     float mel = MelScale(freq);
                     if (mel <= left || mel >= right) continue;
-                    float w = mel <= center
-                        ? (mel - left) / (center - left)
-                        : (right - mel) / (right - center);
+                    float w = mel <= center ? (mel - left) / (center - left) : (right - mel) / (right - center);
                     filt[j] = w;
                 }
                 filters[b] = filt;

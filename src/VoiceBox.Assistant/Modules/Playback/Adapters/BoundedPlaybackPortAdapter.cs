@@ -4,12 +4,9 @@ using VoiceBox.Core.Services.AudioService.Models;
 
 namespace VoiceBox.Assistant.Modules.Playback.Adapters;
 
-internal sealed class BoundedPlaybackPortAdapter(IAssistantAudioOutput playback) :
-    IBoundedPlaybackPort,
-    IPlaybackDeviceQueuePort
+internal sealed class BoundedPlaybackPortAdapter(IAssistantAudioOutput playback) : IBoundedPlaybackPort, IPlaybackDeviceQueuePort
 {
-    private readonly IAssistantAudioOutput _playback = playback
-        ?? throw new ArgumentNullException(nameof(playback));
+    private readonly IAssistantAudioOutput _playback = playback ?? throw new ArgumentNullException(nameof(playback));
 
     public bool TryEnqueue(ReadOnlySpan<float> samples, out int droppedSamples)
         => _playback.TryEnqueue(samples, out droppedSamples);

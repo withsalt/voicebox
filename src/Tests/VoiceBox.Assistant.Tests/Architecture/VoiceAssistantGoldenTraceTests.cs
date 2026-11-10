@@ -54,18 +54,14 @@ public sealed partial class VoiceAssistantLifecycleTests
     public async Task GoldenTrace_SpeechEndBeforeAsrReady_IsExact()
     {
         AssistantScenarioTrace actual = await CaptureSpeechEndScheduleTraceAsync(asrReadyFirst: false);
-        await AssertOrRegenerateSpecTraceAsync(
-            "Schedules/speech-end-vs-asr-start/runtime-speech-end-first.json",
-            actual);
+        await AssertOrRegenerateSpecTraceAsync("Schedules/speech-end-vs-asr-start/runtime-speech-end-first.json", actual);
     }
 
     [Fact]
     public async Task GoldenTrace_AsrReadyBeforeSpeechEnd_IsExact()
     {
         AssistantScenarioTrace actual = await CaptureSpeechEndScheduleTraceAsync(asrReadyFirst: true);
-        await AssertOrRegenerateSpecTraceAsync(
-            "Schedules/speech-end-vs-asr-start/runtime-asr-ready-first.json",
-            actual);
+        await AssertOrRegenerateSpecTraceAsync("Schedules/speech-end-vs-asr-start/runtime-asr-ready-first.json", actual);
     }
 
     [Fact]
@@ -165,8 +161,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         services.Asr.CompleteStart("session-2");
         services.Asr.SetResult("session-2", validationText);
         TaskCompletionSource validationFinish = services.Asr.BlockFinish("session-2");
-        services.Tts.BlockAfterFirstChunk = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        services.Tts.BlockAfterFirstChunk = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         using VoiceAssistant assistant = services.CreateAssistant(
             enableBargeIn: true,
             configure: options => options.BargeIn.PlaybackStartupGuardMs = 0);
@@ -179,9 +174,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             AddEvent(events, new ScenarioEvent(
                 0,
                 "BargeInValidation",
-                Text: value.Kind == BargeInValidationKind.Heard
-                    ? value.Kind.ToString()
-                    : $"{value.Kind}:{value.Reason}"));
+                Text: value.Kind == BargeInValidationKind.Heard ? value.Kind.ToString() : $"{value.Kind}:{value.Reason}"));
             if (value.Kind == BargeInValidationKind.Accepted)
                 accepted.TrySetResult();
         };
@@ -348,9 +341,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             assistant);
         return trace with
         {
-            ScheduleId = asrReadyFirst
-                ? "runtime-asr-ready-first"
-                : "runtime-speech-end-first",
+            ScheduleId = asrReadyFirst ? "runtime-asr-ready-first" : "runtime-speech-end-first",
         };
     }
 
@@ -381,9 +372,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         assistant.BargeInValidation += (_, value) => AddEvent(events, new ScenarioEvent(
             0,
             "BargeInValidation",
-            Text: value.Kind == BargeInValidationKind.Accepted
-                ? $"{value.Kind}:{value.Reason}"
-                : value.Kind.ToString()));
+            Text: value.Kind == BargeInValidationKind.Accepted ? $"{value.Kind}:{value.Reason}" : value.Kind.ToString()));
 
         await assistant.StartAsync();
         services.Vad.EmitSpeechStarted();
@@ -420,10 +409,8 @@ public sealed partial class VoiceAssistantLifecycleTests
             0, "StateChanged", value.From.ToString(), value.To.ToString()));
         assistant.WakeModeChanged += (_, value) => AddEvent(events, new ScenarioEvent(
             0, "WakeModeChanged", value.From.ToString(), value.To.ToString()));
-        assistant.WakeupDetected += (_, value) => AddEvent(events, new ScenarioEvent(
-            0, "WakeupDetected", Text: value.Wakeup.Keyword));
-        assistant.UserSpoke += (_, value) => AddEvent(events, new ScenarioEvent(
-            0, "UserSpoke", Text: value.Text));
+        assistant.WakeupDetected += (_, value) => AddEvent(events, new ScenarioEvent(0, "WakeupDetected", Text: value.Wakeup.Keyword));
+        assistant.UserSpoke += (_, value) => AddEvent(events, new ScenarioEvent(0, "UserSpoke", Text: value.Text));
         assistant.AssistantText += (_, value) => AddEvent(events, new ScenarioEvent(
             0, "AssistantText", Text: value.Delta, IsThinking: value.IsThinking));
         assistant.AssistantResponseGenerated += (_, value) => AddEvent(events, new ScenarioEvent(
@@ -439,8 +426,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     {
         assistant.WakeModeChanged += (_, value) => AddEvent(events, new ScenarioEvent(
             0, "WakeModeChanged", value.From.ToString(), value.To.ToString()));
-        assistant.WakeupDetected += (_, value) => AddEvent(events, new ScenarioEvent(
-            0, "WakeupDetected", Text: value.Wakeup.Keyword));
+        assistant.WakeupDetected += (_, value) => AddEvent(events, new ScenarioEvent(0, "WakeupDetected", Text: value.Wakeup.Keyword));
     }
 
     private static void AddEvent(List<ScenarioEvent> events, ScenarioEvent value)
@@ -467,18 +453,9 @@ public sealed partial class VoiceAssistantLifecycleTests
 
     private static async Task AssertOrRegenerateSpecTraceAsync(string relativePath, AssistantScenarioTrace actual)
     {
-        if (string.Equals(
-                Environment.GetEnvironmentVariable("VOICEBOX_REGENERATE_GOLDENS"),
-                "1",
-                StringComparison.Ordinal))
+        if (string.Equals(Environment.GetEnvironmentVariable("VOICEBOX_REGENERATE_GOLDENS"), "1", StringComparison.Ordinal))
         {
-            string path = Path.Combine(
-                FindRepositoryRoot(),
-                "src",
-                "Tests",
-                "VoiceBox.Assistant.Tests",
-                "GoldenTraces",
-                relativePath);
+            string path = Path.Combine(FindRepositoryRoot(), "src", "Tests", "VoiceBox.Assistant.Tests", "GoldenTraces", relativePath);
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             await File.WriteAllTextAsync(path, GoldenTraceStore.Serialize(actual));
             return;

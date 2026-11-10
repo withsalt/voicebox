@@ -44,10 +44,7 @@ internal sealed class RecognitionEffectHandler : IRecognitionEffectHandler
         _scheduler.Schedule(
             "recognition.start",
             effect.TurnId,
-            () => _recognition.PrepareAsync(
-                effect.TurnId,
-                _operations.NextOperationId(),
-                runToken));
+            () => _recognition.PrepareAsync(effect.TurnId, _operations.NextOperationId(), runToken));
         return ValueTask.CompletedTask;
     }
 
@@ -56,10 +53,7 @@ internal sealed class RecognitionEffectHandler : IRecognitionEffectHandler
         cancellationToken.ThrowIfCancellationRequested();
         CancellationToken runToken = _runtime.RunToken;
         runToken.ThrowIfCancellationRequested();
-        _scheduler.Schedule(
-            "recognition.finish",
-            effect.TurnId,
-            () => FinishAsync(effect, runToken));
+        _scheduler.Schedule("recognition.finish", effect.TurnId, () => FinishAsync(effect, runToken));
         return ValueTask.CompletedTask;
     }
 
@@ -70,10 +64,7 @@ internal sealed class RecognitionEffectHandler : IRecognitionEffectHandler
             RecognitionOutcome outcome = await _recognition.FinishAsync(
                 effect.TurnId,
                 effect.SessionId,
-                _turnContexts.TryGetRecognitionMetadata(
-                    effect.TurnId,
-                    out _,
-                    out TimeSpan speechDuration)
+                _turnContexts.TryGetRecognitionMetadata(effect.TurnId, out _, out TimeSpan speechDuration)
                     ? speechDuration
                     : TimeSpan.Zero,
                 cancellationToken).ConfigureAwait(false);
@@ -82,16 +73,9 @@ internal sealed class RecognitionEffectHandler : IRecognitionEffectHandler
             {
                 case RecognitionOutcomeKind.Completed:
                 case RecognitionOutcomeKind.Empty:
-                    _turnContexts.TrySetRecognitionMetadata(
-                        effect.TurnId,
-                        outcome.RawText,
-                        outcome.SpeechDuration);
+                    _turnContexts.TrySetRecognitionMetadata(effect.TurnId, outcome.RawText, outcome.SpeechDuration);
                     await _signals.SubmitAsync(
-                        AssistantSignal.RecognitionCompleted(
-                            effect.TurnId,
-                            effect.OperationId,
-                            outcome.Text,
-                            outcome.SpeechDuration),
+                        AssistantSignal.RecognitionCompleted(effect.TurnId, effect.OperationId, outcome.Text, outcome.SpeechDuration),
                         AssistantSignalSource.Recognition,
                         cancellationToken).ConfigureAwait(false);
                     return;

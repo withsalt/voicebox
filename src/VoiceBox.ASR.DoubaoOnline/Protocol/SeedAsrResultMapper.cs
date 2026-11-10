@@ -37,9 +37,7 @@ namespace VoiceBox.ASR.DoubaoOnline.Protocol
                 result.CommittedText = committed.ToString();
                 result.UncommittedText = uncommitted.ToString();
                 // Prefer the explicit full text; fall back to concatenated utterances.
-                result.Text = !string.IsNullOrEmpty(body.Text)
-                    ? body.Text!
-                    : committed.ToString() + uncommitted.ToString();
+                result.Text = !string.IsNullOrEmpty(body.Text) ? body.Text! : committed.ToString() + uncommitted.ToString();
             }
             else
             {

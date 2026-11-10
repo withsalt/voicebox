@@ -55,9 +55,7 @@ namespace VoiceBox.ASR.Confucius4.Internal
         public AudioFeatures Encode(ReadOnlySpan<float> waveform, IncrementalMelState? melState = null)
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            LogMelSpectrogram mel = melState is null
-                ? _features.Compute(waveform)
-                : _features.ComputeIncremental(waveform, melState);
+            LogMelSpectrogram mel = melState is null ? _features.Compute(waveform) : _features.ComputeIncremental(waveform, melState);
             double melSeconds = sw.Elapsed.TotalSeconds;
             AudioFeatures features = EncodeFromMel(mel, waveform.Length);
             double encodeSeconds = sw.Elapsed.TotalSeconds;
@@ -228,14 +226,12 @@ namespace VoiceBox.ASR.Confucius4.Internal
             long[] shapeArr = shape.ToArray();
             if (!_useFloat16)
             {
-                return OrtValue.CreateTensorValueFromMemory<float>(
-                    OrtMemoryInfo.DefaultInstance, padded.AsMemory(0, paddedLen), shapeArr);
+                return OrtValue.CreateTensorValueFromMemory<float>(OrtMemoryInfo.DefaultInstance, padded.AsMemory(0, paddedLen), shapeArr);
             }
 
             Float16[] target = EnsureFp16Scratch(ref _featureFp16Scratch, paddedLen);
             PackFromFloat(padded.AsSpan(0, paddedLen), target.AsSpan(0, paddedLen));
-            return OrtValue.CreateTensorValueFromMemory<Float16>(
-                OrtMemoryInfo.DefaultInstance, target.AsMemory(0, paddedLen), shapeArr);
+            return OrtValue.CreateTensorValueFromMemory<Float16>(OrtMemoryInfo.DefaultInstance, target.AsMemory(0, paddedLen), shapeArr);
         }
 
         private void PackFromFloat(ReadOnlySpan<float> src, Span<Float16> dst)

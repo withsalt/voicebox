@@ -31,7 +31,6 @@ namespace VoiceBox.Audio.PortAudio.Backend.Models
         [MarshalAs(UnmanagedType.LPStr)]
         public string versionText;                 // Orignally `const char *`
 
-        public override string ToString() =>
-            $"VersionInfo: v{versionMajor}.{versionMinor}.{versionSubMinor}";
+        public override string ToString() => $"VersionInfo: v{versionMajor}.{versionMinor}.{versionSubMinor}";
     }
 }

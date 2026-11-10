@@ -79,30 +79,23 @@ internal sealed class CurrentDateTimeTool : IConversationTool
             time,
             dayOfWeek,
             localDateTime = now.ToString("yyyy-MM-dd'T'HH:mm:sszzz", CultureInfo.InvariantCulture),
-            utcDateTime = now.UtcDateTime.ToString(
-                "yyyy-MM-dd'T'HH:mm:ss'Z'",
-                CultureInfo.InvariantCulture),
+            utcDateTime = now.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture),
             timeZone = _timeProvider.LocalTimeZone.Id,
             utcOffset,
         });
-        string lunarDateContent = lunarDate is not null
-            ? $"农历是 {lunarDate}，"
-            : "农历日期超出支持范围，";
+        string lunarDateContent = lunarDate is not null ? $"农历是 {lunarDate}，" : "农历日期超出支持范围，";
         string content =
             $"当前日期是 {date}（{dayOfWeek}），{lunarDateContent}当前时间是 {time}，" +
             $"时区为 {_timeProvider.LocalTimeZone.Id}（UTC{utcOffset}）。";
 
-        return ValueTask.FromResult(
-            ConversationToolExecutionResult.Success(content, structuredContent));
+        return ValueTask.FromResult(ConversationToolExecutionResult.Success(content, structuredContent));
     }
 
     private static string FormatUtcOffset(TimeSpan offset)
     {
         char sign = offset < TimeSpan.Zero ? '-' : '+';
         TimeSpan absolute = offset.Duration();
-        return string.Create(
-            CultureInfo.InvariantCulture,
-            $"{sign}{absolute.Hours:00}:{absolute.Minutes:00}");
+        return string.Create(CultureInfo.InvariantCulture, $"{sign}{absolute.Hours:00}:{absolute.Minutes:00}");
     }
 
     private static string? ToLunarDate(DateTime date)

@@ -15,8 +15,5 @@ internal readonly record struct SpeakerCaptureFrame(
     bool HasDiscontinuity,
     string FrontendFingerprint)
 {
-    public bool IsValid =>
-        SourceRange.IsValid &&
-        !Audio.IsEmpty &&
-        SourceRange.Length == Audio.Length;
+    public bool IsValid => SourceRange.IsValid && !Audio.IsEmpty && SourceRange.Length == Audio.Length;
 }

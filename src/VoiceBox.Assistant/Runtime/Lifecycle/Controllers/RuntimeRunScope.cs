@@ -7,9 +7,7 @@ namespace VoiceBox.Assistant.Runtime.Lifecycle.Controllers;
 /// instance. It holds no conversation, module or effect state; collaborators consult it only to
 /// decide whether runtime-owned work may still start or continue.
 /// </summary>
-internal sealed class RuntimeRunScope :
-    IRuntimeLivenessView,
-    IRuntimeCancellationView
+internal sealed class RuntimeRunScope : IRuntimeLivenessView, IRuntimeCancellationView
 {
     private CancellationTokenSource? _runCts;
     private int _started;

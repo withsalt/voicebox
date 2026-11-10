@@ -15,11 +15,7 @@ public sealed class BackgroundTaskTrackerTests
         var supervisor = new AssistantTaskSupervisor(logger);
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        Task task = supervisor.Track(
-            completion.Task,
-            "recognition.turn",
-            ownerTurnId: 42,
-            AssistantTaskFaultPolicy.ObserveAndLog);
+        Task task = supervisor.Track(completion.Task, "recognition.turn", ownerTurnId: 42, AssistantTaskFaultPolicy.ObserveAndLog);
 
         Assert.Equal(1, supervisor.ActiveTaskCount);
         Task drain = supervisor.WaitForCompletionAsync();
@@ -39,11 +35,7 @@ public sealed class BackgroundTaskTrackerTests
         var tracker = new AssistantTaskSupervisor(logger);
         var expected = new InvalidOperationException("background failure");
 
-        _ = tracker.Track(
-            Task.FromException(expected),
-            "recognition.turn",
-            ownerTurnId: 1,
-            AssistantTaskFaultPolicy.ObserveAndLog);
+        _ = tracker.Track(Task.FromException(expected), "recognition.turn", ownerTurnId: 1, AssistantTaskFaultPolicy.ObserveAndLog);
         await tracker.WaitForCompletionAsync();
 
         LogEntry entry = Assert.Single(logger.Entries);

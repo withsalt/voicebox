@@ -251,10 +251,8 @@ namespace VoiceBox.TTS.Qwen3.Internal
             ArgumentException.ThrowIfNullOrEmpty(text);
             voice = ResolveVoice(opts?.Voice);
             string language = opts?.Language ?? _options.DefaultLanguage ?? "auto";
-            if (!string.Equals(language, "auto", StringComparison.OrdinalIgnoreCase)
-                && !_cfg.CodecLanguageId.ContainsKey(language))
-                throw new ArgumentException(
-                    $"未知语言 '{language}'。可用: auto, {string.Join(", ", _cfg.CodecLanguageId.Keys)}");
+            if (!string.Equals(language, "auto", StringComparison.OrdinalIgnoreCase) && !_cfg.CodecLanguageId.ContainsKey(language))
+                throw new ArgumentException($"未知语言 '{language}'。可用: auto, {string.Join(", ", _cfg.CodecLanguageId.Keys)}");
             string? instruct = _supportsInstruct ? opts?.Instruct : null;
 
             int[] textIds = _tokenizer.EncodeAssistant(text);

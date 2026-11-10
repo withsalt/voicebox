@@ -89,8 +89,7 @@ internal sealed class AssistantControlSignalGateway :
         if (!_correlation.TryAdmit(signal.TurnId, signal.OperationId, signal.Kind))
             return new AssistantControlSignalResult(false, false, 0);
 
-        TaskCompletionSource<AssistantControlSignalResult> completion =
-            _operations.RegisterSignal(signal);
+        TaskCompletionSource<AssistantControlSignalResult> completion = _operations.RegisterSignal(signal);
 
         try
         {
@@ -103,17 +102,12 @@ internal sealed class AssistantControlSignalGateway :
                 // lanes by IngressSequence.
                 if (!_ingress.TryEnqueueCritical(signal, sourceTimestamp, source, out _))
                 {
-                    throw new InvalidOperationException(
-                        "Assistant interruption decision was rejected by control ingress.");
+                    throw new InvalidOperationException("Assistant interruption decision was rejected by control ingress.");
                 }
             }
             else
             {
-                await _ingress.EnqueueSignalAsync(
-                    signal,
-                    sourceTimestamp,
-                    source,
-                    cancellationToken).ConfigureAwait(false);
+                await _ingress.EnqueueSignalAsync(signal, sourceTimestamp, source, cancellationToken).ConfigureAwait(false);
             }
 
             return await completion.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -199,11 +193,7 @@ internal sealed class AssistantControlSignalGateway :
                 AssistantSignalKind.ResponseFailed,
                 turnId,
                 operationId,
-                new AssistantFailure(
-                    "VBX-RESP-001",
-                    "response",
-                    "ResponseModule",
-                    failure ?? "response-failed"));
+                new AssistantFailure("VBX-RESP-001", "response", "ResponseModule", failure ?? "response-failed"));
         await EnqueueAsync(signal, AssistantSignalSource.Response, cancellationToken).ConfigureAwait(false);
     }
 
@@ -222,11 +212,7 @@ internal sealed class AssistantControlSignalGateway :
 
     public async ValueTask PublishRecognitionFailedAsync(RecognitionOutcome outcome, CancellationToken cancellationToken)
         => await EnqueueAsync(
-            AssistantSignal.OperationFailed(
-                AssistantSignalKind.RecognitionFailed,
-                outcome.TurnId,
-                outcome.OperationId,
-                outcome.Failure),
+            AssistantSignal.OperationFailed(AssistantSignalKind.RecognitionFailed, outcome.TurnId, outcome.OperationId, outcome.Failure),
             AssistantSignalSource.Recognition,
             cancellationToken).ConfigureAwait(false);
 
@@ -288,11 +274,7 @@ internal sealed class AssistantControlSignalGateway :
             !_ingress.HasTerminalFault)
         {
             _ingress.TryTerminate(
-                new AssistantFailure(
-                    "VBX-CTRL-019",
-                    "capacity",
-                    "wakeup-control-plane",
-                    "wake-mode-admission-failed"),
+                new AssistantFailure("VBX-CTRL-019", "capacity", "wakeup-control-plane", "wake-mode-admission-failed"),
                 Stopwatch.GetTimestamp(),
                 out _);
         }

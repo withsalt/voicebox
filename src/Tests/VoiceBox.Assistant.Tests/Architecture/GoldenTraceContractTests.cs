@@ -23,14 +23,9 @@ public sealed class GoldenTraceContractTests
     public void ScheduleManifestSchema_RequiresNamedControlledVariants()
     {
         using JsonDocument schema = GoldenTraceStore.Read<JsonDocument>("Schemas/schedule-manifest.schema.json");
-        JsonElement variant = schema.RootElement
-            .GetProperty("properties")
-            .GetProperty("variants")
-            .GetProperty("items");
+        JsonElement variant = schema.RootElement.GetProperty("properties").GetProperty("variants").GetProperty("items");
 
-        string[] required = variant.GetProperty("required").EnumerateArray()
-            .Select(static value => value.GetString()!)
-            .ToArray();
+        string[] required = variant.GetProperty("required").EnumerateArray().Select(static value => value.GetString()!).ToArray();
 
         // A declared oracle kind plus a per-variant artifact hash keeps a named
         // schedule family from drifting silently.
@@ -92,22 +87,15 @@ public sealed class GoldenTraceContractTests
             manifest.Variants,
             value => string.Equals(value.TraceFile, traceFile, StringComparison.Ordinal));
         Assert.Equal(traceFile, variant.TraceFile);
-        string tracePath = Path.Combine(Path.GetDirectoryName(manifestPath)!, traceFile)
-            .Replace('\\', '/');
+        string tracePath = Path.Combine(Path.GetDirectoryName(manifestPath)!, traceFile).Replace('\\', '/');
         AssistantScenarioTrace trace = GoldenTraceStore.Read<AssistantScenarioTrace>(tracePath);
         Assert.Equal(scenarioId, trace.ScenarioId);
         Assert.Equal("ExactTrace", trace.OracleKind);
     }
 
     [Theory]
-    [InlineData(
-        "Schedules/speech-end-vs-asr-start/manifest.json",
-        "runtime-speech-end-first.json",
-        "runtime-speech-end-first")]
-    [InlineData(
-        "Schedules/speech-end-vs-asr-start/manifest.json",
-        "runtime-asr-ready-first.json",
-        "runtime-asr-ready-first")]
+    [InlineData("Schedules/speech-end-vs-asr-start/manifest.json", "runtime-speech-end-first.json", "runtime-speech-end-first")]
+    [InlineData("Schedules/speech-end-vs-asr-start/manifest.json", "runtime-asr-ready-first.json", "runtime-asr-ready-first")]
     [InlineData(
         "Schedules/response-complete-vs-barge-in/manifest.json",
         "runtime-barge-in-before-response-generated.json",
@@ -121,8 +109,7 @@ public sealed class GoldenTraceContractTests
         Assert.Equal(scheduleId, variant.ScheduleId);
         Assert.Equal("frozen", variant.Status);
 
-        string tracePath = Path.Combine(Path.GetDirectoryName(manifestPath)!, traceFile)
-            .Replace('\\', '/');
+        string tracePath = Path.Combine(Path.GetDirectoryName(manifestPath)!, traceFile).Replace('\\', '/');
         AssistantScenarioTrace trace = GoldenTraceStore.Read<AssistantScenarioTrace>(tracePath);
         Assert.Equal(scheduleId, trace.ScheduleId);
         Assert.Equal("ExactTrace", trace.OracleKind);

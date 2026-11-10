@@ -238,9 +238,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
             try
             {
-                await WaitUntilAsync(() =>
-                    assistant.State == AssistantState.Speaking &&
-                    services.Audio.AcceptedSamples > 0);
+                await WaitUntilAsync(() => assistant.State == AssistantState.Speaking && services.Audio.AcceptedSamples > 0);
             }
             catch (OperationCanceledException exception)
             {
@@ -302,9 +300,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
             // The previous implementation set _disposed before waiting for this lock. Give it a
             // deterministic opportunity to enter that state before StopAsync re-enters the lock.
-            SpinWait.SpinUntil(
-                () => (int)disposedField.GetValue(runScope)! != 0,
-                TimeSpan.FromMilliseconds(200));
+            SpinWait.SpinUntil(() => (int)disposedField.GetValue(runScope)! != 0, TimeSpan.FromMilliseconds(200));
             stopTask = assistant.StopAsync();
         }
         finally
@@ -337,8 +333,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         await stopTask.WaitAsync(TimeSpan.FromSeconds(2));
         services.Audio.StartBlock.TrySetResult();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => startTask.WaitAsync(TimeSpan.FromSeconds(2)));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => startTask.WaitAsync(TimeSpan.FromSeconds(2)));
         Assert.Equal(AssistantState.Stopped, assistant.State);
         Assert.False(services.Audio.IsRecording);
         // Speaker and wakeup gates start before the audio frontend so no identity frame is lost;
@@ -567,10 +562,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     public async Task WakeWordEnabled_WakeupReplaysPreRollIntoVad()
     {
         var services = TestServices.Create();
-        using var assistant = services.CreateAssistant(
-            enableWakeWord: true,
-            wakeupPreRollMs: 1000,
-            wakeupReplayLeadInMs: 0);
+        using var assistant = services.CreateAssistant(enableWakeWord: true, wakeupPreRollMs: 1000, wakeupReplayLeadInMs: 0);
 
         await assistant.StartAsync();
 
@@ -588,10 +580,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     public async Task WakeWordEnabled_ReplayStartsAtWakeWordStartWhenTimingIsAvailable()
     {
         var services = TestServices.Create();
-        using var assistant = services.CreateAssistant(
-            enableWakeWord: true,
-            wakeupPreRollMs: 1000,
-            wakeupReplayLeadInMs: 0);
+        using var assistant = services.CreateAssistant(enableWakeWord: true, wakeupPreRollMs: 1000, wakeupReplayLeadInMs: 0);
 
         await assistant.StartAsync();
 
@@ -698,9 +687,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         services.Vad.EmitSpeaking([0.4f, 0.5f]);
         services.Vad.EmitSpeechEnded(TimeSpan.FromMilliseconds(200));
 
-        await WaitUntilAsync(() =>
-            assistant.WakeMode == AssistantWakeMode.WaitingForWakeWord &&
-            services.Asr.FinishCount == 1);
+        await WaitUntilAsync(() => assistant.WakeMode == AssistantWakeMode.WaitingForWakeWord && services.Asr.FinishCount == 1);
 
         Assert.Equal(AssistantState.Idle, assistant.State);
         Assert.Equal(1, userSpokeCount);
@@ -801,10 +788,8 @@ public sealed partial class VoiceAssistantLifecycleTests
         await WaitUntilAsync(() => assistant.State == AssistantState.Speaking && services.Audio.AcceptedSamples > 0);
 
         services.Tts.BlockAfterFirstChunk = null;
-        services.Audio.ClearQueueEntered = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
-        services.Audio.ClearQueueBlock = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        services.Audio.ClearQueueEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        services.Audio.ClearQueueBlock = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         EmitCorrelatedPlaybackInput(services, [0.7f]);
         services.Wakeup.EmitWakeup();
         services.Audio.Emit([0.8f]);
@@ -1081,9 +1066,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Equal(1f, services.Audio.PlaybackGain);
         Assert.True(services.Asr.FinishCount >= 2);
         Assert.True(services.Asr.FedAudio.ContainsKey("session-2"));
-        Assert.Contains(
-            services.Asr.FedAudio["session-2"].SelectMany(static chunk => chunk),
-            sample => Math.Abs(sample - 0.4f) < 0.0001f);
+        Assert.Contains(services.Asr.FedAudio["session-2"].SelectMany(static chunk => chunk), sample => Math.Abs(sample - 0.4f) < 0.0001f);
         lock (validationEvents)
             Assert.Equal([BargeInValidationKind.Heard, BargeInValidationKind.Accepted], validationEvents);
         Assert.Equal(AssistantState.Idle, assistant.State);
@@ -1158,8 +1141,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         using var assistant = services.CreateAssistant(
             enableBargeIn: true,
             configure: options => options.BargeIn.PlaybackStartupGuardMs = 0);
-        var accepted = new TaskCompletionSource<BargeInValidationEventArgs>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        var accepted = new TaskCompletionSource<BargeInValidationEventArgs>(TaskCreationOptions.RunContinuationsAsynchronously);
         var validationEvents = new List<BargeInValidationKind>();
         assistant.BargeInValidation += (_, e) =>
         {
@@ -1344,8 +1326,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         // No timer is involved: the stop is decided by the acoustic confirmation itself, and the
         // still-outstanding ASR result cannot delay it.
-        BargeInValidationEventArgs acceptedEvent =
-            await accepted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        BargeInValidationEventArgs acceptedEvent = await accepted.Task.WaitAsync(TimeSpan.FromSeconds(2));
         Assert.Equal("audio-confirmed", acceptedEvent.Reason);
         Assert.Equal(1, services.Audio.ClearQueueCount);
         Assert.Empty(services.Audio.PlaybackGainChanges);
@@ -1364,9 +1345,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Equal("好的。", await replied.Task.WaitAsync(TimeSpan.FromSeconds(2)));
         Assert.Equal(1, services.Audio.ClearQueueCount);
         Assert.Equal(2, services.Llm.Prompts.Count);
-        Assert.Contains(
-            services.Llm.Prompts[^1],
-            message => message.Role == ChatRole.User && MessageText(message) == "停一下");
+        Assert.Contains(services.Llm.Prompts[^1], message => message.Role == ChatRole.User && MessageText(message) == "停一下");
         Assert.Equal(AssistantState.Idle, assistant.State);
     }
 
@@ -1447,15 +1426,9 @@ public sealed partial class VoiceAssistantLifecycleTests
             .GetField("_runtime", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .GetValue(assistant)!;
         // With barge-in installed the near-end reservoir is the VAD gate's speech timeline locator.
-        var nearEndTimeline = RuntimeGraphProbe.RequireField<ISpeechTimelineLocator>(
-            runtime,
-            "_timeline");
+        var nearEndTimeline = RuntimeGraphProbe.RequireField<ISpeechTimelineLocator>(runtime, "_timeline");
         Assert.IsType<NearEndTimelineAdapter>(nearEndTimeline);
-        Assert.True(nearEndTimeline.TryLocate(
-            guardedPrefix,
-            out long streamEpoch,
-            out long startSample,
-            out long endSample));
+        Assert.True(nearEndTimeline.TryLocate(guardedPrefix, out long streamEpoch, out long startSample, out long endSample));
         Assert.Equal(1, streamEpoch);
         Assert.Equal(guardedPrefix.Length, endSample - startSample);
     }
@@ -1751,11 +1724,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         // The matching SpeechAudioAvailable signal can reach the control loop after the VAD
         // endpoint. It must not replay that already-observed audio into the active data plane.
-        RuntimeGraphProbe.InvokeMethod(
-            runtime,
-            "ProcessSpeaking",
-            ConstantSamples(0.12f, 320),
-            1L);
+        RuntimeGraphProbe.InvokeMethod(runtime, "ProcessSpeaking", ConstantSamples(0.12f, 320), 1L);
 
         // A playback endpoint is an input to the near-end DTD silence window. It must not be
         // replayed later as a state-machine speech end for a turn confirmed after this callback.
@@ -1834,12 +1803,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         float[] detectorOnlyPrefix = ConstantSamples(0.19f, 320 * 4);
         float[] detectorRender = AlternatingSamples(0.08, detectorOnlyPrefix.Length);
         float[] detectorEcho = Scale(detectorRender, 0.02 / 0.08);
-        services.Audio.EmitFrame(
-            detectorRender,
-            detectorEcho,
-            detectorEcho,
-            detectorEcho,
-            processedCapture: detectorOnlyPrefix);
+        services.Audio.EmitFrame(detectorRender, detectorEcho, detectorEcho, detectorEcho, processedCapture: detectorOnlyPrefix);
 
         float[] vadPrefix = ConstantSamples(0.23f, 320 * 12);
         services.Vad.PredictAction = () =>
@@ -2017,8 +1981,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         services.Tts.BlockAfterFirstChunk = null;
 
         EmitPlaybackEchoFrames(services, count: 20, renderRms: 0.08, echoRms: 0.02);
-        services.Vad.PredictAction = () =>
-            EmitNearEndFrames(services, count: 8, renderRms: 0.08, captureRms: 0.09);
+        services.Vad.PredictAction = () => EmitNearEndFrames(services, count: 8, renderRms: 0.08, captureRms: 0.09);
         float[] candidate = ConstantSamples(0.17f, 160 * 16);
         services.Audio.Emit(candidate);
         EmitSilenceFrames(services, count: 12, renderRms: 0.08);
@@ -2067,9 +2030,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         AssistantRuntime runtime = GetPrivateField<AssistantRuntime>(assistant, "_runtime");
         INearEndEndpointPort activeNearEnd = GetPrivateField<INearEndEndpointPort>(runtime, "_nearEnd");
-        await WaitUntilAsync(() =>
-            activeNearEnd.GetProcessingState().HasActiveCapture &&
-            services.Asr.FedAudio.ContainsKey("session-2"));
+        await WaitUntilAsync(() => activeNearEnd.GetProcessingState().HasActiveCapture && services.Asr.FedAudio.ContainsKey("session-2"));
 
         int fedBefore = services.Asr.FedAudio["session-2"].Sum(static chunk => chunk.Length);
         float[] vadOnlyChunk = ConstantSamples(0.91f, 4480);
@@ -2124,20 +2085,14 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         var delayed = new List<(CaptureRange Range, float[] Audio)>();
         float[] speechTail = ConstantSamples(0.31f, 320);
-        delayed.Add((
-            services.Audio.EmitDuplexOnly(
-                new float[320], speechTail, speechTail, speechTail),
-            speechTail));
+        delayed.Add((services.Audio.EmitDuplexOnly(new float[320], speechTail, speechTail, speechTail), speechTail));
         for (int i = 0; i < 12; i++)
         {
             float[] silence = new float[320];
             // 最后两帧位于检测线程已经确定的结束边界之后；让处理链产出独特样本，
             // 验证追赶到边界时会精确停止，不把下一段音频带进本次 ASR。
             float[] processed = i >= 10 ? ConstantSamples(0.47f, 320) : silence;
-            delayed.Add((
-                services.Audio.EmitDuplexOnly(
-                    ConstantSamples(0.08f, 320), silence, silence, silence),
-                processed));
+            delayed.Add((services.Audio.EmitDuplexOnly(ConstantSamples(0.08f, 320), silence, silence, silence), processed));
         }
 
         // 双工检测线程已经判停，但录音/DNR处理线程尚未产出上述范围，不能提前 Finish ASR。
@@ -2194,8 +2149,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         for (int i = 0; i < 20; i++)
         {
             float[] silence = new float[320];
-            services.Audio.EmitDuplexOnly(
-                ConstantSamples(0.08f, 320), silence, silence, silence);
+            services.Audio.EmitDuplexOnly(ConstantSamples(0.08f, 320), silence, silence, silence);
         }
 
         await WaitUntilAsync(() => services.Asr.FinishCount == finishCountBeforeSpeechEnd + 1);
@@ -2271,13 +2225,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             EmitPlaybackEchoFrames(services, count: 20, renderRms: 0.08, echoRms: 0.02);
             for (int i = 0; i < 45; i++)
             {
-                EmitNearEndFrames(
-                    services,
-                    count: 1,
-                    renderRms: 0.08,
-                    captureRms: 0.09,
-                    emitMainAudio: true,
-                    alternatingCapture: true);
+                EmitNearEndFrames(services, count: 1, renderRms: 0.08, captureRms: 0.09, emitMainAudio: true, alternatingCapture: true);
                 await Task.Delay(2);
             }
             await Task.Delay(100);
@@ -2322,8 +2270,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 options.BargeIn.ActiveNearEndCooldownMs = 100;
             });
         var validationEvents = new List<BargeInValidationEventArgs>();
-        var bargeInAccepted = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        var bargeInAccepted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         assistant.BargeInValidation += (_, e) =>
         {
             lock (validationEvents)
@@ -2348,36 +2295,19 @@ public sealed partial class VoiceAssistantLifecycleTests
             {
                 float[] render = AlternatingSamples(0.08, preRollFrameSamples);
                 float[] echo = Scale(render, 0.02 / 0.08);
-                services.Audio.EmitFrame(
-                    render,
-                    echo,
-                    echo,
-                    echo,
-                    processedCapture: ConstantSamples(0.19f, preRollFrameSamples));
+                services.Audio.EmitFrame(render, echo, echo, echo, processedCapture: ConstantSamples(0.19f, preRollFrameSamples));
             }
 
             // Owner speech over the reply. The candidate opens on the first accepted near-end frame;
             // the reply keeps playing at full gain while the identity window fills (~500ms of
             // speech). The first scored window matches with high confidence and, by itself, issues
             // the single owner-scoped stop: no DTD Interrupt and no ASR text is needed for it.
-            EmitNearEndFrames(
-                services,
-                count: 8,
-                renderRms: 0.08,
-                captureRms: 0.11,
-                emitMainAudio: true,
-                alternatingCapture: true);
+            EmitNearEndFrames(services, count: 8, renderRms: 0.08, captureRms: 0.11, emitMainAudio: true, alternatingCapture: true);
             Assert.Empty(services.Audio.PlaybackGainChanges);
             Assert.Equal(0, services.Audio.ClearQueueCount);
             for (int i = 0; i < 60 && !bargeInAccepted.Task.IsCompleted; i++)
             {
-                EmitNearEndFrames(
-                    services,
-                    count: 1,
-                    renderRms: 0.08,
-                    captureRms: 0.09,
-                    emitMainAudio: true,
-                    alternatingCapture: true);
+                EmitNearEndFrames(services, count: 1, renderRms: 0.08, captureRms: 0.09, emitMainAudio: true, alternatingCapture: true);
                 await Task.Delay(5);
             }
             await bargeInAccepted.Task.WaitAsync(TimeSpan.FromSeconds(2));
@@ -2389,9 +2319,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 services.Asr.FedAudio.TryGetValue("session-2", out List<float[]>? chunks) &&
                 chunks.SelectMany(chunk => chunk).Any(sample => Math.Abs(sample - 0.11f) < 0.0001f));
             float[] fed = services.Asr.FedAudio["session-2"].SelectMany(static chunk => chunk).ToArray();
-            Assert.Equal(
-                preRollFrameSamples * preRollFrames,
-                fed.Count(sample => Math.Abs(sample - 0.19f) < 0.0001f));
+            Assert.Equal(preRollFrameSamples * preRollFrames, fed.Count(sample => Math.Abs(sample - 0.19f) < 0.0001f));
             var runtime = (VoiceBox.Assistant.Runtime.AssistantRuntime)typeof(VoiceAssistant)
                 .GetField("_runtime", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .GetValue(assistant)!;
@@ -2476,17 +2404,9 @@ public sealed partial class VoiceAssistantLifecycleTests
             ActiveNearEndPreRollMs = 0,
         };
         var turns = new AssistantTurnObservationStoreHarness(
-            new BargeInDetector(
-                options.MinDurationMs,
-                options.MinRms,
-                sampleRate: 16000,
-                channels: 1));
+            new BargeInDetector(options.MinDurationMs, options.MinRms, sampleRate: 16000, channels: 1));
         long responseTurnId = turns.OnSpeechStarted(enableBargeIn: false).TurnId;
-        Assert.True(turns.TryTransitionForTurn(
-            responseTurnId,
-            AssistantState.Speaking,
-            out _,
-            out _));
+        Assert.True(turns.TryTransitionForTurn(responseTurnId, AssistantState.Speaking, out _, out _));
 
         var decision = new BargeInDecision(
             BargeInAction.Interrupt,
@@ -2511,9 +2431,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             FirstAcceptedStartSample: 800);
         BargeInDecision GetRecentDecision(TimeSpan window, int minDurationMs, float minRms)
             => decision;
-        var speakerEvidence = new SequencedSpeakerEvidenceProvider(
-            SpeakerVerificationStatus.Match,
-            SpeakerVerificationStatus.Mismatch);
+        var speakerEvidence = new SequencedSpeakerEvidenceProvider(SpeakerVerificationStatus.Match, SpeakerVerificationStatus.Mismatch);
         int confirmedCount = 0;
         long confirmationOperationId = 0;
         var coordinator = CreateNearEndTestHarness(
@@ -2554,8 +2472,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         coordinator.ObserveDuplexAudio(
             CreateDuplexFrame(sequence: 2, startSample: 1600, sampleCount: 640),
             playbackStartupGuardActive: false);
-        ActiveNearEndDiagnosticSnapshot authorized =
-            coordinator.GetDiagnosticSnapshot();
+        ActiveNearEndDiagnosticSnapshot authorized = coordinator.GetDiagnosticSnapshot();
         Assert.True(authorized.CandidateActive);
         Assert.True(authorized.CandidateAuthorized);
         Assert.Equal(1, speakerEvidence.EvaluateCount);
@@ -2582,9 +2499,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             DelaySamples: 0,
             HasDiscontinuity: false));
 
-        Assert.True(coordinator.TryAcquire(
-            confirmationOperationId,
-            out NearEndConfirmationLease request));
+        Assert.True(coordinator.TryAcquire(confirmationOperationId, out NearEndConfirmationLease request));
         Assert.True(request.IdentityRequired);
         Assert.True(request.IdentityAuthorized);
         Assert.Equal(new SpeakerCandidateId(1), request.CandidateId);
@@ -2619,8 +2534,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             ActiveNearEndWindowMs = 160,
             ActiveNearEndPreRollMs = 0,
         };
-        var turns = new AssistantTurnObservationStoreHarness(
-            new BargeInDetector(options.MinDurationMs, options.MinRms, 16000, 1));
+        var turns = new AssistantTurnObservationStoreHarness(new BargeInDetector(options.MinDurationMs, options.MinRms, 16000, 1));
         long responseTurnId = turns.OnSpeechStarted(enableBargeIn: false).TurnId;
         Assert.True(turns.TryTransitionForTurn(responseTurnId, AssistantState.Speaking, out _, out _));
 
@@ -2790,9 +2704,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         Assert.True(coordinator.StopCapture(1, startCooldown: false));
         await coordinator.AttachAsrSessionAsync(1, "validation-1");
-        Assert.Equal(
-            [1f, 2f, 3f, 4f],
-            services.Asr.FedAudio["validation-1"].SelectMany(static chunk => chunk));
+        Assert.Equal([1f, 2f, 3f, 4f], services.Asr.FedAudio["validation-1"].SelectMany(static chunk => chunk));
 
         static void FeedRecognitionAudio(NearEndTestHarness coordinator, long startSample, float[] samples)
         {
@@ -2810,8 +2722,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 Audio: samples,
                 DelaySamples: 0,
                 HasDiscontinuity: false);
-            MainAudioObservation observation =
-                coordinator.ObserveRecognitionAudio(frame);
+            MainAudioObservation observation = coordinator.ObserveRecognitionAudio(frame);
             coordinator.FeedFromRecognitionAudio(samples, observation);
         }
     }
@@ -2949,18 +2860,12 @@ public sealed partial class VoiceAssistantLifecycleTests
             speechDuration: TimeSpan.Zero);
         AssistantSignal response = AssistantSignal.ResponseStarted(turnId: 1, operationId: 5);
 
-        TaskCompletionSource<AssistantControlSignalResult> recognitionCompletion =
-            operations.RegisterSignal(recognition);
-        operations.CompleteSignal(
-            recognition,
-            new AssistantControlSignalResult(true, true, 1));
-        TaskCompletionSource<AssistantControlSignalResult> responseCompletion =
-            operations.RegisterSignal(response);
+        TaskCompletionSource<AssistantControlSignalResult> recognitionCompletion = operations.RegisterSignal(recognition);
+        operations.CompleteSignal(recognition, new AssistantControlSignalResult(true, true, 1));
+        TaskCompletionSource<AssistantControlSignalResult> responseCompletion = operations.RegisterSignal(response);
 
         operations.ForgetSignal(recognition, recognitionCompletion);
-        operations.CompleteSignal(
-            response,
-            new AssistantControlSignalResult(true, false, 0));
+        operations.CompleteSignal(response, new AssistantControlSignalResult(true, false, 0));
 
         Assert.True(responseCompletion.Task.IsCompletedSuccessfully);
         Assert.Equal(0, operations.PendingSignalCount);
@@ -2969,8 +2874,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     /// <summary>Consumer that accepts every envelope so admission can be tested in isolation.</summary>
     private sealed class IdleControlLoopHandler : IAssistantControlLoopHandler
     {
-        public TaskCompletionSource SignalObserved { get; } = new(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource SignalObserved { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public ValueTask HandleRuntimeCommandAsync(
             RuntimeCommand command,
@@ -3101,8 +3005,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 Audio: samples,
                 DelaySamples: 0,
                 HasDiscontinuity: false);
-            MainAudioObservation observation =
-                coordinator.ObserveRecognitionAudio(frame);
+            MainAudioObservation observation = coordinator.ObserveRecognitionAudio(frame);
             coordinator.FeedFromRecognitionAudio(samples, observation);
         }
     }
@@ -3215,9 +3118,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         FeedRecognitionAudio(coordinator, startSample: 4, samples: [5f, 6f, 7f, 8f]);
         FeedRecognitionAudio(coordinator, startSample: 8, samples: [9f, 10f, 11f, 12f]);
         FeedRecognitionAudio(coordinator, startSample: 12, samples: [13f, 14f, 15f, 16f]);
-        coordinator.ObserveDuplexAudio(
-            CreateDuplexFrame(sequence: 1, startSample: 16, sampleCount: 4),
-            playbackStartupGuardActive: false);
+        coordinator.ObserveDuplexAudio(CreateDuplexFrame(sequence: 1, startSample: 16, sampleCount: 4), playbackStartupGuardActive: false);
         FeedRecognitionAudio(coordinator, startSample: 16, samples: [17f, 18f, 19f, 20f]);
 
         Assert.Equal(1, speechEnded);
@@ -3250,8 +3151,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 Audio: samples,
                 DelaySamples: 0,
                 HasDiscontinuity: false);
-            MainAudioObservation observation =
-                coordinator.ObserveRecognitionAudio(frame);
+            MainAudioObservation observation = coordinator.ObserveRecognitionAudio(frame);
             coordinator.FeedFromRecognitionAudio(samples, observation);
         }
     }
@@ -3305,10 +3205,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             reportDataPlaneFault: static _ => { });
         drainOwner = coordinator;
 
-        FeedRecognitionAudio(
-            coordinator,
-            startSample: 0,
-            samples: [1f, 2f, 3f, 4f, 5f, 6f, 7f, 8f]);
+        FeedRecognitionAudio(coordinator, startSample: 0, samples: [1f, 2f, 3f, 4f, 5f, 6f, 7f, 8f]);
         var request = new NearEndConfirmationLease(
             OperationId: 1,
             InitialAudio: [],
@@ -3347,14 +3244,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         coordinator.ApplyConfirmedCapture(request, confirmed);
         Assert.Equal(8L, coordinator.Module.Capture.DirectFeedNextSample);
         await coordinator.AttachAsrSessionAsync(1, "validation-1");
-        Assert.Equal(
-            [5f, 6f, 7f, 8f],
-            services.Asr.FedAudio["validation-1"].SelectMany(static chunk => chunk));
+        Assert.Equal([5f, 6f, 7f, 8f], services.Asr.FedAudio["validation-1"].SelectMany(static chunk => chunk));
 
         FeedRecognitionAudio(coordinator, startSample: 8, samples: [9f, 10f, 11f, 12f]);
-        coordinator.ObserveDuplexAudio(
-            CreateDuplexFrame(sequence: 2, startSample: 12, sampleCount: 4),
-            playbackStartupGuardActive: false);
+        coordinator.ObserveDuplexAudio(CreateDuplexFrame(sequence: 2, startSample: 12, sampleCount: 4), playbackStartupGuardActive: false);
         FeedRecognitionAudio(coordinator, startSample: 12, samples: [13f, 14f, 15f, 16f]);
 
         Assert.Equal(1, speechEnded);
@@ -3378,8 +3271,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 Audio: samples,
                 DelaySamples: 0,
                 HasDiscontinuity: false);
-            MainAudioObservation observation =
-                coordinator.ObserveRecognitionAudio(frame);
+            MainAudioObservation observation = coordinator.ObserveRecognitionAudio(frame);
             coordinator.FeedFromRecognitionAudio(samples, observation);
         }
     }
@@ -3400,9 +3292,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         await coordinator.AttachAsrSessionAsync(1, "validation-processed-gap");
 
         Assert.Empty(faults);
-        Assert.Equal(
-            [5f, 6f, 7f, 8f],
-            services.Asr.FedAudio["validation-processed-gap"].SelectMany(static chunk => chunk));
+        Assert.Equal([5f, 6f, 7f, 8f], services.Asr.FedAudio["validation-processed-gap"].SelectMany(static chunk => chunk));
     }
 
     [Fact]
@@ -3415,9 +3305,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         coordinator.SeedPendingConfirmation(request);
 
         FeedRecognitionAudio(coordinator, 0, [1f, 2f, 3f, 4f]);
-        coordinator.ObserveDuplexAudio(
-            CreateDuplexFrame(sequence: 1, startSample: 0, sampleCount: 4),
-            playbackStartupGuardActive: false);
+        coordinator.ObserveDuplexAudio(CreateDuplexFrame(sequence: 1, startSample: 0, sampleCount: 4), playbackStartupGuardActive: false);
 
         Assert.True(coordinator.TryAcquire(1, out var taken));
         coordinator.ApplyConfirmedCapture(taken, CreateConfirmedDecision());
@@ -3446,9 +3334,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         await coordinator.AttachAsrSessionAsync(1, "validation-full-first-tail");
 
         Assert.Empty(faults);
-        Assert.Equal(
-            [3f, 4f, 5f, 6f, 7f, 8f],
-            services.Asr.FedAudio["validation-full-first-tail"].SelectMany(static chunk => chunk));
+        Assert.Equal([3f, 4f, 5f, 6f, 7f, 8f], services.Asr.FedAudio["validation-full-first-tail"].SelectMany(static chunk => chunk));
     }
 
     [Fact]
@@ -3457,10 +3343,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         int speechEnded = 0;
-        var coordinator = CreateDataPlaneCoordinator(
-            services,
-            faults,
-            publishSpeechEnded: (_, _) => speechEnded++);
+        var coordinator = CreateDataPlaneCoordinator(services, faults, publishSpeechEnded: (_, _) => speechEnded++);
         coordinator.SeedPendingConfirmation(CreateConfirmationLease(0));
 
         // Before control-plane confirmation, this VAD endpoint belongs to the still-pending
@@ -3481,10 +3364,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         int speechEnded = 0;
-        var coordinator = CreateDataPlaneCoordinator(
-            services,
-            faults,
-            publishSpeechEnded: (_, _) => speechEnded++);
+        var coordinator = CreateDataPlaneCoordinator(services, faults, publishSpeechEnded: (_, _) => speechEnded++);
         coordinator.SeedPendingConfirmation(CreateConfirmationLease(0));
 
         // VAD records its endpoint and the control loop consumes that endpoint before the
@@ -3504,9 +3384,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         Assert.Equal(1, speechEnded);
         Assert.Empty(faults);
-        Assert.Equal(
-            [1f, 2f, 3f, 4f],
-            services.Asr.FedAudio["validation-endpoint-before-confirmation"].SelectMany(static chunk => chunk));
+        Assert.Equal([1f, 2f, 3f, 4f], services.Asr.FedAudio["validation-endpoint-before-confirmation"].SelectMany(static chunk => chunk));
     }
 
     [Fact]
@@ -3515,10 +3393,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         int speechEnded = 0;
-        var coordinator = CreateDataPlaneCoordinator(
-            services,
-            faults,
-            publishSpeechEnded: (_, _) => speechEnded++);
+        var coordinator = CreateDataPlaneCoordinator(services, faults, publishSpeechEnded: (_, _) => speechEnded++);
         coordinator.SeedPendingConfirmation(CreateConfirmationLease(2));
 
         // The endpoint shares the confirmation boundary, leaving no DTD frame for the
@@ -3543,10 +3418,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         int speechEnded = 0;
-        var coordinator = CreateDataPlaneCoordinator(
-            services,
-            faults,
-            publishSpeechEnded: (_, _) => speechEnded++);
+        var coordinator = CreateDataPlaneCoordinator(services, faults, publishSpeechEnded: (_, _) => speechEnded++);
         coordinator.SeedPendingConfirmation(CreateConfirmationLease(2));
 
         // The capture callback records an endpoint, but its queued control-plane signal has
@@ -3563,9 +3435,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Equal(1, coordinator.GetDiagnosticSnapshot().ActiveTurnId);
         Assert.Equal(0, speechEnded);
         Assert.Empty(faults);
-        Assert.Equal(
-            [3f, 4f],
-            services.Asr.FedAudio["validation-pending-endpoint-continuation"].SelectMany(static chunk => chunk));
+        Assert.Equal([3f, 4f], services.Asr.FedAudio["validation-pending-endpoint-continuation"].SelectMany(static chunk => chunk));
     }
 
     [Fact]
@@ -3574,10 +3444,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
         int speechEnded = 0;
-        var coordinator = CreateDataPlaneCoordinator(
-            services,
-            faults,
-            publishSpeechEnded: (_, _) => speechEnded++);
+        var coordinator = CreateDataPlaneCoordinator(services, faults, publishSpeechEnded: (_, _) => speechEnded++);
         coordinator.SeedPendingConfirmation(CreateConfirmationLease(selectedEndSample: 4));
 
         // The endpoint reached the control plane, but DTD advanced the immutable confirmation
@@ -3595,9 +3462,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Equal(1, coordinator.GetDiagnosticSnapshot().ActiveTurnId);
         Assert.Equal(0, speechEnded);
         Assert.Empty(faults);
-        Assert.Equal(
-            [5f, 6f],
-            services.Asr.FedAudio["validation-stale-endpoint-continuation"].SelectMany(static chunk => chunk));
+        Assert.Equal([5f, 6f], services.Asr.FedAudio["validation-stale-endpoint-continuation"].SelectMany(static chunk => chunk));
     }
 
     [Fact]
@@ -3622,9 +3487,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Empty(faults);
         Assert.False(coordinator.Module.Replay.HasFrames);
         Assert.Equal(0.6d, coordinator.Module.Capture.SpeechDurationMs, 6);
-        Assert.Equal(
-            [3f, 4f, 5f],
-            services.Asr.FedAudio["validation-taken-tail"].SelectMany(static chunk => chunk));
+        Assert.Equal([3f, 4f, 5f], services.Asr.FedAudio["validation-taken-tail"].SelectMany(static chunk => chunk));
     }
 
     [Fact]
@@ -3652,9 +3515,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Empty(faults);
         Assert.False(coordinator.Module.Replay.HasFrames);
         Assert.Equal(0.6d, coordinator.Module.Capture.SpeechDurationMs, 6);
-        Assert.Equal(
-            [3f, 4f, 5f],
-            services.Asr.FedAudio["validation-late-tail"].SelectMany(static chunk => chunk));
+        Assert.Equal([3f, 4f, 5f], services.Asr.FedAudio["validation-late-tail"].SelectMany(static chunk => chunk));
     }
 
     [Theory]
@@ -3718,17 +3579,14 @@ public sealed partial class VoiceAssistantLifecycleTests
             Audio: discontinuousAudio,
             DelaySamples: 0,
             HasDiscontinuity: explicitDiscontinuity);
-        MainAudioObservation discontinuousObservation =
-            coordinator.ObserveRecognitionAudio(discontinuousFrame);
+        MainAudioObservation discontinuousObservation = coordinator.ObserveRecognitionAudio(discontinuousFrame);
         coordinator.FeedFromRecognitionAudio(discontinuousAudio, discontinuousObservation);
 
         Assert.Empty(faults);
         Assert.False(coordinator.Module.Replay.HasFrames);
 
         FeedRecognitionAudio(coordinator, 7, [8f, 9f]);
-        Assert.Equal(
-            [3f, 4f, 8f, 9f],
-            services.Asr.FedAudio["validation-discontinuity-tail"].SelectMany(static chunk => chunk));
+        Assert.Equal([3f, 4f, 8f, 9f], services.Asr.FedAudio["validation-discontinuity-tail"].SelectMany(static chunk => chunk));
     }
 
     [Fact]
@@ -3765,10 +3623,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         {
             for (int index = 0; index < iterations; index++)
             {
-                FeedRecognitionAudio(
-                    coordinator,
-                    startSample: index * 4,
-                    samples: [1f, 2f, 3f, 4f]);
+                FeedRecognitionAudio(coordinator, startSample: index * 4, samples: [1f, 2f, 3f, 4f]);
             }
         });
         Task duplex = Task.Run(() =>
@@ -3776,10 +3631,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             for (int index = 0; index < iterations; index++)
             {
                 coordinator.ObserveDuplexAudio(
-                    CreateDuplexFrame(
-                        sequence: index + 1,
-                        startSample: index * 4,
-                        sampleCount: 4),
+                    CreateDuplexFrame(sequence: index + 1, startSample: index * 4, sampleCount: 4),
                     playbackStartupGuardActive: false);
             }
         });
@@ -3794,10 +3646,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     {
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
-        var coordinator = CreateDataPlaneCoordinator(
-            services,
-            faults,
-            directFeedAttached: false);
+        var coordinator = CreateDataPlaneCoordinator(services, faults, directFeedAttached: false);
         coordinator.ApplyConfirmedCapture(CreateConfirmationLease(0), CreateConfirmedDecision());
 
         Task feeding = Task.Run(() =>
@@ -3806,10 +3655,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             // test into the separate pending-overflow fault path.
             for (int index = 0; index < 200; index++)
             {
-                FeedRecognitionAudio(
-                    coordinator,
-                    startSample: index * 2,
-                    samples: [(float)index, (float)index + 1f]);
+                FeedRecognitionAudio(coordinator, startSample: index * 2, samples: [(float)index, (float)index + 1f]);
             }
         });
         Task resetting = Task.Run(() =>
@@ -3828,10 +3674,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     {
         var services = TestServices.Create();
         var coordinator = CreateDataPlaneCoordinator(services, new List<AssistantFailure>());
-        DuplexAudioFrame frame = CreateDuplexFrame(
-            sequence: 1,
-            startSample: 0,
-            sampleCount: 320);
+        DuplexAudioFrame frame = CreateDuplexFrame(sequence: 1, startSample: 0, sampleCount: 320);
 
         for (int index = 0; index < 100; index++)
             coordinator.ObserveDuplexAudio(frame, playbackStartupGuardActive: false);
@@ -3871,9 +3714,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         NearEndTestHarness? coordinator = null;
         var faults = new List<AssistantFailure>();
-        coordinator = CreateDataPlaneCoordinator(
-             services,
-             faults);
+        coordinator = CreateDataPlaneCoordinator(services, faults);
         coordinator.ApplyConfirmedCapture(CreateConfirmationLease(0), CreateConfirmedDecision());
         await coordinator.AttachAsrSessionAsync(1, "validation-pump");
 
@@ -3938,20 +3779,14 @@ public sealed partial class VoiceAssistantLifecycleTests
     [Fact]
     public void ActiveNearEndCapture_DoesNotOwnRecognitionPumpSynchronization()
     {
-        FieldInfo[] dataPlaneFields = typeof(NearEndDataPlane)
-            .GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.DoesNotContain(
-            dataPlaneFields,
-            field => field.Name.StartsWith("_asrFeed", StringComparison.Ordinal));
+        FieldInfo[] dataPlaneFields = typeof(NearEndDataPlane).GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.DoesNotContain(dataPlaneFields, field => field.Name.StartsWith("_asrFeed", StringComparison.Ordinal));
         Assert.DoesNotContain(dataPlaneFields, field => field.FieldType == typeof(SemaphoreSlim));
         Assert.DoesNotContain(dataPlaneFields, field => field.FieldType == typeof(IRecognitionAudioPort));
 
         // The narrow recognition sink lives in the effect executor, the single external exit.
-        FieldInfo[] executorFields = typeof(NearEndEffectExecutor)
-            .GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.Contains(
-            executorFields,
-            field => field.FieldType == typeof(INearEndRecognitionAudioSink));
+        FieldInfo[] executorFields = typeof(NearEndEffectExecutor).GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.Contains(executorFields, field => field.FieldType == typeof(INearEndRecognitionAudioSink));
     }
 
     [Fact]
@@ -3970,9 +3805,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         await feedObserved.Task.WaitAsync(TimeSpan.FromMilliseconds(250));
 
         Assert.Empty(faults);
-        Assert.Equal(
-            [21f, 22f, 23f],
-            services.Asr.FedAudio["validation-explicit-pump"].SelectMany(static chunk => chunk));
+        Assert.Equal([21f, 22f, 23f], services.Asr.FedAudio["validation-explicit-pump"].SelectMany(static chunk => chunk));
     }
 
     [Fact]
@@ -4010,10 +3843,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     {
         var services = TestServices.Create();
         var faults = new List<AssistantFailure>();
-        var coordinator = CreateDataPlaneCoordinator(
-            services,
-            faults,
-            directFeedAttached: false);
+        var coordinator = CreateDataPlaneCoordinator(services, faults, directFeedAttached: false);
         coordinator.ApplyConfirmedCapture(CreateConfirmationLease(0), CreateConfirmedDecision());
         await coordinator.AttachAsrSessionAsync(1, "old-session");
         FeedRecognitionAudio(coordinator, 0, [1f, 2f]);
@@ -4056,31 +3886,20 @@ public sealed partial class VoiceAssistantLifecycleTests
             "AttachAsrSessionAsync",
             "CanAttachAsrSessionLocked",
         ];
-        MethodInfo[] methods = typeof(NearEndDataPlane)
-            .GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        MethodInfo[] methods = typeof(NearEndDataPlane).GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         Assert.DoesNotContain(methods, method => supersededMethods.Contains(method.Name, StringComparer.Ordinal));
     }
 
     [Fact]
     public void ActiveNearEndCapture_DelegatesSessionAdmissionStateToRecognitionPort()
     {
-        FieldInfo[] dataPlaneFields = typeof(NearEndDataPlane)
-            .GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.DoesNotContain(
-            dataPlaneFields,
-            field => field.Name.Contains("AsrSession", StringComparison.Ordinal));
-        Assert.DoesNotContain(
-            dataPlaneFields,
-            field => field.Name.Contains("SessionAttached", StringComparison.Ordinal));
-        Assert.DoesNotContain(
-            dataPlaneFields,
-            field => field.FieldType == typeof(IRecognitionAudioPort));
+        FieldInfo[] dataPlaneFields = typeof(NearEndDataPlane).GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.DoesNotContain(dataPlaneFields, field => field.Name.Contains("AsrSession", StringComparison.Ordinal));
+        Assert.DoesNotContain(dataPlaneFields, field => field.Name.Contains("SessionAttached", StringComparison.Ordinal));
+        Assert.DoesNotContain(dataPlaneFields, field => field.FieldType == typeof(IRecognitionAudioPort));
 
-        FieldInfo[] executorFields = typeof(NearEndEffectExecutor)
-            .GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.Contains(
-            executorFields,
-            field => field.FieldType == typeof(INearEndRecognitionAudioSink));
+        FieldInfo[] executorFields = typeof(NearEndEffectExecutor).GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.Contains(executorFields, field => field.FieldType == typeof(INearEndRecognitionAudioSink));
     }
 
     [Fact]
@@ -4124,14 +3943,9 @@ public sealed partial class VoiceAssistantLifecycleTests
             ActiveNearEndWindowMs = 160,
             ActiveNearEndPreRollMs = 0,
         };
-        var turns = new AssistantTurnObservationStoreHarness(
-            new BargeInDetector(options.MinDurationMs, options.MinRms, 16000, 1));
+        var turns = new AssistantTurnObservationStoreHarness(new BargeInDetector(options.MinDurationMs, options.MinRms, 16000, 1));
         long responseTurnId = turns.OnSpeechStarted(enableBargeIn: false).TurnId;
-        Assert.True(turns.TryTransitionForTurn(
-            responseTurnId,
-            AssistantState.Speaking,
-            out _,
-            out _));
+        Assert.True(turns.TryTransitionForTurn(responseTurnId, AssistantState.Speaking, out _, out _));
 
         var decision = new BargeInDecision(
             BargeInAction.Interrupt,
@@ -4154,9 +3968,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             EndSampleExclusive: 1920,
             LatestFrameAccepted: true,
             FirstAcceptedStartSample: 0);
-        var speakerEvidence = new SequencedSpeakerEvidenceProvider(
-            SpeakerVerificationStatus.Pending,
-            SpeakerVerificationStatus.Mismatch);
+        var speakerEvidence = new SequencedSpeakerEvidenceProvider(SpeakerVerificationStatus.Pending, SpeakerVerificationStatus.Mismatch);
         int confirmations = 0;
         var coordinator = CreateNearEndTestHarness(
             options,
@@ -4219,14 +4031,9 @@ public sealed partial class VoiceAssistantLifecycleTests
             ActiveNearEndWindowMs = 160,
             ActiveNearEndPreRollMs = 0,
         };
-        var turns = new AssistantTurnObservationStoreHarness(
-            new BargeInDetector(options.MinDurationMs, options.MinRms, 16000, 1));
+        var turns = new AssistantTurnObservationStoreHarness(new BargeInDetector(options.MinDurationMs, options.MinRms, 16000, 1));
         long responseTurnId = turns.OnSpeechStarted(enableBargeIn: false).TurnId;
-        Assert.True(turns.TryTransitionForTurn(
-            responseTurnId,
-            AssistantState.Speaking,
-            out _,
-            out _));
+        Assert.True(turns.TryTransitionForTurn(responseTurnId, AssistantState.Speaking, out _, out _));
 
         var decision = new BargeInDecision(
             BargeInAction.Interrupt,
@@ -4249,9 +4056,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             EndSampleExclusive: 1920,
             LatestFrameAccepted: true,
             FirstAcceptedStartSample: 0);
-        var speakerEvidence = new SequencedSpeakerEvidenceProvider(
-            SpeakerVerificationStatus.Pending,
-            SpeakerVerificationStatus.Pending);
+        var speakerEvidence = new SequencedSpeakerEvidenceProvider(SpeakerVerificationStatus.Pending, SpeakerVerificationStatus.Pending);
         var coordinator = CreateNearEndTestHarness(
             options,
             new TestRecognitionAudioPort(services.Asr),
@@ -4296,16 +4101,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         coordinator.ApplyConfirmedCapture(taken, CreateConfirmedDecision());
         await coordinator.AttachAsrSessionAsync(1, "validation-epoch-rebase");
 
-        FeedRecognitionAudio(
-            coordinator,
-            streamEpoch: 2,
-            startSample: 4,
-            samples: [5f, 6f, 7f, 8f]);
+        FeedRecognitionAudio(coordinator, streamEpoch: 2, startSample: 4, samples: [5f, 6f, 7f, 8f]);
 
         Assert.Empty(faults);
-        Assert.Equal(
-            [5f, 6f, 7f, 8f],
-            services.Asr.FedAudio["validation-epoch-rebase"].SelectMany(static chunk => chunk));
+        Assert.Equal([5f, 6f, 7f, 8f], services.Asr.FedAudio["validation-epoch-rebase"].SelectMany(static chunk => chunk));
     }
 
     [Fact]
@@ -4550,12 +4349,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         services.Audio.EmitProcessedCapture(ConstantSamples(0.23f, 320 * 8));
         EmitPlaybackEchoFrames(services, count: 20, renderRms: 0.08, echoRms: 0.02);
-        EmitNearEndFrames(
-            services,
-            count: 8,
-            renderRms: 0.08,
-            captureRms: 0.09,
-            processedRms: 0.23);
+        EmitNearEndFrames(services, count: 8, renderRms: 0.08, captureRms: 0.09, processedRms: 0.23);
         await WaitUntilAsync(() =>
         {
             lock (validationEvents)
@@ -4698,9 +4492,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Equal(1, services.Audio.ClearQueueCount);
         lock (validationEvents)
         {
-            Assert.Contains(validationEvents, e =>
-                e.Kind == BargeInValidationKind.Heard &&
-                e.Source == BargeInTriggerSource.NearEndWindow);
+            Assert.Contains(validationEvents, e => e.Kind == BargeInValidationKind.Heard && e.Source == BargeInTriggerSource.NearEndWindow);
             Assert.Contains(validationEvents, e =>
                 e.Kind == BargeInValidationKind.Accepted &&
                 e.Source == BargeInTriggerSource.NearEndWindow);
@@ -4875,12 +4667,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         {
             float[] render = AlternatingSamples(0.08, preRollFrameSamples);
             float[] echo = Scale(render, 0.02 / 0.08);
-            services.Audio.EmitFrame(
-                render,
-                echo,
-                echo,
-                echo,
-                processedCapture: ConstantSamples(0.23f, preRollFrameSamples));
+            services.Audio.EmitFrame(render, echo, echo, echo, processedCapture: ConstantSamples(0.23f, preRollFrameSamples));
         }
 
         // 完整复现日志的判定帧构成：256 samples/16ms，4 帧未通过门槛，
@@ -4898,15 +4685,9 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         for (int i = 0; i < ranges.Count; i++)
         {
-            float value = i < rejectedPrefixFrames
-                ? 0.27f
-                : i < rejectedPrefixFrames + acceptedFrames
-                    ? 0.31f
-                    : 0.41f;
+            float value = i < rejectedPrefixFrames ? 0.27f : i < rejectedPrefixFrames + acceptedFrames ? 0.31f : 0.41f;
             CaptureRange range = ranges[i];
-            services.Audio.EmitProcessedCapture(
-                in range,
-                ConstantSamples(value, frameSamples));
+            services.Audio.EmitProcessedCapture(in range, ConstantSamples(value, frameSamples));
         }
 
         for (int i = 0; i < rejectedPrefixFrames; i++)
@@ -4914,12 +4695,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             CaptureRange range = ranges[i];
             float[] render = AlternatingSamples(0.08, frameSamples);
             float[] echo = Scale(render, 0.02 / 0.08);
-            services.Audio.EmitDuplex(
-                in range,
-                render,
-                echo,
-                echo,
-                echo);
+            services.Audio.EmitDuplex(in range, render, echo, echo, echo);
         }
 
         for (int i = rejectedPrefixFrames; i < rejectedPrefixFrames + acceptedFrames; i++)
@@ -4927,12 +4703,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             CaptureRange range = ranges[i];
             float[] render = AlternatingSamples(0.08, frameSamples);
             float[] capture = ConstantSamples(0.12f, frameSamples);
-            services.Audio.EmitDuplex(
-                in range,
-                render,
-                capture,
-                capture,
-                capture);
+            services.Audio.EmitDuplex(in range, render, capture, capture, capture);
         }
 
         await heard.Task.WaitAsync(TimeSpan.FromSeconds(2));
@@ -4941,12 +4712,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             CaptureRange range = ranges[i];
             float[] render = AlternatingSamples(0.08, frameSamples);
             float[] capture = ConstantSamples(0.12f, frameSamples);
-            services.Audio.EmitDuplex(
-                in range,
-                render,
-                capture,
-                capture,
-                capture);
+            services.Audio.EmitDuplex(in range, render, capture, capture, capture);
         }
         EmitSilenceFrames(services, count: 24, renderRms: 0.08);
         await WaitUntilAsync(() => services.Asr.FedAudio.ContainsKey("session-2"));
@@ -4957,9 +4723,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         int rejectedSamples = frameSamples * rejectedPrefixFrames;
         int acceptedSamples = frameSamples * acceptedFrames;
         int leadSamples = frameSamples * mainLeadFrames;
-        int preRollOffset = Array.FindIndex(
-            fed,
-            sample => Math.Abs(sample - 0.23f) < 0.0001f);
+        int preRollOffset = Array.FindIndex(fed, sample => Math.Abs(sample - 0.23f) < 0.0001f);
         Assert.True(preRollOffset >= 0);
         Assert.True(fed.Length >= preRollOffset + preRollSamples + rejectedSamples + acceptedSamples + leadSamples);
         Assert.All(fed.AsSpan(preRollOffset, preRollSamples).ToArray(), sample => Assert.Equal(0.23f, sample));
@@ -5046,17 +4810,13 @@ public sealed partial class VoiceAssistantLifecycleTests
         for (int i = 0; i < preRollRanges.Count; i++)
         {
             CaptureRange range = preRollRanges[i];
-            services.Audio.EmitProcessedCapture(
-                in range,
-                ConstantSamples(0.23f, frameSamples));
+            services.Audio.EmitProcessedCapture(in range, ConstantSamples(0.23f, frameSamples));
         }
         for (int i = 0; i < decisionRanges.Count; i++)
         {
             CaptureRange range = decisionRanges[i];
             float value = i < rejectedPrefixFrames ? 0.27f : 0.31f;
-            services.Audio.EmitProcessedCapture(
-                in range,
-                ConstantSamples(value, frameSamples));
+            services.Audio.EmitProcessedCapture(in range, ConstantSamples(value, frameSamples));
         }
 
         // The last main-chain frame reaches the fixed acoustic decision end. Confirmation
@@ -5066,15 +4826,8 @@ public sealed partial class VoiceAssistantLifecycleTests
         CaptureRange retryRange = services.Audio.ReserveCaptureRange(frameSamples);
         float[] retryRender = AlternatingSamples(0.08, frameSamples);
         float[] retryCapture = ConstantSamples(0.12f, frameSamples);
-        services.Audio.EmitDuplex(
-            in retryRange,
-            retryRender,
-            retryCapture,
-            retryCapture,
-            retryCapture);
-        services.Audio.EmitProcessedCapture(
-            in retryRange,
-            ConstantSamples(0.41f, frameSamples));
+        services.Audio.EmitDuplex(in retryRange, retryRender, retryCapture, retryCapture, retryCapture);
+        services.Audio.EmitProcessedCapture(in retryRange, ConstantSamples(0.41f, frameSamples));
         EmitSilenceFrames(services, count: 24, renderRms: 0.08);
         await WaitUntilAsync(() => services.Asr.FinishCount >= 2);
 
@@ -5082,9 +4835,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         int preRollSamples = preRollFrames * frameSamples;
         int rejectedSamples = rejectedPrefixFrames * frameSamples;
         int acceptedSamples = acceptedFrames * frameSamples;
-        int preRollOffset = Array.FindIndex(
-            fed,
-            sample => Math.Abs(sample - 0.23f) < 0.0001f);
+        int preRollOffset = Array.FindIndex(fed, sample => Math.Abs(sample - 0.23f) < 0.0001f);
         Assert.True(preRollOffset >= 0);
         Assert.All(fed.AsSpan(preRollOffset, preRollSamples).ToArray(), sample => Assert.Equal(0.23f, sample));
         Assert.All(fed.AsSpan(preRollOffset + preRollSamples, rejectedSamples).ToArray(), sample => Assert.Equal(0.27f, sample));
@@ -5176,9 +4927,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         services.Vad.EmitSpeechStarted();
         services.Vad.EmitSpeaking([0.1f, 0.2f, 0.3f]);
         services.Vad.EmitSpeechEnded(TimeSpan.FromMilliseconds(120));
-        await WaitUntilAsync(() =>
-            assistant.State == AssistantState.Speaking &&
-            services.Audio.AcceptedSamples > 0);
+        await WaitUntilAsync(() => assistant.State == AssistantState.Speaking && services.Audio.AcceptedSamples > 0);
         services.Audio.HoldPlayback();
         services.Tts.BlockAfterFirstChunk = null;
 
@@ -5193,25 +4942,14 @@ public sealed partial class VoiceAssistantLifecycleTests
         float[] capture = ConstantSamples(0.12f, 320);
         for (int frame = 0; frame < 58; frame++)
         {
-            services.Audio.EmitDuplexOnly(
-                silence,
-                capture,
-                capture,
-                capture,
-                renderStatus: RenderTimelineStatus.Gap);
+            services.Audio.EmitDuplexOnly(silence, capture, capture, capture, renderStatus: RenderTimelineStatus.Gap);
         }
-        EmitNearEndFrames(
-            services,
-            count: 1,
-            renderRms: 0.08,
-            captureRms: 0.12);
+        EmitNearEndFrames(services, count: 1, renderRms: 0.08, captureRms: 0.12);
         services.Vad.EmitSpeaking(ConstantSamples(0.12f, 4800));
 
         VoiceAssistantBenchmarkSnapshot snapshot = benchmarkProbe.GetSnapshot();
         Assert.Equal(BargeInAction.Continue, snapshot.Decision.Action);
-        Assert.True(
-            snapshot.IsSpeakingWithoutPendingCandidate,
-            $"Expected speaking-ready state, got {snapshot.AssistantState}.");
+        Assert.True(snapshot.IsSpeakingWithoutPendingCandidate, $"Expected speaking-ready state, got {snapshot.AssistantState}.");
         Assert.True(
             !snapshot.Coordinator.CandidateActive,
             $"Unexpected candidate: decision={snapshot.Decision}; coordinator={snapshot.Coordinator}.");
@@ -5363,8 +5101,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Equal(AssistantState.Stopped, assistant.State);
     }
 
-    private static string MessageText(ChatMessage message) =>
-        string.Concat(message.Content.OfType<TextContent>().Select(c => c.Text));
+    private static string MessageText(ChatMessage message) => string.Concat(message.Content.OfType<TextContent>().Select(c => c.Text));
 
     private static async Task WaitUntilAsync(Func<bool> condition)
     {
@@ -5382,8 +5119,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     private static void EmitVadAudioWithDuplex(TestServices services, float[] audio)
     {
         services.Audio.Emit(audio);
-        services.Vad.AfterNextSpeechEnded = () =>
-            EmitSilenceFrames(services, count: 30, renderRms: 0);
+        services.Vad.AfterNextSpeechEnded = () => EmitSilenceFrames(services, count: 30, renderRms: 0);
         services.Vad.EmitSpeaking(audio);
     }
 
@@ -5561,8 +5297,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                     RejectNextFeed = false;
                     return false;
                 }
-                if (directFeedAttached &&
-                    _sessions.TryGetValue(turnId, out string? attachedSession))
+                if (directFeedAttached && _sessions.TryGetValue(turnId, out string? attachedSession))
                 {
                     directSession = attachedSession;
                 }
@@ -5656,8 +5391,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             {
                 foreach ((long candidateTurnId, Queue<float[]> queue) in _pending)
                 {
-                    if (_sessions.TryGetValue(candidateTurnId, out string? candidateSession) &&
-                        queue.Count > 0)
+                    if (_sessions.TryGetValue(candidateTurnId, out string? candidateSession) && queue.Count > 0)
                     {
                         sessionId = candidateSession;
                         audio = queue.Dequeue();
@@ -5712,8 +5446,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
     private static void FeedRecognitionAudio(NearEndTestHarness coordinator, long startSample, float[] samples, long streamEpoch = 1)
     {
-        MainAudioObservation observation =
-            ObserveRecognitionAudio(coordinator, startSample, samples, streamEpoch);
+        MainAudioObservation observation = ObserveRecognitionAudio(coordinator, startSample, samples, streamEpoch);
         coordinator.FeedFromRecognitionAudio(samples, observation);
     }
 
@@ -5742,12 +5475,10 @@ public sealed partial class VoiceAssistantLifecycleTests
 
     private static T GetPrivateField<T>(object instance, string name)
     {
-        FieldInfo? field = instance.GetType()
-            .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo? field = instance.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
         if (field is not null)
         {
-            return (T)(field.GetValue(instance)
-                ?? throw new Xunit.Sdk.XunitException($"Field '{name}' was null."));
+            return (T)(field.GetValue(instance) ?? throw new Xunit.Sdk.XunitException($"Field '{name}' was null."));
         }
 
         // The shell is a set of collaborators, so a field the facade used to hold now lives on the
@@ -5822,16 +5553,9 @@ public sealed partial class VoiceAssistantLifecycleTests
             for (int i = 0; i < count; i++)
             {
                 float[] render = AlternatingSamples(renderRms, 320);
-                float[] capture = alternatingCapture
-                    ? AlternatingSamples(captureRms, 320)
-                    : ConstantSamples((float)captureRms, 320);
+                float[] capture = alternatingCapture ? AlternatingSamples(captureRms, 320) : ConstantSamples((float)captureRms, 320);
                 float[] processed = ConstantSamples((float)(processedRms ?? captureRms), 320);
-                services.Audio.EmitFrame(
-                    render,
-                    capture,
-                    capture,
-                    capture,
-                    processedCapture: processed);
+                services.Audio.EmitFrame(render, capture, capture, capture, processedCapture: processed);
             }
         }
         finally
@@ -5949,9 +5673,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 .UseConversation(TestConversation.Create(Llm, enableThinking))
                 .UseSpeechSynthesis(Tts);
             if (enableBargeIn)
-                builder.AddBargeIn(
-                    options.BargeIn,
-                    TestAcousticPathDelayEstimatorFactory.Instance);
+                builder.AddBargeIn(options.BargeIn, TestAcousticPathDelayEstimatorFactory.Instance);
             if (enableWakeWord)
             {
                 builder.AddWakeup(Wakeup);
@@ -6096,15 +5818,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                         LatestNearEndSpeech = false,
                         RenderStatus = renderStatus,
                     };
-                    return new DtdProcessBatch(
-                        0,
-                        0,
-                        false,
-                        0,
-                        0,
-                        false,
-                        StateReset: true,
-                        renderStatus);
+                    return new DtdProcessBatch(0, 0, false, 0, 0, false, StateReset: true, renderStatus);
                 }
 
                 ReadOnlySpan<float> capture = frame.CaptureBeforeAecValid.Span;
@@ -6113,8 +5827,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 double renderRms = ComputeRms(render);
                 double correlation = ComputeAbsoluteCorrelation(capture, render, captureRms, renderRms);
                 bool echoLike = renderRms > 0.001 && correlation >= 0.90;
-                bool detectedNearEnd = captureRms >= 0.01 &&
-                    (!echoLike || captureRms >= renderRms * 1.8);
+                bool detectedNearEnd = captureRms >= 0.01 && (!echoLike || captureRms >= renderRms * 1.8);
                 bool nearEnd = NearEndSpeechOverride ?? detectedNearEnd;
                 CaptureRange range = frame.CaptureBeforeAecTimeline.SourceRange;
                 double durationMs = frame.FrameCount * 1000d / frame.SampleRate;
@@ -6170,11 +5883,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             lock (_lock)
             {
                 ObjectDisposedException.ThrowIf(_disposed, this);
-                return _decisions.AggregateRecent(
-                    window.TotalMilliseconds,
-                    minDurationMs,
-                    minRms,
-                    BargeInDecisionParameters.Default);
+                return _decisions.AggregateRecent(window.TotalMilliseconds, minDurationMs, minRms, BargeInDecisionParameters.Default);
             }
         }
 
@@ -6417,12 +6126,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         public void EmitProcessedCapture(float[] processedAudio)
         {
             float[] detection = new float[processedAudio.Length];
-            EmitFrame(
-                new float[processedAudio.Length],
-                detection,
-                detection,
-                detection,
-                processedCapture: processedAudio);
+            EmitFrame(new float[processedAudio.Length], detection, detection, detection, processedCapture: processedAudio);
         }
         public void EmitMetrics(double renderRms, double captureOutputRms, bool captureProcessed = true)
         {
@@ -6441,12 +6145,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         {
             processedCapture ??= captureAfterAec;
             Assert.Equal(captureAfterAec.Length, processedCapture.Length);
-            CaptureRange range = EmitDuplexOnly(
-                render,
-                captureRaw,
-                captureBeforeAec,
-                captureAfterAec,
-                captureProcessed);
+            CaptureRange range = EmitDuplexOnly(render, captureRaw, captureBeforeAec, captureAfterAec, captureProcessed);
             EmitProcessedCapture(in range, processedCapture);
         }
 
@@ -6522,12 +6221,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 StreamEpoch: range.StreamEpoch,
                 StartSample: range.StartSample,
                 HasDiscontinuity: hasDiscontinuity,
-                RenderTimeline: new RenderSignalTimeline(
-                    _renderEpoch,
-                    renderStart,
-                    _renderPosition,
-                    renderStatus,
-                    hasRenderDiscontinuity),
+                RenderTimeline: new RenderSignalTimeline(_renderEpoch, renderStart, _renderPosition, renderStatus, hasRenderDiscontinuity),
                 PlaybackGain: PlaybackGain);
             OnDuplexAudioFrame?.Invoke(in frame);
         }
@@ -6535,13 +6229,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         public void EmitProcessedCapture(in CaptureRange range, float[] processedCapture, bool hasDiscontinuity = false)
         {
             Assert.Equal(range.Length, processedCapture.LongLength);
-            var processedFrame = new ProcessedCaptureFrame(
-                range,
-                16000,
-                1,
-                processedCapture,
-                0,
-                hasDiscontinuity);
+            var processedFrame = new ProcessedCaptureFrame(range, 16000, 1, processedCapture, 0, hasDiscontinuity);
             OnProcessedCaptureFrame?.Invoke(in processedFrame);
         }
 
@@ -6896,9 +6584,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             lock (_lock)
             {
                 _finishBlocks.TryGetValue(sessionId, out block);
-                text = _results.TryGetValue(sessionId, out string? configured)
-                    ? configured
-                    : "你好";
+                text = _results.TryGetValue(sessionId, out string? configured) ? configured : "你好";
             }
 
             if (block is not null)

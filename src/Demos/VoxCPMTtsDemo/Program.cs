@@ -69,8 +69,7 @@ namespace VoxCPMTtsDemo
                 b.AddSimpleConsole(o => { o.SingleLine = true; o.TimestampFormat = "HH:mm:ss.fff "; });
             });
 
-            using var tts = new VoxCPMTTSService(Options.Create(BuildTtsOptions()),
-                loggerFactory.CreateLogger<VoxCPMTTSService>());
+            using var tts = new VoxCPMTTSService(Options.Create(BuildTtsOptions()), loggerFactory.CreateLogger<VoxCPMTTSService>());
             int sampleRate = tts.OutputSampleRate;
 
             var playOptions = Options.Create(new PortAudioPlayOptions
@@ -87,8 +86,7 @@ namespace VoxCPMTtsDemo
                 if (e.XrunType == AudioXrunType.OutputUnderflow)
                     Console.WriteLine($"  [xrun] 输出欠载 frames={e.FrameCount} 队列={player.CurrentQueueSize} t=+{playClock.Elapsed.TotalSeconds:F2}s");
             };
-            player.OnError += (_, e) =>
-                Console.WriteLine($"  [audio-error] {e.Exception.GetType().Name}: {e.Message}");
+            player.OnError += (_, e) => Console.WriteLine($"  [audio-error] {e.Exception.GetType().Name}: {e.Message}");
 
             var voices = tts.ListVoices();
             Console.WriteLine($"VoxCPM-TTS Demo — {sampleRate}Hz ({Provider})");

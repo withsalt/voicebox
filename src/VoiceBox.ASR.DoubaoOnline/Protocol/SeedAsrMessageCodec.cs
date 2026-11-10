@@ -109,9 +109,7 @@ namespace VoiceBox.ASR.DoubaoOnline.Protocol
             EnsureRemaining(frame, offset, size, "payload");
 
             ReadOnlySpan<byte> payload = frame.Slice(offset, size);
-            byte[] decoded = compression == CompressionMethod.Gzip
-                ? GzipCodec.Decompress(payload)
-                : payload.ToArray();
+            byte[] decoded = compression == CompressionMethod.Gzip ? GzipCodec.Decompress(payload) : payload.ToArray();
 
             return new ServerMessage
             {
@@ -135,9 +133,7 @@ namespace VoiceBox.ASR.DoubaoOnline.Protocol
             EnsureRemaining(frame, offset, size, "error message");
 
             ReadOnlySpan<byte> payload = frame.Slice(offset, size);
-            byte[] decoded = compression == CompressionMethod.Gzip
-                ? GzipCodec.Decompress(payload)
-                : payload.ToArray();
+            byte[] decoded = compression == CompressionMethod.Gzip ? GzipCodec.Decompress(payload) : payload.ToArray();
 
             return new ServerMessage
             {

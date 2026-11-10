@@ -158,8 +158,7 @@ namespace WeTextProcessing.Tests
         public void Verbalize_MalformedTaggedText_ThrowsWetextProcessorException()
         {
             using var processor = CreateProcessor();
-            Assert.ThrowsExactly<WetextProcessorException>(
-                () => processor.Verbalize("cardinal { value: \"unterminated } "));
+            Assert.ThrowsExactly<WetextProcessorException>(() => processor.Verbalize("cardinal { value: \"unterminated } "));
         }
     }
 }

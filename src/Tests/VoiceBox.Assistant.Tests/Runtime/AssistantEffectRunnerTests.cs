@@ -23,21 +23,16 @@ public sealed partial class VoiceAssistantLifecycleTests
     [Fact]
     public void ControlLoopTurnWriter_RejectsOutOfLoopCommits()
     {
-        AssistantControlLoopTurnWriter writer = CreateTurnWriter(
-            isControlLoopMutation: static () => false,
-            new RecordingEffectPorts());
+        AssistantControlLoopTurnWriter writer = CreateTurnWriter(isControlLoopMutation: static () => false, new RecordingEffectPorts());
 
-        Assert.Throws<InvalidOperationException>(() => writer.Commit(
-            TurnSignal.InputGateChanged(1, 1, isOpen: false)));
+        Assert.Throws<InvalidOperationException>(() => writer.Commit(TurnSignal.InputGateChanged(1, 1, isOpen: false)));
     }
 
     [Fact]
     public void ControlLoopTurnWriter_ReportsStatefulPublicationSequenceAndUnchangedConversationState()
     {
         var events = new RecordingEffectPorts();
-        AssistantControlLoopTurnWriter writer = CreateTurnWriter(
-            isControlLoopMutation: static () => true,
-            events);
+        AssistantControlLoopTurnWriter writer = CreateTurnWriter(isControlLoopMutation: static () => true, events);
 
         KernelCommitResult result = writer.Commit(TurnSignal.WakeupObserved(
             operationId: 1,
@@ -61,12 +56,9 @@ public sealed partial class VoiceAssistantLifecycleTests
     public void ControlLoopTurnWriter_RejectsAsyncEffectOnControlThread()
     {
         var events = new RecordingEffectPorts { AsyncInputGate = true };
-        AssistantControlLoopTurnWriter writer = CreateTurnWriter(
-            isControlLoopMutation: static () => true,
-            events);
+        AssistantControlLoopTurnWriter writer = CreateTurnWriter(isControlLoopMutation: static () => true, events);
 
-        Assert.Throws<InvalidOperationException>(() => writer.Commit(
-            TurnSignal.InputGateChanged(1, 1, isOpen: false)));
+        Assert.Throws<InvalidOperationException>(() => writer.Commit(TurnSignal.InputGateChanged(1, 1, isOpen: false)));
     }
 
     [Fact]
@@ -84,10 +76,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 snapshotObservedByCancellation = writer!.Snapshot.ConversationState;
             },
         };
-        writer = CreateTurnWriter(
-            isControlLoopMutation: static () => true,
-            effects,
-            (_, state) => projected = state);
+        writer = CreateTurnWriter(isControlLoopMutation: static () => true, effects, (_, state) => projected = state);
 
         Assert.True(writer.Commit(TurnSignal.SpeechStarted(1, 1)).Accepted);
         Assert.Equal(AssistantState.Listening, projected);
@@ -141,8 +130,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     [Fact]
     public void EffectRunner_RequiresACompleteRuntimeHandlerBundle()
     {
-        Assert.Throws<ArgumentNullException>(
-            () => new AssistantEffectRunner(null!));
+        Assert.Throws<ArgumentNullException>(() => new AssistantEffectRunner(null!));
     }
 
     private static AssistantControlLoopTurnWriter CreateTurnWriter(
@@ -151,8 +139,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Action<TurnSignal, AssistantState>? projectCommittedState = null)
     {
         var effectRunner = new AssistantEffectRunner(ports.ToHandlers());
-        var publications = new OrderedPublicationBoundary(
-            new AssistantEventDispatcher(new object(), NullLogger.Instance));
+        var publications = new OrderedPublicationBoundary(new AssistantEventDispatcher(new object(), NullLogger.Instance));
         var publicEvents = new AssistantRuntimePublicEventEffectHandler(
             publications,
             NullLogger.Instance,
@@ -206,9 +193,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             => new(this, this, this, this, this, this);
 
         public ValueTask SetInputGateAsync(SetInputGateEffect effect, CancellationToken cancellationToken)
-            => AsyncInputGate
-                ? new ValueTask(Task.FromException(new InvalidCastException("async test effect")))
-                : Record("SetInputGate");
+            => AsyncInputGate ? new ValueTask(Task.FromException(new InvalidCastException("async test effect"))) : Record("SetInputGate");
         public ValueTask PrepareRecognitionAsync(PrepareRecognitionEffect effect, CancellationToken cancellationToken) => Record("PrepareRecognition");
         public ValueTask FinishRecognitionAsync(FinishRecognitionEffect effect, CancellationToken cancellationToken) => Record("FinishRecognition");
         public ValueTask GenerateResponseAsync(GenerateResponseEffect effect, CancellationToken cancellationToken) => Record("GenerateResponse");

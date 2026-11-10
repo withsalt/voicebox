@@ -40,8 +40,7 @@ namespace VoiceBox.Speaker.WeSpeaker.Internal
 
                 _inputNames = new[] { config.InputName };
                 _outputNames = new[] { config.OutputName };
-                if (!_session.InputMetadata.ContainsKey(config.InputName) ||
-                    !_session.OutputMetadata.ContainsKey(config.OutputName))
+                if (!_session.InputMetadata.ContainsKey(config.InputName) || !_session.OutputMetadata.ContainsKey(config.OutputName))
                 {
                     throw new InvalidOperationException(
                         $"Unexpected WeSpeaker tensor names (expect input '{config.InputName}' and output '{config.OutputName}'). [{modelPath}]");
@@ -49,8 +48,7 @@ namespace VoiceBox.Speaker.WeSpeaker.Internal
 
                 NodeMetadata inputMetadata = _session.InputMetadata[_inputNames[0]];
                 NodeMetadata outputMetadata = _session.OutputMetadata[_outputNames[0]];
-                if (inputMetadata.ElementType != typeof(float) ||
-                    outputMetadata.ElementType != typeof(float))
+                if (inputMetadata.ElementType != typeof(float) || outputMetadata.ElementType != typeof(float))
                 {
                     throw new InvalidOperationException(
                         $"Unexpected WeSpeaker tensor types {inputMetadata.ElementType.Name}/{outputMetadata.ElementType.Name} " +
@@ -58,8 +56,7 @@ namespace VoiceBox.Speaker.WeSpeaker.Internal
                 }
 
                 int[] inputDims = inputMetadata.Dimensions;
-                if (inputDims.Length != 3 || inputDims[2] != _featureDim ||
-                    inputDims[0] > 1 || inputDims[1] > 0)
+                if (inputDims.Length != 3 || inputDims[2] != _featureDim || inputDims[0] > 1 || inputDims[1] > 0)
                     throw new InvalidOperationException(
                         $"Unexpected WeSpeaker model input shape [{string.Join(",", inputDims)}] " +
                         $"(expect [1/dynamic batch, dynamic time, {_featureDim}]). [{modelPath}]");
@@ -73,10 +70,7 @@ namespace VoiceBox.Speaker.WeSpeaker.Internal
                 _inputShape = new long[] { 1, 0, _featureDim };
                 // 能从 metadata 唯一推导输出形状时复用固定输出张量；自定义模型若有多个动态输出维，
                 // 保留原有的 ORT 动态分配路径，不缩窄此前可接受的模型签名。
-                if (TryResolveOutputShape(
-                        outputDims,
-                        _embeddingSize,
-                        out long[] outputShape))
+                if (TryResolveOutputShape(outputDims, _embeddingSize, out long[] outputShape))
                 {
                     _outputBuffer = GC.AllocateUninitializedArray<float>(_embeddingSize, pinned: true);
                     _outputValue = OrtValue.CreateTensorValueFromMemory(_outputBuffer, outputShape);
@@ -143,8 +137,7 @@ namespace VoiceBox.Speaker.WeSpeaker.Internal
             using var outputs = _session.Run(_runOptions, _inputNames, _inputValues, _outputNames);
             var span = outputs[0].GetTensorDataAsSpan<float>();
             if (span.Length != _embeddingSize)
-                throw new InvalidOperationException(
-                    $"Unexpected embedding size {span.Length} (expect {_embeddingSize}).");
+                throw new InvalidOperationException($"Unexpected embedding size {span.Length} (expect {_embeddingSize}).");
             return span.ToArray();
         }
 

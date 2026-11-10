@@ -95,9 +95,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws
                 thresholds.Add(ek.Threshold);
                 _keywordDebounceMs[ek.Phrase] = ek.DebounceMs > 0 ? ek.DebounceMs : _options.DebounceMs;
             }
-            _contextGraph = new ContextGraph(
-                tokenIdLists, _options.KeywordsScore, _options.KeywordsThreshold,
-                scores, phrases, thresholds);
+            _contextGraph = new ContextGraph(tokenIdLists, _options.KeywordsScore, _options.KeywordsThreshold, scores, phrases, thresholds);
 
             int unkId = _symbols.TryGetId("<unk>", out int u) ? u : -1;
             _decoder = new TransducerKeywordDecoder(
@@ -111,8 +109,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws
             foreach (var h in _decoderResult.Hyps.Values) h.ContextState = _contextGraph.Root;
 
             // 1.5s / (10ms * subsampling_factor 4) = 37.5 个 subsampled 帧
-            _silenceResetTrailingBlanks = Math.Max(1,
-                (int)(_options.ResetAfterSilenceSeconds / (_model.SubsamplingFactor * 0.01f)));
+            _silenceResetTrailingBlanks = Math.Max(1, (int)(_options.ResetAfterSilenceSeconds / (_model.SubsamplingFactor * 0.01f)));
 
             _logger.LogInformation(
                 "SherpaOnnxKws initialized: keywords={Count} [{Names}], threshold={Threshold}, " +
@@ -270,8 +267,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws
             }
             else
             {
-                startTimeMsLong = _startFrameIndex * inputFrameShiftMs +
-                                  Math.Max(0, r.FrameOffset - 1) * subsampledShiftMs;
+                startTimeMsLong = _startFrameIndex * inputFrameShiftMs + Math.Max(0, r.FrameOffset - 1) * subsampledShiftMs;
             }
             long startTimeMs = Math.Max(0, startTimeMsLong);
             long durationMs = Math.Max(0, (long)r.Tokens.Count * subsampledShiftMs);
@@ -301,8 +297,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws
                 keyword, scorePercent, thresholdPercent, startTimeMs);
         }
 
-        private int GetDebounceMs(string keyword) =>
-            _keywordDebounceMs.TryGetValue(keyword, out int ms) ? ms : _options.DebounceMs;
+        private int GetDebounceMs(string keyword) => _keywordDebounceMs.TryGetValue(keyword, out int ms) ? ms : _options.DebounceMs;
 
         /// <summary>
         /// 把命中路径上的 token id 渲染成可读字符串, 供 Near-miss 日志展示 "实际听到了什么"。

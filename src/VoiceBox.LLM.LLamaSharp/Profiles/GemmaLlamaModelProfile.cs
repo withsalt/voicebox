@@ -20,8 +20,7 @@ namespace VoiceBox.LLM.LLamaSharp
 
         public override bool Matches(LlamaModelInfo info) =>
             info.Architecture.StartsWith("gemma", StringComparison.OrdinalIgnoreCase) ||
-            (info.ChatTemplate?.Contains(
-                "<start_of_turn>", StringComparison.OrdinalIgnoreCase) ?? false);
+            (info.ChatTemplate?.Contains("<start_of_turn>", StringComparison.OrdinalIgnoreCase) ?? false);
 
         public override string BuildPrompt(
             LLamaWeights weights,

@@ -49,9 +49,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.DoesNotContain("WakeupGate", composition.Snapshot.Capabilities);
         Assert.DoesNotContain("SpeakerEvidence", composition.Snapshot.Capabilities);
         Assert.DoesNotContain("BargeIn", composition.Snapshot.Capabilities);
-        Assert.Equal(
-            [AssistantLifecycleParticipant.AudioFrontend],
-            composition.Lifecycle.StartOrder);
+        Assert.Equal([AssistantLifecycleParticipant.AudioFrontend], composition.Lifecycle.StartOrder);
     }
 
     [Fact]
@@ -60,18 +58,12 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assembly hosting = typeof(VoiceAssistantServiceCollectionExtensions).Assembly;
         Assert.Equal(typeof(VoiceAssistant).Assembly, hosting);
 
-        Type extensions = RequireType(
-            hosting,
-            "VoiceBox.Assistant.Hosting.VoiceAssistantServiceCollectionExtensions");
-        string[] methodNames = extensions.GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Select(method => method.Name)
-            .ToArray();
+        Type extensions = RequireType(hosting, "VoiceBox.Assistant.Hosting.VoiceAssistantServiceCollectionExtensions");
+        string[] methodNames = extensions.GetMethods(BindingFlags.Public | BindingFlags.Static).Select(method => method.Name).ToArray();
         Assert.Contains("AddVoiceBoxAssistant", methodNames);
         Assert.Contains("AddVoiceBoxAssistantHostedLifecycle", methodNames);
 
-        Type diagnostics = RequireType(
-            hosting,
-            "VoiceBox.Assistant.Hosting.Diagnostics.VoiceAssistantDiagnostics");
+        Type diagnostics = RequireType(hosting, "VoiceBox.Assistant.Hosting.Diagnostics.VoiceAssistantDiagnostics");
         Assert.NotNull(diagnostics.GetProperty("RuntimeLifecycle"));
         Assert.NotNull(diagnostics.GetProperty("Turn"));
         Assert.NotNull(diagnostics.GetProperty("Modules"));
@@ -181,9 +173,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseSpeechSynthesis(services.Tts)
             .AddWakeup(services.Wakeup)
             .AddSpeakerVerification(services.Speaker)
-            .AddBargeIn(
-                options.BargeIn,
-                TestAcousticPathDelayEstimatorFactory.Instance)
+            .AddBargeIn(options.BargeIn, TestAcousticPathDelayEstimatorFactory.Instance)
             .BuildComposition();
         Assert.Equal(direct.Snapshot.CapabilityGraphHash, hosting.Snapshot.CapabilityGraphHash);
     }
@@ -191,12 +181,9 @@ public sealed partial class VoiceAssistantLifecycleTests
     [Fact]
     public void CapabilityGraphHashUsesSortedCapabilityIdsAndSha256()
     {
-        string hash = AssistantCapabilityGraph.ComputeCapabilityGraphHash(
-            ["SpeechSynthesis", "AudioCapture"]);
+        string hash = AssistantCapabilityGraph.ComputeCapabilityGraphHash(["SpeechSynthesis", "AudioCapture"]);
 
-        Assert.Equal(
-            "6a20c9278b9a18a3b2347c57de0ec5736746c14ebe2c95a847852c31dd777159",
-            hash);
+        Assert.Equal("6a20c9278b9a18a3b2347c57de0ec5736746c14ebe2c95a847852c31dd777159", hash);
     }
 
     [Fact]
@@ -224,8 +211,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         registrations.AddVoiceBoxAssistant();
         using ServiceProvider provider = registrations.BuildServiceProvider();
 
-        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
-            () => provider.GetRequiredService<VoiceAssistant>());
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<VoiceAssistant>());
 
         Assert.Contains(nameof(IStreamTTSService), exception.Message, StringComparison.Ordinal);
         Assert.Equal(0, services.Audio.StartCount);
@@ -389,10 +375,8 @@ public sealed partial class VoiceAssistantLifecycleTests
             diagnosticsProperties.Select(property => property.Name).Order(StringComparer.Ordinal));
         Assert.Equal(typeof(VoiceAssistantRuntimeLifecycleSnapshot),
             typeof(VoiceAssistantDiagnostics).GetProperty("RuntimeLifecycle")!.PropertyType);
-        Assert.Equal(typeof(VoiceAssistantTurnSnapshot),
-            typeof(VoiceAssistantDiagnostics).GetProperty("Turn")!.PropertyType);
-        Assert.Equal(typeof(VoiceAssistantModuleHealthSnapshot),
-            typeof(VoiceAssistantDiagnostics).GetProperty("Modules")!.PropertyType);
+        Assert.Equal(typeof(VoiceAssistantTurnSnapshot), typeof(VoiceAssistantDiagnostics).GetProperty("Turn")!.PropertyType);
+        Assert.Equal(typeof(VoiceAssistantModuleHealthSnapshot), typeof(VoiceAssistantDiagnostics).GetProperty("Modules")!.PropertyType);
     }
 
     private static async Task<string[]> RunHostedLifecycleTrace(bool withActivityListener)
@@ -403,8 +387,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             listener = new ActivityListener
             {
                 ShouldListenTo = source => source.Name == "VoiceBox.Assistant.Hosting",
-                Sample = static (ref ActivityCreationOptions<ActivityContext> _) =>
-                    ActivitySamplingResult.AllData,
+                Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
             };
             ActivitySource.AddActivityListener(listener);
         }
@@ -412,10 +395,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         try
         {
             var services = TestServices.Create();
-            using ServiceProvider provider = CreateProvider(
-                services,
-                new VoiceAssistantOptions(),
-                hosted: true);
+            using ServiceProvider provider = CreateProvider(services, new VoiceAssistantOptions(), hosted: true);
             VoiceAssistantDiagnostics diagnostics = provider.GetRequiredService<VoiceAssistantDiagnostics>();
             VoiceAssistant assistant = provider.GetRequiredService<VoiceAssistant>();
             IHostedService hosted = Assert.Single(provider.GetServices<IHostedService>());
@@ -462,8 +442,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         });
         if (bargeInRegistered)
         {
-            registrations.AddSingleton<IAcousticPathDelayEstimatorFactory>(
-                TestAcousticPathDelayEstimatorFactory.Instance);
+            registrations.AddSingleton<IAcousticPathDelayEstimatorFactory>(TestAcousticPathDelayEstimatorFactory.Instance);
             registrations.AddVoiceBoxAssistantBargeIn();
         }
         if (hosted)
@@ -482,6 +461,5 @@ public sealed partial class VoiceAssistantLifecycleTests
     }
 
     private static Type RequireType(Assembly assembly, string fullName)
-        => assembly.GetType(fullName) ?? throw new Xunit.Sdk.XunitException(
-            $"Required type '{fullName}' was not found.");
+        => assembly.GetType(fullName) ?? throw new Xunit.Sdk.XunitException($"Required type '{fullName}' was not found.");
 }

@@ -179,8 +179,7 @@ internal static class SpeakerProfileStore
         if (provider.EmbeddingSize != service.EmbeddingSize)
             throw new InvalidDataException(
                 $"Speaker profile '{path}' embedding size {provider.EmbeddingSize} does not match {service.EmbeddingSize}.");
-        if (provider.WindowSamples != service.StreamingWindowSamples ||
-            provider.HopSamples != service.StreamingHopSamples)
+        if (provider.WindowSamples != service.StreamingWindowSamples || provider.HopSamples != service.StreamingHopSamples)
         {
             throw new InvalidDataException(
                 $"Speaker profile '{path}' was created for {provider.WindowSamples}/{provider.HopSamples} " +
@@ -230,20 +229,17 @@ internal static class SpeakerProfileStore
         {
             using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
             if (stream.Length > MaxProfileBytes)
-                throw new InvalidDataException(
-                    $"Speaker profile '{path}' is unexpectedly large ({stream.Length} bytes).");
+                throw new InvalidDataException($"Speaker profile '{path}' is unexpectedly large ({stream.Length} bytes).");
             return JsonSerializer.Deserialize<ProfileDocument>(stream, JsonOptions)
                 ?? throw new InvalidDataException($"Speaker profile '{path}' is empty.");
         }
         catch (FileNotFoundException ex)
         {
-            throw new InvalidOperationException(
-                $"未找到本人声纹 profile '{path}'。请在启动 VoiceAssistant 前完成说话人注册。", ex);
+            throw new InvalidOperationException($"未找到本人声纹 profile '{path}'。请在启动 VoiceAssistant 前完成说话人注册。", ex);
         }
         catch (DirectoryNotFoundException ex)
         {
-            throw new InvalidOperationException(
-                $"未找到本人声纹 profile '{path}'。请在启动 VoiceAssistant 前完成说话人注册。", ex);
+            throw new InvalidOperationException($"未找到本人声纹 profile '{path}'。请在启动 VoiceAssistant 前完成说话人注册。", ex);
         }
         catch (JsonException ex)
         {
@@ -253,8 +249,7 @@ internal static class SpeakerProfileStore
 
     private static OwnerSpeakerProfile Decode(ProfileDocument document, ISpeakerService service, string path)
     {
-        if (document.FormatVersion != CurrentFormatVersion ||
-            !string.Equals(document.Schema, CurrentSchema, StringComparison.Ordinal))
+        if (document.FormatVersion != CurrentFormatVersion || !string.Equals(document.Schema, CurrentSchema, StringComparison.Ordinal))
         {
             throw new InvalidDataException(
                 $"Speaker profile '{path}' uses unsupported format version {document.FormatVersion} " +
@@ -317,11 +312,7 @@ internal static class SpeakerProfileStore
                         variant.Quality.WithinSpeakerSpread)));
         }
 
-        var profile = new OwnerSpeakerProfile(
-            document.SpeakerId ?? string.Empty,
-            document.CreatedAt,
-            provider,
-            variants.AsReadOnly());
+        var profile = new OwnerSpeakerProfile(document.SpeakerId ?? string.Empty, document.CreatedAt, provider, variants.AsReadOnly());
         ValidateProfileForProvider(profile, service, path);
         return profile;
     }

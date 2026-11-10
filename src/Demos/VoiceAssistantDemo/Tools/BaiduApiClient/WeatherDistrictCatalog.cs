@@ -5,11 +5,8 @@ namespace VoiceAssistantDemo.Tools.BaiduApiClient;
 
 internal sealed class WeatherDistrictCatalog
 {
-    private const string ResourceName =
-        "VoiceAssistantDemo.Resources.weather_district_id.csv";
-    private static readonly Lazy<WeatherDistrictCatalog> SharedCatalog = new(
-        LoadEmbedded,
-        LazyThreadSafetyMode.ExecutionAndPublication);
+    private const string ResourceName = "VoiceAssistantDemo.Resources.weather_district_id.csv";
+    private static readonly Lazy<WeatherDistrictCatalog> SharedCatalog = new(LoadEmbedded, LazyThreadSafetyMode.ExecutionAndPublication);
 
     private readonly DistrictRecord[] _districts;
 
@@ -23,16 +20,10 @@ internal sealed class WeatherDistrictCatalog
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         string target = name.Trim();
 
-        List<DistrictRecord> matches = MatchByAdministrativeName(
-            _districts,
-            static row => row.District,
-            target);
+        List<DistrictRecord> matches = MatchByAdministrativeName(_districts, static row => row.District, target);
         if (matches.Count == 0)
         {
-            matches = MatchByAdministrativeName(
-                _districts,
-                static row => row.City,
-                target);
+            matches = MatchByAdministrativeName(_districts, static row => row.City, target);
         }
         if (matches.Count == 0)
         {
@@ -59,16 +50,13 @@ internal sealed class WeatherDistrictCatalog
             return matches[0];
         if (matches.Count == 0)
         {
-            throw new WeatherLocationException(
-                $"行政区划表中找不到“{target}”，请换用城市、区县名称或行政区划 ID。");
+            throw new WeatherLocationException($"行政区划表中找不到“{target}”，请换用城市、区县名称或行政区划 ID。");
         }
 
         string candidates = string.Join(
             "；",
-            matches.Take(8).Select(static row =>
-                $"{row.Province}/{row.City}/{row.District}({row.DistrictId})"));
-        throw new WeatherLocationException(
-            $"“{target}”对应多个位置：{candidates}。请补充省份或城市。");
+            matches.Take(8).Select(static row => $"{row.Province}/{row.City}/{row.District}({row.DistrictId})"));
+        throw new WeatherLocationException($"“{target}”对应多个位置：{candidates}。请补充省份或城市。");
     }
 
     private static List<DistrictRecord> MatchByAdministrativeName(
@@ -77,14 +65,9 @@ internal sealed class WeatherDistrictCatalog
         string target)
     {
         List<DistrictRecord> exact = rows
-            .Where(row => string.Equals(
-                selector(row).Trim(),
-                target,
-                StringComparison.OrdinalIgnoreCase))
+            .Where(row => string.Equals(selector(row).Trim(), target, StringComparison.OrdinalIgnoreCase))
             .ToList();
-        return exact.Count > 0
-            ? exact
-            : rows.Where(row => SameAdministrativeName(selector(row), target)).ToList();
+        return exact.Count > 0 ? exact : rows.Where(row => SameAdministrativeName(selector(row), target)).ToList();
     }
 
     private static bool MatchesQualifiedName(DistrictRecord row, string target)
@@ -96,15 +79,11 @@ internal sealed class WeatherDistrictCatalog
 
         string province = NormalizeName(row.Province);
         string city = NormalizeName(row.City);
-        return compact.Contains(province, StringComparison.OrdinalIgnoreCase) ||
-            compact.Contains(city, StringComparison.OrdinalIgnoreCase);
+        return compact.Contains(province, StringComparison.OrdinalIgnoreCase) || compact.Contains(city, StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool SameAdministrativeName(string left, string right) =>
-        string.Equals(
-            NormalizeName(left),
-            NormalizeName(right),
-            StringComparison.OrdinalIgnoreCase);
+        string.Equals(NormalizeName(left), NormalizeName(right), StringComparison.OrdinalIgnoreCase);
 
     private static string NormalizeName(string value)
     {
@@ -127,8 +106,7 @@ internal sealed class WeatherDistrictCatalog
         ];
         foreach (string suffix in suffixes)
         {
-            if (result.EndsWith(suffix, StringComparison.Ordinal) &&
-                result.Length > suffix.Length)
+            if (result.EndsWith(suffix, StringComparison.Ordinal) && result.Length > suffix.Length)
             {
                 return result[..^suffix.Length];
             }
@@ -136,25 +114,17 @@ internal sealed class WeatherDistrictCatalog
         return result;
     }
 
-    private static string RemoveWhitespace(string value) =>
-        string.Concat(value.Where(static character => !char.IsWhiteSpace(character)));
+    private static string RemoveWhitespace(string value) => string.Concat(value.Where(static character => !char.IsWhiteSpace(character)));
 
     private static WeatherDistrictCatalog LoadEmbedded()
     {
         Assembly assembly = typeof(WeatherDistrictCatalog).Assembly;
         using Stream stream = assembly.GetManifestResourceStream(ResourceName)
-            ?? throw new InvalidOperationException(
-                $"Embedded weather district resource '{ResourceName}' was not found.");
-        using var reader = new StreamReader(
-            stream,
-            Encoding.UTF8,
-            detectEncodingFromByteOrderMarks: true);
+            ?? throw new InvalidOperationException($"Embedded weather district resource '{ResourceName}' was not found.");
+        using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
 
         string? header = reader.ReadLine();
-        if (!string.Equals(
-            header,
-            "district_id,province,city,city_geocode,district,district_geocode,lon,lat",
-            StringComparison.Ordinal))
+        if (!string.Equals(header, "district_id,province,city,city_geocode,district,district_geocode,lon,lat", StringComparison.Ordinal))
         {
             throw new InvalidDataException("Weather district resource has an unexpected header.");
         }
@@ -167,16 +137,9 @@ internal sealed class WeatherDistrictCatalog
             string[] columns = line.Split(',');
             if (columns.Length != 8)
             {
-                throw new InvalidDataException(
-                    $"Weather district resource line {lineNumber} has {columns.Length} columns.");
+                throw new InvalidDataException($"Weather district resource line {lineNumber} has {columns.Length} columns.");
             }
-            rows.Add(new DistrictRecord(
-                columns[0],
-                columns[1],
-                columns[2],
-                columns[4],
-                columns[6],
-                columns[7]));
+            rows.Add(new DistrictRecord(columns[0], columns[1], columns[2], columns[4], columns[6], columns[7]));
         }
 
         return rows.Count > 0

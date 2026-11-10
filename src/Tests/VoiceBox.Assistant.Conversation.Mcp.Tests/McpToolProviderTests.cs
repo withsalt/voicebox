@@ -9,8 +9,7 @@ namespace VoiceBox.Assistant.Conversation.Mcp.Tests;
 
 public sealed class McpToolProviderTests
 {
-    private static string DotnetHost =>
-        Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ?? "dotnet";
+    private static string DotnetHost => Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ?? "dotnet";
 
     private static string TestAssemblyPath => typeof(McpToolProviderTests).Assembly.Location;
 
@@ -31,18 +30,13 @@ public sealed class McpToolProviderTests
         });
 
     private static ConversationToolCall EchoCall(string text)
-        => new(
-            Guid.NewGuid().ToString("N"),
-            new ConversationToolId("test", "echo"),
-            $$"""{"text":"{{text}}"}""");
+        => new(Guid.NewGuid().ToString("N"), new ConversationToolId("test", "echo"), $$"""{"text":"{{text}}"}""");
 
     [Fact]
     public async Task ProviderCanBeCreatedWithoutConnectingAndFrozenConfigurationSurvivesMutation()
     {
         StdioMcpServerOptions? captured = null;
-        McpToolProvider provider = CreateStdioProvider(
-            options => options.AllowedTools.Add("echo"),
-            options => captured = options);
+        McpToolProvider provider = CreateStdioProvider(options => options.AllowedTools.Add("echo"), options => captured = options);
 
         Assert.Equal(["test"], provider.ServerAliases);
         Assert.Empty(provider.GetType().GetConstructors(BindingFlags.Public | BindingFlags.Instance));
@@ -70,14 +64,11 @@ public sealed class McpToolProviderTests
     [Fact]
     public async Task ProviderDiscoversInvokesStopsRestartsAndDisposes()
     {
-        await using McpToolProvider provider = CreateStdioProvider(
-            options => options.AllowedTools.Add("echo"));
+        await using McpToolProvider provider = CreateStdioProvider(options => options.AllowedTools.Add("echo"));
 
         await provider.StartAsync();
         IReadOnlyList<ConversationToolDefinition> tools = await provider.GetToolsAsync();
-        ConversationToolDefinition echo = Assert.Single(
-            tools,
-            tool => tool.Id.ToolName == "echo");
+        ConversationToolDefinition echo = Assert.Single(tools, tool => tool.Id.ToolName == "echo");
         Assert.Contains("Echo", echo.Descriptor.Description, StringComparison.Ordinal);
 
         ConversationToolResult first = await provider.InvokeAsync(EchoCall("one"));
@@ -101,19 +92,14 @@ public sealed class McpToolProviderTests
     [Fact]
     public async Task InvocationCancellationPropagates()
     {
-        await using McpToolProvider provider = CreateStdioProvider(
-            options => options.AllowedTools.Add("wait"));
+        await using McpToolProvider provider = CreateStdioProvider(options => options.AllowedTools.Add("wait"));
         await provider.StartAsync();
         try
         {
-            var call = new ConversationToolCall(
-                Guid.NewGuid().ToString("N"),
-                new ConversationToolId("test", "wait"),
-                "{}");
+            var call = new ConversationToolCall(Guid.NewGuid().ToString("N"), new ConversationToolId("test", "wait"), "{}");
             using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(300));
 
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
-                await provider.InvokeAsync(call, cancellation.Token));
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await provider.InvokeAsync(call, cancellation.Token));
         }
         finally
         {
@@ -185,16 +171,11 @@ public sealed class McpToolProviderTests
     [Fact]
     public async Task DiscoveryAndInvocationRequireAStartedProvider()
     {
-        await using McpToolProvider provider = CreateStdioProvider(
-            options => options.AllowedTools.Add("echo"));
+        await using McpToolProvider provider = CreateStdioProvider(options => options.AllowedTools.Add("echo"));
 
         Assert.Throws<InvalidOperationException>(() => provider.GetToolsAsync());
-        var call = new ConversationToolCall(
-            "call-1",
-            new ConversationToolId("test", "echo"),
-            """{"text":"x"}""");
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await provider.InvokeAsync(call));
+        var call = new ConversationToolCall("call-1", new ConversationToolId("test", "echo"), """{"text":"x"}""");
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await provider.InvokeAsync(call));
     }
 
     [Fact]
@@ -213,36 +194,29 @@ public sealed class McpToolProviderTests
     [Fact]
     public void CreationValidatesConfigurationWithoutStartingProcesses()
     {
-        Assert.Throws<ArgumentException>(() =>
-            McpToolProvider.CreateStdio("bad alias!", options => options.Command = "echo"));
+        Assert.Throws<ArgumentException>(() => McpToolProvider.CreateStdio("bad alias!", options => options.Command = "echo"));
         Assert.Throws<ArgumentException>(() =>
             McpToolProvider.CreateStdio("no-command", _ => { }));
         Assert.Throws<ArgumentException>(() =>
             McpToolProvider.CreateStreamableHttp("no-endpoint", _ => { }));
-        Assert.Throws<ArgumentNullException>(() =>
-            McpToolProvider.CreateStdio("null-config", null!));
+        Assert.Throws<ArgumentNullException>(() => McpToolProvider.CreateStdio("null-config", null!));
     }
 
     [Fact]
     public async Task AProviderCanBackACustomSessionWithoutTheDefaultConversation()
     {
-        await using McpToolProvider provider = CreateStdioProvider(
-            options => options.AllowedTools.Add("echo"));
+        await using McpToolProvider provider = CreateStdioProvider(options => options.AllowedTools.Add("echo"));
         await provider.StartAsync();
         try
         {
             await using var session = new ProviderBackedSession(provider);
             var events = new List<ConversationEvent>();
-            await foreach (ConversationEvent item in session.StreamAsync(
-                new ConversationRequest(Guid.NewGuid(), "session")))
+            await foreach (ConversationEvent item in session.StreamAsync(new ConversationRequest(Guid.NewGuid(), "session")))
             {
                 events.Add(item);
             }
 
-            Assert.Contains(
-                "echo:session",
-                Assert.IsType<ConversationCompleted>(events[^1]).Text,
-                StringComparison.Ordinal);
+            Assert.Contains("echo:session", Assert.IsType<ConversationCompleted>(events[^1]).Text, StringComparison.Ordinal);
         }
         finally
         {
@@ -254,9 +228,7 @@ public sealed class McpToolProviderTests
     public void McpProjectDependsOnlyOnAbstractionsAndTheMcpSdk()
     {
         Assembly mcp = typeof(McpToolProvider).Assembly;
-        Assert.Contains(
-            mcp.GetReferencedAssemblies(),
-            reference => reference.Name == "VoiceBox.Assistant.Conversation.Abstractions");
+        Assert.Contains(mcp.GetReferencedAssemblies(), reference => reference.Name == "VoiceBox.Assistant.Conversation.Abstractions");
         Assert.DoesNotContain(
             mcp.GetReferencedAssemblies(),
             reference => reference.Name is
@@ -264,13 +236,8 @@ public sealed class McpToolProviderTests
                 "VoiceBox.Assistant" or
                 "VoiceBox.Core");
 
-        string project = ReadProjectFile(
-            "src",
-            "VoiceBox.Assistant.Conversation.Mcp",
-            "VoiceBox.Assistant.Conversation.Mcp.csproj");
-        string[] references = Regex.Matches(
-                project,
-                "ProjectReference Include=\"([^\"]+)\"")
+        string project = ReadProjectFile("src", "VoiceBox.Assistant.Conversation.Mcp", "VoiceBox.Assistant.Conversation.Mcp.csproj");
+        string[] references = Regex.Matches(project, "ProjectReference Include=\"([^\"]+)\"")
             .Select(match => match.Groups[1].Value.Replace('\\', '/'))
             .ToArray();
         string reference = Assert.Single(references);
@@ -288,9 +255,7 @@ public sealed class McpToolProviderTests
             "Tests",
             "VoiceBox.Assistant.Conversation.Mcp.Tests",
             "VoiceBox.Assistant.Conversation.Mcp.Tests.csproj");
-        string[] references = Regex.Matches(
-                project,
-                "ProjectReference Include=\"([^\"]+)\"")
+        string[] references = Regex.Matches(project, "ProjectReference Include=\"([^\"]+)\"")
             .Select(match => match.Groups[1].Value.Replace('\\', '/'))
             .ToArray();
 
@@ -305,12 +270,8 @@ public sealed class McpToolProviderTests
             value => value.EndsWith(
                 "VoiceBox.Assistant.Conversation.Mcp/VoiceBox.Assistant.Conversation.Mcp.csproj",
                 StringComparison.Ordinal));
-        Assert.DoesNotContain(
-            references,
-            value => value.Contains("VoiceBox.Assistant.Conversation/VoiceBox", StringComparison.Ordinal));
-        Assert.DoesNotContain(
-            references,
-            value => value.Contains("VoiceBox.Assistant/VoiceBox", StringComparison.Ordinal));
+        Assert.DoesNotContain(references, value => value.Contains("VoiceBox.Assistant.Conversation/VoiceBox", StringComparison.Ordinal));
+        Assert.DoesNotContain(references, value => value.Contains("VoiceBox.Assistant/VoiceBox", StringComparison.Ordinal));
     }
 
     private static string ReadProjectFile(params string[] segments)
@@ -335,15 +296,9 @@ public sealed class McpToolProviderTests
             ConversationRequest request,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            IReadOnlyList<ConversationToolDefinition> tools =
-                await provider.GetToolsAsync(cancellationToken);
-            ConversationToolDefinition echo = Assert.Single(
-                tools,
-                tool => tool.Id.ToolName == "echo");
-            var call = new ConversationToolCall(
-                request.RequestId.ToString("N"),
-                echo.Id,
-                $$"""{"text":"{{request.Text}}"}""");
+            IReadOnlyList<ConversationToolDefinition> tools = await provider.GetToolsAsync(cancellationToken);
+            ConversationToolDefinition echo = Assert.Single(tools, tool => tool.Id.ToolName == "echo");
+            var call = new ConversationToolCall(request.RequestId.ToString("N"), echo.Id, $$"""{"text":"{{request.Text}}"}""");
             ConversationToolResult result = await provider.InvokeAsync(call, cancellationToken);
             string text = result.ValueJson ?? string.Empty;
 

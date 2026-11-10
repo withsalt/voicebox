@@ -34,9 +34,7 @@ namespace VoiceBox.Assistant.Diagnostics.Metrics
             if (diagnostics is null)
                 return;
 
-            long now = observationTimestampTicks > 0
-                ? observationTimestampTicks
-                : _timeProvider.GetTimestamp();
+            long now = observationTimestampTicks > 0 ? observationTimestampTicks : _timeProvider.GetTimestamp();
             long last = Volatile.Read(ref _lastSampleTicks);
             if (Volatile.Read(ref _hasSampled) != 0 &&
                 _timeProvider.GetElapsedTime(last, now) < TimeSpan.FromMilliseconds(SampleIntervalMs))

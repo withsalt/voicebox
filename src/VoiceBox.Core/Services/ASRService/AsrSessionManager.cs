@@ -232,8 +232,7 @@ internal sealed class AsrSessionManager
     private void PruneFailuresNoLock()
     {
         DateTimeOffset now = _timeProvider.GetUtcNow();
-        while (_failureOrder.TryPeek(out string? id) &&
-               (_failures.Count > MaxRetainedFailures || _failures[id].ExpiresAt <= now))
+        while (_failureOrder.TryPeek(out string? id) && (_failures.Count > MaxRetainedFailures || _failures[id].ExpiresAt <= now))
         {
             _failureOrder.Dequeue();
             _failures.Remove(id);
@@ -255,7 +254,6 @@ internal sealed class AsrSessionManager
     {
         public string Id { get; } = id;
         public CancellationTokenSource Stop { get; } = new();
-        public TaskCompletionSource Completed { get; } =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource Completed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
     }
 }

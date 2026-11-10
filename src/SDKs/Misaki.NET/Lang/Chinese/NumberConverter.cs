@@ -33,33 +33,19 @@ public static class NumberConverter
     private static readonly string[] BigUnits = { "", "万", "亿", "万亿", "兆" };
 
     // Regex patterns for transform
-    private static readonly Regex NumberPattern = new(
-        @"-?\d+\.?\d*",
-        RegexOptions.Compiled);
+    private static readonly Regex NumberPattern = new(@"-?\d+\.?\d*", RegexOptions.Compiled);
 
-    private static readonly Regex DateYearPattern = new(
-        @"(\d+)(年)",
-        RegexOptions.Compiled);
+    private static readonly Regex DateYearPattern = new(@"(\d+)(年)", RegexOptions.Compiled);
 
-    private static readonly Regex DateMonthDayPattern = new(
-        @"(\d+)(月|日|号)",
-        RegexOptions.Compiled);
+    private static readonly Regex DateMonthDayPattern = new(@"(\d+)(月|日|号)", RegexOptions.Compiled);
 
-    private static readonly Regex FractionPattern = new(
-        @"(\d+\.?\d*)\s*/\s*(\d+\.?\d*)",
-        RegexOptions.Compiled);
+    private static readonly Regex FractionPattern = new(@"(\d+\.?\d*)\s*/\s*(\d+\.?\d*)", RegexOptions.Compiled);
 
-    private static readonly Regex PercentagePattern = new(
-        @"(\d+\.?\d*)%",
-        RegexOptions.Compiled);
+    private static readonly Regex PercentagePattern = new(@"(\d+\.?\d*)%", RegexOptions.Compiled);
 
-    private static readonly Regex CelsiusPattern = new(
-        @"(\d+\.?\d*)℃",
-        RegexOptions.Compiled);
+    private static readonly Regex CelsiusPattern = new(@"(\d+\.?\d*)℃", RegexOptions.Compiled);
 
-    private static readonly Regex RangePattern = new(
-        @"(?<!\d)(\d+\.?\d*)\s*[-–—~]\s*(\d+\.?\d*)(?!\d*[年月日号])",
-        RegexOptions.Compiled);
+    private static readonly Regex RangePattern = new(@"(?<!\d)(\d+\.?\d*)\s*[-–—~]\s*(\d+\.?\d*)(?!\d*[年月日号])", RegexOptions.Compiled);
 
     /// <summary>
     /// Converts an Arabic numeral string to Chinese characters using lowercase (low) mode.

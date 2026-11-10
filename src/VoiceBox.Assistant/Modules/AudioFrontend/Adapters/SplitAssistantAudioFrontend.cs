@@ -12,10 +12,7 @@ namespace VoiceBox.Assistant.Modules.AudioFrontend.Adapters;
 /// processed timeline but never claims render reference or simultaneous capture/playback, because
 /// it cannot prove a cross-device clock relationship. Both providers remain borrowed.
 /// </summary>
-internal sealed class SplitAssistantAudioFrontend :
-    IAssistantAudioFrontend,
-    IProcessedCaptureSource,
-    IDisposable
+internal sealed class SplitAssistantAudioFrontend : IAssistantAudioFrontend, IProcessedCaptureSource, IDisposable
 {
     private readonly IAudioRecordService _record;
     private readonly IAudioPlayService _play;

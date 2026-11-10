@@ -70,8 +70,7 @@ namespace Qwen3TtsDemo
             });
 
             var ttsOptions = BuildTtsOptions(schedule);
-            using var tts = new Qwen3TTSService(Options.Create(ttsOptions),
-                loggerFactory.CreateLogger<Qwen3TTSService>());
+            using var tts = new Qwen3TTSService(Options.Create(ttsOptions), loggerFactory.CreateLogger<Qwen3TTSService>());
 
             // 触发模型加载 + 预热 (一次性, 不计入首包)。
             var loadSw = System.Diagnostics.Stopwatch.StartNew();
@@ -167,8 +166,7 @@ namespace Qwen3TtsDemo
             };
             player.OnQueueOverflow += (_, e) =>
                 Console.WriteLine($"  [overflow] 丢弃={e.DroppedSamples} 样本 队列={e.CurrentQueueSize}/{e.MaxQueueSize}");
-            player.OnError += (_, e) =>
-                Console.WriteLine($"  [audio-error] {e.Exception.GetType().Name}: {e.Message}");
+            player.OnError += (_, e) => Console.WriteLine($"  [audio-error] {e.Exception.GetType().Name}: {e.Message}");
 
             var voices = tts.ListVoices();
             Console.WriteLine($"Qwen3-TTS Demo — 采样率 {tts.OutputSampleRate}Hz, {voices.Count} 个内置音色 ({Provider})");

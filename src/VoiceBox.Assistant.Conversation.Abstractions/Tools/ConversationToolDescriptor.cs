@@ -73,12 +73,9 @@ public sealed class ConversationToolDescriptor
             using JsonDocument document = JsonDocument.Parse(value);
             if (requireObject && document.RootElement.ValueKind != JsonValueKind.Object)
                 throw new ArgumentException("Tool input schema must be a JSON object.", parameterName);
-            if (!requireObject && document.RootElement.ValueKind is not
-                (JsonValueKind.Object or JsonValueKind.True or JsonValueKind.False))
+            if (!requireObject && document.RootElement.ValueKind is not (JsonValueKind.Object or JsonValueKind.True or JsonValueKind.False))
             {
-                throw new ArgumentException(
-                    "Tool output schema must be a JSON object or boolean schema.",
-                    parameterName);
+                throw new ArgumentException("Tool output schema must be a JSON object or boolean schema.", parameterName);
             }
         }
         catch (JsonException exception)

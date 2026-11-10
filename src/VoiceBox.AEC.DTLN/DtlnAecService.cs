@@ -13,9 +13,7 @@ namespace VoiceBox.AEC.DTLN
     /// capture/render FIFO -> optional render delay -> DTLN stage 1 (spectral mask) ->
     /// DTLN stage 2 (time-domain refinement) -> processed capture FIFO.
     /// </summary>
-    public sealed class DtlnAecService :
-        IAcousticEchoCancellationService,
-        IAcousticProcessingMetricsSource
+    public sealed class DtlnAecService : IAcousticEchoCancellationService, IAcousticProcessingMetricsSource
     {
         private readonly DtlnAecOptions _options;
         private readonly FloatFifo _captureFifo;
@@ -257,9 +255,7 @@ namespace VoiceBox.AEC.DTLN
 
         private AcousticProcessingMetrics BuildMetrics(SignalStats stats, double erle)
         {
-            double erl = stats.RenderEnergy > 1e-12
-                ? 10.0 * Math.Log10((stats.RenderEnergy + 1e-12) / (stats.CaptureEnergy + 1e-12))
-                : 0.0;
+            double erl = stats.RenderEnergy > 1e-12 ? 10.0 * Math.Log10((stats.RenderEnergy + 1e-12) / (stats.CaptureEnergy + 1e-12)) : 0.0;
 
             // 延迟可观测性:DelayMs = 延迟线当前实际施加的延迟;DelayMedianMs = 估计器最新(中值)估计值。
             bool hasDelay = _delayEstimator is not null && _delayEstimator.HasEstimate;

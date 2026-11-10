@@ -15,8 +15,7 @@ internal sealed class ConversationToolRuntime : IAsyncDisposable
     private readonly ConversationToolOptions _options;
     private readonly ToolArgumentValidator _argumentValidator;
     private readonly List<IConversationToolProvider> _startedProviders = [];
-    private readonly Dictionary<string, IConversationToolProvider> _providersByAlias =
-        new(StringComparer.Ordinal);
+    private readonly Dictionary<string, IConversationToolProvider> _providersByAlias = new(StringComparer.Ordinal);
     private ToolCatalogSnapshot? _catalog;
     private int _disposed;
 
@@ -60,13 +59,11 @@ internal sealed class ConversationToolRuntime : IAsyncDisposable
                 {
                     if (string.Equals(alias, LocalToolProvider.LocalServerAlias, StringComparison.Ordinal))
                     {
-                        throw new InvalidOperationException(
-                            $"Tool provider alias '{alias}' is reserved for AddTool registrations.");
+                        throw new InvalidOperationException($"Tool provider alias '{alias}' is reserved for AddTool registrations.");
                     }
                     if (!_providersByAlias.TryAdd(alias, provider))
                     {
-                        throw new InvalidOperationException(
-                            $"Tool provider alias '{alias}' is already registered.");
+                        throw new InvalidOperationException($"Tool provider alias '{alias}' is already registered.");
                     }
                 }
 
@@ -89,8 +86,7 @@ internal sealed class ConversationToolRuntime : IAsyncDisposable
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         cancellationToken.ThrowIfCancellationRequested();
-        return ValueTask.FromResult(_catalog
-            ?? throw new InvalidOperationException("The conversation tool runtime is not started."));
+        return ValueTask.FromResult(_catalog ?? throw new InvalidOperationException("The conversation tool runtime is not started."));
     }
 
     public async ValueTask<ToolApprovalDecision> AuthorizeAsync(ToolCall call, CancellationToken cancellationToken)
@@ -98,26 +94,15 @@ internal sealed class ConversationToolRuntime : IAsyncDisposable
         ToolDefinition definition = FindDefinition(call.ToolId);
         if (_approvalPolicy is null)
         {
-            return definition.Risk == ConversationToolRisk.ReadOnly
-                ? ToolApprovalDecision.Allowed
-                : ToolApprovalDecision.Denied;
+            return definition.Risk == ConversationToolRisk.ReadOnly ? ToolApprovalDecision.Allowed : ToolApprovalDecision.Denied;
         }
 
         ConversationToolDescriptor descriptor = ToDescriptor(definition);
-        var invocation = new ConversationToolInvocation(
-            call.CallId,
-            call.Arguments.ToJsonElement(),
-            call.ExecutionPreference);
+        var invocation = new ConversationToolInvocation(call.CallId, call.Arguments.ToJsonElement(), call.ExecutionPreference);
         ConversationToolApproval decision = await _approvalPolicy.AuthorizeAsync(
-            new ConversationToolApprovalContext(
-                call.ToolId.ServerAlias,
-                descriptor,
-                invocation,
-                call.ArgumentsHash),
+            new ConversationToolApprovalContext(call.ToolId.ServerAlias, descriptor, invocation, call.ArgumentsHash),
             cancellationToken).ConfigureAwait(false);
-        return decision == ConversationToolApproval.Allow
-            ? ToolApprovalDecision.Allowed
-            : ToolApprovalDecision.Denied;
+        return decision == ConversationToolApproval.Allow ? ToolApprovalDecision.Allowed : ToolApprovalDecision.Denied;
     }
 
     public ToolResult? ValidateArguments(ToolCall call)
@@ -138,19 +123,11 @@ internal sealed class ConversationToolRuntime : IAsyncDisposable
     {
         if (!_providersByAlias.TryGetValue(call.ToolId.ServerAlias, out IConversationToolProvider? provider))
         {
-            return new ToolResult(
-                call.CallId,
-                ConversationToolResultKind.ProtocolError,
-                null,
-                "unknown_tool_provider");
+            return new ToolResult(call.CallId, ConversationToolResultKind.ProtocolError, null, "unknown_tool_provider");
         }
 
         ConversationToolResult result = await provider.InvokeAsync(
-            new ConversationToolCall(
-                call.CallId,
-                call.ToolId,
-                call.Arguments.CanonicalJson,
-                call.ExecutionPreference),
+            new ConversationToolCall(call.CallId, call.ToolId, call.Arguments.CanonicalJson, call.ExecutionPreference),
             cancellationToken).ConfigureAwait(false);
         return ToolResult.From(result);
     }
@@ -204,8 +181,7 @@ internal sealed class ConversationToolRuntime : IAsyncDisposable
 
     private ToolDefinition FindDefinition(ConversationToolId id)
     {
-        ToolCatalogSnapshot catalog = _catalog
-            ?? throw new InvalidOperationException("The conversation tool runtime is not started.");
+        ToolCatalogSnapshot catalog = _catalog ?? throw new InvalidOperationException("The conversation tool runtime is not started.");
         return catalog.Definitions.FirstOrDefault(definition => definition.Id == id)
             ?? throw new InvalidOperationException($"Unknown tool '{id}'.");
     }

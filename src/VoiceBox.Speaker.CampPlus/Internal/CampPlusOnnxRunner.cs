@@ -54,10 +54,7 @@ namespace VoiceBox.Speaker.CampPlus.Internal
                 _inputShape = new long[] { 1, 0, featureDim };
                 // 能从 metadata 唯一推导输出形状时复用固定输出张量；自定义模型若有多个动态输出维，
                 // 保留原有的 ORT 动态分配路径，不缩窄此前可接受的模型签名。
-                if (TryResolveOutputShape(
-                        _session.OutputMetadata[_outputNames[0]].Dimensions,
-                        embeddingSize,
-                        out long[] outputShape))
+                if (TryResolveOutputShape(_session.OutputMetadata[_outputNames[0]].Dimensions, embeddingSize, out long[] outputShape))
                 {
                     _outputBuffer = GC.AllocateUninitializedArray<float>(embeddingSize, pinned: true);
                     _outputValue = OrtValue.CreateTensorValueFromMemory(_outputBuffer, outputShape);
@@ -149,8 +146,7 @@ namespace VoiceBox.Speaker.CampPlus.Internal
             using var outputs = _session.Run(_runOptions, _inputNames, _inputValues, _outputNames);
             var span = outputs[0].GetTensorDataAsSpan<float>();
             if (span.Length != _embeddingSize)
-                throw new InvalidOperationException(
-                    $"Unexpected embedding size {span.Length} (expect {_embeddingSize}).");
+                throw new InvalidOperationException($"Unexpected embedding size {span.Length} (expect {_embeddingSize}).");
             return span.ToArray();
         }
 

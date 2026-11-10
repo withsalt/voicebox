@@ -115,14 +115,9 @@ internal sealed partial class CurrentWeatherTool : IConversationTool
         try
         {
             WeatherToolArguments arguments = ParseArguments(invocation.Arguments);
-            WeatherPosition position = await ResolvePositionAsync(arguments, cancellationToken)
-                .ConfigureAwait(false);
-            CurrentWeatherReport report = await _client.QueryCurrentWeatherAsync(
-                position,
-                cancellationToken).ConfigureAwait(false);
-            return ConversationToolExecutionResult.Success(
-                CreateSpokenSummary(report),
-                JsonSerializer.Serialize(report, JsonOptions));
+            WeatherPosition position = await ResolvePositionAsync(arguments, cancellationToken).ConfigureAwait(false);
+            CurrentWeatherReport report = await _client.QueryCurrentWeatherAsync(position, cancellationToken).ConfigureAwait(false);
+            return ConversationToolExecutionResult.Success(CreateSpokenSummary(report), JsonSerializer.Serialize(report, JsonOptions));
         }
         catch (WeatherLocationException exception)
         {
@@ -130,22 +125,16 @@ internal sealed partial class CurrentWeatherTool : IConversationTool
         }
         catch (BaiduWeatherApiException exception)
         {
-            string message = exception.IsIpLocationRequest
-                ? "无法通过公网 IP 确定当前位置，请让用户明确提供城市或区县。"
-                : $"天气服务暂时不可用（状态码 {exception.Status}）。";
+            string message = exception.IsIpLocationRequest ? "无法通过公网 IP 确定当前位置，请让用户明确提供城市或区县。" : $"天气服务暂时不可用（状态码 {exception.Status}）。";
             return ConversationToolExecutionResult.Error("weather_api_error", message);
         }
         catch (HttpRequestException)
         {
-            return ConversationToolExecutionResult.Error(
-                "weather_network_error",
-                "天气服务网络请求失败，请稍后重试。");
+            return ConversationToolExecutionResult.Error("weather_network_error", "天气服务网络请求失败，请稍后重试。");
         }
         catch (JsonException)
         {
-            return ConversationToolExecutionResult.Error(
-                "weather_response_invalid",
-                "天气服务返回了无法识别的数据。");
+            return ConversationToolExecutionResult.Error("weather_response_invalid", "天气服务返回了无法识别的数据。");
         }
     }
 
@@ -164,19 +153,11 @@ internal sealed partial class CurrentWeatherTool : IConversationTool
         {
             string coordinateType = CoordinateParser.ValidateType(arguments.CoordinateType);
             string coordinates = CoordinateParser.Normalize(target, coordinateType);
-            return WeatherPosition.ForCoordinate(
-                coordinates,
-                coordinateType,
-                $"经纬度 {coordinates}（{coordinateType}）");
+            return WeatherPosition.ForCoordinate(coordinates, coordinateType, $"经纬度 {coordinates}（{coordinateType}）");
         }
 
-        DistrictRecord district = _districts.Resolve(
-            target,
-            arguments.Province,
-            arguments.City);
-        return WeatherPosition.ForDistrict(
-            district.DistrictId,
-            $"{district.Province} {district.City} {district.District}");
+        DistrictRecord district = _districts.Resolve(target, arguments.Province, arguments.City);
+        return WeatherPosition.ForDistrict(district.DistrictId, $"{district.Province} {district.City} {district.District}");
     }
 
     private static WeatherToolArguments ParseArguments(JsonElement root)
@@ -192,8 +173,7 @@ internal sealed partial class CurrentWeatherTool : IConversationTool
 
     private static string? ReadOptionalString(JsonElement root, string propertyName)
     {
-        if (!root.TryGetProperty(propertyName, out JsonElement value) ||
-            value.ValueKind == JsonValueKind.Null)
+        if (!root.TryGetProperty(propertyName, out JsonElement value) || value.ValueKind == JsonValueKind.Null)
         {
             return null;
         }

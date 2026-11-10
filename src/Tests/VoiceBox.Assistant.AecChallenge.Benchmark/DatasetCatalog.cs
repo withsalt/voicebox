@@ -9,8 +9,7 @@ internal static class DatasetCatalog
     public const string AndroidMobileDeviceClass = "android_mobile";
     public const int DefaultDeviceSampleLimitPerStratum = 50;
 
-    public static IReadOnlyList<string> ExpectedDeviceClasses { get; } =
-        [WindowsPcDeviceClass, AndroidMobileDeviceClass];
+    public static IReadOnlyList<string> ExpectedDeviceClasses { get; } = [WindowsPcDeviceClass, AndroidMobileDeviceClass];
 
     public static IReadOnlyList<EvaluationCase> Discover(EvaluationOptions options)
     {
@@ -19,8 +18,7 @@ internal static class DatasetCatalog
             throw new DirectoryNotFoundException($"AEC Challenge root not found: {root}");
 
         options.SkippedIncompletePairs = 0;
-        if (options.Suite == EvaluationSuite.DeviceSample &&
-            options.LimitPerStratum == 0)
+        if (options.Suite == EvaluationSuite.DeviceSample && options.LimitPerStratum == 0)
         {
             options.LimitPerStratum = DefaultDeviceSampleLimitPerStratum;
         }
@@ -78,10 +76,7 @@ internal static class DatasetCatalog
         if (!string.IsNullOrWhiteSpace(options.CaseId))
         {
             cases = cases
-                .Where(testCase => string.Equals(
-                    testCase.Id,
-                    options.CaseId,
-                    StringComparison.OrdinalIgnoreCase))
+                .Where(testCase => string.Equals(testCase.Id, options.CaseId, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
         else if (effectiveLimit > 0)
@@ -93,8 +88,7 @@ internal static class DatasetCatalog
         {
             if (!string.IsNullOrWhiteSpace(options.CaseId))
             {
-                throw new InvalidDataException(
-                    $"No case matched --case-id '{options.CaseId}' in suite {options.Suite}.");
+                throw new InvalidDataException($"No case matched --case-id '{options.CaseId}' in suite {options.Suite}.");
             }
             throw new InvalidDataException($"No evaluation cases found for suite {options.Suite} under {root}.");
         }
@@ -132,14 +126,8 @@ internal static class DatasetCatalog
     {
         DeviceCorpus[] corpora =
         [
-            new(
-                "device_real",
-                WindowsPcDeviceClass,
-                [Path.Combine(root, "datasets", "real")]),
-            new(
-                "device_real_doubled",
-                WindowsPcDeviceClass,
-                [Path.Combine(root, "datasets", "real_doubled")]),
+            new("device_real", WindowsPcDeviceClass, [Path.Combine(root, "datasets", "real")]),
+            new("device_real_doubled", WindowsPcDeviceClass, [Path.Combine(root, "datasets", "real_doubled")]),
             new(
                 "device_fullband",
                 WindowsPcDeviceClass,
@@ -158,8 +146,7 @@ internal static class DatasetCatalog
 
         foreach (DeviceCorpus corpus in corpora)
         {
-            string? directory = corpus.CandidateDirectories
-                .FirstOrDefault(ContainsDeviceMicrophoneFiles);
+            string? directory = corpus.CandidateDirectories.FirstOrDefault(ContainsDeviceMicrophoneFiles);
             if (directory is null)
                 continue;
 
@@ -167,11 +154,7 @@ internal static class DatasetCatalog
                          .EnumerateFiles(directory, "*.wav", SearchOption.AllDirectories)
                          .OrderBy(path => path, StringComparer.Ordinal))
             {
-                if (!TryClassifyDeviceMicrophonePath(
-                        microphone,
-                        out string scenario,
-                        out bool expectedNearEnd,
-                        out string session))
+                if (!TryClassifyDeviceMicrophonePath(microphone, out string scenario, out bool expectedNearEnd, out string session))
                 {
                     continue;
                 }
@@ -243,9 +226,7 @@ internal static class DatasetCatalog
         if (TryClassifyDeviceMicrophoneName(name, out scenario, out expectedNearEnd, out session))
             return true;
 
-        string parent = (Path.GetFileName(Path.GetDirectoryName(path)) ?? string.Empty)
-            .Replace('-', '_')
-            .ToLowerInvariant();
+        string parent = (Path.GetFileName(Path.GetDirectoryName(path)) ?? string.Empty).Replace('-', '_').ToLowerInvariant();
         if (parent is not (
                 "doubletalk" or
                 "doubletalk_with_movement" or
@@ -260,9 +241,7 @@ internal static class DatasetCatalog
 
         string microphoneSuffix = name.EndsWith("_mic_c.wav", StringComparison.OrdinalIgnoreCase)
             ? "_mic_c.wav"
-            : name.EndsWith("_mic.wav", StringComparison.OrdinalIgnoreCase)
-                ? "_mic.wav"
-                : string.Empty;
+            : name.EndsWith("_mic.wav", StringComparison.OrdinalIgnoreCase) ? "_mic.wav" : string.Empty;
         if (microphoneSuffix.Length == 0)
         {
             scenario = string.Empty;
@@ -538,14 +517,10 @@ internal static class DatasetCatalog
     }
 
     private static double ParseDouble(string value, double fallback)
-        => double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double result)
-            ? result
-            : fallback;
+        => double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double result) ? result : fallback;
 
     private static double? ParseNullableDouble(string value)
-        => double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double result)
-            ? result
-            : null;
+        => double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double result) ? result : null;
 
     private static bool? ParseNullableBool(string value)
         => value.Trim() switch

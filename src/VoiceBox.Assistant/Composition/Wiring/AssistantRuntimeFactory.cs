@@ -35,8 +35,7 @@ internal static class AssistantRuntimeFactory
         ArgumentNullException.ThrowIfNull(composition);
         ArgumentNullException.ThrowIfNull(options);
 
-        VoiceAssistantOptions supplied = options.Value
-            ?? throw new ArgumentException("Options value is null.", nameof(options));
+        VoiceAssistantOptions supplied = options.Value ?? throw new ArgumentException("Options value is null.", nameof(options));
         VoiceAssistantOptions snapshot = supplied.Clone();
         ILogger resolvedLogger = logger ?? NullLogger<AssistantRuntime>.Instance;
         TimeProvider resolvedTime = timeProvider ?? TimeProvider.System;
@@ -51,18 +50,15 @@ internal static class AssistantRuntimeFactory
         IWakeupModule? wakeup = null;
         try
         {
-            IPlaybackBargeInDetectorFactory? detectorFactory =
-                playbackBargeInDetectorFactory ?? plan.PlaybackBargeInDetectorFactory;
+            IPlaybackBargeInDetectorFactory? detectorFactory = playbackBargeInDetectorFactory ?? plan.PlaybackBargeInDetectorFactory;
             if (detectorFactory is not null)
             {
                 detector = detectorFactory.Create()
-                    ?? throw new InvalidOperationException(
-                        "The playback barge-in detector factory returned null.");
+                    ?? throw new InvalidOperationException("The playback barge-in detector factory returned null.");
             }
             else if (snapshot.BargeIn.Enable)
             {
-                throw new InvalidOperationException(
-                    "Barge-in is enabled but the composition provided no detector factory.");
+                throw new InvalidOperationException("Barge-in is enabled but the composition provided no detector factory.");
             }
 
             if (plan.Speaker is not null)
@@ -81,12 +77,7 @@ internal static class AssistantRuntimeFactory
             if (plan.Wakeup is not null)
                 wakeup = plan.Wakeup.Create(speaker, resolvedTime, resolvedLogger);
 
-            var installed = new AssistantInstalledModules(
-                speaker,
-                wakeup,
-                detector,
-                plan.Recognition,
-                plan.ResponseGeneration);
+            var installed = new AssistantInstalledModules(speaker, wakeup, detector, plan.Recognition, plan.ResponseGeneration);
 
             AssistantRuntimeCompositionServices services = AssistantRuntimeCompositionFactory.Create(
                 eventSender ?? placeholderSender,

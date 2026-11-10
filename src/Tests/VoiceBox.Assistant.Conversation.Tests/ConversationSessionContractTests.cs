@@ -18,8 +18,7 @@ public sealed class ConversationSessionContractTests
     {
         var llm = new RecordingLlmService { ResponseText = "收到" };
         await using IConversationSession session = new ConversationBuilder(llm).Build();
-        var request = new ConversationRequest(
-            Guid.NewGuid(), "你好", new ConversationAudio([0.1f, -0.1f], 16_000));
+        var request = new ConversationRequest(Guid.NewGuid(), "你好", new ConversationAudio([0.1f, -0.1f], 16_000));
 
         List<ConversationEvent> updates = await ConversationEvents.CollectAsync(session.StreamAsync(request));
 
@@ -36,12 +35,10 @@ public sealed class ConversationSessionContractTests
             .UseOptions(new LlmConversationOptions { SystemPrompt = "系统" })
             .Build();
 
-        List<ConversationEvent> first = await ConversationEvents.CollectAsync(
-            session.StreamAsync(Request("第一问")));
+        List<ConversationEvent> first = await ConversationEvents.CollectAsync(session.StreamAsync(Request("第一问")));
         Assert.Equal("第一答", Assert.IsType<ConversationCompleted>(first[^1]).Text);
 
-        List<ConversationEvent> second = await ConversationEvents.CollectAsync(
-            session.StreamAsync(Request("第二问")));
+        List<ConversationEvent> second = await ConversationEvents.CollectAsync(session.StreamAsync(Request("第二问")));
 
         Assert.Equal(2, llm.Prompts.Count);
         ChatMessage[] prompt = llm.Prompts[1];
@@ -67,13 +64,10 @@ public sealed class ConversationSessionContractTests
             .UseOptions(new LlmConversationOptions { EnableThinking = true })
             .Build();
 
-        List<ConversationEvent> updates = await ConversationEvents.CollectAsync(
-            session.StreamAsync(Request("问题")));
+        List<ConversationEvent> updates = await ConversationEvents.CollectAsync(session.StreamAsync(Request("问题")));
 
-        Assert.Contains(updates, update =>
-            update is ConversationThinkingDelta { Text: "内部推理" });
-        Assert.Contains(updates, update =>
-            update is ConversationTextDelta { Text: "最终回答" });
+        Assert.Contains(updates, update => update is ConversationThinkingDelta { Text: "内部推理" });
+        Assert.Contains(updates, update => update is ConversationTextDelta { Text: "最终回答" });
         Assert.Equal("最终回答", Assert.IsType<ConversationCompleted>(updates[^1]).Text);
         Assert.DoesNotContain(updates, update =>
             update is ConversationTextDelta delta && delta.Text.Contains("内部推理", StringComparison.Ordinal));
@@ -93,8 +87,7 @@ public sealed class ConversationSessionContractTests
             new LlmTextChunk { Text = "半截", Kind = LlmChunkKind.Text },
             new LlmTextChunk { Text = string.Empty, Kind = LlmChunkKind.Text, IsFinal = true },
         ];
-        llm.BlockAfterFirstChunk = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        llm.BlockAfterFirstChunk = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         await using IConversationSession session = new ConversationBuilder(llm).Build();
 
         using var cancellation = new CancellationTokenSource();
@@ -103,8 +96,7 @@ public sealed class ConversationSessionContractTests
         {
             Assert.True(await enumerator.MoveNextAsync());
             cancellation.Cancel();
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(
-                async () => await enumerator.MoveNextAsync());
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await enumerator.MoveNextAsync());
         }
 
         llm.BlockAfterFirstChunk = null;
@@ -121,8 +113,7 @@ public sealed class ConversationSessionContractTests
         var llm = new RecordingLlmService { ResponseText = "完整回答" };
         await using IConversationSession session = new ConversationBuilder(llm).Build();
 
-        await using (IAsyncEnumerator<ConversationEvent> enumerator =
-            session.StreamAsync(Request("第一轮")).GetAsyncEnumerator())
+        await using (IAsyncEnumerator<ConversationEvent> enumerator = session.StreamAsync(Request("第一轮")).GetAsyncEnumerator())
         {
             while (await enumerator.MoveNextAsync())
             {
@@ -134,10 +125,8 @@ public sealed class ConversationSessionContractTests
         await ConversationEvents.CollectAsync(session.StreamAsync(Request("第二轮")));
 
         ChatMessage[] prompt = llm.Prompts[^1];
-        Assert.Contains(prompt, message =>
-            message.Role == ChatRole.User && TextOf(message) == "第一轮");
-        Assert.Contains(prompt, message =>
-            message.Role == ChatRole.Assistant && TextOf(message) == "完整回答");
+        Assert.Contains(prompt, message => message.Role == ChatRole.User && TextOf(message) == "第一轮");
+        Assert.Contains(prompt, message => message.Role == ChatRole.Assistant && TextOf(message) == "完整回答");
     }
 
     [Fact]
@@ -149,12 +138,10 @@ public sealed class ConversationSessionContractTests
             new LlmTextChunk { Text = "半截", Kind = LlmChunkKind.Text },
             new LlmTextChunk { Text = "结尾", Kind = LlmChunkKind.Text, IsFinal = true },
         ];
-        llm.BlockAfterFirstChunk = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        llm.BlockAfterFirstChunk = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         await using IConversationSession session = new ConversationBuilder(llm).Build();
 
-        await using (IAsyncEnumerator<ConversationEvent> enumerator =
-            session.StreamAsync(Request("提前退出")).GetAsyncEnumerator())
+        await using (IAsyncEnumerator<ConversationEvent> enumerator = session.StreamAsync(Request("提前退出")).GetAsyncEnumerator())
         {
             Assert.True(await enumerator.MoveNextAsync());
         }
@@ -176,16 +163,13 @@ public sealed class ConversationSessionContractTests
             new LlmTextChunk { Text = "第一段", Kind = LlmChunkKind.Text },
             new LlmTextChunk { Text = string.Empty, Kind = LlmChunkKind.Text, IsFinal = true },
         ];
-        llm.BlockAfterFirstChunk = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        llm.BlockAfterFirstChunk = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         await using IConversationSession session = new ConversationBuilder(llm).Build();
 
-        Task<List<ConversationEvent>> first = ConversationEvents.CollectAsync(
-            session.StreamAsync(Request("串行一")));
+        Task<List<ConversationEvent>> first = ConversationEvents.CollectAsync(session.StreamAsync(Request("串行一")));
         await WaitUntilAsync(() => llm.Prompts.Count == 1);
 
-        Task<List<ConversationEvent>> second = ConversationEvents.CollectAsync(
-            session.StreamAsync(Request("串行二")));
+        Task<List<ConversationEvent>> second = ConversationEvents.CollectAsync(session.StreamAsync(Request("串行二")));
         await Task.Delay(50);
         Assert.Single(llm.Prompts);
 
@@ -202,22 +186,16 @@ public sealed class ConversationSessionContractTests
     {
         var firstLlm = new RecordingLlmService { ResponseText = "甲" };
         var secondLlm = new RecordingLlmService { ResponseText = "乙" };
-        await using IConversationSession first = new ConversationBuilder(firstLlm)
-            .UseConversationId("session-a")
-            .Build();
-        await using IConversationSession second = new ConversationBuilder(secondLlm)
-            .UseConversationId("session-b")
-            .Build();
+        await using IConversationSession first = new ConversationBuilder(firstLlm).UseConversationId("session-a").Build();
+        await using IConversationSession second = new ConversationBuilder(secondLlm).UseConversationId("session-b").Build();
 
         await ConversationEvents.CollectAsync(first.StreamAsync(Request("只问甲")));
         await ConversationEvents.CollectAsync(second.StreamAsync(Request("只问乙")));
 
         Assert.Equal("session-a", first.ConversationId);
         Assert.Equal("session-b", second.ConversationId);
-        Assert.DoesNotContain("只问乙",
-            string.Join("\n", firstLlm.Prompts[0].Select(TextOf)), StringComparison.Ordinal);
-        Assert.DoesNotContain("只问甲",
-            string.Join("\n", secondLlm.Prompts[0].Select(TextOf)), StringComparison.Ordinal);
+        Assert.DoesNotContain("只问乙", string.Join("\n", firstLlm.Prompts[0].Select(TextOf)), StringComparison.Ordinal);
+        Assert.DoesNotContain("只问甲", string.Join("\n", secondLlm.Prompts[0].Select(TextOf)), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -226,15 +204,13 @@ public sealed class ConversationSessionContractTests
         var llm = new RecordingLlmService { ResponseText = string.Empty };
         await using IConversationSession session = new ConversationBuilder(llm).Build();
 
-        List<ConversationEvent> updates = await ConversationEvents.CollectAsync(
-            session.StreamAsync(Request("第一问")));
+        List<ConversationEvent> updates = await ConversationEvents.CollectAsync(session.StreamAsync(Request("第一问")));
         Assert.Equal(string.Empty, Assert.IsType<ConversationCompleted>(updates[^1]).Text);
 
         await ConversationEvents.CollectAsync(session.StreamAsync(Request("第二问")));
 
         ChatMessage[] prompt = llm.Prompts[^1];
-        Assert.Contains(prompt, message =>
-            message.Role == ChatRole.User && TextOf(message) == "第一问");
+        Assert.Contains(prompt, message => message.Role == ChatRole.User && TextOf(message) == "第一问");
         Assert.DoesNotContain(prompt, message => message.Role == ChatRole.Assistant);
     }
 
@@ -304,8 +280,7 @@ public sealed class ConversationSessionContractTests
         Assert.Contains("基础", TextOf(llm.Prompts[1][0]), StringComparison.Ordinal);
         Assert.Contains("上下文2", TextOf(llm.Prompts[1][0]), StringComparison.Ordinal);
         Assert.DoesNotContain("上下文1", TextOf(llm.Prompts[1][0]), StringComparison.Ordinal);
-        Assert.DoesNotContain(llm.Prompts[1],
-            message => TextOf(message) == "上下文1");
+        Assert.DoesNotContain(llm.Prompts[1], message => TextOf(message) == "上下文1");
         Assert.Equal(2, provider.Snapshots[1].CommittedHistory.Count); // user + assistant from turn one
     }
 
@@ -314,9 +289,7 @@ public sealed class ConversationSessionContractTests
     {
         var llm = new RecordingLlmService();
         var provider = new ThrowingContextProvider();
-        await using IConversationSession session = new ConversationBuilder(llm)
-            .AddContextProvider(provider)
-            .Build();
+        await using IConversationSession session = new ConversationBuilder(llm).AddContextProvider(provider).Build();
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
         {
@@ -375,12 +348,10 @@ public sealed class ConversationSessionContractTests
             new LlmTextChunk { Text = "半截", Kind = LlmChunkKind.Text },
             new LlmTextChunk { Text = string.Empty, Kind = LlmChunkKind.Text, IsFinal = true },
         ];
-        llm.BlockAfterFirstChunk = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        llm.BlockAfterFirstChunk = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         IConversationSession session = new ConversationBuilder(llm).Build();
 
-        await using IAsyncEnumerator<ConversationEvent> enumerator =
-            session.StreamAsync(Request("进行中")).GetAsyncEnumerator();
+        await using IAsyncEnumerator<ConversationEvent> enumerator = session.StreamAsync(Request("进行中")).GetAsyncEnumerator();
         Assert.True(await enumerator.MoveNextAsync());
 
         Task dispose = session.DisposeAsync().AsTask();
@@ -417,9 +388,7 @@ public sealed class ConversationSessionContractTests
         public bool Enabled { get; set; } = true;
 
         public ValueTask<string> GetContextAsync(ConversationContext context, CancellationToken cancellationToken = default)
-            => Enabled
-                ? throw new InvalidOperationException("memory unavailable")
-                : ValueTask.FromResult(string.Empty);
+            => Enabled ? throw new InvalidOperationException("memory unavailable") : ValueTask.FromResult(string.Empty);
     }
 }
 
@@ -456,8 +425,7 @@ public sealed class CustomBusinessSessionTests
     public async Task AThirdPartySessionNeedsOnlyThePublicContract()
     {
         await using IConversationSession session = new StaticBusinessSession("business-1");
-        var updates = await ConversationEvents.CollectAsync(
-            session.StreamAsync(new ConversationRequest(Guid.NewGuid(), "订单状态")));
+        var updates = await ConversationEvents.CollectAsync(session.StreamAsync(new ConversationRequest(Guid.NewGuid(), "订单状态")));
 
         Assert.Equal("business-1", session.ConversationId);
         Assert.Equal("您的订单已发货。", Assert.IsType<ConversationCompleted>(updates[^1]).Text);

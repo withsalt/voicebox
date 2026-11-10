@@ -135,9 +135,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
             {
                 int prevPaddedLen = prevSamples + 2 * pad;
                 int prevFrames = prevPaddedLen >= nFft ? 1 + (prevPaddedLen - nFft) / hop : 0;
-                int cleanFramesPrev = pad + prevSamples >= nFft
-                    ? (pad + prevSamples - nFft) / hop + 1
-                    : 0;
+                int cleanFramesPrev = pad + prevSamples >= nFft ? (pad + prevSamples - nFft) / hop + 1 : 0;
                 reusable = Math.Min(prevFrames, cleanFramesPrev);
                 reusable = Math.Min(reusable, numFrames);
             }
@@ -314,9 +312,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
             if (_capacityFrames >= numFrames)
                 return _log10;
 
-            int newCapacity = _capacityFrames == 0
-                ? Math.Max(numFrames, 1024)
-                : Math.Max(numFrames, _capacityFrames * 2);
+            int newCapacity = _capacityFrames == 0 ? Math.Max(numFrames, 1024) : Math.Max(numFrames, _capacityFrames * 2);
 
             var bigger = new float[nMels * newCapacity];
             int preserve = Math.Min(keepFrames, LastNumFrames);
@@ -324,10 +320,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
             {
                 for (int m = 0; m < nMels; m++)
                 {
-                    Array.Copy(
-                        _log10, m * _capacityFrames,
-                        bigger, m * newCapacity,
-                        preserve);
+                    Array.Copy(_log10, m * _capacityFrames, bigger, m * newCapacity, preserve);
                 }
             }
             _log10 = bigger;

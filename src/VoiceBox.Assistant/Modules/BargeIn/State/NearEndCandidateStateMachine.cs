@@ -152,16 +152,14 @@ internal sealed class NearEndCandidateStateMachine
     /// </summary>
     public void ObserveInferenceWait(in SpeakerVerificationResult result, long timestamp)
     {
-        if (result.Status != SpeakerVerificationStatus.Pending ||
-            result.Reason != SpeakerVerificationReason.WaitingForInference)
+        if (result.Status != SpeakerVerificationStatus.Pending || result.Reason != SpeakerVerificationReason.WaitingForInference)
         {
             InferenceReadyTimestamp = -1;
             _pendingWindowStart = _pendingWindowEnd = -1;
             return;
         }
 
-        bool hasWindow = result.PendingWindowStartSample >= 0 &&
-            result.PendingWindowEndSampleExclusive > result.PendingWindowStartSample;
+        bool hasWindow = result.PendingWindowStartSample >= 0 && result.PendingWindowEndSampleExclusive > result.PendingWindowStartSample;
         if (InferenceReadyTimestamp < 0 ||
             (hasWindow && (_pendingWindowStart != result.PendingWindowStartSample ||
                            _pendingWindowEnd != result.PendingWindowEndSampleExclusive)))

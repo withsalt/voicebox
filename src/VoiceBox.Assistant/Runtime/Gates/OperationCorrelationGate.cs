@@ -30,8 +30,7 @@ internal sealed class OperationCorrelationGate
             if (_closedTurns.Contains(turnId))
                 return false;
 
-            if (_latestTurnByOperation.TryGetValue(operationId, out long existingTurn) &&
-                existingTurn != turnId)
+            if (_latestTurnByOperation.TryGetValue(operationId, out long existingTurn) && existingTurn != turnId)
             {
                 return false;
             }
@@ -102,8 +101,7 @@ internal sealed class OperationCorrelationGate
         {
             foreach (long operationId in operationIds)
             {
-                if (_latestTurnByOperation.TryGetValue(operationId, out long ownerTurnId) &&
-                    ownerTurnId == turnId)
+                if (_latestTurnByOperation.TryGetValue(operationId, out long ownerTurnId) && ownerTurnId == turnId)
                 {
                     _latestTurnByOperation.Remove(operationId);
                 }

@@ -11,49 +11,27 @@ public static partial class TextNormalizer
 {
     #region Regex Patterns
 
-    private static readonly Regex ReDateChinese = new(
-        @"(\d{2,4})年((\d{1,2})月)?((\d{1,2})[日号])?",
-        RegexOptions.Compiled);
+    private static readonly Regex ReDateChinese = new(@"(\d{2,4})年((\d{1,2})月)?((\d{1,2})[日号])?", RegexOptions.Compiled);
 
-    private static readonly Regex ReDateSlash = new(
-        @"(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})",
-        RegexOptions.Compiled);
+    private static readonly Regex ReDateSlash = new(@"(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})", RegexOptions.Compiled);
 
-    private static readonly Regex ReTime = new(
-        @"(\d{1,2}):(\d{1,2})(:(\d{1,2}))?",
-        RegexOptions.Compiled);
+    private static readonly Regex ReTime = new(@"(\d{1,2}):(\d{1,2})(:(\d{1,2}))?", RegexOptions.Compiled);
 
-    private static readonly Regex ReTemperature = new(
-        @"(-?\d+\.?\d*)(°C|℃|度|°F)",
-        RegexOptions.Compiled);
+    private static readonly Regex ReTemperature = new(@"(-?\d+\.?\d*)(°C|℃|度|°F)", RegexOptions.Compiled);
 
-    private static readonly Regex ReFraction = new(
-        @"(-?\d+)/(\d+)",
-        RegexOptions.Compiled);
+    private static readonly Regex ReFraction = new(@"(-?\d+)/(\d+)", RegexOptions.Compiled);
 
-    private static readonly Regex RePercentage = new(
-        @"(\d+\.?\d*)%",
-        RegexOptions.Compiled);
+    private static readonly Regex RePercentage = new(@"(\d+\.?\d*)%", RegexOptions.Compiled);
 
-    private static readonly Regex ReMobilePhone = new(
-        @"(?<!\d)(1[3-9]\d{9})(?!\d)",
-        RegexOptions.Compiled);
+    private static readonly Regex ReMobilePhone = new(@"(?<!\d)(1[3-9]\d{9})(?!\d)", RegexOptions.Compiled);
 
-    private static readonly Regex ReTelephone = new(
-        @"(?<!\d)(0\d{2,3}-?\d{7,8})(?!\d)",
-        RegexOptions.Compiled);
+    private static readonly Regex ReTelephone = new(@"(?<!\d)(0\d{2,3}-?\d{7,8})(?!\d)", RegexOptions.Compiled);
 
-    private static readonly Regex ReRange = new(
-        @"(\d+\.?\d*)[~\-－—](\d+\.?\d*)",
-        RegexOptions.Compiled);
+    private static readonly Regex ReRange = new(@"(\d+\.?\d*)[~\-－—](\d+\.?\d*)", RegexOptions.Compiled);
 
-    private static readonly Regex ReNumber = new(
-        @"(-?\d+)(\.\d+)?",
-        RegexOptions.Compiled);
+    private static readonly Regex ReNumber = new(@"(-?\d+)(\.\d+)?", RegexOptions.Compiled);
 
-    private static readonly Regex ReSentenceSplit = new(
-        @"([。！？；\n]+)",
-        RegexOptions.Compiled);
+    private static readonly Regex ReSentenceSplit = new(@"([。！？；\n]+)", RegexOptions.Compiled);
 
     #endregion
 

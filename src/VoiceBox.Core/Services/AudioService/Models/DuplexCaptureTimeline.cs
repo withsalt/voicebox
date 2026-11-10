@@ -13,8 +13,7 @@ namespace VoiceBox.Core.Services.AudioService.Models
 
         public static DuplexCaptureTimeline Unbuffered(in CaptureRange sourceRange, int bufferLength)
         {
-            CaptureSignalTimeline signal =
-                CaptureSignalTimeline.FromWholeBuffer(in sourceRange, bufferLength);
+            CaptureSignalTimeline signal = CaptureSignalTimeline.FromWholeBuffer(in sourceRange, bufferLength);
             return new DuplexCaptureTimeline(signal, signal, signal);
         }
     }

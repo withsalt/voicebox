@@ -91,14 +91,11 @@ public sealed class RenderAwareDataPlaneContractTests
     [Fact]
     public void NearEndDataPlane_UsesOnlySmallTypedCollaboratorsAndOneEffectExecutor()
     {
-        FieldInfo[] fields = typeof(NearEndDataPlane).GetFields(
-            BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo[] fields = typeof(NearEndDataPlane).GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.DoesNotContain(fields, field => typeof(Delegate).IsAssignableFrom(field.FieldType));
 
         ConstructorInfo constructor = Assert.Single(typeof(NearEndDataPlane).GetConstructors());
-        Assert.DoesNotContain(
-            constructor.GetParameters(),
-            parameter => typeof(Delegate).IsAssignableFrom(parameter.ParameterType));
+        Assert.DoesNotContain(constructor.GetParameters(), parameter => typeof(Delegate).IsAssignableFrom(parameter.ParameterType));
 
         Type[] requiredCollaborators =
         [
@@ -115,8 +112,7 @@ public sealed class RenderAwareDataPlaneContractTests
         Assert.DoesNotContain(fields, field => field.FieldType == typeof(IActiveNearEndSignalSink));
         Assert.DoesNotContain(fields, field => field.FieldType == typeof(INearEndRecognitionAudioSink));
 
-        FieldInfo[] executorFields = typeof(NearEndEffectExecutor).GetFields(
-            BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo[] executorFields = typeof(NearEndEffectExecutor).GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.DoesNotContain(executorFields, field => typeof(Delegate).IsAssignableFrom(field.FieldType));
         Assert.Contains(executorFields, field => field.FieldType == typeof(IActiveNearEndPlaybackPort));
         Assert.Contains(executorFields, field => field.FieldType == typeof(IActiveNearEndSignalSink));

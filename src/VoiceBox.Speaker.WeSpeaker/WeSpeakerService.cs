@@ -35,8 +35,7 @@ namespace VoiceBox.Speaker.WeSpeaker
         private readonly Dictionary<string, float[]> _profiles = new(StringComparer.Ordinal);
         private readonly Dictionary<string, float> _smoothedScores = new(StringComparer.Ordinal);
         private static readonly IReadOnlyDictionary<string, float> EmptyScores =
-            new ReadOnlyDictionary<string, float>(
-                new Dictionary<string, float>(StringComparer.Ordinal));
+            new ReadOnlyDictionary<string, float>(new Dictionary<string, float>(StringComparer.Ordinal));
         private readonly float[] _windowFeats;
         private readonly int _windowFrames;
         private readonly int _hopFrames;
@@ -84,8 +83,7 @@ namespace VoiceBox.Speaker.WeSpeaker
 
         public WeSpeakerService(IOptions<WeSpeakerOptions> options, ILogger<WeSpeakerService> logger)
         {
-            WeSpeakerOptions effectiveOptions =
-                options?.Value ?? throw new ArgumentNullException(nameof(options));
+            WeSpeakerOptions effectiveOptions = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? NullLogger<WeSpeakerService>.Instance;
 
             if (effectiveOptions.SampleRate != StreamingWeSpeakerFbank.SampleRate)
@@ -281,8 +279,7 @@ namespace VoiceBox.Speaker.WeSpeaker
                     _fbank.NumFramesReady < _windowFrames &&
                     _fbank.NumFramesReady >= _nextEarlyExitEnd)
                 {
-                    long prefixEnd = _earlyExitMinFrames +
-                        (_fbank.NumFramesReady - _earlyExitMinFrames) / _hopFrames * _hopFrames;
+                    long prefixEnd = _earlyExitMinFrames + (_fbank.NumFramesReady - _earlyExitMinFrames) / _hopFrames * _hopFrames;
                     SpeakerEventArgs? earlyResult = ProcessPrefixWindow(prefixEnd);
                     _nextEarlyExitEnd = prefixEnd + _hopFrames;
                     if (earlyResult is not null)

@@ -173,13 +173,8 @@ namespace VoiceBox.LLM.LLamaSharp
             ValidateMessages(request.Messages);
 
             LlamaToolCallCatalog catalog = LlamaToolCallCatalog.Create(request.Tools);
-            IReadOnlyList<ChatMessage> promptMessages = LlamaToolPromptBuilder.AddToolInstructions(
-                request.Messages,
-                catalog);
-            var linked = LlamaCancellation.LinkIfNeeded(
-                cancellationToken,
-                _shutdownCts.Token,
-                out CancellationToken token);
+            IReadOnlyList<ChatMessage> promptMessages = LlamaToolPromptBuilder.AddToolInstructions(request.Messages, catalog);
+            var linked = LlamaCancellation.LinkIfNeeded(cancellationToken, _shutdownCts.Token, out CancellationToken token);
             var response = new StringBuilder();
             GenerationStats stats;
             try
@@ -226,10 +221,7 @@ namespace VoiceBox.LLM.LLamaSharp
                     for (int index = 0; index < calls.Calls.Count; index++)
                     {
                         LlamaToolCall call = calls.Calls[index];
-                        yield return new LlmToolCallEvent(
-                            $"llama_{correlation}_{index}",
-                            call.ToolName,
-                            call.ArgumentsJson);
+                        yield return new LlmToolCallEvent($"llama_{correlation}_{index}", call.ToolName, call.ArgumentsJson);
                     }
                     break;
                 default:
@@ -274,8 +266,7 @@ namespace VoiceBox.LLM.LLamaSharp
         {
             EnsureNotDisposed();
             bool reuse = _options.EnableSessionCache && _options.MaxConcurrentRequests == 1;
-            return new LLamaSharpLLMConversation(
-                _session, _options, _gate, _shutdownCts.Token, reuse, _logger);
+            return new LLamaSharpLLMConversation(_session, _options, _gate, _shutdownCts.Token, reuse, _logger);
         }
 
         public void Dispose()
@@ -323,8 +314,7 @@ namespace VoiceBox.LLM.LLamaSharp
         /// </summary>
         private sealed class NativeLogFilterLogger(ILogger inner) : ILogger
         {
-            public IDisposable? BeginScope<TState>(TState state) where TState : notnull =>
-                inner.BeginScope(state);
+            public IDisposable? BeginScope<TState>(TState state) where TState : notnull => inner.BeginScope(state);
 
             public bool IsEnabled(LogLevel logLevel)
             {

@@ -133,8 +133,7 @@ public sealed class FsmnKwsMetadataSpecs
 
     private sealed class ModelMetadataFile : IDisposable
     {
-        public string DirectoryPath { get; } = System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), $"fsmnkws-meta-{Guid.NewGuid():N}");
+        public string DirectoryPath { get; } = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"fsmnkws-meta-{Guid.NewGuid():N}");
         public string Path => System.IO.Path.Combine(DirectoryPath, "kws_meta.json");
 
         public ModelMetadataFile(JsonObject metadata)

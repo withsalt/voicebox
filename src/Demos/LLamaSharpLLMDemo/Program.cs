@@ -70,8 +70,7 @@ namespace LLamaSharpLLMDemo
 
             Console.WriteLine($"加载模型中: {ModelPath} ...");
             var sw = Stopwatch.StartNew();
-            using var llm = new LLamaSharpLLMService(
-                options, loggerFactory.CreateLogger<LLamaSharpLLMService>());
+            using var llm = new LLamaSharpLLMService(options, loggerFactory.CreateLogger<LLamaSharpLLMService>());
             sw.Stop();
             Console.WriteLine($"模型已就绪 (加载耗时 {sw.Elapsed.TotalSeconds:F1}s)。");
             Console.WriteLine($"Profile: {llm.GetType().Name}");
@@ -190,10 +189,7 @@ namespace LLamaSharpLLMDemo
 
                 try
                 {
-                    await foreach (var chunk in conversation.StreamAsync(
-                        history,
-                        new LlmCompleteOptions { MaxTokens = 1024 },
-                        cts.Token))
+                    await foreach (var chunk in conversation.StreamAsync(history, new LlmCompleteOptions { MaxTokens = 1024 }, cts.Token))
                     {
                         if (chunk.IsFinal) continue;
                         if (chunk.Kind == LlmChunkKind.Text)

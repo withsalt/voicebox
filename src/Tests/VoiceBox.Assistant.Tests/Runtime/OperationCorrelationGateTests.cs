@@ -14,10 +14,7 @@ public sealed class OperationCorrelationGateTests
 
         for (long turnId = 1; turnId <= 4_100; turnId++)
         {
-            Assert.True(gate.TryAdmit(
-                turnId,
-                operationId: turnId,
-                AssistantSignalKind.RecognitionCompleted));
+            Assert.True(gate.TryAdmit(turnId, operationId: turnId, AssistantSignalKind.RecognitionCompleted));
             gate.ForgetTurn(turnId);
         }
 

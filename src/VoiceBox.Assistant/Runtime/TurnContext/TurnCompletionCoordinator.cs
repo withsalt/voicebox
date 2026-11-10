@@ -91,10 +91,7 @@ internal sealed class TurnCompletionCoordinator : ITurnCompletionPort
             _controlSignals.SubmitWakeModeChanged(wakeModeDecision.OldMode, wakeModeDecision.NewMode);
         if (changed && _logger.IsEnabled(LogLevel.Debug))
         {
-            _logger.LogDebug(
-                AssistantRuntimeEventIds.TurnCompleted,
-                "Turn {TurnId} completed.",
-                turnId);
+            _logger.LogDebug(AssistantRuntimeEventIds.TurnCompleted, "Turn {TurnId} completed.", turnId);
         }
 
         return true;

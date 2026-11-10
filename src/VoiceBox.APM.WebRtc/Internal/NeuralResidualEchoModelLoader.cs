@@ -4,19 +4,15 @@ namespace VoiceBox.APM.WebRtc.Internal
 {
     internal static class NeuralResidualEchoModelLoader
     {
-        internal const string BundledModelRelativePath =
-            "runtimes/models/aec/webrtc/v20260212/model.tflite";
+        internal const string BundledModelRelativePath = "runtimes/models/aec/webrtc/v20260212/model.tflite";
 
-        internal const string BundledModelSha256 =
-            "3A18833EAEB08BFFFB88A588C10DB67885F246BA4794FD0F1609F2CCF6C30B77";
+        internal const string BundledModelSha256 = "3A18833EAEB08BFFFB88A588C10DB67885F246BA4794FD0F1609F2CCF6C30B77";
 
         public static byte[] Load(string? configuredPath)
         {
             bool isBundledModel = configuredPath is null;
             string path = isBundledModel
-                ? RuntimeAssetLocator.FindRequired(
-                    BundledModelRelativePath,
-                    "Bundled WebRTC neural residual echo model")
+                ? RuntimeAssetLocator.FindRequired(BundledModelRelativePath, "Bundled WebRTC neural residual echo model")
                 : ResolveConfiguredPath(configuredPath!);
 
             byte[] model = File.ReadAllBytes(path);
@@ -45,9 +41,7 @@ namespace VoiceBox.APM.WebRtc.Internal
 
             if (!File.Exists(path))
             {
-                throw new FileNotFoundException(
-                    $"Configured WebRTC neural residual echo model was not found: '{path}'.",
-                    path);
+                throw new FileNotFoundException($"Configured WebRTC neural residual echo model was not found: '{path}'.", path);
             }
 
             return path;

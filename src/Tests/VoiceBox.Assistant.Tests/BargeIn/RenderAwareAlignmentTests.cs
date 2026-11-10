@@ -59,27 +59,11 @@ public sealed class RenderAwareAlignmentTests
         float[] second = Enumerable.Range(320, 320).Select(value => (float)value).ToArray();
         var firstRange = new CaptureRange(1, 1, 1, 0, 320, 1);
         var secondRange = new CaptureRange(1, 2, 2, 320, 640, 2);
-        CaptureSignalTimeline firstTimeline =
-            CaptureSignalTimeline.FromWholeBuffer(in firstRange, first.Length);
-        CaptureSignalTimeline secondTimeline =
-            CaptureSignalTimeline.FromWholeBuffer(in secondRange, second.Length);
+        CaptureSignalTimeline firstTimeline = CaptureSignalTimeline.FromWholeBuffer(in firstRange, first.Length);
+        CaptureSignalTimeline secondTimeline = CaptureSignalTimeline.FromWholeBuffer(in secondRange, second.Length);
 
-        resampler.Append(
-            in firstTimeline,
-            first,
-            sampleRate: 16000,
-            channels: 1,
-            originSample: 160,
-            streamEpoch: 1,
-            destination);
-        resampler.Append(
-            in secondTimeline,
-            second,
-            sampleRate: 16000,
-            channels: 1,
-            originSample: 160,
-            streamEpoch: 1,
-            destination);
+        resampler.Append(in firstTimeline, first, sampleRate: 16000, channels: 1, originSample: 160, streamEpoch: 1, destination);
+        resampler.Append(in secondTimeline, second, sampleRate: 16000, channels: 1, originSample: 160, streamEpoch: 1, destination);
 
         Assert.Equal(0, destination.StartSample);
         float[] output = new float[2];
@@ -138,26 +122,20 @@ public sealed class RenderAwareAlignmentTests
         // Three consistent external hints bootstrap an unverified path at 12 ms.
         for (int i = 0; i < 3; i++)
         {
-            tracker.Observe(
-                i * 320,
-                new RenderDelayEstimate(true, 192, 0.65, IsExternalHint: true));
+            tracker.Observe(i * 320, new RenderDelayEstimate(true, 192, 0.65, IsExternalHint: true));
         }
         long generation = tracker.Generation;
 
         // One stream-local measurement replaces the hint path immediately; the
         // material jump restarts the model because everything inferred so far
         // read the wrong render audio.
-        RenderAlignmentUpdate corrected = tracker.Observe(
-            960,
-            new RenderDelayEstimate(true, 1744, 0.7, IsCorrelationFallback: true));
+        RenderAlignmentUpdate corrected = tracker.Observe(960, new RenderDelayEstimate(true, 1744, 0.7, IsCorrelationFallback: true));
         Assert.True(corrected.PathChanged);
         Assert.True(corrected.Generation > generation);
         Assert.InRange(corrected.DelaySamples, 1743, 1745);
 
         // The path is verified now, so one later outlier no longer replaces it.
-        RenderAlignmentUpdate outlier = tracker.Observe(
-            1280,
-            new RenderDelayEstimate(true, 240, 0.9, IsRefined: true));
+        RenderAlignmentUpdate outlier = tracker.Observe(1280, new RenderDelayEstimate(true, 240, 0.9, IsRefined: true));
         Assert.False(outlier.PathChanged);
         Assert.InRange(outlier.DelaySamples, 1743, 1745);
     }
@@ -174,26 +152,20 @@ public sealed class RenderAwareAlignmentTests
 
         for (int i = 0; i < 3; i++)
         {
-            tracker.Observe(
-                i * 320,
-                new RenderDelayEstimate(true, 192, 0.65, IsExternalHint: true));
+            tracker.Observe(i * 320, new RenderDelayEstimate(true, 192, 0.65, IsExternalHint: true));
         }
         long generation = tracker.Generation;
 
         // Measurement within half a hop of the hint: adopt directly without a
         // model-resetting path change.
-        RenderAlignmentUpdate snapped = tracker.Observe(
-            960,
-            new RenderDelayEstimate(true, 240, 0.7, IsCorrelationFallback: true));
+        RenderAlignmentUpdate snapped = tracker.Observe(960, new RenderDelayEstimate(true, 240, 0.7, IsCorrelationFallback: true));
         Assert.False(snapped.PathChanged);
         Assert.Equal(generation, snapped.Generation);
         Assert.InRange(snapped.DelaySamples, 239, 241);
 
         // Verified by the measurement: a later distant estimate must build
         // path-change consensus instead of replacing the path at once.
-        RenderAlignmentUpdate outlier = tracker.Observe(
-            1280,
-            new RenderDelayEstimate(true, 1600, 0.9, IsRefined: true));
+        RenderAlignmentUpdate outlier = tracker.Observe(1280, new RenderDelayEstimate(true, 1600, 0.9, IsRefined: true));
         Assert.False(outlier.PathChanged);
         Assert.Equal(generation, outlier.Generation);
         Assert.InRange(outlier.DelaySamples, 239, 241);
@@ -212,20 +184,14 @@ public sealed class RenderAwareAlignmentTests
         tracker.Observe(0, new RenderDelayEstimate(true, 80, 1, IsRefined: true));
         long generation = tracker.Generation;
 
-        RenderAlignmentUpdate transient = tracker.Observe(
-            320,
-            new RenderDelayEstimate(true, 640, 1, IsRefined: true));
+        RenderAlignmentUpdate transient = tracker.Observe(320, new RenderDelayEstimate(true, 640, 1, IsRefined: true));
         Assert.False(transient.PathChanged);
         Assert.Equal(generation, transient.Generation);
 
-        RenderAlignmentUpdate second = tracker.Observe(
-            640,
-            new RenderDelayEstimate(true, 642, 1, IsRefined: true));
+        RenderAlignmentUpdate second = tracker.Observe(640, new RenderDelayEstimate(true, 642, 1, IsRefined: true));
         Assert.False(second.PathChanged);
 
-        RenderAlignmentUpdate promoted = tracker.Observe(
-            960,
-            new RenderDelayEstimate(true, 641, 1, IsRefined: true));
+        RenderAlignmentUpdate promoted = tracker.Observe(960, new RenderDelayEstimate(true, 641, 1, IsRefined: true));
         Assert.True(promoted.PathChanged);
         Assert.True(promoted.Generation > generation);
         Assert.InRange(promoted.DelaySamples, 640, 642);

@@ -22,8 +22,7 @@ internal static class PreparedSpeechTranscript
         text = NormalizeChineseText(text);
         if (text.Length == 0)
         {
-            throw new InvalidDataException(
-                $"WenetSpeech4TTS transcript '{utteranceId}' does not contain reference text.");
+            throw new InvalidDataException($"WenetSpeech4TTS transcript '{utteranceId}' does not contain reference text.");
         }
         return text;
     }
@@ -43,28 +42,19 @@ internal static class PreparedSpeechTranscript
         if (speech.Corpus.StartsWith("wenet-", StringComparison.Ordinal))
             return ParseWenet(raw, speech.UtteranceId);
 
-        if (speech.Corpus.StartsWith("thchs30-", StringComparison.Ordinal) &&
-            IsThchs30Pointer(raw))
+        if (speech.Corpus.StartsWith("thchs30-", StringComparison.Ordinal) && IsThchs30Pointer(raw))
         {
-            if (!manifest.SourceRoots.TryGetValue("kwsAsr", out string? kwsRoot) ||
-                string.IsNullOrWhiteSpace(kwsRoot))
+            if (!manifest.SourceRoots.TryGetValue("kwsAsr", out string? kwsRoot) || string.IsNullOrWhiteSpace(kwsRoot))
             {
                 throw new InvalidDataException(
                     $"Prepared THCHS30 asset '{speech.Id}' contains a legacy transcript pointer, " +
                     "but the manifest has no kwsAsr source root.");
             }
 
-            string transcriptPath = Path.Combine(
-                kwsRoot,
-                "THCHS30_2015",
-                "data_thchs30",
-                "test",
-                speech.UtteranceId + ".wav.trn");
+            string transcriptPath = Path.Combine(kwsRoot, "THCHS30_2015", "data_thchs30", "test", speech.UtteranceId + ".wav.trn");
             if (!File.Exists(transcriptPath))
             {
-                throw new FileNotFoundException(
-                    $"Cannot resolve the legacy THCHS30 transcript for '{speech.Id}'.",
-                    transcriptPath);
+                throw new FileNotFoundException($"Cannot resolve the legacy THCHS30 transcript for '{speech.Id}'.", transcriptPath);
             }
             return ReadThchs30(transcriptPath);
         }
@@ -79,30 +69,21 @@ internal static class PreparedSpeechTranscript
     {
         if (depth > 2)
         {
-            throw new InvalidDataException(
-                $"THCHS30 transcript pointer chain is too deep: {transcriptPath}");
+            throw new InvalidDataException($"THCHS30 transcript pointer chain is too deep: {transcriptPath}");
         }
 
-        string firstLine = File.ReadLines(transcriptPath)
-            .FirstOrDefault(line => !string.IsNullOrWhiteSpace(line))
-            ?.Trim()
-            ?? string.Empty;
+        string firstLine = File.ReadLines(transcriptPath).FirstOrDefault(line => !string.IsNullOrWhiteSpace(line))?.Trim() ?? string.Empty;
         if (firstLine.Length == 0)
             throw new InvalidDataException($"THCHS30 transcript is empty: {transcriptPath}");
 
         if (IsThchs30Pointer(firstLine))
         {
             string directory = Path.GetDirectoryName(Path.GetFullPath(transcriptPath))
-                ?? throw new InvalidDataException(
-                    $"THCHS30 transcript has no parent directory: {transcriptPath}");
-            string target = Path.GetFullPath(
-                firstLine.Replace('/', Path.DirectorySeparatorChar),
-                directory);
+                ?? throw new InvalidDataException($"THCHS30 transcript has no parent directory: {transcriptPath}");
+            string target = Path.GetFullPath(firstLine.Replace('/', Path.DirectorySeparatorChar), directory);
             if (!File.Exists(target))
             {
-                throw new FileNotFoundException(
-                    $"THCHS30 transcript pointer target was not found: {firstLine}",
-                    target);
+                throw new FileNotFoundException($"THCHS30 transcript pointer target was not found: {firstLine}", target);
             }
             return ReadThchs30(target, depth + 1);
         }
@@ -113,7 +94,6 @@ internal static class PreparedSpeechTranscript
     private static bool IsThchs30Pointer(string value)
     {
         string text = value.Trim();
-        return text.EndsWith(".trn", StringComparison.OrdinalIgnoreCase) &&
-               !text.Any(char.IsWhiteSpace);
+        return text.EndsWith(".trn", StringComparison.OrdinalIgnoreCase) && !text.Any(char.IsWhiteSpace);
     }
 }

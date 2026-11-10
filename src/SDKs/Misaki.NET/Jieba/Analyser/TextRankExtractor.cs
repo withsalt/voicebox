@@ -20,10 +20,7 @@ namespace Misaki.NET.Jieba.Analyser
 
         public bool PairFilter(IEnumerable<string>? allowPos, Pair wp)
         {
-            return allowPos != null
-                   && allowPos.Contains(wp.Flag)
-                   && wp.Word.Trim().Length >= 2
-                   && !StopWords.Contains(wp.Word.ToLower());
+            return allowPos != null && allowPos.Contains(wp.Flag) && wp.Word.Trim().Length >= 2 && !StopWords.Contains(wp.Word.ToLower());
         }
 
         public TextRankExtractor()

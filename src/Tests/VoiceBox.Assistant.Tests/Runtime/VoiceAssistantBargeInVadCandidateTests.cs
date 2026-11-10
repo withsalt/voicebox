@@ -60,8 +60,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             // A pending candidate retains its utterance even if VAD ends before identity inference.
             services.Vad.EmitSpeechEnded(TimeSpan.FromMilliseconds(800));
             services.Speaker.FeedBlock.TrySetResult();
-            await PumpSilentFramesUntilAsync(services,
-                () => owner ? services.Audio.ClearQueueCount == 1 : nearEnd.CommandDeniedCount == 1);
+            await PumpSilentFramesUntilAsync(services, () => owner ? services.Audio.ClearQueueCount == 1 : nearEnd.CommandDeniedCount == 1);
 
             Assert.Empty(services.Audio.PlaybackGainChanges);
             Assert.False(services.PlaybackDetector.GetSnapshot().LatestNearEndSpeech);
@@ -93,8 +92,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     [Fact]
     public void ActiveNearEndVadCandidate_ModelNegativeWaitsForItsOwnSpeakerMatch()
     {
-        var speaker = new SequencedSpeakerEvidenceProvider(
-            SpeakerVerificationStatus.Pending, SpeakerVerificationStatus.Match);
+        var speaker = new SequencedSpeakerEvidenceProvider(SpeakerVerificationStatus.Pending, SpeakerVerificationStatus.Match);
         var fixture = new VadBargeInFixture(speaker);
         fixture.ObserveVadAudio();
 

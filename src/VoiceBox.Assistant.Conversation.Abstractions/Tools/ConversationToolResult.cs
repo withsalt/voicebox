@@ -17,9 +17,7 @@ public sealed record ConversationToolResult(
         ? throw new ArgumentException("Tool result call id cannot be empty.", nameof(CallId))
         : CallId;
 
-    public ConversationToolResultKind Kind { get; } = Enum.IsDefined(Kind)
-        ? Kind
-        : throw new ArgumentOutOfRangeException(nameof(Kind));
+    public ConversationToolResultKind Kind { get; } = Enum.IsDefined(Kind) ? Kind : throw new ArgumentOutOfRangeException(nameof(Kind));
 
     public string? ValueJson { get; } = ValueJson;
 

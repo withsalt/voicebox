@@ -20,9 +20,7 @@ public sealed class ConversationHistoryStoreTests
         Assert.Equal(
             [ChatRole.System, ChatRole.User, ChatRole.Assistant],
             history.GetModelTranscriptSnapshot().Select(message => message.Role));
-        Assert.Equal(
-            [ChatRole.User, ChatRole.Assistant],
-            history.GetUserConversationHistorySnapshot().Select(message => message.Role));
+        Assert.Equal([ChatRole.User, ChatRole.Assistant], history.GetUserConversationHistorySnapshot().Select(message => message.Role));
         Assert.Empty(history.GetToolAuditTrailSnapshot());
     }
 
@@ -38,9 +36,7 @@ public sealed class ConversationHistoryStoreTests
         Assert.True(history.CommitGeneratedResponse(2, "second answer"));
 
         ChatMessage[] transcript = history.GetModelTranscriptSnapshot();
-        Assert.Equal(
-            [ChatRole.System, ChatRole.User, ChatRole.Assistant],
-            transcript.Select(static message => message.Role));
+        Assert.Equal([ChatRole.System, ChatRole.User, ChatRole.Assistant], transcript.Select(static message => message.Role));
         Assert.Equal("second", MessageText(transcript[1]));
         Assert.Equal("second answer", MessageText(transcript[2]));
         Assert.Empty(history.GetToolAuditTrailSnapshot());
@@ -125,9 +121,7 @@ public sealed class ConversationHistoryStoreTests
 
         history.AddUserMessage(2, "第二轮", null, out ChatMessage[] prompt);
 
-        Assert.Equal(
-            [ChatRole.System, ChatRole.User, ChatRole.Assistant, ChatRole.User],
-            prompt.Select(m => m.Role));
+        Assert.Equal([ChatRole.System, ChatRole.User, ChatRole.Assistant, ChatRole.User], prompt.Select(m => m.Role));
         Assert.Equal("好的。", MessageText(prompt[2]));
         Assert.DoesNotContain(prompt, m => MessageText(m) == "重复。");
     }
@@ -151,9 +145,7 @@ public sealed class ConversationHistoryStoreTests
         history.RemoveUnansweredUserMessage(1);
         history.AddUserMessage(2, "第二轮", null, out ChatMessage[] prompt);
 
-        Assert.Equal(
-            [ChatRole.System, ChatRole.User, ChatRole.Assistant, ChatRole.User],
-            prompt.Select(m => m.Role));
+        Assert.Equal([ChatRole.System, ChatRole.User, ChatRole.Assistant, ChatRole.User], prompt.Select(m => m.Role));
         Assert.Equal("回答一", MessageText(prompt[2]));
     }
 
@@ -167,9 +159,7 @@ public sealed class ConversationHistoryStoreTests
         history.RemoveUnansweredUserMessage(1);
         history.AddUserMessage(2, "next", null, out ChatMessage[] prompt);
 
-        Assert.Equal(
-            [ChatRole.System, ChatRole.User, ChatRole.User],
-            prompt.Select(static message => message.Role));
+        Assert.Equal([ChatRole.System, ChatRole.User, ChatRole.User], prompt.Select(static message => message.Role));
         Assert.Equal("thinking only", MessageText(prompt[1]));
         Assert.Equal("next", MessageText(prompt[2]));
     }
@@ -218,18 +208,14 @@ public sealed class ConversationHistoryStoreTests
         history.AddUserMessage(2, "第二轮", null, out ChatMessage[] prompt);
 
         Assert.True(committed);
-        Assert.Equal(
-            [ChatRole.System, ChatRole.User, ChatRole.Assistant, ChatRole.User],
-            prompt.Select(m => m.Role));
+        Assert.Equal([ChatRole.System, ChatRole.User, ChatRole.Assistant, ChatRole.User], prompt.Select(m => m.Role));
     }
 
     [Fact]
     public void Constructor_RejectsNonPositiveHistoryLimit()
     {
-        ArgumentOutOfRangeException zero = Assert.Throws<ArgumentOutOfRangeException>(
-            () => new ConversationHistoryStore("system", 0));
-        ArgumentOutOfRangeException negative = Assert.Throws<ArgumentOutOfRangeException>(
-            () => new ConversationHistoryStore("system", -1));
+        ArgumentOutOfRangeException zero = Assert.Throws<ArgumentOutOfRangeException>(() => new ConversationHistoryStore("system", 0));
+        ArgumentOutOfRangeException negative = Assert.Throws<ArgumentOutOfRangeException>(() => new ConversationHistoryStore("system", -1));
 
         Assert.Equal("maxHistoryTurns", zero.ParamName);
         Assert.StartsWith("Max history turns must be >= 1.", zero.Message, StringComparison.Ordinal);
@@ -252,15 +238,10 @@ public sealed class ConversationHistoryStoreTests
         var toolId = new ConversationToolId("srv", "lookup");
         records[index] = records[index] with
         {
-            ToolCalls = includeCall
-                ? [new ToolCall(callId, toolId, OwnedJsonValue.Parse("{}"))]
-                : [],
-            ToolResults = includeResult
-                ? [new ToolResult(callId, ConversationToolResultKind.Success, null)]
-                : [],
+            ToolCalls = includeCall ? [new ToolCall(callId, toolId, OwnedJsonValue.Parse("{}"))] : [],
+            ToolResults = includeResult ? [new ToolResult(callId, ConversationToolResultKind.Success, null)] : [],
         };
     }
 
-    private static string MessageText(ChatMessage message) =>
-        string.Concat(message.Content.OfType<TextContent>().Select(c => c.Text));
+    private static string MessageText(ChatMessage message) => string.Concat(message.Content.OfType<TextContent>().Select(c => c.Text));
 }

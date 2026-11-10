@@ -25,8 +25,7 @@ internal static class Program
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(
-                    $"[ERROR] Benchmark comparison failed: {ex.GetType().Name}: {ex.Message}");
+                Console.Error.WriteLine($"[ERROR] Benchmark comparison failed: {ex.GetType().Name}: {ex.Message}");
                 return 1;
             }
         }
@@ -44,8 +43,7 @@ internal static class Program
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(
-                    $"[ERROR] End-to-end benchmark failed: {ex.GetType().Name}: {ex.Message}");
+                Console.Error.WriteLine($"[ERROR] End-to-end benchmark failed: {ex.GetType().Name}: {ex.Message}");
                 return 1;
             }
         }
@@ -58,8 +56,7 @@ internal static class Program
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(
-                    $"[ERROR] Prepared dataset creation failed: {ex.GetType().Name}: {ex.Message}");
+                Console.Error.WriteLine($"[ERROR] Prepared dataset creation failed: {ex.GetType().Name}: {ex.Message}");
                 return 1;
             }
         }
@@ -99,8 +96,7 @@ internal static class Program
 
         if (string.IsNullOrWhiteSpace(options.DatasetRoot))
         {
-            Console.Error.WriteLine(
-                "[ERROR] Dataset root is required. Use --dataset <path> or set VOICEBOX_AEC_CHALLENGE.");
+            Console.Error.WriteLine("[ERROR] Dataset root is required. Use --dataset <path> or set VOICEBOX_AEC_CHALLENGE.");
             return 2;
         }
 
@@ -111,14 +107,10 @@ internal static class Program
             if (!string.IsNullOrWhiteSpace(options.CaseId))
             {
                 cases = cases
-                    .Where(testCase => string.Equals(
-                        testCase.Id,
-                        options.CaseId,
-                        StringComparison.OrdinalIgnoreCase))
+                    .Where(testCase => string.Equals(testCase.Id, options.CaseId, StringComparison.OrdinalIgnoreCase))
                     .ToArray();
                 if (cases.Count == 0)
-                    throw new InvalidOperationException(
-                        $"No case matched --case-id '{options.CaseId}' in suite {options.Suite}.");
+                    throw new InvalidOperationException($"No case matched --case-id '{options.CaseId}' in suite {options.Suite}.");
             }
         }
         catch (Exception ex)
@@ -171,8 +163,7 @@ internal static class Program
                     catch (Exception ex)
                     {
                         results.Add(ErrorResult(testCase, callbackSamples, ex));
-                        Console.Error.WriteLine(
-                            $"[ERROR] {testCase.Id} callback={callbackSamples}: {ex.GetType().Name}: {ex.Message}");
+                        Console.Error.WriteLine($"[ERROR] {testCase.Id} callback={callbackSamples}: {ex.GetType().Name}: {ex.Message}");
                     }
 
                     completed++;
@@ -258,9 +249,7 @@ internal static class Program
         (string jsonPath, string csvPath) = ReportWriter.Write(report, options.OutputPath);
         PrintSummary(report, jsonPath, csvPath);
 
-        return options.EnforceGates && gates.Any(g => g.Status != GateStatus.Passed)
-            ? 1
-            : 0;
+        return options.EnforceGates && gates.Any(g => g.Status != GateStatus.Passed) ? 1 : 0;
     }
 
     private static EvaluationOptions ParseArguments(string[] args)
@@ -325,14 +314,10 @@ internal static class Program
                     options.MinimumRecall = ParseRatio(Required(args, ref i, argument), argument);
                     break;
                 case "--maximum-false-triggers-per-hour":
-                    options.MaximumFalseTriggersPerHour = ParseNonNegativeDouble(
-                        Required(args, ref i, argument),
-                        argument);
+                    options.MaximumFalseTriggersPerHour = ParseNonNegativeDouble(Required(args, ref i, argument), argument);
                     break;
                 case "--maximum-p95-latency-ms":
-                    options.MaximumP95EligibleLatencyMs = ParseNonNegativeDouble(
-                        Required(args, ref i, argument),
-                        argument);
+                    options.MaximumP95EligibleLatencyMs = ParseNonNegativeDouble(Required(args, ref i, argument), argument);
                     break;
                 case "--enforce-gates":
                     options.EnforceGates = true;
@@ -472,19 +457,12 @@ internal static class Program
             ? "ERROR"
             : result.TruePositive
                 ? "TP"
-                : result.FalsePositive
-                    ? "FP"
-                    : result.FalseNegative
-                        ? "FN"
-                        : result.EarlyFalseTrigger
-                            ? "EARLY-FP"
-                            : "TN/SKIP";
+                : result.FalsePositive ? "FP" : result.FalseNegative ? "FN" : result.EarlyFalseTrigger ? "EARLY-FP" : "TN/SKIP";
         Console.WriteLine(
             $"[{outcome,-8}] {result.Id} cb={result.CallbackSamples} " +
             $"det={result.DetectionTimeMs?.ToString("F0", CultureInfo.InvariantCulture) ?? "-"}ms " +
             $"p={result.PeakSmoothedNearEndProbability:F3} reason={result.DecisionReason}" +
-            (result.FalseNegative &&
-             string.Equals(result.DecisionReason, "confirmed-nearend-window", StringComparison.Ordinal)
+            (result.FalseNegative && string.Equals(result.DecisionReason, "confirmed-nearend-window", StringComparison.Ordinal)
                 ? $" coord={result.CoordinatorDiagnostic}"
                 : string.Empty));
     }
@@ -493,17 +471,14 @@ internal static class Program
     {
         foreach (string deviceClass in DatasetCatalog.ExpectedDeviceClasses)
         {
-            EvaluationCase[] deviceCases = cases
-                .Where(c => string.Equals(c.DeviceClass, deviceClass, StringComparison.Ordinal))
-                .ToArray();
+            EvaluationCase[] deviceCases = cases.Where(c => string.Equals(c.DeviceClass, deviceClass, StringComparison.Ordinal)).ToArray();
             int sessions = deviceCases
                 .Select(c => c.DeviceSession)
                 .Where(session => session is not null)
                 .Distinct(StringComparer.Ordinal)
                 .Count();
             string marker = deviceCases.Length == 0 ? " [MISSING]" : string.Empty;
-            Console.WriteLine(
-                $"Device class  : {deviceClass}={deviceCases.Length} cases/{sessions} sessions{marker}");
+            Console.WriteLine($"Device class  : {deviceClass}={deviceCases.Length} cases/{sessions} sessions{marker}");
         }
     }
 
@@ -553,9 +528,7 @@ internal static class Program
         => value.HasValue ? $"{Number(value)}ms" : "n/a";
 
     private static string Interval(double? lower, double? upper)
-        => lower.HasValue && upper.HasValue
-            ? $"[{lower.Value:P2}, {upper.Value:P2}]"
-            : "n/a";
+        => lower.HasValue && upper.HasValue ? $"[{lower.Value:P2}, {upper.Value:P2}]" : "n/a";
 
     private static string? TryGetGitCommit(string? startDirectory = null)
     {

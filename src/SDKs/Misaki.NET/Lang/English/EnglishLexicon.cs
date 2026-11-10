@@ -23,8 +23,7 @@ public sealed class EnglishLexicon
 
     private static readonly Regex SuffixRegex = new(@"[a-z']+$", RegexOptions.Compiled);
     private static readonly Regex NonAlphaRegex = new(@"[^a-z]+", RegexOptions.Compiled);
-    private static readonly Regex DoubleConsonantIngRegex = new(
-        @"([bcdgklmnprstvxz])\1ing$|cking$", RegexOptions.Compiled);
+    private static readonly Regex DoubleConsonantIngRegex = new(@"([bcdgklmnprstvxz])\1ing$|cking$", RegexOptions.Compiled);
     private static readonly Regex VsRegex = new(@"(?i)vs\.?$", RegexOptions.Compiled);
 
     private static readonly Dictionary<string, (string major, string minor)> Currencies = new()
@@ -64,8 +63,7 @@ public sealed class EnglishLexicon
         using var reader = new StreamReader(stream);
         var json = reader.ReadToEnd();
 
-        var raw = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json)
-            ?? new Dictionary<string, JsonElement>();
+        var raw = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json) ?? new Dictionary<string, JsonElement>();
 
         var dict = new Dictionary<string, object>(raw.Count * 2, StringComparer.Ordinal);
         foreach (var (key, value) in raw)
@@ -79,8 +77,7 @@ public sealed class EnglishLexicon
                 var inner = new Dictionary<string, string?>(StringComparer.Ordinal);
                 foreach (var prop in value.EnumerateObject())
                 {
-                    inner[prop.Name] = prop.Value.ValueKind == JsonValueKind.Null
-                        ? null : prop.Value.GetString();
+                    inner[prop.Name] = prop.Value.ValueKind == JsonValueKind.Null ? null : prop.Value.GetString();
                 }
                 dict[key] = inner;
             }
@@ -284,8 +281,7 @@ public sealed class EnglishLexicon
                 var cleaned = word.Replace(",", "");
                 if (cleaned.StartsWith('.'))
                 {
-                    var text = "point " + string.Join(" ",
-                        cleaned[1..].Select(c => NumberToWords.ToCardinal(c - '0')));
+                    var text = "point " + string.Join(" ", cleaned[1..].Select(c => NumberToWords.ToCardinal(c - '0')));
                     ExtendNum(text, escape: true);
                 }
                 else
@@ -320,8 +316,7 @@ public sealed class EnglishLexicon
         string? stem = null;
         if (!word.EndsWith("ss") && IsKnown(word[..^1], tag))
             stem = word[..^1];
-        else if ((word.EndsWith("'s") || (word.Length > 4 && word.EndsWith("es") && !word.EndsWith("ies")))
-                 && IsKnown(word[..^2], tag))
+        else if ((word.EndsWith("'s") || (word.Length > 4 && word.EndsWith("es") && !word.EndsWith("ies"))) && IsKnown(word[..^2], tag))
             stem = word[..^2];
         else if (word.Length > 4 && word.EndsWith("ies") && IsKnown(word[..^3] + "y", tag))
             stem = word[..^3] + "y";
@@ -357,8 +352,7 @@ public sealed class EnglishLexicon
             stem = word[..^3];
         else if (IsKnown(word[..^3] + "e", tag))
             stem = word[..^3] + "e";
-        else if (word.Length > 5 && DoubleConsonantIngRegex.IsMatch(word)
-                 && IsKnown(word[..^4], tag))
+        else if (word.Length > 5 && DoubleConsonantIngRegex.IsMatch(word) && IsKnown(word[..^4], tag))
             stem = word[..^4];
 
         if (stem == null) return (null, null);

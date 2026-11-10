@@ -113,12 +113,7 @@ internal sealed class ConfirmedBargeInApplier
         {
             if (_candidates.IsCandidateActive)
                 return false;
-            _validation.Begin(
-                decision.TurnId,
-                decision.InterruptedTurnId,
-                decision.ResponseToCancel,
-                decision.OldState,
-                initialAudio);
+            _validation.Begin(decision.TurnId, decision.InterruptedTurnId, decision.ResponseToCancel, decision.OldState, initialAudio);
             _recognitionTurn.ClearActiveSessionId();
             _candidates.MarkNearEndConfirmed();
             return true;
@@ -127,12 +122,7 @@ internal sealed class ConfirmedBargeInApplier
         if (!_candidates.CanMarkConfirmed(SpeechCandidateKind.BargeIn))
             return false;
 
-        _validation.Begin(
-            decision.TurnId,
-            decision.InterruptedTurnId,
-            decision.ResponseToCancel,
-            decision.OldState,
-            initialAudio: null);
+        _validation.Begin(decision.TurnId, decision.InterruptedTurnId, decision.ResponseToCancel, decision.OldState, initialAudio: null);
         _recognitionTurn.ClearActiveSessionId();
         _candidates.TryMarkConfirmed(SpeechCandidateKind.BargeIn);
         return true;

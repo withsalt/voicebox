@@ -58,10 +58,8 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
         _textStream = textStream ?? throw new ArgumentNullException(nameof(textStream));
         _playbackStartupGuard = playbackStartupGuard ?? throw new ArgumentNullException(nameof(playbackStartupGuard));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _bargeInDecisionReset = bargeInDecisionReset
-            ?? throw new ArgumentNullException(nameof(bargeInDecisionReset));
-        _playbackTextEchoGuard = playbackTextEchoGuard
-            ?? throw new ArgumentNullException(nameof(playbackTextEchoGuard));
+        _bargeInDecisionReset = bargeInDecisionReset ?? throw new ArgumentNullException(nameof(bargeInDecisionReset));
+        _playbackTextEchoGuard = playbackTextEchoGuard ?? throw new ArgumentNullException(nameof(playbackTextEchoGuard));
     }
 
     public async Task<ResponseTurnResult> RunRecognizedTextTurnAsync(
@@ -82,12 +80,7 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
             throw new ArgumentOutOfRangeException(nameof(operationId));
         ResponseOperation? operation = turnResources is null
             ? null
-            : BeginOperation(
-                turnId,
-                operationId,
-                cancellationToken,
-                runtimeCancellationToken,
-                turnResources);
+            : BeginOperation(turnId, operationId, cancellationToken, runtimeCancellationToken, turnResources);
         try
         {
             if (string.IsNullOrEmpty(userText) || !AsrTextNormalizer.HasMeaningfulCharacters(userText))
@@ -101,11 +94,7 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
 
             if (!recognitionAlreadyPublished)
             {
-                await _control.PublishRecognitionCompletedAsync(
-                    turnId,
-                    userText,
-                    speechDuration,
-                    cancellationToken).ConfigureAwait(false);
+                await _control.PublishRecognitionCompletedAsync(turnId, userText, speechDuration, cancellationToken).ConfigureAwait(false);
             }
 
             if (canEndContinuousConversation &&
@@ -125,20 +114,12 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
             throw;
         }
 
-        operation ??= BeginOperation(
-            turnId,
-            operationId,
-            cancellationToken,
-            runtimeCancellationToken,
-            turnResources);
+        operation ??= BeginOperation(turnId, operationId, cancellationToken, runtimeCancellationToken, turnResources);
 
         CancellationToken ct = operation.Cancellation.Token;
         try
         {
-            ResponseControlTransition thinking = await _control.StartResponseAsync(
-                turnId,
-                operation.OperationId,
-                ct).ConfigureAwait(false);
+            ResponseControlTransition thinking = await _control.StartResponseAsync(turnId, operation.OperationId, ct).ConfigureAwait(false);
             if (!thinking.Accepted)
                 throw new OperationCanceledException(ct);
 
@@ -160,11 +141,7 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
                 string generated = visible.ToString();
                 if (IsCurrentOperation(operation))
                 {
-                    await _control.PublishResponseCompletedAsync(
-                        turnId,
-                        operation.OperationId,
-                        generated,
-                        ct).ConfigureAwait(false);
+                    await _control.PublishResponseCompletedAsync(turnId, operation.OperationId, generated, ct).ConfigureAwait(false);
                 }
             }
 
@@ -209,8 +186,7 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
                                 textDelta.Text,
                                 textDelta.EndsTextSegment,
                                 textDelta.EndsTextSegment
-                                    ? new TaskCompletionSource(
-                                        TaskCreationOptions.RunContinuationsAsynchronously)
+                                    ? new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously)
                                     : null);
                             break;
                         case ConversationTurnText:
@@ -218,30 +194,24 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
                         case ConversationTurnCompleted completion:
                             if (completed)
                             {
-                                throw new ConversationProtocolException(
-                                    "The conversation completed the turn more than once.");
+                                throw new ConversationProtocolException("The conversation completed the turn more than once.");
                             }
                             completed = true;
                             await NotifyResponseGeneratedAsync().ConfigureAwait(false);
                             _conversation.ReleaseForegroundBoundary(completion.RequestId);
                             break;
                         default:
-                            throw new ConversationProtocolException(
-                                $"Unsupported conversation update '{update.GetType().Name}'.");
+                            throw new ConversationProtocolException($"Unsupported conversation update '{update.GetType().Name}'.");
                     }
                 }
 
                 if (!completed)
                 {
-                    throw new ConversationProtocolException(
-                        "The conversation ended without a completed update.");
+                    throw new ConversationProtocolException("The conversation ended without a completed update.");
                 }
             }
 
-            string assistantText = await _playbackSessions.PlayAsync(
-                turnId,
-                ReadSpeakableTextAsync(ct),
-                ct).ConfigureAwait(false);
+            string assistantText = await _playbackSessions.PlayAsync(turnId, ReadSpeakableTextAsync(ct), ct).ConfigureAwait(false);
             _bargeInDecisionReset.ResetDecisionState();
 
             if (!ct.IsCancellationRequested && IsCurrentOperation(operation))
@@ -258,10 +228,7 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
         }
         catch (OperationCanceledException)
         {
-            await TryPublishTerminalOutcomeAsync(
-                operation,
-                ResponseOperationOutcomeKind.Cancelled,
-                failure: null).ConfigureAwait(false);
+            await TryPublishTerminalOutcomeAsync(operation, ResponseOperationOutcomeKind.Cancelled, failure: null).ConfigureAwait(false);
             throw;
         }
         catch (Exception exception)
@@ -286,8 +253,7 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
         IResponseTurnResourcePort turnResources)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
-        ResponseOperation operation = BeginOperation(
-            turnId, operationId, cancellationToken, turnResources.RunToken, turnResources);
+        ResponseOperation operation = BeginOperation(turnId, operationId, cancellationToken, turnResources.RunToken, turnResources);
         CancellationToken ct = operation.Cancellation.Token;
         try
         {
@@ -304,13 +270,11 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
                 yield return new SpeakableTextDelta(text);
             }
 
-            string spokenText = await _playbackSessions.PlayAsync(
-                turnId, ReadTextAsync(ct), ct).ConfigureAwait(false);
+            string spokenText = await _playbackSessions.PlayAsync(turnId, ReadTextAsync(ct), ct).ConfigureAwait(false);
             _bargeInDecisionReset.ResetDecisionState();
             if (!ct.IsCancellationRequested && IsCurrentOperation(operation))
             {
-                await _control.PublishPlaybackCompletedAsync(
-                    turnId, operationId, spokenText, roundSw.Elapsed, ct).ConfigureAwait(false);
+                await _control.PublishPlaybackCompletedAsync(turnId, operationId, spokenText, roundSw.Elapsed, ct).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException exception)
@@ -320,8 +284,7 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
             bool interrupted = (ct.IsCancellationRequested || exception is ResponsePlaybackCanceledException) &&
                 !cancellationToken.IsCancellationRequested &&
                 !turnResources.RunToken.IsCancellationRequested;
-            await TryPublishTerminalOutcomeAsync(
-                operation, ResponseOperationOutcomeKind.Cancelled, failure: null).ConfigureAwait(false);
+            await TryPublishTerminalOutcomeAsync(operation, ResponseOperationOutcomeKind.Cancelled, failure: null).ConfigureAwait(false);
             if (interrupted)
             {
                 // Barge-in cancels this response, not the background message reader.
@@ -364,8 +327,7 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
         lock (_operationLock)
         {
             operation = _currentOperation;
-            if (operation is null || operation.TurnId != turnId ||
-                (operationId > 0 && operation.OperationId != operationId))
+            if (operation is null || operation.TurnId != turnId || (operationId > 0 && operation.OperationId != operationId))
             {
                 return false;
             }
@@ -423,17 +385,13 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
         CancellationTokenSource operationCancellation = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken,
             runtimeCancellationToken);
-        if (turnResources is not null &&
-            !turnResources.TryAttachResponseContext(turnId, operationCancellation))
+        if (turnResources is not null && !turnResources.TryAttachResponseContext(turnId, operationCancellation))
         {
             turnResources.ReleaseResponseContext(turnId, operationCancellation);
             throw new ResponseOperationAdmissionRejectedException();
         }
 
-        var operation = new ResponseOperation(
-            turnId,
-            requestedOperationId,
-            operationCancellation)
+        var operation = new ResponseOperation(turnId, requestedOperationId, operationCancellation)
         {
             Resources = turnResources,
         };
@@ -493,9 +451,7 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
 
         if (transition.Changed)
         {
-            await _textStream.WaitUntilDeliveredAsync(
-                transition.PublicationSequence,
-                cancellationToken).ConfigureAwait(false);
+            await _textStream.WaitUntilDeliveredAsync(transition.PublicationSequence, cancellationToken).ConfigureAwait(false);
         }
 
         return true;

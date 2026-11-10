@@ -18,9 +18,7 @@ internal sealed class PlaybackDrainWaiter
 
     public async Task WaitAsync(long totalSamples, int sampleRate, CancellationToken cancellationToken)
     {
-        double expectedMs = sampleRate > 0 && totalSamples > 0
-            ? totalSamples * 1000.0 / sampleRate
-            : 0;
+        double expectedMs = sampleRate > 0 && totalSamples > 0 ? totalSamples * 1000.0 / sampleRate : 0;
         double safetyTimeoutMs = expectedMs * 2 + 5000;
         const int pollIntervalMs = 50;
         const int requiredIdleSamples = 3;
@@ -53,10 +51,7 @@ internal sealed class PlaybackDrainWaiter
 
         if (waited >= safetyTimeoutMs)
         {
-            _logger.LogWarning(
-                "播放排空轮询超时 ({Waited:F0}ms / {Safety:F0}ms), 可能存在播放堆积。",
-                waited,
-                safetyTimeoutMs);
+            _logger.LogWarning("播放排空轮询超时 ({Waited:F0}ms / {Safety:F0}ms), 可能存在播放堆积。", waited, safetyTimeoutMs);
         }
 
         if (_tailBufferMs > 0)

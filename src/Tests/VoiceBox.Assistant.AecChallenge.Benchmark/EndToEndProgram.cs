@@ -12,8 +12,7 @@ internal static class EndToEndProgram
             return true;
         for (int i = 0; i + 1 < args.Count; i++)
         {
-            if (args[i] == "--mode" &&
-                string.Equals(args[i + 1], "e2e", StringComparison.OrdinalIgnoreCase))
+            if (args[i] == "--mode" && string.Equals(args[i + 1], "e2e", StringComparison.OrdinalIgnoreCase))
                 return true;
         }
         return false;
@@ -27,15 +26,11 @@ internal static class EndToEndProgram
         if (manifest.SchemaVersion == EvaluationDatasetManifest.CurrentSchemaVersion &&
             !options.Suite.Equals("all", StringComparison.OrdinalIgnoreCase))
         {
-            selected = selected.Where(testCase => testCase.Suites.Contains(
-                options.Suite,
-                StringComparer.OrdinalIgnoreCase));
+            selected = selected.Where(testCase => testCase.Suites.Contains(options.Suite, StringComparer.OrdinalIgnoreCase));
         }
         if (!string.IsNullOrWhiteSpace(options.CaseId))
         {
-            selected = selected.Where(c => c.Id.Equals(
-                options.CaseId,
-                StringComparison.OrdinalIgnoreCase));
+            selected = selected.Where(c => c.Id.Equals(options.CaseId, StringComparison.OrdinalIgnoreCase));
         }
         if (options.Limit is > 0)
             selected = selected.Take(options.Limit.Value);
@@ -60,9 +55,7 @@ internal static class EndToEndProgram
             for (int i = 0; i < cases.Length; i++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                EndToEndCaseResult result = await evaluator
-                    .EvaluateAsync(cases[i], cancellationToken)
-                    .ConfigureAwait(false);
+                EndToEndCaseResult result = await evaluator.EvaluateAsync(cases[i], cancellationToken).ConfigureAwait(false);
                 results.Add(result);
                 if (options.Verbose || result.Error is not null ||
                     (result.ExpectHeard && !result.Heard) ||
@@ -99,21 +92,15 @@ internal static class EndToEndProgram
             TtsExecutionProvider = options.TtsExecutionProvider.ToString(),
             WallTimeSeconds = stopwatch.Elapsed.TotalSeconds,
             AudioTimeSeconds = audioSeconds,
-            RealTimeFactor = audioSeconds > 0
-                ? stopwatch.Elapsed.TotalSeconds / audioSeconds
-                : 0,
+            RealTimeFactor = audioSeconds > 0 ? stopwatch.Elapsed.TotalSeconds / audioSeconds : 0,
             Overall = overall,
             Slices = EndToEndMetrics.BuildSlices(results),
             Gates = gates,
             Cases = results,
         };
-        (string jsonPath, string csvPath) = EndToEndReportWriter.Write(
-            report,
-            options.OutputPath);
+        (string jsonPath, string csvPath) = EndToEndReportWriter.Write(report, options.OutputPath);
         PrintSummary(report, jsonPath, csvPath);
-        return options.EnforceGates && gates.Any(g => g.Status != GateStatus.Passed)
-            ? 1
-            : 0;
+        return options.EnforceGates && gates.Any(g => g.Status != GateStatus.Passed) ? 1 : 0;
     }
 
     private static EndToEndOptions Parse(string[] args)
@@ -124,8 +111,7 @@ internal static class EndToEndProgram
                      Environment.GetEnvironmentVariable("VOXCPM_MODEL") ??
                      string.Empty;
         string? voice = null;
-        string? vadDirectory =
-            Environment.GetEnvironmentVariable("VOICEBOX_FIRERED_VAD_MODEL_DIR");
+        string? vadDirectory = Environment.GetEnvironmentVariable("VOICEBOX_FIRERED_VAD_MODEL_DIR");
         string suite = "release-e2e";
         string? caseId = null;
         string? output = null;
@@ -204,8 +190,7 @@ internal static class EndToEndProgram
         if (string.IsNullOrWhiteSpace(asr))
             throw new ArgumentException("--asr-model or VOICEBOX_QWEN3_ASR_MODEL is required.");
         if (string.IsNullOrWhiteSpace(tts))
-            throw new ArgumentException(
-                "--tts-model, VOICEBOX_VOXCPM_TTS_MODEL, or VOXCPM_MODEL is required.");
+            throw new ArgumentException("--tts-model, VOICEBOX_VOXCPM_TTS_MODEL, or VOXCPM_MODEL is required.");
         return new EndToEndOptions
         {
             DatasetRoot = dataset,
@@ -230,14 +215,12 @@ internal static class EndToEndProgram
             "cpu" => OnnxExecutionProvider.Cpu,
             "cuda" or "gpu" => OnnxExecutionProvider.Cuda,
             "directml" or "dml" => OnnxExecutionProvider.DirectML,
-            _ => throw new ArgumentException(
-                $"Unknown provider '{value}', expected cpu|cuda|directml."),
+            _ => throw new ArgumentException($"Unknown provider '{value}', expected cpu|cuda|directml."),
         };
 
     private static int ParsePositiveInt(string value, string flag)
     {
-        if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed) ||
-            parsed <= 0)
+        if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed) || parsed <= 0)
         {
             throw new ArgumentException($"{flag} expects a positive integer.");
         }
@@ -313,9 +296,7 @@ internal static class EndToEndProgram
         => value.HasValue ? value.Value.ToString("P2", CultureInfo.InvariantCulture) : "n/a";
 
     private static string Ms(double? value)
-        => value.HasValue
-            ? $"{value.Value.ToString("0", CultureInfo.InvariantCulture)}ms"
-            : "n/a";
+        => value.HasValue ? $"{value.Value.ToString("0", CultureInfo.InvariantCulture)}ms" : "n/a";
 
     private static void PrintHelp()
     {

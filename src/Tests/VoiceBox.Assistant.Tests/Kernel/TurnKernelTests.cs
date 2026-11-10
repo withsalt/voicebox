@@ -160,9 +160,7 @@ public sealed class TurnKernelTests
             TurnId = 7,
         };
 
-        TurnDecision wrongTurn = TurnKernel.Reduce(
-            input,
-            TurnSignal.RecognitionCompleted(8, 22, "late"));
+        TurnDecision wrongTurn = TurnKernel.Reduce(input, TurnSignal.RecognitionCompleted(8, 22, "late"));
         TurnDecision outOfState = TurnKernel.Reduce(
             input with { ConversationState = AssistantState.Idle },
             TurnSignal.PlaybackCompleted(7, 23));
@@ -189,14 +187,10 @@ public sealed class TurnKernelTests
         AssertRejected(recognizing, TurnSignal.SpeechEnded(7, 0, TimeSpan.Zero, "asr-7"));
         AssertRejected(recognizing, TurnSignal.SpeechEnded(7, 17, TimeSpan.Zero, string.Empty));
 
-        TurnDecision accepted = TurnKernel.Reduce(
-            recognizing,
-            TurnSignal.SpeechEnded(7, 17, TimeSpan.Zero, "asr-7"));
+        TurnDecision accepted = TurnKernel.Reduce(recognizing, TurnSignal.SpeechEnded(7, 17, TimeSpan.Zero, "asr-7"));
 
         Assert.True(accepted.Accepted);
-        Assert.Equal(
-            "asr-7",
-            Assert.IsType<FinishRecognitionEffect>(Assert.Single(accepted.Effects)).SessionId);
+        Assert.Equal("asr-7", Assert.IsType<FinishRecognitionEffect>(Assert.Single(accepted.Effects)).SessionId);
     }
 
     [Fact]
@@ -268,12 +262,8 @@ public sealed class TurnKernelTests
         AssertRejected(idle, TurnSignal.SpeechStarted(0, 10));
         AssertRejected(idle, TurnSignal.SpeechStarted(-1, 10));
         AssertRejected(idle, TurnSignal.SpeechStarted(2, 10));
-        AssertRejected(
-            idle with { NextTurnOrdinal = 0 },
-            TurnSignal.SpeechStarted(0, 10));
-        AssertRejected(
-            listening with { NextTurnOrdinal = 8 },
-            TurnSignal.SpeechStarted(8, 10));
+        AssertRejected(idle with { NextTurnOrdinal = 0 }, TurnSignal.SpeechStarted(0, 10));
+        AssertRejected(listening with { NextTurnOrdinal = 8 }, TurnSignal.SpeechStarted(8, 10));
         TurnDecision started = TurnKernel.Reduce(idle, TurnSignal.SpeechStarted(1, 10));
         Assert.True(started.Accepted);
         Assert.Equal(2, started.Next.NextTurnOrdinal);
@@ -304,8 +294,7 @@ public sealed class TurnKernelTests
         TurnDecision playbackStarted = TurnKernel.Reduce(thinking, TurnSignal.PlaybackStarted(7, 17));
         Assert.True(playbackStarted.Accepted);
         Assert.Equal(AssistantState.Speaking, playbackStarted.Next.ConversationState);
-        PublishStateChangedEffect speakingEffect =
-            Assert.IsType<PublishStateChangedEffect>(Assert.Single(playbackStarted.Effects));
+        PublishStateChangedEffect speakingEffect = Assert.IsType<PublishStateChangedEffect>(Assert.Single(playbackStarted.Effects));
         Assert.Equal((AssistantState.Thinking, AssistantState.Speaking), (speakingEffect.From, speakingEffect.To));
         TurnDecision playbackContinues = TurnKernel.Reduce(speaking, TurnSignal.PlaybackStarted(7, 18));
         Assert.True(playbackContinues.Accepted);
@@ -316,9 +305,7 @@ public sealed class TurnKernelTests
         AssertRejected(speaking, TurnSignal.InterruptionRequested(7, 0));
         AssertRejected(speaking, TurnSignal.InterruptionRequested(7, 21));
         AssertRejected(speaking, TurnSignal.InterruptionRequested(8, 20));
-        AssertRejected(
-            speaking with { NextTurnOrdinal = 0 },
-            TurnSignal.InterruptionRequested(7, 0));
+        AssertRejected(speaking with { NextTurnOrdinal = 0 }, TurnSignal.InterruptionRequested(7, 0));
         // KWS disabled: the acoustic interrupt enters as NotRequired and stops playback at once,
         // exactly once, with no duck.
         TurnDecision interruptionRequested = TurnKernel.Reduce(speaking, TurnSignal.InterruptionRequested(7, 20));
@@ -337,9 +324,7 @@ public sealed class TurnKernelTests
             effect => Assert.Equal(AssistantEffectKind.CancelResponse, effect.Kind),
             effect => Assert.Equal(AssistantEffectKind.PrepareRecognition, effect.Kind));
         Assert.All(interruptionRequested.Effects.Take(3), effect => Assert.Equal(7, effect.TurnId));
-        TurnDecision interruptionHeard = TurnKernel.Reduce(
-            speaking,
-            TurnSignal.InterruptionRequested(7, 20, publishHeard: true));
+        TurnDecision interruptionHeard = TurnKernel.Reduce(speaking, TurnSignal.InterruptionRequested(7, 20, publishHeard: true));
         Assert.True(interruptionHeard.Accepted);
         Assert.Collection(
             interruptionHeard.Effects,
@@ -398,11 +383,7 @@ public sealed class TurnKernelTests
 
         TurnDecision restoredInterruption = TurnKernel.Reduce(
             validating,
-            TurnSignal.InterruptionResolved(
-                20,
-                22,
-                accepted: false,
-                restoreState: AssistantState.Thinking));
+            TurnSignal.InterruptionResolved(20, 22, accepted: false, restoreState: AssistantState.Thinking));
         Assert.True(restoredInterruption.Accepted);
         Assert.Collection(
             restoredInterruption.Effects,
@@ -413,9 +394,7 @@ public sealed class TurnKernelTests
                 Assert.Equal((AssistantState.Speaking, AssistantState.Thinking), (state.From, state.To));
             });
 
-        TurnDecision turnCompleted = TurnKernel.Reduce(
-            thinking,
-            TurnSignal.CancelRequested(7, 25, "turn-completed"));
+        TurnDecision turnCompleted = TurnKernel.Reduce(thinking, TurnSignal.CancelRequested(7, 25, "turn-completed"));
         Assert.True(turnCompleted.Accepted);
         Assert.Equal(AssistantState.Idle, turnCompleted.Next.ConversationState);
         Assert.Equal(ResponseLifecycle.Completed, turnCompleted.Next.ResponseLifecycle);
@@ -471,9 +450,7 @@ public sealed class TurnKernelTests
             TurnAuthorizationStatus.DeniedUnavailable,
         })
         {
-            TurnDecision deniedDecision = TurnKernel.Reduce(
-                pendingCandidate,
-                TurnSignal.AuthorizationResolved(20, 34, denied, 41));
+            TurnDecision deniedDecision = TurnKernel.Reduce(pendingCandidate, TurnSignal.AuthorizationResolved(20, 34, denied, 41));
             Assert.True(deniedDecision.Accepted);
             Assert.Equal(denied, deniedDecision.Next.Authorization);
             Assert.Empty(deniedDecision.Effects);
@@ -498,9 +475,7 @@ public sealed class TurnKernelTests
 
         foreach (TurnSnapshot state in new[] { listening, recognizing })
         {
-            TurnDecision recognitionFailed = TurnKernel.Reduce(
-                state,
-                TurnSignal.RecognitionFailed(7, 23, Failure()));
+            TurnDecision recognitionFailed = TurnKernel.Reduce(state, TurnSignal.RecognitionFailed(7, 23, Failure()));
             Assert.True(recognitionFailed.Accepted);
             Assert.Equal(AssistantState.Idle, recognitionFailed.Next.ConversationState);
             Assert.Equal(ResponseLifecycle.Failed, recognitionFailed.Next.ResponseLifecycle);
@@ -570,9 +545,7 @@ public sealed class TurnKernelTests
                 Assert.Equal("停一下", accepted.Text);
             });
 
-        TurnDecision recognition = TurnKernel.Reduce(
-            interruption.Next,
-            TurnSignal.RecognitionCompleted(20, 22, "停一下"));
+        TurnDecision recognition = TurnKernel.Reduce(interruption.Next, TurnSignal.RecognitionCompleted(20, 22, "停一下"));
 
         Assert.True(recognition.Accepted);
         Assert.Equal(AssistantState.Thinking, recognition.Next.ConversationState);
@@ -581,11 +554,8 @@ public sealed class TurnKernelTests
             effect => Assert.IsType<PublishUserSpokeEffect>(effect),
             effect => Assert.IsType<PublishStateChangedEffect>(effect),
             effect => Assert.IsType<GenerateResponseEffect>(effect));
-        PublishStateChangedEffect recognitionState =
-            Assert.IsType<PublishStateChangedEffect>(recognition.Effects[1]);
-        Assert.Equal(
-            (AssistantState.Listening, AssistantState.Thinking),
-            (recognitionState.From, recognitionState.To));
+        PublishStateChangedEffect recognitionState = Assert.IsType<PublishStateChangedEffect>(recognition.Effects[1]);
+        Assert.Equal((AssistantState.Listening, AssistantState.Thinking), (recognitionState.From, recognitionState.To));
     }
 
     [Fact]
@@ -638,9 +608,7 @@ public sealed class TurnKernelTests
             ResponseLifecycle = ResponseLifecycle.Generating,
         };
 
-        TurnDecision decision = TurnKernel.Reduce(
-            thinking,
-            TurnSignal.InterruptionRequested(7, 20));
+        TurnDecision decision = TurnKernel.Reduce(thinking, TurnSignal.InterruptionRequested(7, 20));
 
         Assert.True(decision.Accepted);
         Assert.Equal(AssistantState.Listening, decision.Next.ConversationState);
@@ -675,8 +643,7 @@ public sealed class TurnKernelTests
                 type.Namespace == "VoiceBox.Assistant.Kernel" &&
                 type.Name.EndsWith("Effect", StringComparison.Ordinal)),
             static type => type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
-                .Any(field => field.FieldType == typeof(CancellationTokenSource) ||
-                    typeof(Task).IsAssignableFrom(field.FieldType)));
+                .Any(field => field.FieldType == typeof(CancellationTokenSource) || typeof(Task).IsAssignableFrom(field.FieldType)));
     }
 
     [Fact]

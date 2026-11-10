@@ -24,13 +24,11 @@ public sealed class CustomSessionTests
     {
         await using var session = new MemorySession();
 
-        List<ConversationEvent> first = await CollectAsync(
-            session.StreamAsync(new ConversationRequest(Guid.NewGuid(), "我叫小明")));
+        List<ConversationEvent> first = await CollectAsync(session.StreamAsync(new ConversationRequest(Guid.NewGuid(), "我叫小明")));
         Assert.Equal("记住了:小明", Completed(first));
         Assert.Equal(2, first.OfType<ConversationTextDelta>().Count());
 
-        List<ConversationEvent> second = await CollectAsync(
-            session.StreamAsync(new ConversationRequest(Guid.NewGuid(), "我叫什么")));
+        List<ConversationEvent> second = await CollectAsync(session.StreamAsync(new ConversationRequest(Guid.NewGuid(), "我叫什么")));
         Assert.Equal("你叫小明", Completed(second));
 
         Assert.Equal("memory-session", session.ConversationId);
@@ -47,9 +45,7 @@ public sealed class CustomSessionTests
         cancellation.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => CollectAsync(
-            session.StreamAsync(
-                new ConversationRequest(Guid.NewGuid(), "取消"),
-                cancellation.Token),
+            session.StreamAsync(new ConversationRequest(Guid.NewGuid(), "取消"), cancellation.Token),
             cancellation.Token));
     }
 

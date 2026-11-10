@@ -146,8 +146,7 @@ namespace VoiceBox.DNR.DeepFilterNet.Internal
             featErb.CopyTo(_featErb);
             featSpec.CopyTo(_featSpec);
 
-            using IDisposableReadOnlyCollection<OrtValue> results =
-                _session.Run(_runOptions, _inputNames, _inputValues, _outputNames);
+            using IDisposableReadOnlyCollection<OrtValue> results = _session.Run(_runOptions, _inputNames, _inputValues, _outputNames);
 
             // outputs: [0]=lsnr, [1]=m, [2]=coefs, [3]=h1, [4]=erb_h1, [5]=df_h1
             ReadOnlySpan<float> lsnrSpan = results[0].GetTensorDataAsSpan<float>();

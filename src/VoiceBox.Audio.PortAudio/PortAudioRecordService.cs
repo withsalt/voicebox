@@ -263,11 +263,7 @@ namespace VoiceBox.Audio.PortAudio
             var dataChannel = _dataChannel;
             var cts = _cancellationTokenSource;
 
-            if (!_isRecording
-                || OnDataAvailable == null
-                || frameCount == 0
-                || dataChannel == null
-                || cts?.IsCancellationRequested == true)
+            if (!_isRecording || OnDataAvailable == null || frameCount == 0 || dataChannel == null || cts?.IsCancellationRequested == true)
             {
                 return StreamCallbackResult.Continue;
             }

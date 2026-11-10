@@ -107,14 +107,12 @@ public sealed class WetextProcessor : IDisposable
 
         if (!File.Exists(taggerPath))
         {
-            throw new FileNotFoundException(
-                $"Tagger FST file not found: {taggerPath}", taggerPath);
+            throw new FileNotFoundException($"Tagger FST file not found: {taggerPath}", taggerPath);
         }
 
         if (!File.Exists(verbalizerPath))
         {
-            throw new FileNotFoundException(
-                $"Verbalizer FST file not found: {verbalizerPath}", verbalizerPath);
+            throw new FileNotFoundException($"Verbalizer FST file not found: {verbalizerPath}", verbalizerPath);
         }
 
         NativeLibraryLoader.EnsureRegistered();
@@ -191,8 +189,7 @@ public sealed class WetextProcessor : IDisposable
             _handle.DangerousAddRef(ref addedRef);
             var resultPtr = call(_handle.DangerousGetHandle());
             return MarshalNativeString(resultPtr)
-                ?? throw new WetextProcessorException(
-                    "The native WeTextProcessing processor failed to process the input.");
+                ?? throw new WetextProcessorException("The native WeTextProcessing processor failed to process the input.");
         }
         finally
         {

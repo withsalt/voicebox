@@ -230,8 +230,7 @@ namespace VoiceBox.Wakeup.OpenWakeWord.Internal
             for (int j = 0; j < count; j++)
                 buffer[j] = src[srcOffset + j];
 
-            using var results = _melSession.Run(
-                new[] { NamedOnnxValue.CreateFromTensor(_melInputName, tensor) });
+            using var results = _melSession.Run(new[] { NamedOnnxValue.CreateFromTensor(_melInputName, tensor) });
 
             var outTensor = results.First(r => r.Name == _melOutputName).AsTensor<float>();
             float[] flat = outTensor.ToArray();
@@ -275,8 +274,7 @@ namespace VoiceBox.Wakeup.OpenWakeWord.Internal
             var dst = tensor.Buffer.Span;
             _melBuffer.AsSpan(srcStart, MelWindowFrames * MelBins).CopyTo(dst);
 
-            using var results = _embeddingSession.Run(
-                new[] { NamedOnnxValue.CreateFromTensor(_embeddingInputName, tensor) });
+            using var results = _embeddingSession.Run(new[] { NamedOnnxValue.CreateFromTensor(_embeddingInputName, tensor) });
 
             var outTensor = results.First(r => r.Name == _embeddingOutputName).AsTensor<float>();
             float[] flat = outTensor.ToArray();
@@ -306,15 +304,13 @@ namespace VoiceBox.Wakeup.OpenWakeWord.Internal
             var tensor = new DenseTensor<float>(new[] { batchSize, MelWindowFrames, MelBins, 1 });
             batchInput.AsSpan(0, batchSize * MelWindowFrames * MelBins).CopyTo(tensor.Buffer.Span);
 
-            using var results = _embeddingSession.Run(
-                new[] { NamedOnnxValue.CreateFromTensor(_embeddingInputName, tensor) });
+            using var results = _embeddingSession.Run(new[] { NamedOnnxValue.CreateFromTensor(_embeddingInputName, tensor) });
 
             var outTensor = results.First(r => r.Name == _embeddingOutputName).AsTensor<float>();
             float[] flat = outTensor.ToArray();
             int expected = batchSize * EmbeddingDim;
             if (flat.Length < expected)
-                throw new InvalidOperationException(
-                    $"Embedding model batch output length {flat.Length} < expected {expected}.");
+                throw new InvalidOperationException($"Embedding model batch output length {flat.Length} < expected {expected}.");
             if (flat.Length == expected) return flat;
             // 模型可能返回 [batch, 1, 1, 96]; flat 总长是 expected
             var trimmed = new float[expected];

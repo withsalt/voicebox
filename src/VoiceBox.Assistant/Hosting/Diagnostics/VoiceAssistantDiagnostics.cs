@@ -24,8 +24,7 @@ public sealed class VoiceAssistantDiagnostics
     {
         _assistant = assistant ?? throw new ArgumentNullException(nameof(assistant));
         _profileId = profileId ?? throw new ArgumentNullException(nameof(profileId));
-        _capabilityGraphHash = capabilityGraphHash
-            ?? throw new ArgumentNullException(nameof(capabilityGraphHash));
+        _capabilityGraphHash = capabilityGraphHash ?? throw new ArgumentNullException(nameof(capabilityGraphHash));
 
         var statuses = new Dictionary<string, string>(StringComparer.Ordinal)
         {

@@ -9,8 +9,7 @@ internal sealed class LocalToolProvider : IConversationToolProvider
     internal const string LocalServerAlias = "local";
 
     private readonly IReadOnlyList<IConversationTool> _tools;
-    private readonly Dictionary<string, IConversationTool> _toolsByName =
-        new(StringComparer.Ordinal);
+    private readonly Dictionary<string, IConversationTool> _toolsByName = new(StringComparer.Ordinal);
     private IReadOnlyList<ConversationToolDefinition> _definitions = Array.Empty<ConversationToolDefinition>();
     private int _disposed;
 
@@ -32,9 +31,7 @@ internal sealed class LocalToolProvider : IConversationToolProvider
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         cancellationToken.ThrowIfCancellationRequested();
         _definitions = Array.AsReadOnly(_tools
-            .Select(tool => new ConversationToolDefinition(
-                new ConversationToolId(LocalServerAlias, tool.Descriptor.Name),
-                tool.Descriptor))
+            .Select(tool => new ConversationToolDefinition(new ConversationToolId(LocalServerAlias, tool.Descriptor.Name), tool.Descriptor))
             .ToArray());
         return Task.CompletedTask;
     }
@@ -51,19 +48,12 @@ internal sealed class LocalToolProvider : IConversationToolProvider
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         if (!_toolsByName.TryGetValue(call.ToolId.ToolName, out IConversationTool? tool))
         {
-            return new ConversationToolResult(
-                call.CallId,
-                ConversationToolResultKind.ProtocolError,
-                ErrorCode: "unknown_local_tool");
+            return new ConversationToolResult(call.CallId, ConversationToolResultKind.ProtocolError, ErrorCode: "unknown_local_tool");
         }
 
-        using JsonDocument document = JsonDocument.Parse(
-            string.IsNullOrWhiteSpace(call.ArgumentsJson) ? "{}" : call.ArgumentsJson);
+        using JsonDocument document = JsonDocument.Parse(string.IsNullOrWhiteSpace(call.ArgumentsJson) ? "{}" : call.ArgumentsJson);
         ConversationToolExecutionResult result = await tool.ExecuteAsync(
-            new ConversationToolInvocation(
-                call.CallId,
-                document.RootElement,
-                call.ExecutionPreference),
+            new ConversationToolInvocation(call.CallId, document.RootElement, call.ExecutionPreference),
             cancellationToken).ConfigureAwait(false);
 
         if (!string.IsNullOrWhiteSpace(result.StructuredContentJson))

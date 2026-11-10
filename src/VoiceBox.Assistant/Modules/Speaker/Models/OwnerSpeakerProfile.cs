@@ -52,8 +52,7 @@ internal sealed record OwnerSpeakerProfile(
             variants.Add(variant);
         if (variants.Count > MaxVariants)
         {
-            throw new InvalidOperationException(
-                $"Owner speaker profile cannot hold more than {MaxVariants} front-end variants.");
+            throw new InvalidOperationException($"Owner speaker profile cannot hold more than {MaxVariants} front-end variants.");
         }
 
         return this with { Variants = variants.AsReadOnly() };

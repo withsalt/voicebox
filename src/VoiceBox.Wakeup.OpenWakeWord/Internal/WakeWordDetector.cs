@@ -57,15 +57,12 @@ namespace VoiceBox.Wakeup.OpenWakeWord.Internal
                 frames = dims[1];
             }
             if (frames <= 0)
-                throw new InvalidOperationException(
-                    $"Cannot determine feature frame count for wakeword model '{definition.Keyword}'.");
+                throw new InvalidOperationException($"Cannot determine feature frame count for wakeword model '{definition.Keyword}'.");
             _featureFrames = frames;
 
             _outputName = _session.OutputMetadata.Keys.First();
 
-            _debounceSampleSpan = definition.DebounceMs > 0
-                ? (long)Math.Ceiling(definition.DebounceMs / 1000.0 * sampleRate)
-                : 0;
+            _debounceSampleSpan = definition.DebounceMs > 0 ? (long)Math.Ceiling(definition.DebounceMs / 1000.0 * sampleRate) : 0;
         }
 
         /// <summary>
@@ -94,8 +91,7 @@ namespace VoiceBox.Wakeup.OpenWakeWord.Internal
             var tensor = new DenseTensor<float>(new[] { 1, _featureFrames, EmbeddingDim });
             features.Slice(0, _featureFrames * EmbeddingDim).CopyTo(tensor.Buffer.Span);
 
-            using var results = _session.Run(
-                new[] { NamedOnnxValue.CreateFromTensor(_inputName, tensor) });
+            using var results = _session.Run(new[] { NamedOnnxValue.CreateFromTensor(_inputName, tensor) });
 
             var output = results.First(r => r.Name == _outputName).AsTensor<float>();
             // 输出可能为 [1, 1, 1] / [1, 1] / [1] — 都取第一个元素即可
@@ -120,8 +116,7 @@ namespace VoiceBox.Wakeup.OpenWakeWord.Internal
             }
 
             // debounce: 距上次触发 < debounce 间隔则抑制
-            if (_lastTriggerSampleIndex != long.MinValue &&
-                processedSampleIndex - _lastTriggerSampleIndex < _debounceSampleSpan)
+            if (_lastTriggerSampleIndex != long.MinValue && processedSampleIndex - _lastTriggerSampleIndex < _debounceSampleSpan)
             {
                 return false;
             }

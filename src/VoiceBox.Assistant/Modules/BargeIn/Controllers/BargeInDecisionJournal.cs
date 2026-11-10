@@ -26,9 +26,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Controllers
         public BargeInTriggerSource GetTriggerSource(long turnId)
         {
             lock (_triggerSourceLock)
-                return _triggerSources.TryGetValue(turnId, out BargeInTriggerSource source)
-                    ? source
-                    : BargeInTriggerSource.Vad;
+                return _triggerSources.TryGetValue(turnId, out BargeInTriggerSource source) ? source : BargeInTriggerSource.Vad;
         }
 
         public void ForgetTriggerSource(long turnId)

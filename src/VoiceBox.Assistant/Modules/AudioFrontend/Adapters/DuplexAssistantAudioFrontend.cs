@@ -7,10 +7,7 @@ using VoiceBox.Core.Services.AudioService.Models;
 namespace VoiceBox.Assistant.Modules.AudioFrontend.Adapters;
 
 /// <summary>Adapts one duplex provider to the typed capture/playback ports.</summary>
-internal sealed class DuplexAssistantAudioFrontend :
-    IAssistantAudioFrontend,
-    IRenderReferenceSource,
-    IProcessedCaptureSource
+internal sealed class DuplexAssistantAudioFrontend : IAssistantAudioFrontend, IRenderReferenceSource, IProcessedCaptureSource
 {
     private readonly IAudioDuplexService _audio;
     private readonly DuplexInputPort _input;

@@ -123,13 +123,7 @@ internal sealed class SpeakerSpeechPrefetchGate
         for (int i = 0; i < count; i++)
         {
             long end = ends[i];
-            var job = new SpeakerInferenceJob(
-                epoch,
-                end - _windows.WindowSamples,
-                end,
-                priority,
-                default,
-                IsPrefetch: true);
+            var job = new SpeakerInferenceJob(epoch, end - _windows.WindowSamples, end, priority, default, IsPrefetch: true);
             switch (_scheduler.TrySchedule(in job))
             {
                 case SpeakerScheduleResult.Queued:

@@ -101,16 +101,11 @@ internal sealed class VoiceAssistantBenchmarkProbe
         {
             if (detector.HasObservation)
             {
-                _peakNearEndProbability = Math.Max(
-                    _peakNearEndProbability,
-                    detector.LatestProbability);
-                _peakSmoothedNearEndProbability = Math.Max(
-                    _peakSmoothedNearEndProbability,
-                    detector.LatestSmoothedProbability);
+                _peakNearEndProbability = Math.Max(_peakNearEndProbability, detector.LatestProbability);
+                _peakSmoothedNearEndProbability = Math.Max(_peakSmoothedNearEndProbability, detector.LatestSmoothedProbability);
             }
 
-            if (startupGuardActive ||
-                decision.PeakScoreDurationMs < _highestDecision.PeakScoreDurationMs)
+            if (startupGuardActive || decision.PeakScoreDurationMs < _highestDecision.PeakScoreDurationMs)
             {
                 return;
             }

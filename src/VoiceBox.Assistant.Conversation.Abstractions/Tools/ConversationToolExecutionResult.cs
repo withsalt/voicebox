@@ -22,6 +22,5 @@ public sealed class ConversationToolExecutionResult
     public static ConversationToolExecutionResult Success(string content, string? structuredContentJson = null) =>
         new(true, content, structuredContentJson, null);
 
-    public static ConversationToolExecutionResult Error(string errorCode, string content) =>
-        new(false, content, null, errorCode);
+    public static ConversationToolExecutionResult Error(string errorCode, string content) => new(false, content, null, errorCode);
 }

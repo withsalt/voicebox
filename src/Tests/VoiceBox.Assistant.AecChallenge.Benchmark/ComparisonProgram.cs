@@ -150,14 +150,10 @@ internal static class ComparisonProgram
         string output = ResolveOutput(options.Output, options.CandidateEvidence!);
         Directory.CreateDirectory(Path.GetDirectoryName(output)!);
         File.WriteAllText(output, JsonSerializer.Serialize(report, OutputJsonOptions), new UTF8Encoding(false));
-        string csv = string.IsNullOrWhiteSpace(options.Csv)
-            ? Path.ChangeExtension(output, ".csv")
-            : Path.GetFullPath(options.Csv!);
+        string csv = string.IsNullOrWhiteSpace(options.Csv) ? Path.ChangeExtension(output, ".csv") : Path.GetFullPath(options.Csv!);
         WriteCsv(report, csv);
         PrintSummary(report, output, csv);
-        return options.Enforce && !string.Equals(report.Status, nameof(ComparisonStatus.Passed), StringComparison.Ordinal)
-            ? 1
-            : 0;
+        return options.Enforce && !string.Equals(report.Status, nameof(ComparisonStatus.Passed), StringComparison.Ordinal) ? 1 : 0;
     }
 
     internal static ComparisonReport Compare(
@@ -213,9 +209,7 @@ internal static class ComparisonProgram
 
         ComparisonStatus status = findings.Any(f => f.Kind == "incomparable")
             ? ComparisonStatus.Incomparable
-            : findings.Count > 0
-                ? ComparisonStatus.Regressed
-                : ComparisonStatus.Passed;
+            : findings.Count > 0 ? ComparisonStatus.Regressed : ComparisonStatus.Passed;
         return new ComparisonReport
         {
             SchemaVersion = ComparisonSchemaVersion,
@@ -291,10 +285,8 @@ internal static class ComparisonProgram
     internal static bool AcousticOnlyCommandIdentityIgnoresUnexecutedE2eForSelfTest()
     {
         const string root = "C:\\evidence";
-        const string acoustic =
-            "dotnet run -- --dataset D:\\dataset --suite prepared-phase1 --callback-samples 256 --output A";
-        const string e2e =
-            "dotnet run -- --mode e2e --dataset D:\\dataset --suite release-e2e --output E";
+        const string acoustic = "dotnet run -- --dataset D:\\dataset --suite prepared-phase1 --callback-samples 256 --output A";
+        const string e2e = "dotnet run -- --mode e2e --dataset D:\\dataset --suite release-e2e --output E";
         return string.Equals(
             EvidenceSnapshot.NormalizeCommandText(acoustic + "\n" + e2e, root, includeE2e: false),
             EvidenceSnapshot.NormalizeCommandText(acoustic, root, includeE2e: false),
@@ -333,8 +325,7 @@ internal static class ComparisonProgram
         EvaluationReport candidateAcoustic,
         ICollection<ComparisonFinding> findings)
     {
-        CompareEqual("acoustic", "suite", baselineAcoustic.Suite, candidateAcoustic.Suite,
-            "Acoustic suite differs.", findings);
+        CompareEqual("acoustic", "suite", baselineAcoustic.Suite, candidateAcoustic.Suite, "Acoustic suite differs.", findings);
         CompareEqual("acoustic", "dataset", baselineAcoustic.DatasetRoot, candidateAcoustic.DatasetRoot,
             "Acoustic dataset differs.", findings);
         CompareJsonFields(
@@ -347,8 +338,7 @@ internal static class ComparisonProgram
         EndToEndReport candidateE2e,
         ICollection<ComparisonFinding> findings)
     {
-        CompareEqual("e2e", "dataset-id", baselineE2e.DatasetId, candidateE2e.DatasetId,
-            "End-to-end dataset id differs.", findings);
+        CompareEqual("e2e", "dataset-id", baselineE2e.DatasetId, candidateE2e.DatasetId, "End-to-end dataset id differs.", findings);
         CompareEqual("e2e", "execution-provider", baselineE2e.ExecutionProvider,
             candidateE2e.ExecutionProvider, "ASR/VAD execution provider differs.", findings);
         CompareEqual("e2e", "tts-execution-provider", baselineE2e.TtsExecutionProvider,
@@ -612,8 +602,7 @@ internal static class ComparisonProgram
             value.Status, value.Detail));
         if (value.Status == "regressed")
         {
-            findings.Add(new ComparisonFinding(
-                "regression", scope, key, metric, Format(baseline), Format(candidate), value.Detail));
+            findings.Add(new ComparisonFinding("regression", scope, key, metric, Format(baseline), Format(candidate), value.Detail));
         }
     }
 
@@ -628,19 +617,11 @@ internal static class ComparisonProgram
         if (!double.IsFinite(baseline.Value) || !double.IsFinite(candidate.Value))
             return new("incomparable", "Metric contains a non-finite value.");
         const double epsilon = 1e-12;
-        bool worse = higherIsBetter
-            ? candidate.Value + epsilon < baseline.Value
-            : candidate.Value > baseline.Value + epsilon;
-        bool better = higherIsBetter
-            ? candidate.Value > baseline.Value + epsilon
-            : candidate.Value + epsilon < baseline.Value;
+        bool worse = higherIsBetter ? candidate.Value + epsilon < baseline.Value : candidate.Value > baseline.Value + epsilon;
+        bool better = higherIsBetter ? candidate.Value > baseline.Value + epsilon : candidate.Value + epsilon < baseline.Value;
         return worse
-            ? new("regressed", higherIsBetter
-                ? "Candidate is lower than baseline."
-                : "Candidate is higher than baseline.")
-            : better
-                ? new("improved", "Candidate improved over baseline.")
-                : new("same", "Candidate matches baseline within tolerance.");
+            ? new("regressed", higherIsBetter ? "Candidate is lower than baseline." : "Candidate is higher than baseline.")
+            : better ? new("improved", "Candidate improved over baseline.") : new("same", "Candidate matches baseline within tolerance.");
     }
 
     private static void CompareGates(
@@ -686,8 +667,7 @@ internal static class ComparisonProgram
     {
         if (regression)
         {
-            findings.Add(new ComparisonFinding(
-                "regression", scope, key, metric, baseline.ToString(), candidate.ToString(), detail));
+            findings.Add(new ComparisonFinding("regression", scope, key, metric, baseline.ToString(), candidate.ToString(), detail));
         }
     }
 
@@ -798,8 +778,7 @@ internal static class ComparisonProgram
         var result = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
         foreach (JsonElement item in document.RootElement.EnumerateArray())
         {
-            string id = item.GetProperty("id").GetString()
-                ?? throw new InvalidDataException("A benchmark case has a null id.");
+            string id = item.GetProperty("id").GetString() ?? throw new InvalidDataException("A benchmark case has a null id.");
             if (!result.TryAdd(id, item.Clone()))
                 throw new InvalidDataException($"Duplicate benchmark case id '{id}'.");
         }
@@ -1045,10 +1024,7 @@ internal static class ComparisonProgram
             if (!Directory.Exists(fullRoot))
                 throw new DirectoryNotFoundException($"Comparison evidence directory not found: {fullRoot}");
             string manifestHash = ReadHash(fullRoot, "dataset-manifest.sha256.txt", "dataset-manifest.json");
-            string commands = NormalizeCommandText(
-                ReadRequired(fullRoot, "commands.txt"),
-                fullRoot,
-                includeE2eCommand);
+            string commands = NormalizeCommandText(ReadRequired(fullRoot, "commands.txt"), fullRoot, includeE2eCommand);
             string backends = NormalizeSharedBackends(ReadRequired(fullRoot, "execution-backends.txt"));
             string environment = ReadEnvironment(fullRoot);
             Dictionary<string, string> models = ReadModelHashes(fullRoot);
@@ -1068,8 +1044,7 @@ internal static class ComparisonProgram
                 string path = Path.Combine(root, name);
                 if (File.Exists(path))
                 {
-                    parts.Add(
-                        $"[{name}]\n{NormalizeEnvironmentEvidence(name, File.ReadAllText(path))}");
+                    parts.Add($"[{name}]\n{NormalizeEnvironmentEvidence(name, File.ReadAllText(path))}");
                 }
             }
             if (parts.Count == 0)
@@ -1089,9 +1064,7 @@ internal static class ComparisonProgram
                 return string.Join(
                     "\n",
                     normalized.Split('\n', StringSplitOptions.RemoveEmptyEntries)
-                        .Where(line => !line.TrimStart().StartsWith(
-                            "LastBootUpTime",
-                            StringComparison.OrdinalIgnoreCase))
+                        .Where(line => !line.TrimStart().StartsWith("LastBootUpTime", StringComparison.OrdinalIgnoreCase))
                         .Select(line => line.TrimEnd()));
             }
             return normalized;
@@ -1113,10 +1086,8 @@ internal static class ComparisonProgram
 
             string[] stableLines = value
                 .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Where(line => fieldPrefixes.Any(prefix =>
-                                   line.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) ||
-                               entryPrefixes.Any(prefix =>
-                                   line.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) ||
+                .Where(line => fieldPrefixes.Any(prefix => line.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) ||
+                               entryPrefixes.Any(prefix => line.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) ||
                                Regex.IsMatch(line, @"^\d+\.\d+\.\d+\s+\["))
                 .ToArray();
             if (stableLines.Length == 0)
@@ -1230,10 +1201,7 @@ internal static class ComparisonProgram
                                    (line.Contains("--dataset", StringComparison.Ordinal) &&
                                     line.Contains("--callback-samples 256", StringComparison.Ordinal)))
                     .OrderBy(line => line, StringComparer.Ordinal));
-            normalized = Regex.Replace(
-                normalized,
-                "(?i)(--output\\s+|--csv\\s+|-o\\s+)([^\\s`]+)",
-                "$1<output>");
+            normalized = Regex.Replace(normalized, "(?i)(--output\\s+|--csv\\s+|-o\\s+)([^\\s`]+)", "$1<output>");
             return normalized;
         }
 

@@ -54,9 +54,7 @@ namespace VoiceBox.Audio.Common.Resampling
             int alignedLength = sourceFrames * sourceChannels;
 
             // 完全一致 (格式相同且无需裁剪) → 直接拷贝到 output。
-            if (_resamplers is null &&
-                sourceChannels == _targetChannels &&
-                alignedLength == samples.Length)
+            if (_resamplers is null && sourceChannels == _targetChannels && alignedLength == samples.Length)
             {
                 EnsureCapacity(ref output, samples.Length);
                 samples.CopyTo(output);
@@ -122,9 +120,7 @@ namespace VoiceBox.Audio.Common.Resampling
             _sourceChannels = sourceChannels;
 
             DisposeResamplers();
-            _resamplers = sourceSampleRate == _targetSampleRate
-                ? null
-                : BuildResamplers(sourceSampleRate);
+            _resamplers = sourceSampleRate == _targetSampleRate ? null : BuildResamplers(sourceSampleRate);
 
             _channelInput = new float[_targetChannels][];
             _channelOutput = new float[_targetChannels][];

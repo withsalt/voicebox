@@ -22,9 +22,7 @@ internal sealed class CallbackLogEventSink : ILogEventSink
         string message = logEvent.RenderMessage(CultureInfo.InvariantCulture);
         if (logEvent.Exception is not null)
         {
-            message = string.IsNullOrEmpty(message)
-                ? logEvent.Exception.ToString()
-                : message + Environment.NewLine + logEvent.Exception;
+            message = string.IsNullOrEmpty(message) ? logEvent.Exception.ToString() : message + Environment.NewLine + logEvent.Exception;
         }
 
         if (message.Length > 0)

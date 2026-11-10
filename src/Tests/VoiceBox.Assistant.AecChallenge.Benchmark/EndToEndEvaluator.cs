@@ -39,8 +39,7 @@ internal sealed class EndToEndEvaluator : IDisposable
     private readonly EndToEndOptions _options;
     private readonly EvaluationDatasetManifest _manifest;
     private readonly VoxCPMTTSService _synthesizer;
-    private readonly Dictionary<string, TtsResult> _ttsCache =
-        new(StringComparer.Ordinal);
+    private readonly Dictionary<string, TtsResult> _ttsCache = new(StringComparer.Ordinal);
     private readonly BenchmarkTimeProvider _timeProvider = new();
     private readonly WebRtcApmService _mainAec;
     private readonly BenchmarkClockedAecService _clockedMainAec;
@@ -85,11 +84,7 @@ internal sealed class EndToEndEvaluator : IDisposable
             // and AEC residual during quiet passages and can form a feedback loop.
             EnableAgc2 = false,
         }));
-        _audio = new BenchmarkDuplexAudioIngress(
-            _mainAec,
-            _timeProvider,
-            EvaluationOptions.TargetSampleRate,
-            channels: 1)
+        _audio = new BenchmarkDuplexAudioIngress(_mainAec, _timeProvider, EvaluationOptions.TargetSampleRate, channels: 1)
         {
             // Match the shipping duplex configuration: SuggestedLatency 0.020 in every
             // VoiceAssistantDemo plan. Without this the harness lets a queue clear silence the
@@ -115,13 +110,10 @@ internal sealed class EndToEndEvaluator : IDisposable
         };
         if (!string.IsNullOrWhiteSpace(options.VadModelDirectory))
         {
-            vadOptions.VADModelPath = Path.Combine(
-                options.VadModelDirectory,
-                "fireredvad_stream_vad_with_cache.onnx");
+            vadOptions.VADModelPath = Path.Combine(options.VadModelDirectory, "fireredvad_stream_vad_with_cache.onnx");
             vadOptions.CMVNPath = Path.Combine(options.VadModelDirectory, "cmvn.ark");
         }
-        _vad = new BootstrapThenRealVadService(
-            new FireRedVoiceActivityDetectService(Options.Create(vadOptions)));
+        _vad = new BootstrapThenRealVadService(new FireRedVoiceActivityDetectService(Options.Create(vadOptions)));
         IASRService realAsr = new Qwen3ASRService(
             Options.Create(new Qwen3ASROptions
             {
@@ -152,9 +144,7 @@ internal sealed class EndToEndEvaluator : IDisposable
     public async Task<EndToEndCaseResult> EvaluateAsync(PreparedEndToEndCase testCase, CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        TtsResult ttsResult = await GetTtsAsync(
-            testCase.PromptText,
-            cancellationToken).ConfigureAwait(false);
+        TtsResult ttsResult = await GetTtsAsync(testCase.PromptText, cancellationToken).ConfigureAwait(false);
         _tts.BeginCase(ttsResult);
         _llm.SetResponse(testCase.PromptText);
         _asr.BeginCase();
@@ -162,21 +152,14 @@ internal sealed class EndToEndEvaluator : IDisposable
 
         PreparedSpeechAsset? speech = testCase.SpeechAssetId is null
             ? null
-            : _manifest.SpeechAssets.Single(
-                item => string.Equals(
-                    item.Id,
-                    testCase.SpeechAssetId,
-                    StringComparison.Ordinal));
+            : _manifest.SpeechAssets.Single(item => string.Equals(item.Id, testCase.SpeechAssetId, StringComparison.Ordinal));
         WaveAudio? nearSpeech = speech is null
             ? null
             : WaveAudioLoader.LoadMono(
                 EvaluationDatasetManifest.ResolvePath(_options.DatasetRoot, speech.AudioPath),
                 EvaluationOptions.TargetSampleRate);
-        PreparedRirAsset echoRir = _manifest.RirAssets.Single(
-            item => item.Id == testCase.EchoRirId);
-        PreparedRirAsset? nearRir = testCase.NearRirId is null
-            ? null
-            : _manifest.RirAssets.Single(item => item.Id == testCase.NearRirId);
+        PreparedRirAsset echoRir = _manifest.RirAssets.Single(item => item.Id == testCase.EchoRirId);
+        PreparedRirAsset? nearRir = testCase.NearRirId is null ? null : _manifest.RirAssets.Single(item => item.Id == testCase.NearRirId);
         PreparedNoiseAsset? noise = testCase.NoiseAssetId is null
             ? null
             : _manifest.NoiseAssets.Single(item => item.Id == testCase.NoiseAssetId);
@@ -208,16 +191,10 @@ internal sealed class EndToEndEvaluator : IDisposable
             .UseConversation(conversation)
             .UseSpeechSynthesis(_tts)
             .AddAcousticDiagnostics(_clockedMainAec)
-            .AddBargeIn(
-                assistantOptions.BargeIn,
-                new WebRtcAec3DelayEstimatorFactory());
-        using var assistant = builder.BuildForBenchmark(
-            _timeProvider,
-            probe,
-            playbackBargeInDetectorFactory: null);
+            .AddBargeIn(assistantOptions.BargeIn, new WebRtcAec3DelayEstimatorFactory());
+        using var assistant = builder.BuildForBenchmark(_timeProvider, probe, playbackBargeInDetectorFactory: null);
 
-        var terminal = new TaskCompletionSource<BargeInValidationEventArgs>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        var terminal = new TaskCompletionSource<BargeInValidationEventArgs>(TaskCreationOptions.RunContinuationsAsynchronously);
         BargeInValidationEventArgs? heard = null;
         BargeInValidationEventArgs? timeoutAcceptance = null;
         string? recognizedFromUserSpoke = null;
@@ -232,14 +209,10 @@ internal sealed class EndToEndEvaluator : IDisposable
             await assistant.StartAsync(cancellationToken).ConfigureAwait(false);
             _vad.EmitBootstrapUtterance();
             await WaitUntilAsync(
-                () => assistant.State == AssistantState.Speaking &&
-                      _audio.IsPlaying &&
-                      _audio.CapturedPlaybackSampleCount > 0,
+                () => assistant.State == AssistantState.Speaking && _audio.IsPlaying && _audio.CapturedPlaybackSampleCount > 0,
                 cancellationToken).ConfigureAwait(false);
 
-            float[] capturedRender = await WaitForRenderAsync(
-                ttsResult,
-                cancellationToken).ConfigureAwait(false);
+            float[] capturedRender = await WaitForRenderAsync(ttsResult, cancellationToken).ConfigureAwait(false);
             // The scene resolves onset truth itself, so it needs the same eligibility rules the
             // product applies: nothing may be expected before the playback startup guard elapses or
             // before the minimum continuous-speech duration is available.
@@ -269,50 +242,32 @@ internal sealed class EndToEndEvaluator : IDisposable
                 var echoFrame = new float[callbackSamples];
                 _audio.ReadPlayback(renderFrame);
                 ApplyRenderGap(testCase, offset, renderFrame);
-                scene.Process(
-                    offset,
-                    renderFrame,
-                    microphoneFrame,
-                    echoFrame);
+                scene.Process(offset, renderFrame, microphoneFrame, echoFrame);
 
                 if (_audio.PlaybackClearCapturePosition >= 0)
                 {
                     double echoRms = Rms(echoFrame.AsSpan(0, length));
-                    quietEchoSamplesAfterClear = echoRms < 0.001
-                        ? quietEchoSamplesAfterClear + length
-                        : 0;
-                    if (quietEchoSamplesAfterClear >=
-                        EvaluationOptions.TargetSampleRate * 60 / 1000)
+                    quietEchoSamplesAfterClear = echoRms < 0.001 ? quietEchoSamplesAfterClear + length : 0;
+                    if (quietEchoSamplesAfterClear >= EvaluationOptions.TargetSampleRate * 60 / 1000)
                     {
                         _audio.MarkPlaybackAudibleStop(offset + length);
                     }
                 }
 
-                TimeSpan callbackPeriod = TimeSpan.FromSeconds(
-                    (double)length / EvaluationOptions.TargetSampleRate);
+                TimeSpan callbackPeriod = TimeSpan.FromSeconds((double)length / EvaluationOptions.TargetSampleRate);
                 _timeProvider.AdvanceSamples(length, EvaluationOptions.TargetSampleRate, 1);
                 // A validation timeout can become due inside the clock advance. Give the single
                 // non-audio consumer its budget before the capture cursor moves on.
-                await AllowInterruptionDecisionToSettleAsync(
-                    probe,
-                    callbackPeriod,
-                    cancellationToken).ConfigureAwait(false);
+                await AllowInterruptionDecisionToSettleAsync(probe, callbackPeriod, cancellationToken).ConfigureAwait(false);
                 // The event callbacks execute synchronously from PushFrame, so the local
                 // sample cursor is an exact virtual-audio timestamp for Heard.
                 _audio.PushFrame(
                     microphoneFrame.AsSpan(0, length),
                     renderFrame.AsSpan(0, length),
-                    renderStatus: HasRenderGapOverlap(testCase, offset, length)
-                        ? RenderTimelineStatus.Gap
-                        : RenderTimelineStatus.Valid);
-                await AllowInterruptionDecisionToSettleAsync(
-                    probe,
-                    callbackPeriod,
-                    cancellationToken).ConfigureAwait(false);
+                    renderStatus: HasRenderGapOverlap(testCase, offset, length) ? RenderTimelineStatus.Gap : RenderTimelineStatus.Valid);
+                await AllowInterruptionDecisionToSettleAsync(probe, callbackPeriod, cancellationToken).ConfigureAwait(false);
                 _audio.CommitPlaybackFrame();
-                if (terminal.Task.IsCompleted &&
-                    _audio.PlaybackClearCapturePosition >= 0 &&
-                    _audio.PlaybackAudibleStopCapturePosition >= 0)
+                if (terminal.Task.IsCompleted && _audio.PlaybackClearCapturePosition >= 0 && _audio.PlaybackAudibleStopCapturePosition >= 0)
                 {
                     break;
                 }
@@ -322,15 +277,13 @@ internal sealed class EndToEndEvaluator : IDisposable
 
             if (heard is not null && !terminal.Task.IsCompleted)
             {
-                using var timeout = new CancellationTokenSource(
-                    TimeSpan.FromSeconds(_options.AsrTimeoutSeconds));
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(_options.AsrTimeoutSeconds));
                 try
                 {
                     while (!terminal.Task.IsCompleted)
                     {
                         if (timeoutAcceptance is not null &&
-                            (recognizedFromUserSpoke is not null ||
-                             assistant.State == AssistantState.Idle))
+                            (recognizedFromUserSpoke is not null || assistant.State == AssistantState.Idle))
                         {
                             // Empty/filler/echo ASR results after the stop do not emit a second
                             // validation event: the accepted stop is the only validation event
@@ -356,16 +309,10 @@ internal sealed class EndToEndEvaluator : IDisposable
                 }
             }
 
-            BargeInValidationEventArgs? outcome =
-                terminal.Task.IsCompletedSuccessfully ? terminal.Task.Result : null;
+            BargeInValidationEventArgs? outcome = terminal.Task.IsCompletedSuccessfully ? terminal.Task.Result : null;
             BargeInValidationEventArgs? decision = heard ?? outcome;
-            string recognized = recognizedFromUserSpoke ??
-                                outcome?.Text ??
-                                string.Empty;
-            string reference = PreparedSpeechTranscript.ResolvePreparedReference(
-                _manifest,
-                testCase,
-                speech);
+            string recognized = recognizedFromUserSpoke ?? outcome?.Text ?? string.Empty;
+            string reference = PreparedSpeechTranscript.ResolvePreparedReference(_manifest, testCase, speech);
             (int errors, int referenceCharacters, double? cer, bool exact) =
                 ChineseTextMetrics.Compare(reference, recognized);
             // Latency reference.
@@ -382,9 +329,7 @@ internal sealed class EndToEndEvaluator : IDisposable
                 : scene.NearEndSpeechOnsetSample;
 
             static double? LatencyMsFrom(long reference, long observed)
-                => reference >= 0 && observed >= 0
-                    ? (observed - reference) * 1000.0 / EvaluationOptions.TargetSampleRate
-                    : null;
+                => reference >= 0 && observed >= 0 ? (observed - reference) * 1000.0 / EvaluationOptions.TargetSampleRate : null;
 
             // Firing before ANY near-end energy exists is a genuine false trigger regardless of the
             // eligibility rules, so this stays anchored to the acoustic onset.
@@ -393,19 +338,13 @@ internal sealed class EndToEndEvaluator : IDisposable
                                      heardSample >= 0 &&
                                      scene.NearEndSpeechOnsetSample >= 0 &&
                                      heardSample < scene.NearEndSpeechOnsetSample;
-            double? heardLatency = testCase.OracleExpectHeard &&
-                                   heard is not null &&
-                                   heardSample >= 0
+            double? heardLatency = testCase.OracleExpectHeard && heard is not null && heardSample >= 0
                 ? LatencyMsFrom(latencyReference, heardSample)
                 : null;
-            double? heardLatencyFromSpeechOnset = testCase.OracleExpectHeard &&
-                                                  heard is not null &&
-                                                  heardSample >= 0
+            double? heardLatencyFromSpeechOnset = testCase.OracleExpectHeard && heard is not null && heardSample >= 0
                 ? LatencyMsFrom(scene.NearEndSpeechOnsetSample, heardSample)
                 : null;
-            double? duckLatency = testCase.OracleExpectDuck
-                ? LatencyMsFrom(latencyReference, _audio.PlaybackDuckCapturePosition)
-                : null;
+            double? duckLatency = testCase.OracleExpectDuck ? LatencyMsFrom(latencyReference, _audio.PlaybackDuckCapturePosition) : null;
             double? stopLatency = testCase.OracleExpectPlaybackStop
                 ? LatencyMsFrom(latencyReference, _audio.PlaybackClearCapturePosition)
                 : null;
@@ -429,16 +368,14 @@ internal sealed class EndToEndEvaluator : IDisposable
                 testCase.OracleExpectPlaybackStop &&
                 _audio.PlaybackDrainCompleteCapturePosition >= 0 &&
                 _audio.PlaybackClearCapturePosition >= 0
-                    ? (_audio.PlaybackDrainCompleteCapturePosition -
-                       _audio.PlaybackClearCapturePosition) *
+                    ? (_audio.PlaybackDrainCompleteCapturePosition - _audio.PlaybackClearCapturePosition) *
                       1000.0 / EvaluationOptions.TargetSampleRate
                     : null;
             double? audibleTailLatency =
                 testCase.OracleExpectPlaybackStop &&
                 _audio.PlaybackAudibleStopCapturePosition >= 0 &&
                 _audio.PlaybackClearCapturePosition >= 0
-                    ? (_audio.PlaybackAudibleStopCapturePosition -
-                       _audio.PlaybackClearCapturePosition) *
+                    ? (_audio.PlaybackAudibleStopCapturePosition - _audio.PlaybackClearCapturePosition) *
                       1000.0 / EvaluationOptions.TargetSampleRate
                     : null;
 
@@ -467,11 +404,9 @@ internal sealed class EndToEndEvaluator : IDisposable
                 PlaybackDucked = _audio.PlaybackDuckCapturePosition >= 0,
                 PlaybackStopped = _audio.PlaybackClearCapturePosition >= 0,
                 PlaybackResumed = _audio.PlaybackResumeCapturePosition >= 0,
-                ValidationReason = outcome?.Reason ??
-                                  (asrTimedOut ? "asr-timeout" : null),
+                ValidationReason = outcome?.Reason ?? (asrTimedOut ? "asr-timeout" : null),
                 CallbackSamples = callbackSamples,
-                AudioDurationMs = scene.TotalSamples * 1000.0 /
-                                  EvaluationOptions.TargetSampleRate,
+                AudioDurationMs = scene.TotalSamples * 1000.0 / EvaluationOptions.TargetSampleRate,
                 HeardLatencyMs = heardLatency,
                 HeardLatencyFromSpeechOnsetMs = heardLatencyFromSpeechOnset,
                 DuckLatencyMs = duckLatency,
@@ -481,15 +416,12 @@ internal sealed class EndToEndEvaluator : IDisposable
                 AudibleTailLatencyMs = audibleTailLatency,
                 DrainCompleteLatencyMs = drainCompleteLatency,
                 DeviceTailLatencyMs = deviceTailLatency,
-                NearEndInsertionOnsetMs = scene.NearEndOnsetSample * 1000.0 /
-                                          EvaluationOptions.TargetSampleRate,
+                NearEndInsertionOnsetMs = scene.NearEndOnsetSample * 1000.0 / EvaluationOptions.TargetSampleRate,
                 NearEndSpeechOnsetMs = scene.NearEndSpeechOnsetSample >= 0
-                    ? scene.NearEndSpeechOnsetSample * 1000.0 /
-                      EvaluationOptions.TargetSampleRate
+                    ? scene.NearEndSpeechOnsetSample * 1000.0 / EvaluationOptions.TargetSampleRate
                     : null,
                 NearEndEligibleOnsetMs = scene.NearEndEligibleOnsetSample >= 0
-                    ? scene.NearEndEligibleOnsetSample * 1000.0 /
-                      EvaluationOptions.TargetSampleRate
+                    ? scene.NearEndEligibleOnsetSample * 1000.0 / EvaluationOptions.TargetSampleRate
                     : null,
                 NearEndEligible = scene.NearEndEligibleOnsetSample >= 0,
                 NearEndActiveDurationMs = scene.NearEndActivity.ActiveDurationMs,
@@ -539,8 +471,7 @@ internal sealed class EndToEndEvaluator : IDisposable
             AssistantFaultedEventArgs? fatalFault = Volatile.Read(ref assistantFault);
             string error = fatalFault is null
                 ? ex.ToString()
-                : $"{fatalFault.Component}: {fatalFault.Exception}" +
-                  $"{Environment.NewLine}Subsequent exception: {ex}";
+                : $"{fatalFault.Component}: {fatalFault.Exception}" + $"{Environment.NewLine}Subsequent exception: {ex}";
             DumpControlTraceIfRequested(testCase, probe);
             return new EndToEndCaseResult
             {
@@ -557,10 +488,7 @@ internal sealed class EndToEndEvaluator : IDisposable
                 ExpectAccepted = testCase.OracleExpectAccepted,
                 ExpectPlaybackStop = testCase.OracleExpectPlaybackStop,
                 ExpectPlaybackResume = testCase.OracleExpectPlaybackResume,
-                ReferenceText = PreparedSpeechTranscript.ResolvePreparedReference(
-                    _manifest,
-                    testCase,
-                    speech),
+                ReferenceText = PreparedSpeechTranscript.ResolvePreparedReference(_manifest, testCase, speech),
                 RecognizedText = string.Empty,
                 Heard = heard is not null,
                 EarlyFalseTrigger = false,
@@ -647,10 +575,7 @@ internal sealed class EndToEndEvaluator : IDisposable
 
         static void DumpControlTraceIfRequested(PreparedEndToEndCase testCase, VoiceAssistantBenchmarkProbe probe)
         {
-            if (!string.Equals(
-                    Environment.GetEnvironmentVariable("VOICEBOX_BENCHMARK_TRACE"),
-                    "1",
-                    StringComparison.Ordinal))
+            if (!string.Equals(Environment.GetEnvironmentVariable("VOICEBOX_BENCHMARK_TRACE"), "1", StringComparison.Ordinal))
             {
                 return;
             }
@@ -715,16 +640,12 @@ internal sealed class EndToEndEvaluator : IDisposable
 
     private static void ApplyRenderGap(PreparedEndToEndCase testCase, int frameOffset, Span<float> render)
     {
-        if (testCase.RenderGapStartMs is not int gapStartMs ||
-            testCase.RenderGapDurationMs <= 0)
+        if (testCase.RenderGapStartMs is not int gapStartMs || testCase.RenderGapDurationMs <= 0)
         {
             return;
         }
-        int gapStart = checked(
-            gapStartMs * EvaluationOptions.TargetSampleRate / 1000);
-        int gapEnd = checked(
-            gapStart +
-            testCase.RenderGapDurationMs * EvaluationOptions.TargetSampleRate / 1000);
+        int gapStart = checked(gapStartMs * EvaluationOptions.TargetSampleRate / 1000);
+        int gapEnd = checked(gapStart + testCase.RenderGapDurationMs * EvaluationOptions.TargetSampleRate / 1000);
         int localStart = Math.Max(0, gapStart - frameOffset);
         int localEnd = Math.Min(render.Length, gapEnd - frameOffset);
         if (localEnd > localStart)
@@ -733,16 +654,12 @@ internal sealed class EndToEndEvaluator : IDisposable
 
     private static bool HasRenderGapOverlap(PreparedEndToEndCase testCase, int frameOffset, int frameLength)
     {
-        if (testCase.RenderGapStartMs is not int gapStartMs ||
-            testCase.RenderGapDurationMs <= 0)
+        if (testCase.RenderGapStartMs is not int gapStartMs || testCase.RenderGapDurationMs <= 0)
         {
             return false;
         }
-        int gapStart = checked(
-            gapStartMs * EvaluationOptions.TargetSampleRate / 1000);
-        int gapEnd = checked(
-            gapStart +
-            testCase.RenderGapDurationMs * EvaluationOptions.TargetSampleRate / 1000);
+        int gapStart = checked(gapStartMs * EvaluationOptions.TargetSampleRate / 1000);
+        int gapEnd = checked(gapStart + testCase.RenderGapDurationMs * EvaluationOptions.TargetSampleRate / 1000);
         int frameEnd = checked(frameOffset + frameLength);
         return frameOffset < gapEnd && frameEnd > gapStart;
     }

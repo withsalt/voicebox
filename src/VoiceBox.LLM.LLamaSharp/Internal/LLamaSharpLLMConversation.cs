@@ -174,8 +174,7 @@ namespace VoiceBox.LLM.LLamaSharp.Internal
             try
             {
                 bool enableThinking = options?.EnableThinking ?? false;
-                string prompt = LlamaPromptBuilder.Build(
-                    _session, messages, addGenerationPrompt: true, enableThinking);
+                string prompt = LlamaPromptBuilder.Build(_session, messages, addGenerationPrompt: true, enableThinking);
 
                 var context = _context ??= _session.CreateConversationContext();
                 LLamaToken[] newIds = LlamaTokenUtils.TokenizePrompt(_session.Weights, prompt, _session.Encoding);
@@ -205,8 +204,7 @@ namespace VoiceBox.LLM.LLamaSharp.Internal
                     context.NativeHandle.MemoryClear(true);
                     _cachedIds.Clear();
                     reuse = 0;
-                    _logger.LogDebug(
-                        "LLamaSharp session: partial cache rollback unsupported; rebuilding full prompt.");
+                    _logger.LogDebug("LLamaSharp session: partial cache rollback unsupported; rebuilding full prompt.");
                 }
                 else
                 {

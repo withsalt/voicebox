@@ -42,8 +42,7 @@ internal static class SpeakerProfileMatcher
     /// <summary>Threshold comparisons use <c>&gt;=</c> everywhere; boundary tests pin this.</summary>
     public static bool IsMatch(in SpeakerWindowScore score, float threshold)
         => score.IsFinite &&
-           (score.Top2MeanScore >= threshold ||
-            (score.CentroidScore >= threshold && score.BestPrototypeScore >= threshold));
+           (score.Top2MeanScore >= threshold || (score.CentroidScore >= threshold && score.BestPrototypeScore >= threshold));
 
     public static bool IsHighConfidence(in SpeakerWindowScore score, float threshold, float highConfidenceThreshold)
         => score.IsFinite &&

@@ -30,9 +30,7 @@ internal sealed record EvaluationDatasetManifest
             throw new FileNotFoundException("Prepared evaluation dataset manifest not found.", path);
 
         EvaluationDatasetManifest manifest =
-            JsonSerializer.Deserialize<EvaluationDatasetManifest>(
-                File.ReadAllText(path),
-                JsonOptions)
+            JsonSerializer.Deserialize<EvaluationDatasetManifest>(File.ReadAllText(path), JsonOptions)
             ?? throw new InvalidDataException($"Invalid prepared dataset manifest: {path}");
         if (manifest.SchemaVersion is not (CurrentSchemaVersion or LegacySchemaVersion))
         {
@@ -49,8 +47,7 @@ internal sealed record EvaluationDatasetManifest
     {
         if (SchemaVersion != CurrentSchemaVersion)
         {
-            throw new InvalidOperationException(
-                $"New manifests must use schema '{CurrentSchemaVersion}'.");
+            throw new InvalidOperationException($"New manifests must use schema '{CurrentSchemaVersion}'.");
         }
         ValidateV2();
         string path = Path.Combine(Path.GetFullPath(root), FileName);
@@ -60,12 +57,8 @@ internal sealed record EvaluationDatasetManifest
     public static string ResolvePath(string root, string relativePath)
     {
         string fullRoot = Path.GetFullPath(root);
-        string fullPath = Path.GetFullPath(
-            relativePath.Replace('/', Path.DirectorySeparatorChar),
-            fullRoot);
-        string boundary = fullRoot.EndsWith(Path.DirectorySeparatorChar)
-            ? fullRoot
-            : fullRoot + Path.DirectorySeparatorChar;
+        string fullPath = Path.GetFullPath(relativePath.Replace('/', Path.DirectorySeparatorChar), fullRoot);
+        string boundary = fullRoot.EndsWith(Path.DirectorySeparatorChar) ? fullRoot : fullRoot + Path.DirectorySeparatorChar;
         if (!fullPath.StartsWith(boundary, StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException($"Manifest path escapes the dataset root: {relativePath}");
         return fullPath;
@@ -73,12 +66,9 @@ internal sealed record EvaluationDatasetManifest
 
     private void ValidateV2()
     {
-        if (Generator is null ||
-            string.IsNullOrWhiteSpace(Generator.Commit) ||
-            Generator.Options.Count == 0)
+        if (Generator is null || string.IsNullOrWhiteSpace(Generator.Commit) || Generator.Options.Count == 0)
         {
-            throw new InvalidDataException(
-                "Schema 2.0 requires generator commit and options metadata.");
+            throw new InvalidDataException("Schema 2.0 requires generator commit and options metadata.");
         }
 
         foreach (PreparedAcousticCase item in AcousticCases)
@@ -86,22 +76,17 @@ internal sealed record EvaluationDatasetManifest
             if (string.IsNullOrWhiteSpace(item.Split) ||
                 string.IsNullOrWhiteSpace(item.MicrophoneSha256) ||
                 string.IsNullOrWhiteSpace(item.RenderSha256) ||
-                (item.NearEndReferencePath is not null &&
-                 string.IsNullOrWhiteSpace(item.NearEndReferenceSha256)))
+                (item.NearEndReferencePath is not null && string.IsNullOrWhiteSpace(item.NearEndReferenceSha256)))
             {
-                throw new InvalidDataException(
-                    $"Acoustic case '{item.Id}' is missing v2 split or source hashes.");
+                throw new InvalidDataException($"Acoustic case '{item.Id}' is missing v2 split or source hashes.");
             }
         }
 
         foreach (PreparedSpeechAsset item in SpeechAssets)
         {
-            if (string.IsNullOrWhiteSpace(item.Split) ||
-                string.IsNullOrWhiteSpace(item.AudioSha256) ||
-                item.DurationMs <= 0)
+            if (string.IsNullOrWhiteSpace(item.Split) || string.IsNullOrWhiteSpace(item.AudioSha256) || item.DurationMs <= 0)
             {
-                throw new InvalidDataException(
-                    $"Speech asset '{item.Id}' is missing v2 split, duration, or source hash.");
+                throw new InvalidDataException($"Speech asset '{item.Id}' is missing v2 split, duration, or source hash.");
             }
         }
 
@@ -113,8 +98,7 @@ internal sealed record EvaluationDatasetManifest
                 string.IsNullOrWhiteSpace(item.SpeakerSetupId) ||
                 string.IsNullOrWhiteSpace(item.AudioSha256))
             {
-                throw new InvalidDataException(
-                    $"RIR asset '{item.Id}' is missing v2 geometry or source hash.");
+                throw new InvalidDataException($"RIR asset '{item.Id}' is missing v2 geometry or source hash.");
             }
         }
 
@@ -122,8 +106,7 @@ internal sealed record EvaluationDatasetManifest
         {
             if (string.IsNullOrWhiteSpace(item.AudioSha256))
             {
-                throw new InvalidDataException(
-                    $"Noise asset '{item.Id}' is missing its v2 source hash.");
+                throw new InvalidDataException($"Noise asset '{item.Id}' is missing its v2 source hash.");
             }
         }
 
@@ -131,8 +114,7 @@ internal sealed record EvaluationDatasetManifest
         {
             if (string.IsNullOrWhiteSpace(item.AudioSha256))
             {
-                throw new InvalidDataException(
-                    $"BUT LibriSpeech asset '{item.Id}' is missing its v2 source hash.");
+                throw new InvalidDataException($"BUT LibriSpeech asset '{item.Id}' is missing its v2 source hash.");
             }
         }
 
@@ -149,8 +131,7 @@ internal sealed record EvaluationDatasetManifest
                 string.IsNullOrWhiteSpace(item.GeometryId) ||
                 string.IsNullOrWhiteSpace(item.SpeakerPolicy))
             {
-                throw new InvalidDataException(
-                    $"End-to-end case '{item.Id}' is missing v2 layered truth or grouping metadata.");
+                throw new InvalidDataException($"End-to-end case '{item.Id}' is missing v2 layered truth or grouping metadata.");
             }
         }
     }

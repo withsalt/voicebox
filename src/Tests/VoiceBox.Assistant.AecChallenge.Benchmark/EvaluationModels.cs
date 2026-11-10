@@ -80,8 +80,7 @@ internal sealed record OracleActivity(
     double ActiveDurationMs,
     double ThresholdRms)
 {
-    public static OracleActivity Unavailable { get; } =
-        new(false, false, -1, -1, -1, 0, 0);
+    public static OracleActivity Unavailable { get; } = new(false, false, -1, -1, -1, 0, 0);
 }
 
 internal sealed record CaseResult

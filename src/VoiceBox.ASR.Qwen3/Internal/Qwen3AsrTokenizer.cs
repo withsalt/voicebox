@@ -40,8 +40,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
             string vocab = Path.Combine(modelDir, "vocab.json");
             string merges = Path.Combine(modelDir, "merges.txt");
             if (!File.Exists(vocab) || !File.Exists(merges))
-                throw new FileNotFoundException(
-                    "vocab.json / merges.txt not found in model directory.", vocab);
+                throw new FileNotFoundException("vocab.json / merges.txt not found in model directory.", vocab);
 
             var specials = LoadSpecialTokens(modelDir);
             var pre = new RegexPreTokenizer(Gpt2Regex, specials);
@@ -55,9 +54,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
             _tokenizer = BpeTokenizer.Create(options);
 
             string templatePath = Path.Combine(modelDir, "chat_template.json");
-            ChatTemplate = File.Exists(templatePath)
-                ? ParseChatTemplate(File.ReadAllText(templatePath))
-                : string.Empty;
+            ChatTemplate = File.Exists(templatePath) ? ParseChatTemplate(File.ReadAllText(templatePath)) : string.Empty;
         }
 
         /// <summary>
@@ -85,9 +82,7 @@ namespace VoiceBox.ASR.Qwen3.Internal
             if (!string.IsNullOrEmpty(prefixText))
                 sb.Append(prefixText);
 
-            var ids = _tokenizer.EncodeToIds(sb.ToString(),
-                considerPreTokenization: true,
-                considerNormalization: false);
+            var ids = _tokenizer.EncodeToIds(sb.ToString(), considerPreTokenization: true, considerNormalization: false);
             return ids.ToArray();
         }
 

@@ -50,9 +50,7 @@ internal sealed class SpeechCandidateOwner : ICandidatePreRollSource, ISpeechCan
         {
             lock (_lock)
             {
-                return _detector.IsCandidateActive &&
-                    _kind == SpeechCandidateKind.BargeIn &&
-                    _detector.IsConfirmationMet;
+                return _detector.IsCandidateActive && _kind == SpeechCandidateKind.BargeIn && _detector.IsConfirmationMet;
             }
         }
     }
@@ -84,8 +82,7 @@ internal sealed class SpeechCandidateOwner : ICandidatePreRollSource, ISpeechCan
                 return false;
 
             // 监听候选只在 Idle 态有意义; 状态被外部转走 (如 Stop) 后直接废弃。
-            if (_kind == SpeechCandidateKind.Listening &&
-                _turnState.ConversationState != AssistantState.Idle)
+            if (_kind == SpeechCandidateKind.Listening && _turnState.ConversationState != AssistantState.Idle)
             {
                 ClearLocked();
                 return true;
@@ -103,9 +100,7 @@ internal sealed class SpeechCandidateOwner : ICandidatePreRollSource, ISpeechCan
     {
         lock (_lock)
         {
-            if (!_detector.IsCandidateActive ||
-                _kind != SpeechCandidateKind.BargeIn ||
-                !_detector.IsConfirmationMet)
+            if (!_detector.IsCandidateActive || _kind != SpeechCandidateKind.BargeIn || !_detector.IsConfirmationMet)
             {
                 return default;
             }
@@ -162,9 +157,7 @@ internal sealed class SpeechCandidateOwner : ICandidatePreRollSource, ISpeechCan
     {
         lock (_lock)
         {
-            return _detector.IsCandidateActive &&
-                _kind == expectedKind &&
-                _detector.IsConfirmationMet;
+            return _detector.IsCandidateActive && _kind == expectedKind && _detector.IsConfirmationMet;
         }
     }
 
@@ -173,9 +166,7 @@ internal sealed class SpeechCandidateOwner : ICandidatePreRollSource, ISpeechCan
     {
         lock (_lock)
         {
-            if (!_detector.IsCandidateActive ||
-                _kind != expectedKind ||
-                !_detector.IsConfirmationMet)
+            if (!_detector.IsCandidateActive || _kind != expectedKind || !_detector.IsConfirmationMet)
             {
                 return false;
             }
@@ -228,42 +219,24 @@ internal sealed class SpeechCandidateOwner : ICandidatePreRollSource, ISpeechCan
             if (_listeningGate is { } gate)
             {
                 BeginCandidateLocked(gate, SpeechCandidateKind.Listening);
-                return new SpeechStartedDecision(
-                    SpeechStartedDecisionKind.ListeningCandidate,
-                    state,
-                    state,
-                    activeTurnId);
+                return new SpeechStartedDecision(SpeechStartedDecisionKind.ListeningCandidate, state, state, activeTurnId);
             }
 
             if (proposedTurnId <= 0)
                 throw new ArgumentOutOfRangeException(nameof(proposedTurnId));
 
-            return new SpeechStartedDecision(
-                SpeechStartedDecisionKind.StartListening,
-                state,
-                AssistantState.Listening,
-                proposedTurnId);
+            return new SpeechStartedDecision(SpeechStartedDecisionKind.StartListening, state, AssistantState.Listening, proposedTurnId);
         }
 
         // Speaking authorization belongs to the render-aware DTD window; main VAD events
         // must never create an independent playback interruption candidate.
-        if (enableBargeIn &&
-            state != AssistantState.Speaking &&
-            _policy.TryGetSettings(state, out BargeInConfirmationSettings settings))
+        if (enableBargeIn && state != AssistantState.Speaking && _policy.TryGetSettings(state, out BargeInConfirmationSettings settings))
         {
             BeginCandidateLocked(settings, SpeechCandidateKind.BargeIn);
-            return new SpeechStartedDecision(
-                SpeechStartedDecisionKind.BargeInCandidate,
-                state,
-                state,
-                activeTurnId);
+            return new SpeechStartedDecision(SpeechStartedDecisionKind.BargeInCandidate, state, state, activeTurnId);
         }
 
-        return new SpeechStartedDecision(
-            SpeechStartedDecisionKind.Ignored,
-            state,
-            state,
-            activeTurnId);
+        return new SpeechStartedDecision(SpeechStartedDecisionKind.Ignored, state, state, activeTurnId);
     }
 
     private SpeakingDecision ResolveConfirmedLocked(BargeInSpeakerGateStatus speakerGateStatus, long proposedTurnId)
@@ -275,8 +248,7 @@ internal sealed class SpeechCandidateOwner : ICandidatePreRollSource, ISpeechCan
         BargeInConfirmationSettings confirmationSettings = _detector.CurrentSettings;
         AssistantState state = _turnState.ConversationState;
 
-        if (_kind == SpeechCandidateKind.BargeIn &&
-            speakerGateStatus != BargeInSpeakerGateStatus.Match)
+        if (_kind == SpeechCandidateKind.BargeIn && speakerGateStatus != BargeInSpeakerGateStatus.Match)
         {
             if (speakerGateStatus == BargeInSpeakerGateStatus.Pending)
                 return default;

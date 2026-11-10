@@ -17,9 +17,7 @@ public sealed class AssistantTurnObservationStoreMutationTests
         Assert.False(idle.IsSpeakingWithoutPendingCandidate);
 
         var listeningDetector = new BargeInDetector(1, 0, 1000, 1);
-        var listening = new AssistantTurnObservationStoreHarness(
-            listeningDetector,
-            new BargeInConfirmationSettings(1, 0));
+        var listening = new AssistantTurnObservationStoreHarness(listeningDetector, new BargeInConfirmationSettings(1, 0));
         Assert.Equal(SpeechStartedDecisionKind.ListeningCandidate, listening.OnSpeechStarted(enableBargeIn: true).Kind);
         Assert.True(listeningDetector.AddAudio([0.5f]));
         Assert.False(listening.IsBargeInAwaitingSpeaker);
@@ -32,9 +30,7 @@ public sealed class AssistantTurnObservationStoreMutationTests
         Assert.Equal(SpeechStartedDecisionKind.BargeInCandidate, barge.OnSpeechStarted(enableBargeIn: true).Kind);
         Assert.False(barge.IsBargeInAwaitingSpeaker);
         Assert.Equal(SpeakingDecisionKind.None, barge.ResolveBargeInSpeakerGate(BargeInSpeakerGateStatus.Match).Kind);
-        Assert.Equal(
-            SpeechEndedDecisionKind.DiscardedBargeInCandidate,
-            barge.OnSpeechEnded(TimeSpan.FromMilliseconds(10)).Kind);
+        Assert.Equal(SpeechEndedDecisionKind.DiscardedBargeInCandidate, barge.OnSpeechEnded(TimeSpan.FromMilliseconds(10)).Kind);
     }
 
     [Fact]
@@ -99,12 +95,7 @@ public sealed class AssistantTurnObservationStoreMutationTests
 
         SpeakingDecision pendingAudio = turns.OnSpeaking([0.5f]);
         Assert.Equal(SpeakingDecisionKind.None, pendingAudio.Kind);
-        Assert.True(turns.TryAttachStartedAsrSession(
-            validation.TurnId,
-            "validation-asr",
-            _ => { },
-            out bool endedBeforeAttach,
-            out _));
+        Assert.True(turns.TryAttachStartedAsrSession(validation.TurnId, "validation-asr", _ => { }, out bool endedBeforeAttach, out _));
         Assert.False(endedBeforeAttach);
 
         SpeakingDecision feed = turns.OnSpeaking([0.6f]);
@@ -254,8 +245,7 @@ public sealed class AssistantTurnObservationStoreMutationTests
     [Fact]
     public void TwoPhaseInterruptionObservations_DoNotMutateBeforeCommit()
     {
-        var turns = new AssistantTurnObservationStoreHarness(
-            new BargeInDetector(0, 0, 16000, 1));
+        var turns = new AssistantTurnObservationStoreHarness(new BargeInDetector(0, 0, 16000, 1));
         using var response = new CancellationTokenSource();
         turns.SynchronizeKernelState(AssistantState.Speaking, 1);
         Assert.True(turns.TrySetResponseCtsForTurn(1, response));
@@ -271,10 +261,7 @@ public sealed class AssistantTurnObservationStoreMutationTests
         Assert.True(turns.CommitConfirmedBargeIn(confirmation, [[0.4f, 0.5f]]));
         Assert.True(turns.IsValidatingBargeInTurn(2));
 
-        Assert.True(turns.TryObserveValidatedBargeInRejection(
-            2,
-            out AssistantState oldState,
-            out AssistantState restoredState));
+        Assert.True(turns.TryObserveValidatedBargeInRejection(2, out AssistantState oldState, out AssistantState restoredState));
         Assert.Equal(AssistantState.Speaking, oldState);
         Assert.Equal(AssistantState.Speaking, restoredState);
         Assert.True(turns.IsValidatingBargeInTurn(2));
@@ -712,48 +699,27 @@ public sealed class AssistantTurnObservationStoreMutationTests
     [Fact]
     public void KernelOwnedTurnProposals_RejectZeroAndNegativeIdentities()
     {
-        var immediate = new AssistantTurnObservationStoreHarness(
-            new BargeInDetector(0, 0, 1000, 1));
-        Assert.Throws<ArgumentOutOfRangeException>(
-            () => immediate.OnSpeechStarted(enableBargeIn: false, proposedTurnId: 0));
-        Assert.Throws<ArgumentOutOfRangeException>(
-            () => immediate.OnSpeechStarted(enableBargeIn: false, proposedTurnId: -1));
+        var immediate = new AssistantTurnObservationStoreHarness(new BargeInDetector(0, 0, 1000, 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => immediate.OnSpeechStarted(enableBargeIn: false, proposedTurnId: 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => immediate.OnSpeechStarted(enableBargeIn: false, proposedTurnId: -1));
 
         var listening = new AssistantTurnObservationStoreHarness(
             new BargeInDetector(100, 0, 1000, 1),
             new BargeInConfirmationSettings(100, 0));
-        Assert.Equal(
-            SpeechStartedDecisionKind.ListeningCandidate,
-            listening.OnSpeechStarted(enableBargeIn: false, proposedTurnId: 1).Kind);
+        Assert.Equal(SpeechStartedDecisionKind.ListeningCandidate, listening.OnSpeechStarted(enableBargeIn: false, proposedTurnId: 1).Kind);
         Assert.Throws<ArgumentOutOfRangeException>(
-            () => listening.OnSpeaking(
-                Enumerable.Repeat(0.1f, 100).ToArray(),
-                BargeInSpeakerGateStatus.Match,
-                proposedTurnId: 0));
+            () => listening.OnSpeaking(Enumerable.Repeat(0.1f, 100).ToArray(), BargeInSpeakerGateStatus.Match, proposedTurnId: 0));
 
-        var thinking = new AssistantTurnObservationStoreHarness(
-            new BargeInDetector(0, 0, 1000, 1));
+        var thinking = new AssistantTurnObservationStoreHarness(new BargeInDetector(0, 0, 1000, 1));
         thinking.SynchronizeKernelState(AssistantState.Thinking, 1);
-        Assert.Equal(
-            SpeechStartedDecisionKind.BargeInCandidate,
-            thinking.OnSpeechStarted(enableBargeIn: true, proposedTurnId: 2).Kind);
-        Assert.Throws<ArgumentOutOfRangeException>(
-            () => thinking.OnSpeaking(
-                [0.1f],
-                BargeInSpeakerGateStatus.Match,
-                proposedTurnId: 0));
+        Assert.Equal(SpeechStartedDecisionKind.BargeInCandidate, thinking.OnSpeechStarted(enableBargeIn: true, proposedTurnId: 2).Kind);
+        Assert.Throws<ArgumentOutOfRangeException>(() => thinking.OnSpeaking([0.1f], BargeInSpeakerGateStatus.Match, proposedTurnId: 0));
 
-        var speaking = new AssistantTurnObservationStoreHarness(
-            new BargeInDetector(0, 0, 1000, 1));
+        var speaking = new AssistantTurnObservationStoreHarness(new BargeInDetector(0, 0, 1000, 1));
         speaking.SynchronizeKernelState(AssistantState.Speaking, 1);
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            speaking.TryObserveBargeInFromNearEndWindow(
-                [[0.1f]],
-                ConfirmedWindow(),
-                proposedTurnId: 0,
-                out _));
-        Assert.Throws<ArgumentOutOfRangeException>(
-            () => speaking.TryObserveWakeupInterrupt(operationOwnerTurnId: 0, out _));
+            speaking.TryObserveBargeInFromNearEndWindow([[0.1f]], ConfirmedWindow(), proposedTurnId: 0, out _));
+        Assert.Throws<ArgumentOutOfRangeException>(() => speaking.TryObserveWakeupInterrupt(operationOwnerTurnId: 0, out _));
     }
 
     private static AssistantTurnObservationStoreHarness CreateTurns()

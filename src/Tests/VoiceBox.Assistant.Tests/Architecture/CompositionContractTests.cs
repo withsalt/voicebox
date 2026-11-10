@@ -35,9 +35,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assembly assembly = typeof(VoiceAssistant).Assembly;
 
         Type builder = Require(assembly.GetType("VoiceBox.Assistant.Composition.Builder.VoiceAssistantBuilder"));
-        MethodInfo createBuilder = Require(typeof(VoiceAssistant).GetMethod(
-            "CreateBuilder",
-            BindingFlags.Public | BindingFlags.Static));
+        MethodInfo createBuilder = Require(typeof(VoiceAssistant).GetMethod("CreateBuilder", BindingFlags.Public | BindingFlags.Static));
 
         Assert.Equal(builder, createBuilder.ReturnType);
     }
@@ -205,8 +203,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     {
         var services = TestServices.Create();
         VoiceAssistantBuilder incomplete = VoiceAssistant.CreateBuilder().UseAudio(services.Audio);
-        AssistantCompositionException missing =
-            Assert.Throws<AssistantCompositionException>(incomplete.Build);
+        AssistantCompositionException missing = Assert.Throws<AssistantCompositionException>(incomplete.Build);
         Assert.Equal("VBX-COMP-001", missing.Code);
         Assert.Equal(0, services.Audio.StartCount);
 
@@ -223,11 +220,8 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseSpeechRecognition(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts)
-            .AddBargeIn(
-                new VoiceAssistantBargeInOptions(),
-                TestAcousticPathDelayEstimatorFactory.Instance);
-        AssistantCompositionException incompatible =
-            Assert.Throws<AssistantCompositionException>(splitBargeIn.Build);
+            .AddBargeIn(new VoiceAssistantBargeInOptions(), TestAcousticPathDelayEstimatorFactory.Instance);
+        AssistantCompositionException incompatible = Assert.Throws<AssistantCompositionException>(splitBargeIn.Build);
         Assert.Equal("VBX-COMP-008", incompatible.Code);
         Assert.Equal(0, record.StartCount);
         Assert.Equal(0, playback.StartCount);
@@ -362,8 +356,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             StopException = new InvalidOperationException("playback stop"),
         };
         using var stopAdapter = new SplitAssistantAudioFrontend(stopRecord, stopPlayback);
-        InvalidOperationException playbackFailure = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => stopAdapter.StopAsync());
+        InvalidOperationException playbackFailure = await Assert.ThrowsAsync<InvalidOperationException>(() => stopAdapter.StopAsync());
         Assert.Equal("playback stop", playbackFailure.Message);
         Assert.Equal(1, stopRecord.StopCount);
 
@@ -387,8 +380,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             StopException = new InvalidOperationException("playback stop"),
         };
         using var bothFailureAdapter = new SplitAssistantAudioFrontend(bothFailureRecord, bothFailurePlayback);
-        InvalidOperationException firstFailure = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => bothFailureAdapter.StopAsync());
+        InvalidOperationException firstFailure = await Assert.ThrowsAsync<InvalidOperationException>(() => bothFailureAdapter.StopAsync());
         Assert.Equal("record stop", firstFailure.Message);
     }
 
@@ -405,8 +397,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseSpeechRecognition(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
             .UseSpeechSynthesis(services.Tts);
-        AssistantCompositionException format =
-            Assert.Throws<AssistantCompositionException>(incompatibleAudio.Build);
+        AssistantCompositionException format = Assert.Throws<AssistantCompositionException>(incompatibleAudio.Build);
         Assert.Equal("VBX-COMP-006", format.Code);
 
         VoiceAssistantBuilder builderIgnoringWakeupEnableFlag = VoiceAssistant.CreateBuilder()
@@ -430,8 +421,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 Speaker = { Confirmation = { Enable = true } },
             })
             .AddWakeup(services.Wakeup);
-        AssistantCompositionException keywordOnly =
-            Assert.Throws<AssistantCompositionException>(builderWithWakeupOnly.Build);
+        AssistantCompositionException keywordOnly = Assert.Throws<AssistantCompositionException>(builderWithWakeupOnly.Build);
         Assert.Equal("VBX-COMP-004", keywordOnly.Code);
         Assert.Equal(0, services.Audio.StartCount);
         Assert.Equal(0, record.StartCount);
@@ -464,8 +454,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.False(splitFrontend.SupportsRenderReference);
         Assert.False(splitFrontend.SupportsProcessedCaptureTimeline);
 
-        Assert.Null(typeof(VoiceAssistant).Assembly.GetType(
-            "VoiceBox.Assistant.Audio.SplitAudioDuplexAdapter"));
+        Assert.Null(typeof(VoiceAssistant).Assembly.GetType("VoiceBox.Assistant.Audio.SplitAudioDuplexAdapter"));
         Assert.DoesNotContain(
             typeof(IAssistantAudioFrontend).GetProperties(),
             property => property.PropertyType == typeof(IAudioDuplexService) ||
@@ -524,26 +513,17 @@ public sealed partial class VoiceAssistantLifecycleTests
     {
         var services = TestServices.Create();
         VoiceAssistantBargeInOptions bargeIn = new();
-        var duplicateBargeIn = VoiceAssistant.CreateBuilder().AddBargeIn(
-            bargeIn,
-            TestAcousticPathDelayEstimatorFactory.Instance);
-        AssertCompositionCode(
-            "VBX-COMP-002",
-            () => duplicateBargeIn.AddBargeIn(
-                bargeIn,
-                TestAcousticPathDelayEstimatorFactory.Instance));
+        var duplicateBargeIn = VoiceAssistant.CreateBuilder().AddBargeIn(bargeIn, TestAcousticPathDelayEstimatorFactory.Instance);
+        AssertCompositionCode("VBX-COMP-002", () => duplicateBargeIn.AddBargeIn(bargeIn, TestAcousticPathDelayEstimatorFactory.Instance));
 
         var afterWakeup = VoiceAssistant.CreateBuilder().AddWakeup(services.Wakeup);
         AssertCompositionCode("VBX-COMP-002", () => afterWakeup.UseOptions(new VoiceAssistantOptions()));
         var afterSpeaker = VoiceAssistant.CreateBuilder().AddSpeakerVerification(services.Speaker);
         AssertCompositionCode("VBX-COMP-002", () => afterSpeaker.UseOptions(new VoiceAssistantOptions()));
-        var afterBargeIn = VoiceAssistant.CreateBuilder().AddBargeIn(
-            bargeIn,
-            TestAcousticPathDelayEstimatorFactory.Instance);
+        var afterBargeIn = VoiceAssistant.CreateBuilder().AddBargeIn(bargeIn, TestAcousticPathDelayEstimatorFactory.Instance);
         AssertCompositionCode("VBX-COMP-002", () => afterBargeIn.UseOptions(new VoiceAssistantOptions()));
 
-        VoiceAssistantBuilder duplicateRecognition = VoiceAssistant.CreateBuilder()
-            .UseSpeechRecognition(services.Asr);
+        VoiceAssistantBuilder duplicateRecognition = VoiceAssistant.CreateBuilder().UseSpeechRecognition(services.Asr);
         AssertCompositionCode("VBX-COMP-002", () => duplicateRecognition.UseSpeechRecognition(services.Asr));
     }
 
@@ -615,8 +595,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
     private static void AssertCompositionCode(string code, Action action)
     {
-        AssistantCompositionException exception =
-            Assert.Throws<AssistantCompositionException>(action);
+        AssistantCompositionException exception = Assert.Throws<AssistantCompositionException>(action);
         Assert.Equal(code, exception.Code);
     }
 
@@ -634,17 +613,13 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         public IAssistantAudioOutput Output => _inner.Output;
 
-        public IProcessedCaptureSource? ProcessedCapture =>
-            SupportsProcessedCaptureTimeline ? _inner.ProcessedCapture : null;
+        public IProcessedCaptureSource? ProcessedCapture => SupportsProcessedCaptureTimeline ? _inner.ProcessedCapture : null;
 
-        public IRenderReferenceSource? RenderReference =>
-            SupportsRenderReference ? _inner.RenderReference : null;
+        public IRenderReferenceSource? RenderReference => SupportsRenderReference ? _inner.RenderReference : null;
 
-        public IDuplexAudioFrameSource? DuplexFrames =>
-            SupportsRenderReference ? _inner.DuplexFrames : null;
+        public IDuplexAudioFrameSource? DuplexFrames => SupportsRenderReference ? _inner.DuplexFrames : null;
 
-        public SpeakerCaptureDescriptor? SpeakerCapture =>
-            SupportsRenderReference ? _inner.SpeakerCapture : null;
+        public SpeakerCaptureDescriptor? SpeakerCapture => SupportsRenderReference ? _inner.SpeakerCapture : null;
 
         public bool SupportsSimultaneousCapturePlayback { get; } = supportsSimultaneousCapturePlayback;
 

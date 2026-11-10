@@ -105,9 +105,7 @@ public class WaveStreamReader : IAudioStreamReader
         if (_sourceBuffer.Length >= requiredLength)
             return;
 
-        int newLength = _sourceBuffer.Length == 0
-            ? requiredLength
-            : Math.Max(requiredLength, _sourceBuffer.Length * 2);
+        int newLength = _sourceBuffer.Length == 0 ? requiredLength : Math.Max(requiredLength, _sourceBuffer.Length * 2);
         _sourceBuffer = GC.AllocateUninitializedArray<byte>(newLength);
     }
 

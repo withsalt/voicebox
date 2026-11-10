@@ -131,9 +131,7 @@ namespace VoiceBox.DNR.DeepFilterNet
 
             FrameSize = (int)Math.Round(_hopSize * (double)_inputRate / _modelRate);
             if (FrameSize <= 0) FrameSize = _hopSize;
-            DelaySamples = Math.Max(
-                0,
-                (int)Math.Round(_delaySamplesModelRate * (double)_inputRate / _modelRate));
+            DelaySamples = Math.Max(0, (int)Math.Round(_delaySamplesModelRate * (double)_inputRate / _modelRate));
             _delaySkipRemaining = _delaySamplesModelRate;
         }
 

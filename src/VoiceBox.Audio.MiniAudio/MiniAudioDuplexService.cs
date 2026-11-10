@@ -517,11 +517,7 @@ public sealed class MiniAudioDuplexService : MiniAudioServiceBase, IAudioDuplexS
             {
                 try
                 {
-                    captureProcessor.Process(
-                        captureSamples,
-                        outputSamples,
-                        _options.Value.ChannelCount,
-                        _options.Value.SampleRate);
+                    captureProcessor.Process(captureSamples, outputSamples, _options.Value.ChannelCount, _options.Value.SampleRate);
                     captureProcessed = true;
                     processorDelaySamples = Math.Max(0, captureProcessor.DelaySamples);
                 }
@@ -832,12 +828,7 @@ public sealed class MiniAudioDuplexService : MiniAudioServiceBase, IAudioDuplexS
         long startSample = _renderSamplePosition;
         long endSample = checked(startSample + (long)frameCount * _options.Value.ChannelCount);
         _renderSamplePosition = endSample;
-        return new RenderSignalTimeline(
-            _renderStreamEpoch,
-            startSample,
-            endSample,
-            RenderTimelineStatus.Valid,
-            hasDiscontinuity);
+        return new RenderSignalTimeline(_renderStreamEpoch, startSample, endSample, RenderTimelineStatus.Valid, hasDiscontinuity);
     }
 
     private void ApplyPlaybackGain(Span<float> samples)
@@ -976,10 +967,7 @@ public sealed class MiniAudioDuplexService : MiniAudioServiceBase, IAudioDuplexS
     }
 
     private void RaiseError(Exception exception, string message)
-        => MiniAudioServiceHelpers.InvokeEventHandlers(
-            OnError,
-            this,
-            new AudioErrorEventArgs(exception, message, _state));
+        => MiniAudioServiceHelpers.InvokeEventHandlers(OnError, this, new AudioErrorEventArgs(exception, message, _state));
 
     private void RaiseErrorAsync(Exception exception, string message)
         => _ = Task.Run(() => RaiseError(exception, message));

@@ -8,6 +8,5 @@ internal readonly record struct SpeakerWindowScore(float CentroidScore, float Be
     /// <summary>Reported score: the stronger of the two agreement measures.</summary>
     public float Reported => Math.Max(Top2MeanScore, CentroidScore);
 
-    public bool IsFinite =>
-        float.IsFinite(CentroidScore) && float.IsFinite(BestPrototypeScore) && float.IsFinite(Top2MeanScore);
+    public bool IsFinite => float.IsFinite(CentroidScore) && float.IsFinite(BestPrototypeScore) && float.IsFinite(Top2MeanScore);
 }

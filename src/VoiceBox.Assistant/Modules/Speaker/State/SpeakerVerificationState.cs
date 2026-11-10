@@ -85,13 +85,7 @@ internal sealed class SpeakerVerificationState : ISpeakerVerificationStatePort
                 endSample = Math.Max(endSample, existing.CandidateEndSampleExclusive);
             }
 
-            query = new SpeakerEvidenceQuery(
-                _purpose,
-                streamEpoch,
-                startSample,
-                endSample,
-                queryTimestampTicks,
-                CandidateId: _candidateId);
+            query = new SpeakerEvidenceQuery(_purpose, streamEpoch, startSample, endSample, queryTimestampTicks, CandidateId: _candidateId);
             _query = query;
             return true;
         }

@@ -147,10 +147,7 @@ internal sealed class WakeupDetectorAdapter
     {
         lock (_stateLock)
         {
-            return !_disposed &&
-                _transitionVersion == version &&
-                _requestedActive == active &&
-                (!conditional || _activation.IsActive);
+            return !_disposed && _transitionVersion == version && _requestedActive == active && (!conditional || _activation.IsActive);
         }
     }
 

@@ -256,9 +256,7 @@ namespace OnnxGenAILLMDemo
 
             var messages = new[]
             {
-                ChatMessage.User(
-                    new TextContent(prompt),
-                    new AudioContent(audioPath)),
+                ChatMessage.User(new TextContent(prompt), new AudioContent(audioPath)),
             };
 
             Console.WriteLine();

@@ -12,10 +12,7 @@ using VoiceBox.Assistant.Runtime.Control.Models;
 
 namespace VoiceBox.Assistant.Modules.Recognition.Controllers;
 
-internal sealed class RecognitionModule :
-    IRecognitionAudioPort,
-    IRecognitionCompletionPort,
-    IRecognitionCaptureOwner
+internal sealed class RecognitionModule : IRecognitionAudioPort, IRecognitionCompletionPort, IRecognitionCaptureOwner
 {
     private static readonly TimeSpan CleanupTimeout = TimeSpan.FromSeconds(5);
     private const int ActiveAudioCapacity = 256;
@@ -32,8 +29,7 @@ internal sealed class RecognitionModule :
     // low-level IRecognitionAudioPort admission buffer before a session exists; this ledger
     // owns session identity and endpoint-before-ready state used by the capture router.
     private readonly Dictionary<long, CaptureTurnState> _captureByTurn = [];
-    private readonly Dictionary<string, RecognitionSession> _sessionsByProviderId =
-        new(StringComparer.Ordinal);
+    private readonly Dictionary<string, RecognitionSession> _sessionsByProviderId = new(StringComparer.Ordinal);
     private readonly Dictionary<TerminalOperationKey, Task<RecognitionOutcome>> _terminalOperations = [];
     private readonly Queue<TerminalOperationKey> _completedTerminalOperations = [];
     private readonly SemaphoreSlim _audioWakeup = new(0);
@@ -119,11 +115,7 @@ internal sealed class RecognitionModule :
                 await CleanupProviderSessionAsync(session, providerSessionId).ConfigureAwait(false);
 
             _logger.LogError(ex, "启动 ASR 会话失败。");
-            var failure = new AssistantFailure(
-                "VBX-CTRL-011",
-                "operation",
-                "recognition",
-                "session-start-failed");
+            var failure = new AssistantFailure("VBX-CTRL-011", "operation", "recognition", "session-start-failed");
             session.MarkTerminal();
             await _control.PublishRecognitionFailedAsync(
                 new RecognitionOutcome(
@@ -193,9 +185,7 @@ internal sealed class RecognitionModule :
             return true;
         }
 
-        if (!session.TryEnqueue(
-                audio,
-                ActiveAudioCapacity))
+        if (!session.TryEnqueue(audio, ActiveAudioCapacity))
         {
             // A capture callback may race the control-loop cleanup of a failed/stale session.
             // Such PCM no longer belongs to a live turn and must be ignored, not escalated as a
@@ -211,8 +201,7 @@ internal sealed class RecognitionModule :
     {
         lock (_lock)
         {
-            return _captureByTurn.TryGetValue(turnId, out CaptureTurnState? capture) &&
-                capture.SessionId is not null;
+            return _captureByTurn.TryGetValue(turnId, out CaptureTurnState? capture) && capture.SessionId is not null;
         }
     }
 
@@ -317,8 +306,7 @@ internal sealed class RecognitionModule :
             // the next utterance and must not be appended to the completed turn. Validation is
             // the exception: its endpoint is allowed to race session startup and the buffered
             // tail remains part of that validation turn.
-            if (!capture.SpeechEndedBeforeAsrReady &&
-                (validationTurnId != 0 || conversationState == AssistantState.Listening))
+            if (!capture.SpeechEndedBeforeAsrReady && (validationTurnId != 0 || conversationState == AssistantState.Listening))
             {
                 if (capture.PendingAudio.Count >= ActiveAudioCapacity)
                 {
@@ -420,8 +408,7 @@ internal sealed class RecognitionModule :
         ownedBootstrap.AddRange(bootstrapAudio);
         lock (_lock)
         {
-            if (!_sessionsByTurn.TryGetValue(turnId, out session!) ||
-                !StringComparer.Ordinal.Equals(session.ProviderSessionId, sessionId))
+            if (!_sessionsByTurn.TryGetValue(turnId, out session!) || !StringComparer.Ordinal.Equals(session.ProviderSessionId, sessionId))
                 return false;
 
             CaptureTurnState capture = GetOrCreateCaptureLocked(turnId);
@@ -521,15 +508,12 @@ internal sealed class RecognitionModule :
     {
         lock (_lock)
         {
-            if (activeTurnId != 0 &&
-                _captureByTurn.TryGetValue(activeTurnId, out CaptureTurnState? active) &&
-                active.SessionId is not null)
+            if (activeTurnId != 0 && _captureByTurn.TryGetValue(activeTurnId, out CaptureTurnState? active) && active.SessionId is not null)
             {
                 return active.SessionId;
             }
 
-            return validationTurnId != 0 &&
-                _captureByTurn.TryGetValue(validationTurnId, out CaptureTurnState? validation)
+            return validationTurnId != 0 && _captureByTurn.TryGetValue(validationTurnId, out CaptureTurnState? validation)
                 ? validation.SessionId
                 : null;
         }
@@ -610,8 +594,7 @@ internal sealed class RecognitionModule :
         if (sessionId is not null)
             return sessionId;
 
-        if (!_sessionsByTurn.TryGetValue(turnId, out RecognitionSession? session) ||
-            session.IsTerminal)
+        if (!_sessionsByTurn.TryGetValue(turnId, out RecognitionSession? session) || session.IsTerminal)
         {
             return null;
         }
@@ -662,13 +645,7 @@ internal sealed class RecognitionModule :
             owner = RegisterTerminalOperationLocked(operationKey);
         }
 
-        return StartTerminalOperation(
-            owner,
-            session,
-            operationKey,
-            sessionId,
-            speechDuration,
-            cancellationToken);
+        return StartTerminalOperation(owner, session, operationKey, sessionId, speechDuration, cancellationToken);
     }
 
     private Task<RecognitionOutcome> GetOrStartTerminalOperation(
@@ -687,19 +664,12 @@ internal sealed class RecognitionModule :
             owner = RegisterTerminalOperationLocked(operationKey);
         }
 
-        return StartTerminalOperation(
-            owner,
-            session,
-            operationKey,
-            sessionId,
-            speechDuration,
-            cancellationToken);
+        return StartTerminalOperation(owner, session, operationKey, sessionId, speechDuration, cancellationToken);
     }
 
     private TaskCompletionSource<RecognitionOutcome> RegisterTerminalOperationLocked(TerminalOperationKey operationKey)
     {
-        var owner = new TaskCompletionSource<RecognitionOutcome>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        var owner = new TaskCompletionSource<RecognitionOutcome>(TaskCreationOptions.RunContinuationsAsynchronously);
         _terminalOperations.Add(operationKey, owner.Task);
         return owner;
     }
@@ -715,13 +685,7 @@ internal sealed class RecognitionModule :
         // Starting an async method executes synchronously until its first incomplete await. Start
         // it only after releasing the ownership lock so provider Feed/Finish can never run under
         // that lock, even when the provider completes synchronously.
-        _ = CompleteTerminalOperationAsync(
-            owner,
-            session,
-            operationKey,
-            sessionId,
-            speechDuration,
-            cancellationToken);
+        _ = CompleteTerminalOperationAsync(owner, session, operationKey, sessionId, speechDuration, cancellationToken);
         return owner.Task;
     }
 
@@ -737,11 +701,7 @@ internal sealed class RecognitionModule :
         Exception? failure = null;
         try
         {
-            outcome = await FinishCoreAsync(
-                session,
-                sessionId,
-                speechDuration,
-                cancellationToken).ConfigureAwait(false);
+            outcome = await FinishCoreAsync(session, sessionId, speechDuration, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -803,8 +763,7 @@ internal sealed class RecognitionModule :
         if (!_sessionsByTurn.TryGetValue(turnId, out RecognitionSession? session) ||
             !StringComparer.Ordinal.Equals(session.ProviderSessionId, sessionId))
         {
-            throw new InvalidOperationException(
-                $"Recognition session '{sessionId}' is not owned by turn '{turnId}'.");
+            throw new InvalidOperationException($"Recognition session '{sessionId}' is not owned by turn '{turnId}'.");
         }
 
         return session;
@@ -831,9 +790,7 @@ internal sealed class RecognitionModule :
                 session.MarkAudioFeedFailed(ex);
             }
             providerFinishStarted = true;
-            string? rawText = await _provider.FinishSessionAsync(
-                sessionId,
-                cancellationToken).ConfigureAwait(false);
+            string? rawText = await _provider.FinishSessionAsync(sessionId, cancellationToken).ConfigureAwait(false);
             if (session.AudioFeedFailure is { } feedFailure)
                 throw new InvalidOperationException("ASR audio feed failed.", feedFailure);
             string text = AsrTextNormalizer.Sanitize(rawText);
@@ -894,19 +851,11 @@ internal sealed class RecognitionModule :
                 null,
                 string.Empty,
                 speechDuration,
-                new AssistantFailure(
-                    "VBX-CTRL-012",
-                    "cancellation",
-                    "recognition",
-                    "session-cancelled"));
+                new AssistantFailure("VBX-CTRL-012", "cancellation", "recognition", "session-cancelled"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(
-                ex,
-                "ASR recognition failed: turnId={TurnId}, sessionId={SessionId}.",
-                session.TurnId,
-                sessionId);
+            _logger.LogError(ex, "ASR recognition failed: turnId={TurnId}, sessionId={SessionId}.", session.TurnId, sessionId);
             return new RecognitionOutcome(
                 session.TurnId,
                 session.OperationId,
@@ -914,11 +863,7 @@ internal sealed class RecognitionModule :
                 null,
                 string.Empty,
                 speechDuration,
-                new AssistantFailure(
-                    "VBX-CTRL-013",
-                    "operation",
-                    "recognition",
-                    "session-failed"));
+                new AssistantFailure("VBX-CTRL-013", "operation", "recognition", "session-failed"));
         }
         finally
         {
@@ -934,11 +879,7 @@ internal sealed class RecognitionModule :
             // it still needs a finite provider teardown path.
             session.OpenAudioAdmission();
             using var cleanupCts = new CancellationTokenSource(CleanupTimeout);
-            Task<RecognitionOutcome> terminal = GetOrStartTerminalOperation(
-                session,
-                sessionId,
-                TimeSpan.Zero,
-                cleanupCts.Token);
+            Task<RecognitionOutcome> terminal = GetOrStartTerminalOperation(session, sessionId, TimeSpan.Zero, cleanupCts.Token);
 
             RecognitionOutcome outcome = await terminal.ConfigureAwait(false);
             if (outcome.Kind is RecognitionOutcomeKind.Failed or RecognitionOutcomeKind.Cancelled)
@@ -954,8 +895,7 @@ internal sealed class RecognitionModule :
     {
         lock (_lock)
         {
-            if (_sessionsByTurn.TryGetValue(session.TurnId, out RecognitionSession? byTurn) &&
-                ReferenceEquals(byTurn, session))
+            if (_sessionsByTurn.TryGetValue(session.TurnId, out RecognitionSession? byTurn) && ReferenceEquals(byTurn, session))
             {
                 _sessionsByTurn.Remove(session.TurnId);
             }
@@ -1026,8 +966,7 @@ internal sealed class RecognitionModule :
 
     private void SignalAudioPump()
     {
-        if (Volatile.Read(ref _audioPumpStarted) == 0 ||
-            Interlocked.Exchange(ref _audioWakeupPending, 1) != 0)
+        if (Volatile.Read(ref _audioPumpStarted) == 0 || Interlocked.Exchange(ref _audioWakeupPending, 1) != 0)
         {
             return;
         }

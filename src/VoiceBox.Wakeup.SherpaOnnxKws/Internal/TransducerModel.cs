@@ -147,19 +147,15 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Internal
             var ortInputs = new OrtValue[totalInputs];
             try
             {
-                ortInputs[0] = OrtValue.CreateTensorValueFromMemory<float>(features,
-                    new long[] { 1, ChunkSize, FeatureDim });
+                ortInputs[0] = OrtValue.CreateTensorValueFromMemory<float>(features, new long[] { 1, ChunkSize, FeatureDim });
 
                 for (int i = 0; i < state.NumFloatStates; i++)
                 {
-                    ortInputs[i + 1] = OrtValue.CreateTensorValueFromMemory<float>(
-                        state.FloatBuffers[i], state.FloatShapes[i]);
+                    ortInputs[i + 1] = OrtValue.CreateTensorValueFromMemory<float>(state.FloatBuffers[i], state.FloatShapes[i]);
                 }
-                ortInputs[totalInputs - 1] = OrtValue.CreateTensorValueFromMemory<long>(
-                    state.ProcessedLens, state.ProcessedLensShape);
+                ortInputs[totalInputs - 1] = OrtValue.CreateTensorValueFromMemory<long>(state.ProcessedLens, state.ProcessedLensShape);
 
-                using var outputs = _encoder.Run(_runOptions,
-                    _encoderInputNames, ortInputs, _encoderOutputNames);
+                using var outputs = _encoder.Run(_runOptions, _encoderInputNames, ortInputs, _encoderOutputNames);
 
                 // outputs[0] = encoder_out; outputs[1..] = new states (顺序同 inputs[1..])
                 var encOut = outputs[0];

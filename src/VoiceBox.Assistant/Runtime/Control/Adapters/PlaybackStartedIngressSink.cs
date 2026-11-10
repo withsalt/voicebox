@@ -31,11 +31,7 @@ internal sealed class PlaybackStartedIngressSink : IPlaybackStartedSink
         if (!_ingress.HasTerminalFault)
         {
             _ingress.TryTerminate(
-                new AssistantFailure(
-                    "VBX-CTRL-021",
-                    "capacity",
-                    "playback-data-plane",
-                    "playback-start-admission-failed"),
+                new AssistantFailure("VBX-CTRL-021", "capacity", "playback-data-plane", "playback-start-admission-failed"),
                 Stopwatch.GetTimestamp(),
                 out _);
         }

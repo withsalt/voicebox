@@ -105,9 +105,7 @@ internal sealed class SpeechBoundaryCoordinator : ITurnBoundaryEndpointSink
         if (IgnoreDuringPlaybackStartupGuard("OnSpeechStarted"))
             return default;
 
-        if (_projection.Current == AssistantState.Idle &&
-            _listeningOptions.MinDurationMs == 0 &&
-            _listeningOptions.MinRms == 0)
+        if (_projection.Current == AssistantState.Idle && _listeningOptions.MinDurationMs == 0 && _listeningOptions.MinRms == 0)
         {
             long turnId = _turnState.NextTurnOrdinal;
             TurnAuthorizationStatus authorization = EnsureSingleTalkCandidate();
@@ -132,9 +130,7 @@ internal sealed class SpeechBoundaryCoordinator : ITurnBoundaryEndpointSink
                 if (wakeupReplayAuthorized)
                 {
                     _skipSingleTalkForReplayCandidate = true;
-                    _logger.LogDebug(
-                        "初次唤醒回放已通过 Wakeup 声纹认证，本次回放候选跳过 SingleTalk 身份复核: turnId={TurnId}。",
-                        decision.TurnId);
+                    _logger.LogDebug("初次唤醒回放已通过 Wakeup 声纹认证，本次回放候选跳过 SingleTalk 身份复核: turnId={TurnId}。", decision.TurnId);
                 }
                 else
                 {
@@ -196,9 +192,7 @@ internal sealed class SpeechBoundaryCoordinator : ITurnBoundaryEndpointSink
     }
 
     private static string DescribeSingleTalkMode(TurnAuthorizationStatus authorization)
-        => authorization == TurnAuthorizationStatus.PendingSpeaker
-            ? "pending-speaker:single-talk"
-            : "not-required";
+        => authorization == TurnAuthorizationStatus.PendingSpeaker ? "pending-speaker:single-talk" : "not-required";
 
     /// <summary>
     /// Turns a final gate status of the active single-talk candidate into the Kernel verdict of the
@@ -237,10 +231,7 @@ internal sealed class SpeechBoundaryCoordinator : ITurnBoundaryEndpointSink
                 _ => TurnAuthorizationStatus.DeniedUnavailable,
             };
             reason = $"command-denied-{denied}";
-            _logger.LogInformation(
-                "单讲身份复核未通过 ({Status}): turnId={TurnId}, 本句识别结果不会进入语义回合。",
-                denied,
-                snapshot.TurnId);
+            _logger.LogInformation("单讲身份复核未通过 ({Status}): turnId={TurnId}, 本句识别结果不会进入语义回合。", denied, snapshot.TurnId);
         }
 
         if (resetGate)
@@ -297,10 +288,7 @@ internal sealed class SpeechBoundaryCoordinator : ITurnBoundaryEndpointSink
 
             case SpeakingDecisionKind.ConfirmedListening:
                 return SpeechBoundaryObservation.ConfirmedListening(
-                    TurnSignal.SpeechStarted(
-                        decision.TurnId,
-                        operationId,
-                        authorization: EnsureSingleTalkCandidate()),
+                    TurnSignal.SpeechStarted(decision.TurnId, operationId, authorization: EnsureSingleTalkCandidate()),
                     decision);
 
             case SpeakingDecisionKind.ConfirmedBargeIn:
@@ -383,9 +371,7 @@ internal sealed class SpeechBoundaryCoordinator : ITurnBoundaryEndpointSink
     /// gate is a pass-through (KWS disabled). The Kernel candidate id is not needed for this path.
     /// </summary>
     private BargeInIdentityContext CreateIdentityContext()
-        => _speakerGate.IsIdentityRequired
-            ? BargeInIdentityContext.AuthorizedSpeaker(candidateId: 0)
-            : BargeInIdentityContext.NotRequired;
+        => _speakerGate.IsIdentityRequired ? BargeInIdentityContext.AuthorizedSpeaker(candidateId: 0) : BargeInIdentityContext.NotRequired;
 
     public SpeechBoundaryObservation ProcessSpeechEnded(TimeSpan duration, bool endpointObservationApplied)
     {
@@ -472,17 +458,13 @@ internal sealed class SpeechBoundaryCoordinator : ITurnBoundaryEndpointSink
             decision.TurnId,
             decision.AsrSessionId,
             decision.SpeechDuration.TotalMilliseconds);
-        return SpeechBoundaryObservation.BeginRecognition(
-            decision.TurnId,
-            decision.AsrSessionId,
-            decision.SpeechDuration);
+        return SpeechBoundaryObservation.BeginRecognition(decision.TurnId, decision.AsrSessionId, decision.SpeechDuration);
     }
 
     /// <summary>Clears the per-turn observation context the Kernel's new Listening turn replaces.</summary>
     public void PrepareListeningTurn(long turnId)
     {
-        if (!_turnState.IsCurrentTurn(turnId) ||
-            _turnState.ConversationState != AssistantState.Listening)
+        if (!_turnState.IsCurrentTurn(turnId) || _turnState.ConversationState != AssistantState.Listening)
         {
             throw new InvalidOperationException("Kernel listening turn projection is not current.");
         }
@@ -498,11 +480,7 @@ internal sealed class SpeechBoundaryCoordinator : ITurnBoundaryEndpointSink
         if (_validation.HasValidation)
         {
             AssistantState state = _turnState.ConversationState;
-            return new SpeechStartedDecision(
-                SpeechStartedDecisionKind.Ignored,
-                state,
-                state,
-                _validation.ValidationTurnId);
+            return new SpeechStartedDecision(SpeechStartedDecisionKind.Ignored, state, state, _validation.ValidationTurnId);
         }
 
         return _candidates.ObserveSpeechStarted(_bargeInInstalled, _turnState.NextTurnOrdinal);
@@ -530,11 +508,9 @@ internal sealed class SpeechBoundaryCoordinator : ITurnBoundaryEndpointSink
         SpeakingDecision decision = observation.SpeakingDecision;
         // Idle 态监听候选通过门槛: 此刻才算真实用户语音, 进入 Listening 并启动 ASR。
         // 候选期间累积的音频已由候选所有者保留, ASR session 就绪后补喂。
-        if (decision.TurnId <= 0 ||
-            !_candidates.CanMarkConfirmed(SpeechCandidateKind.Listening))
+        if (decision.TurnId <= 0 || !_candidates.CanMarkConfirmed(SpeechCandidateKind.Listening))
         {
-            throw new InvalidOperationException(
-                "Confirmed listening observation could not be committed after Kernel acceptance.");
+            throw new InvalidOperationException("Confirmed listening observation could not be committed after Kernel acceptance.");
         }
 
         _recognitionTurn.PrepareTurn();
@@ -572,10 +548,7 @@ internal sealed class SpeechBoundaryCoordinator : ITurnBoundaryEndpointSink
 
         if (_logger.IsEnabled(LogLevel.Trace))
         {
-            _logger.LogTrace(
-                "播放启动保护期忽略 {EventName}: remainingMs={RemainingMs}.",
-                eventName,
-                remainingMs);
+            _logger.LogTrace("播放启动保护期忽略 {EventName}: remainingMs={RemainingMs}.", eventName, remainingMs);
         }
 
         return true;

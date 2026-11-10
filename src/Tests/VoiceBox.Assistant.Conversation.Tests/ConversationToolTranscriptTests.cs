@@ -37,9 +37,7 @@ public sealed class ConversationToolTranscriptTests
 
         history.RemoveUnansweredUserMessage(1);
 
-        Assert.Equal(
-            [ChatRole.System],
-            history.GetModelTranscriptSnapshot().Select(static message => message.Role));
+        Assert.Equal([ChatRole.System], history.GetModelTranscriptSnapshot().Select(static message => message.Role));
     }
 
     [Fact]
@@ -77,9 +75,7 @@ public sealed class ConversationToolTranscriptTests
             .ToArray();
 
         Assert.Equal(["call-2", "call-3"], retainedCallIds);
-        Assert.Equal(
-            ["问题1", "回答1", "问题2", "回答2", "问题3", "回答3"],
-            transcript.Where(IsPlainText).Select(TextOf));
+        Assert.Equal(["问题1", "回答1", "问题2", "回答2", "问题3", "回答3"], transcript.Where(IsPlainText).Select(TextOf));
     }
 
     [Fact]
@@ -125,9 +121,7 @@ public sealed class ConversationToolTranscriptTests
 
         ChatMessage[] visible = history.GetUserConversationHistorySnapshot();
 
-        Assert.Equal(
-            [ChatRole.User, ChatRole.Assistant],
-            visible.Select(static message => message.Role));
+        Assert.Equal([ChatRole.User, ChatRole.Assistant], visible.Select(static message => message.Role));
         Assert.DoesNotContain(
             visible.SelectMany(static message => message.Content),
             static content => content is ToolCallContent or ToolResultContent);
@@ -157,9 +151,7 @@ public sealed class ConversationToolTranscriptTests
         history.RecordToolExchange(1, ToolExchange("call-1", "{\"temperature\":31}"));
         Assert.True(history.CommitGeneratedResponse(1, "北京晴"));
 
-        Assert.Equal(
-            "{\"temperature\":31}",
-            ToolResultOf(history.GetModelTranscriptSnapshot()[3]).ResultJson);
+        Assert.Equal("{\"temperature\":31}", ToolResultOf(history.GetModelTranscriptSnapshot()[3]).ResultJson);
     }
 
     [Fact]
@@ -184,8 +176,7 @@ public sealed class ConversationToolTranscriptTests
         ConversationHistoryStore history = CreateStore();
         history.AddUserMessage(1, "北京天气", null, out _);
         Assert.True(history.CommitGeneratedResponse(1, "正在查询"));
-        Assert.True(history.RecordBackgroundResult(
-            1, "查到了，北京晴", ToolExchange("call-1", "{\"temperature\":31}")));
+        Assert.True(history.RecordBackgroundResult(1, "查到了，北京晴", ToolExchange("call-1", "{\"temperature\":31}")));
         history.RemoveUnansweredUserMessage(1);
 
         Assert.Equal(
@@ -219,9 +210,7 @@ public sealed class ConversationToolTranscriptTests
     ];
 
     private static bool IsPlainText(ChatMessage message)
-        => message.Role is ChatRole.User or ChatRole.Assistant &&
-            message.Content.Count == 1 &&
-            message.Content[0] is TextContent;
+        => message.Role is ChatRole.User or ChatRole.Assistant && message.Content.Count == 1 && message.Content[0] is TextContent;
 
     private static string TextOf(ChatMessage message)
         => Assert.IsType<TextContent>(Assert.Single(message.Content)).Text;

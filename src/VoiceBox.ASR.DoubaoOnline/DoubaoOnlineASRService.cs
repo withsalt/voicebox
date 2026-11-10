@@ -84,8 +84,7 @@ namespace VoiceBox.ASR.DoubaoOnline
         private static void ValidateOptions(DoubaoOnlineASROptions o)
         {
             if (string.IsNullOrWhiteSpace(o.ApiKey))
-                throw new ArgumentException(
-                    "Authentication is not configured: set ApiKey.");
+                throw new ArgumentException("Authentication is not configured: set ApiKey.");
             if (string.IsNullOrWhiteSpace(o.ResourceId))
                 throw new ArgumentException("DoubaoOnlineASROptions.ResourceId must be set.");
             if (string.IsNullOrWhiteSpace(o.Host))
@@ -108,12 +107,8 @@ namespace VoiceBox.ASR.DoubaoOnline
 
         private static long ComputeMaxBufferedSamples(DoubaoOnlineASROptions options)
         {
-            long configuredMs = Math.Min(
-                options.MaxBufferedAudioMs,
-                checked((long)options.MaxBufferChunks * options.PackageDurationMs));
-            return Math.Max(
-                1,
-                checked(configuredMs * options.SampleRate * options.Channels / 1000));
+            long configuredMs = Math.Min(options.MaxBufferedAudioMs, checked((long)options.MaxBufferChunks * options.PackageDurationMs));
+            return Math.Max(1, checked(configuredMs * options.SampleRate * options.Channels / 1000));
         }
 
         private static int GetMaxConcurrentSessions(IOptions<DoubaoOnlineASROptions> options)

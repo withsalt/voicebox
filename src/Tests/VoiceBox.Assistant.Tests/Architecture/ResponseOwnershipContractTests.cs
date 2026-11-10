@@ -24,37 +24,24 @@ public sealed class ResponseOwnershipContractTests
         Assert.True(owner.IsSealed, "ResponseModule must be the sealed response-operation owner.");
 
         Type operation = owner.GetNestedType("ResponseOperation", BindingFlags.NonPublic)
-            ?? throw new Xunit.Sdk.XunitException(
-                "ResponseModule must declare a private ResponseOperation that owns the CTS.");
+            ?? throw new Xunit.Sdk.XunitException("ResponseModule must declare a private ResponseOperation that owns the CTS.");
         Assert.Contains(
             operation.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic),
             property => property.PropertyType == typeof(CancellationTokenSource));
-        Assert.Contains(
-            owner.GetFields(BindingFlags.Instance | BindingFlags.NonPublic),
-            field => field.FieldType == operation);
+        Assert.Contains(owner.GetFields(BindingFlags.Instance | BindingFlags.NonPublic), field => field.FieldType == operation);
 
-        MethodInfo cancel = owner.GetMethod(
-            "Cancel",
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            ?? throw new Xunit.Sdk.XunitException(
-                "ResponseModule must expose Cancel(turnId, operationId) as the exclusive cancel path.");
+        MethodInfo cancel = owner.GetMethod("Cancel", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+            ?? throw new Xunit.Sdk.XunitException("ResponseModule must expose Cancel(turnId, operationId) as the exclusive cancel path.");
         Assert.Equal(typeof(bool), cancel.ReturnType);
         Assert.Equal(new[] { typeof(long), typeof(long) }, cancel.GetParameters().Select(p => p.ParameterType));
-        Assert.NotNull(owner.GetMethod(
-            "BeginOperation",
-            BindingFlags.Instance | BindingFlags.NonPublic));
+        Assert.NotNull(owner.GetMethod("BeginOperation", BindingFlags.Instance | BindingFlags.NonPublic));
 
         HashSet<MethodBase> ownerCalls = CollectCalls(owner);
+        Assert.Contains(ownerCalls, method => method.Name == nameof(IResponseControlSignalPort.PublishResponseCompletedAsync));
+        Assert.Contains(ownerCalls, method => method.Name == nameof(IResponseControlSignalPort.PublishResponseTerminatedAsync));
         Assert.Contains(
             ownerCalls,
-            method => method.Name == nameof(IResponseControlSignalPort.PublishResponseCompletedAsync));
-        Assert.Contains(
-            ownerCalls,
-            method => method.Name == nameof(IResponseControlSignalPort.PublishResponseTerminatedAsync));
-        Assert.Contains(
-            ownerCalls,
-            method => method.DeclaringType == typeof(CancellationTokenSource) &&
-                method.Name is "Cancel" or "CancelAsync");
+            method => method.DeclaringType == typeof(CancellationTokenSource) && method.Name is "Cancel" or "CancelAsync");
 
         var violations = new List<string>();
         Assembly assembly = typeof(VoiceAssistant).Assembly;
@@ -101,8 +88,7 @@ public sealed class ResponseOwnershipContractTests
                             "cancel of the response operation must be exclusive to ResponseModule.Cancel.");
                     }
 
-                    if (callee.DeclaringType == typeof(CancellationTokenSource) &&
-                        callee.Name is "Cancel" or "CancelAsync")
+                    if (callee.DeclaringType == typeof(CancellationTokenSource) && callee.Name is "Cancel" or "CancelAsync")
                     {
                         violations.Add(
                             $"{Format(method)} cancels a CancellationTokenSource; " +

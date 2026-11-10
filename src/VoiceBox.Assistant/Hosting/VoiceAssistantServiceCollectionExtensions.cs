@@ -32,14 +32,10 @@ public static class VoiceAssistantServiceCollectionExtensions
         options.ValidateOnStart();
 
         services.TryAddEnumerable(
-            ServiceDescriptor.Singleton<
-                IValidateOptions<VoiceAssistantOptions>,
-                VoiceAssistantOptionsValidateOnStart>());
+            ServiceDescriptor.Singleton<IValidateOptions<VoiceAssistantOptions>, VoiceAssistantOptionsValidateOnStart>());
         services.TryAddSingleton<VoiceAssistantHostInstance>(CreateHostInstance);
-        services.TryAddSingleton(static provider =>
-            provider.GetRequiredService<VoiceAssistantHostInstance>().Assistant);
-        services.TryAddSingleton(static provider =>
-            provider.GetRequiredService<VoiceAssistantHostInstance>().Diagnostics);
+        services.TryAddSingleton(static provider => provider.GetRequiredService<VoiceAssistantHostInstance>().Assistant);
+        services.TryAddSingleton(static provider => provider.GetRequiredService<VoiceAssistantHostInstance>().Diagnostics);
         return services;
     }
 
@@ -53,8 +49,7 @@ public static class VoiceAssistantServiceCollectionExtensions
     public static IServiceCollection AddVoiceBoxAssistantHostedLifecycle(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
-        services.TryAddEnumerable(
-            ServiceDescriptor.Singleton<IHostedService, VoiceAssistantHostedLifecycle>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, VoiceAssistantHostedLifecycle>());
         return services;
     }
 
@@ -72,9 +67,7 @@ public static class VoiceAssistantServiceCollectionExtensions
 
     private static VoiceAssistantBuilder CreateBuilder(IServiceProvider provider)
     {
-        VoiceAssistantOptions options = provider
-            .GetRequiredService<IOptions<VoiceAssistantOptions>>()
-            .Value;
+        VoiceAssistantOptions options = provider.GetRequiredService<IOptions<VoiceAssistantOptions>>().Value;
         VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
             .UseOptions(options)
             .UseTurnBoundary(provider.GetRequiredService<IVoiceActivityDetectService>())
@@ -89,9 +82,7 @@ public static class VoiceAssistantServiceCollectionExtensions
         }
         else
         {
-            builder.UseAudio(
-                provider.GetRequiredService<IAudioRecordService>(),
-                provider.GetRequiredService<IAudioPlayService>());
+            builder.UseAudio(provider.GetRequiredService<IAudioRecordService>(), provider.GetRequiredService<IAudioPlayService>());
         }
 
         IWakeupService? wakeup = provider.GetService<IWakeupService>();
@@ -102,16 +93,13 @@ public static class VoiceAssistantServiceCollectionExtensions
         if (speaker is not null)
             builder.AddSpeakerVerification(speaker);
 
-        IAcousticProcessingMetricsSource? acousticDiagnostics =
-            provider.GetService<IAcousticProcessingMetricsSource>();
+        IAcousticProcessingMetricsSource? acousticDiagnostics = provider.GetService<IAcousticProcessingMetricsSource>();
         if (acousticDiagnostics is not null)
             builder.AddAcousticDiagnostics(acousticDiagnostics);
 
         if (provider.GetService<VoiceAssistantBargeInModuleRegistration>() is not null)
         {
-            builder.AddBargeIn(
-                options.BargeIn,
-                provider.GetRequiredService<IAcousticPathDelayEstimatorFactory>());
+            builder.AddBargeIn(options.BargeIn, provider.GetRequiredService<IAcousticPathDelayEstimatorFactory>());
         }
 
         return builder;

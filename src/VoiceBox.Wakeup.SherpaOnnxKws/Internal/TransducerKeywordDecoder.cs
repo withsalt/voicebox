@@ -157,8 +157,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Internal
                 // decOutShape = [numHyps, joinerDim]
                 int decoderDim = (int)decOutShape[1];
                 if (decoderDim != joinerDim)
-                    throw new InvalidOperationException(
-                        $"Joiner dim mismatch: encoder {joinerDim} vs decoder {decoderDim}.");
+                    throw new InvalidOperationException($"Joiner dim mismatch: encoder {joinerDim} vs decoder {decoderDim}.");
 
                 // 4) Repeat encoder frame to match hyps count (复制 numHyps 份)
                 var encRepeated = new float[numHyps * joinerDim];

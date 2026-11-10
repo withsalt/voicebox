@@ -114,11 +114,7 @@ internal sealed class WakeupInterruptOwner : IWakeupDecisionSink
                 WakeupTriggerKind.InSessionWakeup => KernelWakeupTriggerKind.InSessionWakeup,
                 _ => KernelWakeupTriggerKind.None,
             });
-        return new WakeupSemanticPlan(
-            WakeupSemanticPlanKind.Observed,
-            signal,
-            decision,
-            default);
+        return new WakeupSemanticPlan(WakeupSemanticPlanKind.Observed, signal, decision, default);
     }
 
     public WakeupSemanticPlan CommitObservation(WakeupSemanticPlan plan, KernelCommitResult kernel)
@@ -138,9 +134,7 @@ internal sealed class WakeupInterruptOwner : IWakeupDecisionSink
             return default;
 
         // Wake word is a high-confidence command to start over, even when regular barge-in is enabled.
-        if (!_turns.TryObserveWakeupInterrupt(
-                _turnState.NextTurnOrdinal,
-                out WakeupInterruptDecision interrupt))
+        if (!_turns.TryObserveWakeupInterrupt(_turnState.NextTurnOrdinal, out WakeupInterruptDecision interrupt))
         {
             return default;
         }
@@ -154,10 +148,7 @@ internal sealed class WakeupInterruptOwner : IWakeupDecisionSink
 
         return new WakeupSemanticPlan(
             WakeupSemanticPlanKind.Interrupt,
-            TurnSignal.CancelRequested(
-                interrupt.InterruptedTurnId,
-                interrupt.TurnId,
-                "wakeup-interrupt"),
+            TurnSignal.CancelRequested(interrupt.InterruptedTurnId, interrupt.TurnId, "wakeup-interrupt"),
             decision,
             interrupt);
     }
@@ -176,8 +167,7 @@ internal sealed class WakeupInterruptOwner : IWakeupDecisionSink
             _turnBoundary.Observe(replay);
         if (!_turns.CommitWakeupInterrupt(interrupt))
         {
-            throw new InvalidOperationException(
-                "Wakeup interruption observation could not be committed after Kernel acceptance.");
+            throw new InvalidOperationException("Wakeup interruption observation could not be committed after Kernel acceptance.");
         }
 
         // The physical stop of the interrupted reply was issued by the Kernel's owner-scoped

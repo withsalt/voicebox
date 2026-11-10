@@ -58,8 +58,7 @@ namespace VoiceBox.TTS.VoxCPM
                     _logger?.LogInformation("正在加载 VoxCPM 模型: {Path}", _options.ModelPath);
                     var sw = System.Diagnostics.Stopwatch.StartNew();
                     _pipeline = new VoxCpmPipeline(_options, _logger);
-                    _logger?.LogInformation("VoxCPM 模型加载完成, 用时 {Ms} ms, 默认音色={Voice}",
-                        sw.ElapsedMilliseconds, _pipeline.DefaultVoiceName);
+                    _logger?.LogInformation("VoxCPM 模型加载完成, 用时 {Ms} ms, 默认音色={Voice}", sw.ElapsedMilliseconds, _pipeline.DefaultVoiceName);
                 }
             }
             return _pipeline;

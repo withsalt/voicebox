@@ -58,8 +58,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         boundary.ReserveSequence();
         boundary.RaiseAssistantText(new AssistantTextEventArgs { Delta = "gap", IsThinking = false });
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => boundary.Completion.WaitAsync(TimeSpan.FromSeconds(2)));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => boundary.Completion.WaitAsync(TimeSpan.FromSeconds(2)));
         await WaitUntilAsync(() => services.Audio.StopCount == 1);
         InvalidOperationException failure = await Assert.ThrowsAsync<InvalidOperationException>(
             () => assistant.StopAsync().WaitAsync(TimeSpan.FromSeconds(2)));
@@ -98,8 +97,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             original.TurnBoundary, original.Recognition, original.ResponseGeneration,
             original.SpeechSynthesis, original.Wakeup, original.Speaker,
             original.AcousticDiagnostics, original.PlaybackBargeInDetectorFactory);
-        var installed = new AssistantInstalledModules(
-            null, null, null, plan.Recognition, plan.ResponseGeneration);
+        var installed = new AssistantInstalledModules(null, null, null, plan.Recognition, plan.ResponseGeneration);
         var eventSender = new object();
         var weakSender = new WeakReference(eventSender);
         Assert.Same(failure, Assert.Throws<InvalidOperationException>(() =>

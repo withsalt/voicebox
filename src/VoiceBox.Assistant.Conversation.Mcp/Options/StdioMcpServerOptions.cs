@@ -6,8 +6,7 @@ public sealed class StdioMcpServerOptions : McpToolServerOptions
 
     public IList<string> Arguments { get; } = new List<string>();
 
-    public IDictionary<string, string?> EnvironmentVariables { get; } =
-        new Dictionary<string, string?>(StringComparer.Ordinal);
+    public IDictionary<string, string?> EnvironmentVariables { get; } = new Dictionary<string, string?>(StringComparer.Ordinal);
 
     public string? WorkingDirectory { get; set; }
 

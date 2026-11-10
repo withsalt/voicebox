@@ -53,9 +53,7 @@ internal sealed class CompositeRenderDelayEstimator : IRenderDelayEstimator
             throw new ArgumentOutOfRangeException(nameof(maxDelayMs));
         if (stabilityToleranceMs < 0 || stabilityToleranceMs > 5000)
             throw new ArgumentOutOfRangeException(nameof(stabilityToleranceMs));
-        if (!double.IsFinite(minimumCorrelationConfidence) ||
-            minimumCorrelationConfidence < 0 ||
-            minimumCorrelationConfidence > 1)
+        if (!double.IsFinite(minimumCorrelationConfidence) || minimumCorrelationConfidence < 0 || minimumCorrelationConfidence > 1)
             throw new ArgumentOutOfRangeException(nameof(minimumCorrelationConfidence));
 
         _maxDelaySamples = checked(maxDelayMs * 16);
@@ -71,10 +69,7 @@ internal sealed class CompositeRenderDelayEstimator : IRenderDelayEstimator
         if (render.Length != microphone.Length)
             throw new ArgumentException("Render and capture hop lengths must match.", nameof(microphone));
 
-        RenderDelayEstimate result = _primary.TryEstimate(
-            render,
-            microphone,
-            out AcousticPathDelayEstimate primaryEstimate)
+        RenderDelayEstimate result = _primary.TryEstimate(render, microphone, out AcousticPathDelayEstimate primaryEstimate)
             ? new RenderDelayEstimate(
                 HasEstimate: true,
                 primaryEstimate.DelaySamples,
@@ -89,9 +84,7 @@ internal sealed class CompositeRenderDelayEstimator : IRenderDelayEstimator
             return result;
         _fallbackCountdown = 5;
         RenderDelayEstimate correlation = TryEstimateCorrelation();
-        return TryPromoteCorrelation(in correlation, out RenderDelayEstimate promoted)
-            ? promoted
-            : result;
+        return TryPromoteCorrelation(in correlation, out RenderDelayEstimate promoted) ? promoted : result;
     }
 
     public void Reset()
@@ -148,10 +141,7 @@ internal sealed class CompositeRenderDelayEstimator : IRenderDelayEstimator
         // searchable delay range. Covering the full tracked range earlier with a
         // short window was measured on the evaluation corpus and produced more wrong
         // large-delay locks than it prevented.
-        int analysisWindow = (int)Math.Clamp(
-            _count / 2,
-            MinimumCorrelationAnalysisWindow,
-            MaximumCorrelationAnalysisWindow);
+        int analysisWindow = (int)Math.Clamp(_count / 2, MinimumCorrelationAnalysisWindow, MaximumCorrelationAnalysisWindow);
         if (_count < analysisWindow || _maxDelaySamples == 0)
             return default;
 
@@ -184,9 +174,7 @@ internal sealed class CompositeRenderDelayEstimator : IRenderDelayEstimator
         if (captureEnergy < 1e-6)
             return default;
 
-        int availableMaximumDelay = (int)Math.Min(
-            _maxDelaySamples,
-            Math.Max(0, captureStart - historyStart));
+        int availableMaximumDelay = (int)Math.Min(_maxDelaySamples, Math.Max(0, captureStart - historyStart));
         double bestScore = 0;
         double secondScore = 0;
         int bestDelay = 0;
@@ -205,8 +193,7 @@ internal sealed class CompositeRenderDelayEstimator : IRenderDelayEstimator
             }
         }
 
-        if (bestScore < 0.12 ||
-            bestScore - secondScore < Math.Max(0.015, bestScore * 0.08))
+        if (bestScore < 0.12 || bestScore - secondScore < Math.Max(0.015, bestScore * 0.08))
         {
             return default;
         }
@@ -223,22 +210,13 @@ internal sealed class CompositeRenderDelayEstimator : IRenderDelayEstimator
             }
         }
 
-        double confidence = Math.Clamp(
-            0.55 + (bestScore - 0.12) * 0.75 + (bestScore - secondScore) * 1.5,
-            0.55,
-            0.95);
-        return new RenderDelayEstimate(
-            HasEstimate: true,
-            bestDelay,
-            confidence,
-            IsRefined: false,
-            IsCorrelationFallback: true);
+        double confidence = Math.Clamp(0.55 + (bestScore - 0.12) * 0.75 + (bestScore - secondScore) * 1.5, 0.55, 0.95);
+        return new RenderDelayEstimate(HasEstimate: true, bestDelay, confidence, IsRefined: false, IsCorrelationFallback: true);
     }
 
     private bool TryPromoteCorrelation(in RenderDelayEstimate correlation, out RenderDelayEstimate promoted)
     {
-        if (!correlation.HasEstimate ||
-            correlation.Confidence < _minimumCorrelationConfidence)
+        if (!correlation.HasEstimate || correlation.Confidence < _minimumCorrelationConfidence)
         {
             if (++_correlationCandidateAge > 3)
                 ResetCorrelationCandidate();
@@ -248,8 +226,7 @@ internal sealed class CompositeRenderDelayEstimator : IRenderDelayEstimator
 
         _correlationCandidateAge = 0;
         int toleranceSamples = Math.Max(16, _correlationStabilityToleranceSamples);
-        if (_correlationCandidateCount == 0 ||
-            Math.Abs(correlation.DelaySamples - _correlationCandidateDelay) > toleranceSamples)
+        if (_correlationCandidateCount == 0 || Math.Abs(correlation.DelaySamples - _correlationCandidateDelay) > toleranceSamples)
         {
             _correlationCandidateCount = 1;
             _correlationCandidateDelay = correlation.DelaySamples;
@@ -296,8 +273,7 @@ internal sealed class CompositeRenderDelayEstimator : IRenderDelayEstimator
         // Both windows are fully in range for every delay the caller scans, so the ring
         // offsets can be resolved once instead of re-deriving bounds per sample. The
         // accumulation order is still i = 0..length-1, so the sums are unchanged.
-        if (TryResolveWindow(captureStart, length, out int captureIndex) &&
-            TryResolveWindow(renderStart, length, out int renderIndex))
+        if (TryResolveWindow(captureStart, length, out int captureIndex) && TryResolveWindow(renderStart, length, out int renderIndex))
         {
             float[] captureHistory = _captureHistory;
             float[] renderHistory = _renderHistory;

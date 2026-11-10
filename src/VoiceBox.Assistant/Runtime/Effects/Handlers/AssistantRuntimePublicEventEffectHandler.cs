@@ -54,12 +54,7 @@ internal sealed class AssistantRuntimePublicEventEffectHandler : IPublicEventEff
         KernelWakeupObservation value = effect.Observation;
         Publish(_publications.RaiseWakeupDetected(new AssistantWakeupDetectedEventArgs
         {
-            Wakeup = new WakeupEventArgs(
-                value.Keyword,
-                value.Score,
-                value.Threshold,
-                value.DurationMs,
-                value.StartTimeMs),
+            Wakeup = new WakeupEventArgs(value.Keyword, value.Score, value.Threshold, value.DurationMs, value.StartTimeMs),
         }));
         return ValueTask.CompletedTask;
     }
@@ -123,8 +118,7 @@ internal sealed class AssistantRuntimePublicEventEffectHandler : IPublicEventEff
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        Publish(_publications.RaiseAssistantResponseGenerated(
-            new AssistantResponseGeneratedEventArgs { Text = effect.Text }));
+        Publish(_publications.RaiseAssistantResponseGenerated(new AssistantResponseGeneratedEventArgs { Text = effect.Text }));
         return ValueTask.CompletedTask;
     }
 

@@ -62,30 +62,22 @@ internal sealed class LlamaToolCallCatalog
                 throw new ArgumentException($"Tool name '{tool.Name}' is repeated.", nameof(definitions));
             if (tool.InputSchemaJson.Length > MaxSchemaCharacters)
             {
-                throw new ArgumentException(
-                    $"Tool '{tool.Name}' schema exceeds {MaxSchemaCharacters} characters.",
-                    nameof(definitions));
+                throw new ArgumentException($"Tool '{tool.Name}' schema exceeds {MaxSchemaCharacters} characters.", nameof(definitions));
             }
 
             try
             {
-                using JsonDocument schema = JsonDocument.Parse(
-                    tool.InputSchemaJson,
-                    new JsonDocumentOptions { MaxDepth = 64 });
+                using JsonDocument schema = JsonDocument.Parse(tool.InputSchemaJson, new JsonDocumentOptions { MaxDepth = 64 });
                 if (schema.RootElement.ValueKind != JsonValueKind.Object)
                     throw new JsonException("The schema root must be a JSON object.");
-                if (schema.RootElement.TryGetProperty("type", out JsonElement schemaType) &&
-                    !AllowsObjectArguments(schemaType))
+                if (schema.RootElement.TryGetProperty("type", out JsonElement schemaType) && !AllowsObjectArguments(schemaType))
                 {
                     throw new JsonException("The schema root must allow object-valued arguments.");
                 }
             }
             catch (JsonException exception)
             {
-                throw new ArgumentException(
-                    $"Tool '{tool.Name}' has an invalid JSON input schema.",
-                    nameof(definitions),
-                    exception);
+                throw new ArgumentException($"Tool '{tool.Name}' has an invalid JSON input schema.", nameof(definitions), exception);
             }
         }
 
@@ -93,9 +85,7 @@ internal sealed class LlamaToolCallCatalog
         string systemPrompt = BuildSystemPrompt(readOnlyTools);
         if (systemPrompt.Length > MaxCatalogCharacters)
         {
-            throw new ArgumentException(
-                $"The tool catalog prompt exceeds {MaxCatalogCharacters} characters.",
-                nameof(definitions));
+            throw new ArgumentException($"The tool catalog prompt exceeds {MaxCatalogCharacters} characters.", nameof(definitions));
         }
 
         return new LlamaToolCallCatalog(
@@ -112,8 +102,7 @@ internal sealed class LlamaToolCallCatalog
         if (schemaType.ValueKind != JsonValueKind.Array)
             return false;
 
-        return schemaType.EnumerateArray().Any(static item =>
-            item.ValueKind == JsonValueKind.String && item.GetString() == "object");
+        return schemaType.EnumerateArray().Any(static item => item.ValueKind == JsonValueKind.String && item.GetString() == "object");
     }
 
     private static string BuildSystemPrompt(IReadOnlyList<LlmToolDefinition> tools)
@@ -145,9 +134,7 @@ internal sealed class LlamaToolCallCatalog
     private static string BuildGrammar(IReadOnlyList<LlmToolDefinition> tools)
     {
         var grammar = new StringBuilder();
-        grammar.AppendLine(tools.Count == 0
-            ? "root ::= final"
-            : "root ::= final | tool-request");
+        grammar.AppendLine(tools.Count == 0 ? "root ::= final" : "root ::= final | tool-request");
         grammar.AppendLine("final ::= \"{\" ws \"\\\"text\\\"\" ws \":\" ws json-string ws \"}\"");
 
         if (tools.Count > 0)
@@ -267,8 +254,7 @@ internal static class LlamaToolCallEnvelopeParser
             JsonProperty property = properties[0];
             if (property.NameEquals("text"))
             {
-                if (property.Value.ValueKind != JsonValueKind.String ||
-                    string.IsNullOrWhiteSpace(property.Value.GetString()))
+                if (property.Value.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(property.Value.GetString()))
                 {
                     throw new FormatException("The response 'text' field must be a non-empty string.");
                 }
@@ -297,8 +283,7 @@ internal static class LlamaToolCallEnvelopeParser
                 {
                     throw new FormatException("Each tool call must contain only 'name' and 'arguments'.");
                 }
-                if (name.ValueKind != JsonValueKind.String ||
-                    !catalog.ToolsByName.ContainsKey(name.GetString()!))
+                if (name.ValueKind != JsonValueKind.String || !catalog.ToolsByName.ContainsKey(name.GetString()!))
                 {
                     throw new FormatException("The model requested a tool that is not in the current catalog.");
                 }

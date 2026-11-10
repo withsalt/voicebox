@@ -86,13 +86,11 @@ internal sealed class NearEndTestHarness
                 taken.OperationId != lease.OperationId ||
                 taken.CandidateId != lease.CandidateId)
             {
-                throw new InvalidOperationException(
-                    "A different confirmation lease is already taken.");
+                throw new InvalidOperationException("A different confirmation lease is already taken.");
             }
         }
         else if (!_module.Journal.TryAcquire(lease.OperationId, out _) &&
-                 (!_module.Journal.TryQueue(in lease) ||
-                  !_module.Journal.TryAcquire(lease.OperationId, out _)))
+                 (!_module.Journal.TryQueue(in lease) || !_module.Journal.TryAcquire(lease.OperationId, out _)))
         {
             throw new InvalidOperationException("The confirmation lease could not be acquired.");
         }

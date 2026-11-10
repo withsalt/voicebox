@@ -204,16 +204,8 @@ public sealed partial class VoiceAssistantLifecycleTests
         ConversationRequest request;
         lock (session.Requests)
             request = session.Requests.Single();
-        session.Publish(new ConversationBackgroundMessage(
-            Guid.NewGuid(),
-            session.ConversationId,
-            request.RequestId,
-            "后台结果1"));
-        session.Publish(new ConversationBackgroundMessage(
-            Guid.NewGuid(),
-            session.ConversationId,
-            request.RequestId,
-            "后台结果2"));
+        session.Publish(new ConversationBackgroundMessage(Guid.NewGuid(), session.ConversationId, request.RequestId, "后台结果1"));
+        session.Publish(new ConversationBackgroundMessage(Guid.NewGuid(), session.ConversationId, request.RequestId, "后台结果2"));
 
         await WaitUntilAsync(() =>
         {
@@ -440,9 +432,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         public Task StartAsync(CancellationToken cancellationToken = default)
         {
             StartCount++;
-            return FailStart
-                ? Task.FromException(new InvalidOperationException("start failed"))
-                : Task.CompletedTask;
+            return FailStart ? Task.FromException(new InvalidOperationException("start failed")) : Task.CompletedTask;
         }
 
         public Task StopAsync()
@@ -461,9 +451,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         }
     }
 
-    private sealed class EarlyBackgroundConversationSession :
-        IConversationSession,
-        IConversationBackgroundOutput
+    private sealed class EarlyBackgroundConversationSession : IConversationSession, IConversationBackgroundOutput
     {
         private readonly object _lock = new();
         private Channel<ConversationBackgroundMessage>? _channel;
@@ -507,11 +495,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             lock (_lock)
             {
                 Assert.NotNull(_channel);
-                _channel!.Writer.TryWrite(new ConversationBackgroundMessage(
-                    Guid.NewGuid(),
-                    ConversationId,
-                    request.RequestId,
-                    "后台先到"));
+                _channel!.Writer.TryWrite(new ConversationBackgroundMessage(Guid.NewGuid(), ConversationId, request.RequestId, "后台先到"));
             }
             await Task.Delay(150, cancellationToken);
             yield return new ConversationTextDelta("前台确认");
@@ -521,9 +505,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
-    private sealed class BackgroundConversationSession :
-        IConversationSession,
-        IConversationBackgroundOutput
+    private sealed class BackgroundConversationSession : IConversationSession, IConversationBackgroundOutput
     {
         private readonly object _lock = new();
         private Channel<ConversationBackgroundMessage>? _channel;

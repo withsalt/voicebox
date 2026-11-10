@@ -12,8 +12,7 @@ internal sealed class SeedAsrSession : AsrSession
 {
     private readonly Channel<PooledAudio> _audioChannel;
     private readonly Channel<AsrResult> _resultChannel;
-    private readonly TaskCompletionSource<AsrResult> _finalResult =
-        new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource<AsrResult> _finalResult = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly long _maxBufferedSamples;
     private readonly DoubaoOnlineASROptions? _options;
     private readonly ILogger _logger;
@@ -145,8 +144,7 @@ internal sealed class SeedAsrSession : AsrSession
         if (State != SeedAsrSessionState.Active || FailureException is not null || audio.IsEmpty) return false;
         if (!TryReserveSamples(audio.Length, out long bufferedBefore))
         {
-            var overflow = new SeedAsrAudioBufferOverflowException(
-                SessionId, _maxBufferedSamples, bufferedBefore, audio.Length);
+            var overflow = new SeedAsrAudioBufferOverflowException(SessionId, _maxBufferedSamples, bufferedBefore, audio.Length);
             if (FailAudioIngress(overflow)) throw overflow;
             return false;
         }
@@ -191,8 +189,7 @@ internal sealed class SeedAsrSession : AsrSession
 
     internal void MarkFinishing()
     {
-        Interlocked.CompareExchange(ref _state, (int)SeedAsrSessionState.Finishing,
-            (int)SeedAsrSessionState.Active);
+        Interlocked.CompareExchange(ref _state, (int)SeedAsrSessionState.Finishing, (int)SeedAsrSessionState.Active);
         _audioChannel.Writer.TryComplete();
     }
 
@@ -205,8 +202,7 @@ internal sealed class SeedAsrSession : AsrSession
 
     protected override void OnSessionFaulted(Exception ex)
     {
-        Interlocked.CompareExchange(ref _state, (int)SeedAsrSessionState.Finishing,
-            (int)SeedAsrSessionState.Active);
+        Interlocked.CompareExchange(ref _state, (int)SeedAsrSessionState.Finishing, (int)SeedAsrSessionState.Active);
         _finalResult.TrySetException(ex);
         _resultChannel.Writer.TryComplete(ex);
         // Keep the original failure available to Finish while stopping any
@@ -218,8 +214,7 @@ internal sealed class SeedAsrSession : AsrSession
 
     internal void AbortWork()
     {
-        Interlocked.CompareExchange(ref _state, (int)SeedAsrSessionState.Finishing,
-            (int)SeedAsrSessionState.Active);
+        Interlocked.CompareExchange(ref _state, (int)SeedAsrSessionState.Finishing, (int)SeedAsrSessionState.Active);
         _resultChannel.Writer.TryComplete();
         _finalResult.TrySetCanceled();
         _audioChannel.Writer.TryComplete();

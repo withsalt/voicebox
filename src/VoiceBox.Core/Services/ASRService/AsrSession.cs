@@ -16,12 +16,9 @@ public abstract class AsrSession : IDisposable, IAsyncDisposable
     private readonly object _sync = new();
     private readonly CancellationTokenSource _cancellation = new();
     private readonly CancellationToken _cancellationToken;
-    private readonly TaskCompletionSource _startCompleted =
-        new(TaskCreationOptions.RunContinuationsAsynchronously);
-    private readonly TaskCompletionSource _finishCompleted =
-        new(TaskCreationOptions.RunContinuationsAsynchronously);
-    private readonly TaskCompletionSource _released =
-        new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource _startCompleted = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource _finishCompleted = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource _released = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     private LifecycleState _state = LifecycleState.Created;
     private Task<AsrResult?>? _finishTask;

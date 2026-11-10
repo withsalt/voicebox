@@ -61,9 +61,7 @@ namespace VoiceBox.APM.WebRtc
         public static IServiceCollection AddWebRtcAec3DelayEstimator(this IServiceCollection services)
         {
             ArgumentNullException.ThrowIfNull(services);
-            services.TryAddSingleton<
-                IAcousticPathDelayEstimatorFactory,
-                WebRtcAec3DelayEstimatorFactory>();
+            services.TryAddSingleton<IAcousticPathDelayEstimatorFactory, WebRtcAec3DelayEstimatorFactory>();
             return services;
         }
     }

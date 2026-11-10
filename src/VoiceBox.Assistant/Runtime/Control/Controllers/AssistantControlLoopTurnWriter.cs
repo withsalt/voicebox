@@ -69,17 +69,12 @@ internal sealed class AssistantControlLoopTurnWriter : ITurnSemanticCommitPort
     {
         if (!_loopHost.IsInMutation)
         {
-            throw new InvalidOperationException(
-                "TurnKernel decisions must be committed by AssistantControlLoop.");
+            throw new InvalidOperationException("TurnKernel decisions must be committed by AssistantControlLoop.");
         }
 
         TurnSnapshot previous = _snapshots.Snapshot;
         TurnDecision decision = TurnKernel.Reduce(previous, signal);
-        _benchmarkProbe?.ObserveControlTrace(
-            "kernel.reduce",
-            signal.TurnId,
-            signal.OperationId,
-            signal.Kind.ToString());
+        _benchmarkProbe?.ObserveControlTrace("kernel.reduce", signal.TurnId, signal.OperationId, signal.Kind.ToString());
         _benchmarkProbe?.ObserveKernelDecision(signal, previous, decision);
         if (!decision.Accepted)
             return default;
@@ -102,8 +97,7 @@ internal sealed class AssistantControlLoopTurnWriter : ITurnSemanticCommitPort
             ValueTask execution = _effects!.ExecuteAsync(effect);
             if (!execution.IsCompletedSuccessfully)
             {
-                throw new InvalidOperationException(
-                    $"Kernel effect '{effect.Kind}' performed asynchronous work on the control loop.");
+                throw new InvalidOperationException($"Kernel effect '{effect.Kind}' performed asynchronous work on the control loop.");
             }
 
             execution.GetAwaiter().GetResult();

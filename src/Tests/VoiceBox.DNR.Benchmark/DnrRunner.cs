@@ -160,8 +160,7 @@ namespace VoiceBox.DNR.Benchmark
                 if (dumpThis) dumped++;
 
                 if (_config.Verbose || (processed % 25 == 0))
-                    _log.LogInformation("[{Backend}] {Done}/{Total} 已处理",
-                        _spec.Label, processed, _cleanFiles.Count);
+                    _log.LogInformation("[{Backend}] {Done}/{Total} 已处理", _spec.Label, processed, _cleanFiles.Count);
             }
             wall.Stop();
 

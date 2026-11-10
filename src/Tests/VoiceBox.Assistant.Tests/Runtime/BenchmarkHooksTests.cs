@@ -58,10 +58,7 @@ public sealed class BenchmarkHooksTests
     {
         var provider = new MetricsProvider();
         var timeProvider = new ManualTimeProvider();
-        var sampler = new AecMetricsSampler(
-            new AcousticProcessingDiagnosticsAdapter(provider),
-            NullLogger.Instance,
-            timeProvider);
+        var sampler = new AecMetricsSampler(new AcousticProcessingDiagnosticsAdapter(provider), NullLogger.Instance, timeProvider);
         timeProvider.Advance(TimeSpan.FromMilliseconds(10));
 
         sampler.SampleIfDue();
@@ -101,11 +98,7 @@ public sealed class BenchmarkHooksTests
     {
         var processor = new SubtractRenderCaptureProcessor();
         var timeProvider = new ManualTimeProvider();
-        using var ingress = new BenchmarkDuplexAudioIngress(
-            processor,
-            timeProvider,
-            sampleRate: 16000,
-            channels: 1);
+        using var ingress = new BenchmarkDuplexAudioIngress(processor, timeProvider, sampleRate: 16000, channels: 1);
         var eventOrder = new List<string>();
         DuplexAudioFrame duplex = default;
         ProcessedCaptureFrame processed = default;
@@ -117,10 +110,7 @@ public sealed class BenchmarkHooksTests
         await ingress.StartAsync();
         ingress.SetPlaybackGain(0.5f);
         timeProvider.Advance(TimeSpan.FromMilliseconds(10));
-        CaptureRange range = ingress.PushFrame(
-            [0.8f, 0.6f, -0.2f],
-            [0.3f, 0.1f, 0.2f],
-            hasDiscontinuity: true);
+        CaptureRange range = ingress.PushFrame([0.8f, 0.6f, -0.2f], [0.3f, 0.1f, 0.2f], hasDiscontinuity: true);
 
         Assert.Equal(2, processor.ResetCalls);
         Assert.Equal(1, processor.ProcessCalls);
@@ -142,9 +132,7 @@ public sealed class BenchmarkHooksTests
         Assert.Equal(duplex.CaptureAfterAec.ToArray(), available);
         Assert.Equal(0, range.StartSample);
         Assert.Equal(3, range.EndSampleExclusive);
-        Assert.Equal(
-            new RenderSignalTimeline(1, 0, 3, RenderTimelineStatus.Valid),
-            duplex.RenderTimeline);
+        Assert.Equal(new RenderSignalTimeline(1, 0, 3, RenderTimelineStatus.Valid), duplex.RenderTimeline);
 
         void OnDuplex(in DuplexAudioFrame frame)
         {
@@ -178,29 +166,16 @@ public sealed class BenchmarkHooksTests
 
         await ingress.StartAsync();
         ingress.PushFrame([1f, 2f], [0f, 0f]);
-        ingress.PushFrame(
-            [3f, 4f],
-            [0f, 0f],
-            renderStatus: RenderTimelineStatus.Gap);
-        ingress.PushFrame(
-            [5f, 6f],
-            [0f, 0f],
-            renderStatus: RenderTimelineStatus.Missing,
-            hasRenderDiscontinuity: true);
+        ingress.PushFrame([3f, 4f], [0f, 0f], renderStatus: RenderTimelineStatus.Gap);
+        ingress.PushFrame([5f, 6f], [0f, 0f], renderStatus: RenderTimelineStatus.Missing, hasRenderDiscontinuity: true);
 
         Assert.Equal(3, frames.Count);
-        Assert.Equal(
-            new RenderSignalTimeline(1, 0, 2, RenderTimelineStatus.Valid),
-            frames[0].RenderTimeline);
-        Assert.Equal(
-            new RenderSignalTimeline(1, 2, 4, RenderTimelineStatus.Gap),
-            frames[1].RenderTimeline);
+        Assert.Equal(new RenderSignalTimeline(1, 0, 2, RenderTimelineStatus.Valid), frames[0].RenderTimeline);
+        Assert.Equal(new RenderSignalTimeline(1, 2, 4, RenderTimelineStatus.Gap), frames[1].RenderTimeline);
         RenderSignalTimeline firstRender = frames[0].RenderTimeline;
         RenderSignalTimeline gapRender = frames[1].RenderTimeline;
         Assert.True(firstRender.IsContiguousWith(in gapRender));
-        Assert.Equal(
-            new RenderSignalTimeline(2, 0, 2, RenderTimelineStatus.Missing, true),
-            frames[2].RenderTimeline);
+        Assert.Equal(new RenderSignalTimeline(2, 0, 2, RenderTimelineStatus.Missing, true), frames[2].RenderTimeline);
         Assert.All(frames, static frame => Assert.False(frame.HasDiscontinuity));
         Assert.All(frames, static frame => Assert.Equal(1, frame.StreamEpoch));
         Assert.Equal([0L, 2L, 4L], frames.Select(static frame => frame.StartSample));
@@ -211,9 +186,7 @@ public sealed class BenchmarkHooksTests
     [Fact]
     public async Task BenchmarkIngress_RejectsDiscontinuousRenderGap()
     {
-        using var ingress = new BenchmarkDuplexAudioIngress(
-            new SubtractRenderCaptureProcessor(),
-            new ManualTimeProvider());
+        using var ingress = new BenchmarkDuplexAudioIngress(new SubtractRenderCaptureProcessor(), new ManualTimeProvider());
         await ingress.StartAsync();
 
         Assert.Throws<ArgumentException>(() => ingress.PushFrame(
@@ -227,11 +200,7 @@ public sealed class BenchmarkHooksTests
     public async Task BenchmarkIngress_MapsBufferedProcessorOutputToOriginalCaptureTimeline()
     {
         var processor = new TwoSampleDelayCaptureProcessor();
-        using var ingress = new BenchmarkDuplexAudioIngress(
-            processor,
-            new ManualTimeProvider(),
-            sampleRate: 16000,
-            channels: 1);
+        using var ingress = new BenchmarkDuplexAudioIngress(processor, new ManualTimeProvider(), sampleRate: 16000, channels: 1);
         var frames = new List<(CaptureRange Range, float[] Audio, int Delay)>();
         ingress.OnProcessedCaptureFrame += OnProcessed;
 
@@ -360,11 +329,7 @@ public sealed class BenchmarkHooksTests
         var probe = new VoiceAssistantBenchmarkProbe();
         probe.AttachCapturePosition(new FixedCapturePosition(1600));
 
-        probe.ObserveControlTrace(
-            "effect.clear-playback",
-            turnId: 2,
-            operationId: 7,
-            detail: "diagnostic");
+        probe.ObserveControlTrace("effect.clear-playback", turnId: 2, operationId: 7, detail: "diagnostic");
 
         ControlTraceEntry[] trace = probe.GetControlTrace();
         var entry = Assert.Single(trace);
@@ -460,9 +425,7 @@ public sealed class BenchmarkHooksTests
             for (int i = 0; i < capture.Length; i++)
             {
                 float input = capture[i];
-                capture[i] = _delay.Count < DelaySamples
-                    ? 0
-                    : _delay.Dequeue();
+                capture[i] = _delay.Count < DelaySamples ? 0 : _delay.Dequeue();
                 _delay.Enqueue(input);
             }
         }

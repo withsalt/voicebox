@@ -107,8 +107,7 @@ namespace VoiceBox.Wakeup.FsmnKws
             _model = new StreamingFsmnModel(_options);
 
             long maxSpanFrames = Math.Max(1, (long)maxSpanFrameValue);
-            _decoder = new CtcKeywordDecoder(
-                entries, _options.ScoreBeam, _options.PathBeam, _options.TokenProbFloor, maxSpanFrames);
+            _decoder = new CtcKeywordDecoder(entries, _options.ScoreBeam, _options.PathBeam, _options.TokenProbFloor, maxSpanFrames);
 
             _logger.LogInformation(
                 "FsmnKws initialized: keyword='{Keyword}' (tokens=[{Ids}]), threshold={Threshold}, " +

@@ -75,9 +75,7 @@ namespace VoiceBox.Core.Services.AudioService.Models
                 peak = Math.Max(peak, Math.Abs(sample));
             }
 
-            return new DuplexSignalStats(
-                Rms: Math.Sqrt(energy / samples.Length),
-                Peak: peak);
+            return new DuplexSignalStats(Rms: Math.Sqrt(energy / samples.Length), Peak: peak);
         }
 
         private static double ComputeCorrelation(ReadOnlySpan<float> left, ReadOnlySpan<float> right)

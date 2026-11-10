@@ -64,8 +64,6 @@ namespace VoiceBox.Assistant.Api.Configuration
         public SpeakerConfirmationOptions Confirmation { get; set; } = new();
 
         internal string ResolveProfilePath()
-            => Path.GetFullPath(Path.IsPathRooted(ProfilePath)
-                ? ProfilePath
-                : Path.Combine(AppContext.BaseDirectory, ProfilePath));
+            => Path.GetFullPath(Path.IsPathRooted(ProfilePath) ? ProfilePath : Path.Combine(AppContext.BaseDirectory, ProfilePath));
     }
 }

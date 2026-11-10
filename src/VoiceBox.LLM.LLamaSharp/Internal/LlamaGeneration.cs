@@ -155,8 +155,7 @@ namespace VoiceBox.LLM.LLamaSharp.Internal
 
                     if (pos >= ctxSize)
                     {
-                        logger.LogWarning(
-                            "Generation stopped early: context window is full ({ContextSize} tokens).", ctxSize);
+                        logger.LogWarning("Generation stopped early: context window is full ({ContextSize} tokens).", ctxSize);
                         break;
                     }
 
@@ -223,8 +222,7 @@ namespace VoiceBox.LLM.LLamaSharp.Internal
             string? grammar = null)
         {
             bool enableThinking = grammar is null && (options?.EnableThinking ?? false);
-            string prompt = LlamaPromptBuilder.Build(
-                session, messages, addGenerationPrompt: true, enableThinking);
+            string prompt = LlamaPromptBuilder.Build(session, messages, addGenerationPrompt: true, enableThinking);
             LLamaToken[] tokens = LlamaTokenUtils.TokenizePrompt(session.Weights, prompt, session.Encoding);
             if (tokens.Length == 0)
                 throw new InvalidOperationException("Prompt tokenized to zero tokens.");

@@ -11,8 +11,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     public async Task ScheduleCr004_StaleAsrStartAfterWakeupInterrupt_CleansOnlyTheOldSession()
     {
         var services = TestServices.Create();
-        services.Asr.FinishEntered = new TaskCompletionSource<string>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        services.Asr.FinishEntered = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
         using var assistant = services.CreateAssistant(enableWakeWord: true);
         var replied = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
         assistant.AssistantReplied += (_, value) => replied.TrySetResult(value.Text);
@@ -41,9 +40,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         // The first queued completion arrives after the new turn exists and must be cleaned up.
         services.Asr.CompleteStart("stale-session-1");
-        Assert.Equal(
-            "stale-session-1",
-            await services.Asr.FinishEntered.Task.WaitAsync(TimeSpan.FromSeconds(2)));
+        Assert.Equal("stale-session-1", await services.Asr.FinishEntered.Task.WaitAsync(TimeSpan.FromSeconds(2)));
 
         services.Asr.CompleteStart("session-2");
         services.Vad.EmitSpeechEnded(TimeSpan.FromMilliseconds(120));
@@ -85,8 +82,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         await assistant.StartAsync();
         services.PlaybackDetector.PushException = new InvalidOperationException("fatal detector schedule");
-        Task callback = Task.Run(() => services.Audio.EmitFrame(
-            new float[320], new float[320], new float[320], new float[320]));
+        Task callback = Task.Run(() => services.Audio.EmitFrame(new float[320], new float[320], new float[320], new float[320]));
 
         await faultEntered.Task.WaitAsync(TimeSpan.FromSeconds(2));
         Task hostStop = assistant.StopAsync();
@@ -236,10 +232,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 160 => 5_380,
                 256 => 6_148,
                 320 => 6_660,
-                _ => throw new ArgumentOutOfRangeException(
-                    nameof(measurement.CallbackSamples),
-                    measurement.CallbackSamples,
-                    null),
+                _ => throw new ArgumentOutOfRangeException(nameof(measurement.CallbackSamples), measurement.CallbackSamples, null),
             };
             Assert.True(
                 measurement.AllocatedBytesPerCallback <= allocationCeiling,
@@ -370,10 +363,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         string history = string.Join(
             '|',
             secondPrompt.Select(static message => $"{message.Role}:{string.Concat(message.Content.OfType<TextContent>().Select(static content => content.Text))}"));
-        return new TextChunkingResult(
-            string.Concat(visible),
-            string.Join('|', services.Tts.SynthesizedTexts),
-            history);
+        return new TextChunkingResult(string.Concat(visible), string.Join('|', services.Tts.SynthesizedTexts), history);
     }
 
     private static async Task WaitForAssistantStateAsync(VoiceAssistant assistant, AssistantState expected)

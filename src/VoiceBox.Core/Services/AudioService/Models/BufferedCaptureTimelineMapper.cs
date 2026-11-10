@@ -43,10 +43,7 @@ namespace VoiceBox.Core.Services.AudioService.Models
                 throw new ArgumentOutOfRangeException(nameof(algorithmicDelaySamples));
 
             buffered &= algorithmicDelaySamples > 0;
-            bool configurationChanged =
-                _hasConfiguration &&
-                (_buffered != buffered ||
-                 _algorithmicDelaySamples != algorithmicDelaySamples);
+            bool configurationChanged = _hasConfiguration && (_buffered != buffered || _algorithmicDelaySamples != algorithmicDelaySamples);
             bool reset = hasDiscontinuity || configurationChanged;
             if (!_hasConfiguration || reset)
                 BeginConfiguration(buffered, algorithmicDelaySamples);
@@ -71,10 +68,7 @@ namespace VoiceBox.Core.Services.AudioService.Models
             int validSamples = outputSampleCount - syntheticPrefix;
             if (validSamples <= 0)
             {
-                return new BufferedCaptureOutput(
-                    default,
-                    reset,
-                    reset);
+                return new BufferedCaptureOutput(default, reset, reset);
             }
 
             if (!_sourceRanges.TryDequeue(validSamples, out CaptureRange outputRange))

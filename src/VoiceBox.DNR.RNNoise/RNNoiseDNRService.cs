@@ -88,9 +88,7 @@ namespace VoiceBox.DNR.RNNoise
 
             FrameSize = (int)Math.Round(RNNoiseFrameSize * (double)_inputRate / RNNoiseNativeRate);
             if (FrameSize <= 0) FrameSize = RNNoiseFrameSize;
-            DelaySamples = _bypass
-                ? 0
-                : (int)Math.Round(RNNoiseAlgorithmicDelaySamples * (double)_inputRate / RNNoiseNativeRate);
+            DelaySamples = _bypass ? 0 : (int)Math.Round(RNNoiseAlgorithmicDelaySamples * (double)_inputRate / RNNoiseNativeRate);
             _delaySkipRemaining = _bypass ? 0 : RNNoiseAlgorithmicDelaySamples;
         }
 
@@ -134,9 +132,7 @@ namespace VoiceBox.DNR.RNNoise
                 {
                     if (_needsResample)
                     {
-                        int produced = _downsampler!.Process(
-                            _work48k.AsSpan(denoised48kOffset, denoised48kLen),
-                            ref _resampleOutput);
+                        int produced = _downsampler!.Process(_work48k.AsSpan(denoised48kOffset, denoised48kLen), ref _resampleOutput);
                         AppendPending(_resampleOutput.AsSpan(0, produced));
                     }
                     else

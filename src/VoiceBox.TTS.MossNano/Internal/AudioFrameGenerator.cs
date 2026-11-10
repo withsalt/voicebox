@@ -331,8 +331,7 @@ namespace VoiceBox.TTS.MossNano.Internal
                     inputs.Add(ov);
                 }
 
-                using var outputs = _bundle.LocalCachedStep.Run(
-                    _engine.RunOptions, inputNames, inputs, _bundle.LocalCachedOutputNames);
+                using var outputs = _bundle.LocalCachedStep.Run(_engine.RunOptions, inputNames, inputs, _bundle.LocalCachedOutputNames);
 
                 var textLogits = outputs[0].GetTensorDataAsSpan<float>().ToArray();
                 var audioLogitsShape = outputs[1].GetTensorTypeAndShape().Shape;
@@ -368,9 +367,7 @@ namespace VoiceBox.TTS.MossNano.Internal
         private void ResetSeenMaskIfNeeded(int nVq, int audioCodebookSize)
         {
             int needed = nVq * audioCodebookSize;
-            if (_seenMask.Length < needed
-                || _seenMaskNVq != nVq
-                || _seenMaskCodebookSize != audioCodebookSize)
+            if (_seenMask.Length < needed || _seenMaskNVq != nVq || _seenMaskCodebookSize != audioCodebookSize)
             {
                 _seenMask = new int[needed];
                 _seenMaskNVq = nVq;

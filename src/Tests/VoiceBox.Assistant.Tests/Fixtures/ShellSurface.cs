@@ -10,8 +10,7 @@ namespace VoiceBox.Assistant.Tests;
 /// </summary>
 internal static class ShellSurface
 {
-    private const BindingFlags Declared =
-        BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly;
+    private const BindingFlags Declared = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly;
 
     private const int MaxDepth = 6;
 
@@ -60,8 +59,5 @@ internal static class ShellSurface
     }
 
     private static bool IsAssistantType(Type type)
-        => !type.IsPrimitive &&
-            !type.IsEnum &&
-            type != typeof(string) &&
-            type.Assembly == typeof(AssistantRuntime).Assembly;
+        => !type.IsPrimitive && !type.IsEnum && type != typeof(string) && type.Assembly == typeof(AssistantRuntime).Assembly;
 }

@@ -39,10 +39,7 @@ internal sealed class BargeInValidationTurnOwner :
         {
             lock (_lock)
             {
-                return new BargeInValidationCaptureSnapshot(
-                    _validationTurnId,
-                    _interruptedTurnId,
-                    _responseCts);
+                return new BargeInValidationCaptureSnapshot(_validationTurnId, _interruptedTurnId, _responseCts);
             }
         }
     }

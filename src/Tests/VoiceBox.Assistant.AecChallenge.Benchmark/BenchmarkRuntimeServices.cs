@@ -56,9 +56,7 @@ internal sealed class BenchmarkTimeProvider : TimeProvider
             throw new ArgumentOutOfRangeException(nameof(channels));
 
         int frames = interleavedSamples / channels;
-        long ticks = checked((long)Math.Round(
-            frames * TimestampFrequency / (double)sampleRate,
-            MidpointRounding.AwayFromZero));
+        long ticks = checked((long)Math.Round(frames * TimestampFrequency / (double)sampleRate, MidpointRounding.AwayFromZero));
         Interlocked.Add(ref _timestamp, ticks);
         _utcNow = _utcNow.AddSeconds(frames / (double)sampleRate);
         FireDueTimers();
@@ -67,17 +65,13 @@ internal sealed class BenchmarkTimeProvider : TimeProvider
     private bool ChangeTimer(BenchmarkTimer timer, TimeSpan dueTime, TimeSpan period)
     {
         long dueTicks = ToTimestampTicks(dueTime, nameof(dueTime));
-        long periodTicks = period == TimeSpan.Zero
-            ? long.MaxValue
-            : ToTimestampTicks(period, nameof(period));
+        long periodTicks = period == TimeSpan.Zero ? long.MaxValue : ToTimestampTicks(period, nameof(period));
         lock (_timerSync)
         {
             if (timer.Disposed)
                 return false;
 
-            timer.DueTimestamp = dueTicks == long.MaxValue
-                ? long.MaxValue
-                : SaturatingAdd(_timestamp, dueTicks);
+            timer.DueTimestamp = dueTicks == long.MaxValue ? long.MaxValue : SaturatingAdd(_timestamp, dueTicks);
             timer.PeriodTicks = periodTicks;
             _timers.Add(timer);
             return true;
@@ -131,8 +125,7 @@ internal sealed class BenchmarkTimeProvider : TimeProvider
         if (value < TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(parameterName);
 
-        double ticks = Math.Ceiling(
-            value.TotalSeconds * TimestampFrequency);
+        double ticks = Math.Ceiling(value.TotalSeconds * TimestampFrequency);
         return ticks >= long.MaxValue ? long.MaxValue : (long)ticks;
     }
 
@@ -179,9 +172,7 @@ internal sealed class BenchmarkTimeProvider : TimeProvider
     }
 }
 
-internal sealed class BenchmarkClockedAecService :
-    IAcousticEchoCancellationService,
-    IAcousticProcessingMetricsSource
+internal sealed class BenchmarkClockedAecService : IAcousticEchoCancellationService, IAcousticProcessingMetricsSource
 {
     private readonly IAcousticEchoCancellationService _inner;
     private readonly IAcousticProcessingMetricsSource _metricsSource;
@@ -237,12 +228,8 @@ internal sealed class BenchmarkVadService : IVoiceActivityDetectService
     public void EmitBootstrapUtterance()
     {
         OnSpeechStarted?.Invoke(this, EventArgs.Empty);
-        OnSpeaking?.Invoke(
-            this,
-            new VADEventArgs([0.1f, 0.2f, 0.1f, 0.2f], VADEventDataType.Chunk));
-        OnSpeechEnded?.Invoke(
-            this,
-            new VADEventArgs([], VADEventDataType.End, TimeSpan.FromMilliseconds(120)));
+        OnSpeaking?.Invoke(this, new VADEventArgs([0.1f, 0.2f, 0.1f, 0.2f], VADEventDataType.Chunk));
+        OnSpeechEnded?.Invoke(this, new VADEventArgs([], VADEventDataType.End, TimeSpan.FromMilliseconds(120)));
     }
 
     public void Reset()
@@ -319,16 +306,13 @@ internal sealed class BenchmarkLlmService : IStreamLLMService
 
 internal sealed class BenchmarkTtsService : IStreamTTSService
 {
-    private TaskCompletionSource _caseRelease =
-        CompletedRelease();
+    private TaskCompletionSource _caseRelease = CompletedRelease();
 
     public int OutputSampleRate => EvaluationOptions.TargetSampleRate;
     public int OutputChannels => 1;
 
     public void BeginCase()
-        => Interlocked.Exchange(
-            ref _caseRelease,
-            new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously));
+        => Interlocked.Exchange(ref _caseRelease, new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously));
 
     public void ReleaseCase()
         => Volatile.Read(ref _caseRelease).TrySetResult();
@@ -378,8 +362,7 @@ internal sealed class BenchmarkTtsService : IStreamTTSService
 
     private static TaskCompletionSource CompletedRelease()
     {
-        var completion = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         completion.SetResult();
         return completion;
     }

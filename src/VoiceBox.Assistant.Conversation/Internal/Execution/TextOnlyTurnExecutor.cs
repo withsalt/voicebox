@@ -32,9 +32,7 @@ internal sealed class TextOnlyTurnExecutor : ITurnExecutor
             .WithCancellation(cancellationToken)
             .ConfigureAwait(false))
         {
-            yield return chunk.Kind == LlmChunkKind.Thinking
-                ? new TurnThinkingDelta(chunk.Text)
-                : new TurnTextDelta(chunk.Text);
+            yield return chunk.Kind == LlmChunkKind.Thinking ? new TurnThinkingDelta(chunk.Text) : new TurnTextDelta(chunk.Text);
         }
 
         yield return new TurnFinished();

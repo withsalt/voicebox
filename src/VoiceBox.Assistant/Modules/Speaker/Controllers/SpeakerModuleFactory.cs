@@ -30,12 +30,5 @@ internal sealed class SpeakerModuleFactory : ISpeakerModuleFactory
     public SpeakerPurposeSet EffectivePurposes => _effectivePurposes;
 
     public ISpeakerModule Create(SpeakerCaptureDescriptor descriptor, int audioSampleRate, int audioChannels, ILogger logger)
-        => new SpeakerModule(
-            _speaker,
-            _options,
-            _effectivePurposes,
-            descriptor,
-            audioSampleRate,
-            audioChannels,
-            logger);
+        => new SpeakerModule(_speaker, _options, _effectivePurposes, descriptor, audioSampleRate, audioChannels, logger);
 }

@@ -73,9 +73,7 @@ namespace VoiceBox.DNR.DPDFNet.Internal
 
             // state_in 形状给出权威状态长度。
             var stateDims = _session.InputMetadata[_inStateName].Dimensions;
-            _stateSize = stateDims.Length > 0 && stateDims[0] > 0
-                ? stateDims[0]
-                : ReadIntMeta(meta, "state_size", 0);
+            _stateSize = stateDims.Length > 0 && stateDims[0] > 0 ? stateDims[0] : ReadIntMeta(meta, "state_size", 0);
             if (_stateSize <= 0)
                 throw new InvalidOperationException("Unable to determine DPDFNet state size from model.");
 
@@ -85,10 +83,8 @@ namespace VoiceBox.DNR.DPDFNet.Internal
             _specBuffer = new float[_freqBins * 2];
             _outputNames = new[] { _outSpecName, _outStateName };
             _inputNames = new[] { _inSpecName, _inStateName };
-            _specValue = OrtValue.CreateTensorValueFromMemory(
-                _specBuffer, new long[] { 1, 1, _freqBins, 2 });
-            _stateValue = OrtValue.CreateTensorValueFromMemory(
-                _state, new long[] { _stateSize });
+            _specValue = OrtValue.CreateTensorValueFromMemory(_specBuffer, new long[] { 1, 1, _freqBins, 2 });
+            _stateValue = OrtValue.CreateTensorValueFromMemory(_state, new long[] { _stateSize });
             _inputValues = new[] { _specValue, _stateValue };
         }
 
@@ -110,8 +106,7 @@ namespace VoiceBox.DNR.DPDFNet.Internal
                 _specBuffer[f * 2 + 1] = im[f];
             }
 
-            using IDisposableReadOnlyCollection<OrtValue> results =
-                _session.Run(_runOptions, _inputNames, _inputValues, _outputNames);
+            using IDisposableReadOnlyCollection<OrtValue> results = _session.Run(_runOptions, _inputNames, _inputValues, _outputNames);
 
             ReadOnlySpan<float> specSpan = results[0].GetTensorDataAsSpan<float>();
             if (specSpan.Length < _freqBins * 2)

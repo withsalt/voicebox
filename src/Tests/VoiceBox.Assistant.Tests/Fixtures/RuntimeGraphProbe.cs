@@ -13,8 +13,7 @@ internal static class RuntimeGraphProbe
     private const int MaxDepth = 5;
 
     public static object RequireField(object root, string fieldName)
-        => FindField(root, fieldName)
-            ?? throw new Xunit.Sdk.XunitException($"Field '{fieldName}' was not found in the runtime graph.");
+        => FindField(root, fieldName) ?? throw new Xunit.Sdk.XunitException($"Field '{fieldName}' was not found in the runtime graph.");
 
     public static T RequireField<T>(object root, string fieldName)
         => (T)RequireField(root, fieldName);
@@ -69,7 +68,5 @@ internal static class RuntimeGraphProbe
     }
 
     private static bool IsWorthWalking(Type type)
-        => !type.IsPrimitive &&
-            type != typeof(string) &&
-            type.Namespace?.StartsWith("VoiceBox", StringComparison.Ordinal) == true;
+        => !type.IsPrimitive && type != typeof(string) && type.Namespace?.StartsWith("VoiceBox", StringComparison.Ordinal) == true;
 }

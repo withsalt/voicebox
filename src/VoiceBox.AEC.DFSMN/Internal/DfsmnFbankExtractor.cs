@@ -100,13 +100,9 @@ namespace VoiceBox.AEC.DFSMN.Internal
                     float mel = DspMath.MelScale(fftBinWidth * k);
                     if (mel <= left || mel >= right) continue;
                     startBin = startBin < 0 ? k : startBin;
-                    weights.Add(mel <= center
-                        ? (mel - left) / (center - left)
-                        : (right - mel) / (right - center));
+                    weights.Add(mel <= center ? (mel - left) / (center - left) : (right - mel) / (right - center));
                 }
-                filters[bin] = new MelFilter(
-                    startBin < 0 ? 0 : startBin,
-                    weights.ToArray());
+                filters[bin] = new MelFilter(startBin < 0 ? 0 : startBin, weights.ToArray());
             }
             return filters;
         }

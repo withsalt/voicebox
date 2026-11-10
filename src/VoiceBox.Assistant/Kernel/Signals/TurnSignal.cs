@@ -200,30 +200,10 @@ internal readonly record struct TurnSignal
             candidateId: candidateId);
 
     public static TurnSignal RecognitionSessionReady(long turnId, long operationId, long sourceSequence = 0, long sourceTick = 0)
-        => new(
-            TurnSignalKind.RecognitionSessionReady,
-            sourceSequence,
-            sourceTick,
-            turnId,
-            operationId,
-            false,
-            0,
-            null,
-            null,
-            default);
+        => new(TurnSignalKind.RecognitionSessionReady, sourceSequence, sourceTick, turnId, operationId, false, 0, null, null, default);
 
     public static TurnSignal RecognitionCompleted(long turnId, long operationId, string text, TimeSpan speechDuration = default)
-        => new(
-            TurnSignalKind.RecognitionCompleted,
-            0,
-            0,
-            turnId,
-            operationId,
-            false,
-            speechDuration.Ticks,
-            text,
-            null,
-            default);
+        => new(TurnSignalKind.RecognitionCompleted, 0, 0, turnId, operationId, false, speechDuration.Ticks, text, null, default);
 
     public static TurnSignal RecognitionFailed(long turnId, long operationId, KernelFailure failure)
         => new(TurnSignalKind.RecognitionFailed, 0, 0, turnId, operationId, false, 0, null, null, failure);
@@ -294,17 +274,7 @@ internal readonly record struct TurnSignal
         => new(TurnSignalKind.PlaybackCompleted, 0, 0, turnId, operationId, false, elapsed.Ticks, null, null, default);
 
     public static TurnSignal PlaybackCompleted(long turnId, long operationId, string text, TimeSpan elapsed)
-        => new(
-            TurnSignalKind.PlaybackCompleted,
-            0,
-            0,
-            turnId,
-            operationId,
-            false,
-            elapsed.Ticks,
-            text,
-            null,
-            default);
+        => new(TurnSignalKind.PlaybackCompleted, 0, 0, turnId, operationId, false, elapsed.Ticks, text, null, default);
 
     public static TurnSignal OperationFailed(
         long turnId,

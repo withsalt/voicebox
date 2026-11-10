@@ -44,12 +44,8 @@ internal sealed record SpeakerCaptureDescriptor(
         if (channels <= 0)
             throw new ArgumentOutOfRangeException(nameof(channels));
 
-        string processorId = captureProcessorEnabled
-            ? Normalize(captureProcessorId)
-            : NoCaptureProcessor;
-        string processorDigest = captureProcessorEnabled
-            ? Normalize(captureProcessorDigest)
-            : NoCaptureProcessor;
+        string processorId = captureProcessorEnabled ? Normalize(captureProcessorId) : NoCaptureProcessor;
+        string processorDigest = captureProcessorEnabled ? Normalize(captureProcessorDigest) : NoCaptureProcessor;
         string model = captureProcessorEnabled ? Normalize(modelDigest) : NoCaptureProcessor;
 
         var fingerprint = new StringBuilder(128)
@@ -84,12 +80,8 @@ internal sealed record SpeakerCaptureDescriptor(
         Core.Services.AcousticProcessing.IAcousticProcessingMetricsSource? acousticDiagnostics)
     {
         ArgumentNullException.ThrowIfNull(audio);
-        int sampleRate = audio.Options.SampleRate is > 0 and <= int.MaxValue
-            ? (int)audio.Options.SampleRate
-            : 1;
-        int channels = audio.Options.ChannelCount is > 0 and <= int.MaxValue
-            ? (int)audio.Options.ChannelCount
-            : 1;
+        int sampleRate = audio.Options.SampleRate is> 0 and <= int.MaxValue ? (int)audio.Options.SampleRate : 1;
+        int channels = audio.Options.ChannelCount is> 0 and <= int.MaxValue ? (int)audio.Options.ChannelCount : 1;
         return Create(
             sampleRate,
             channels,

@@ -139,8 +139,7 @@ namespace OpenAILLMDemo
             Console.WriteLine($"输入 :q 退出, :reset 清空历史 (最多保留最近 {MaxTurns} 轮对话)");
             Console.WriteLine();
 
-            string role = "你是一个自然、真实、简洁的日常聊天伙伴。和我对话时不要使用机器化、模板化的表达，"
-                + "也不要频繁提到\"AI\"\"模型\"\"程序\"等身份信息。回答简洁，不说废话，语气像朋友聊天。";
+            string role = "你是一个自然、真实、简洁的日常聊天伙伴。和我对话时不要使用机器化、模板化的表达，" + "也不要频繁提到\"AI\"\"模型\"\"程序\"等身份信息。回答简洁，不说废话，语气像朋友聊天。";
 
             var systemMessage = ChatMessage.System(role);
             var history = new List<ChatMessage> { systemMessage };

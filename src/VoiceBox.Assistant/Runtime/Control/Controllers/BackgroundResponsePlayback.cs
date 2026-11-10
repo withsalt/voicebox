@@ -17,8 +17,7 @@ internal sealed class BackgroundResponsePlayback(
 {
     public async Task PlayAsync(string text, CancellationToken cancellationToken)
     {
-        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(
-            cancellationToken, resources.RunToken);
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, resources.RunToken);
         CancellationToken token = cancellation.Token;
         while (true)
         {
@@ -43,8 +42,7 @@ internal sealed class BackgroundResponsePlayback(
 
             try
             {
-                await responses.RunBackgroundTextTurnAsync(
-                    turnId, operationId, text, token, resources).ConfigureAwait(false);
+                await responses.RunBackgroundTextTurnAsync(turnId, operationId, text, token, resources).ConfigureAwait(false);
             }
             catch (ResponseModule.ResponseOperationAdmissionRejectedException)
             {

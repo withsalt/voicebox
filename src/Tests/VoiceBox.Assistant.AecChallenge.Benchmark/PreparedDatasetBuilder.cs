@@ -113,32 +113,23 @@ internal static class PreparedDatasetBuilder
         ValidateSourceRoot(options.WenetRoot, "WenetSpeech4TTS");
 
         string outputRoot = Path.GetFullPath(options.OutputRoot);
-        if (Directory.Exists(outputRoot) &&
-            Directory.EnumerateFileSystemEntries(outputRoot).Any())
+        if (Directory.Exists(outputRoot) && Directory.EnumerateFileSystemEntries(outputRoot).Any())
         {
-            throw new InvalidOperationException(
-                $"Output directory already exists and is not empty: {outputRoot}");
+            throw new InvalidOperationException($"Output directory already exists and is not empty: {outputRoot}");
         }
         Directory.CreateDirectory(outputRoot);
 
         var materializer = new DatasetMaterializer(outputRoot, options.Materialization);
         IReadOnlyList<EvaluationCase> acousticSource = SelectAcousticCases(options);
-        var acoustic = acousticSource
-            .Select(c => MaterializeAcoustic(c, materializer))
-            .ToArray();
-        PreparedSpeechSelection speechSelection =
-            SelectSpeechAssets(options, materializer);
+        var acoustic = acousticSource.Select(c => MaterializeAcoustic(c, materializer)).ToArray();
+        PreparedSpeechSelection speechSelection = SelectSpeechAssets(options, materializer);
         IReadOnlyList<PreparedSpeechAsset> speech = speechSelection.Assets;
         ValidateSpeechAssets(speech);
         (IReadOnlyList<PreparedRirAsset> rirs, IReadOnlyList<PreparedNoiseAsset> roomNoises) =
             SelectButAssets(options, materializer);
-        IReadOnlyList<PreparedNoiseAsset> noises = roomNoises
-            .Concat(SelectEnvironmentalNoiseAssets(options, materializer))
-            .ToArray();
-        IReadOnlyList<PreparedLibriSpeechAsset> libriSpeech =
-            SelectButLibriSpeech(options, materializer);
-        IReadOnlyList<PreparedEndToEndCase> endToEnd =
-            BuildEndToEndCases(speechSelection.EndToEndAssets, rirs, noises, options.Seed);
+        IReadOnlyList<PreparedNoiseAsset> noises = roomNoises.Concat(SelectEnvironmentalNoiseAssets(options, materializer)).ToArray();
+        IReadOnlyList<PreparedLibriSpeechAsset> libriSpeech = SelectButLibriSpeech(options, materializer);
+        IReadOnlyList<PreparedEndToEndCase> endToEnd = BuildEndToEndCases(speechSelection.EndToEndAssets, rirs, noises, options.Seed);
         ValidateEndToEndCases(endToEnd, rirs, noises);
         ValidateManualReviewExclusions(acoustic, speech, endToEnd);
 
@@ -187,16 +178,10 @@ internal static class PreparedDatasetBuilder
             Seed = options.Seed,
         };
         EvaluationCase[] all = DatasetCatalog.Discover(allOptions).ToArray();
-        EvaluationCase[] negatives = all
-            .Where(c => !c.ExpectedNearEnd)
-            .OrderBy(c => c.Id, StringComparer.Ordinal)
-            .ToArray();
+        EvaluationCase[] negatives = all.Where(c => !c.ExpectedNearEnd).OrderBy(c => c.Id, StringComparer.Ordinal).ToArray();
 
         var selected = new List<EvaluationCase>(negatives);
-        selected.AddRange(SelectSyntheticBySer(
-            all.Where(c => c.Corpus == "synthetic"),
-            countPerBucket: 24,
-            options.Seed));
+        selected.AddRange(SelectSyntheticBySer(all.Where(c => c.Corpus == "synthetic"), countPerBucket: 24, options.Seed));
         selected.AddRange(SelectPerStratum(
             all.Where(c => c.ExpectedNearEnd && c.Corpus != "synthetic"),
             countPerStratum: 30,
@@ -246,17 +231,11 @@ internal static class PreparedDatasetBuilder
             Corpus = source.Corpus,
             Scenario = source.Scenario,
             ExpectedNearEnd = source.ExpectedNearEnd,
-            MicrophonePath = materializer.Add(
-                source.MicrophonePath,
-                $"{directory}/microphone.wav"),
-            RenderPath = materializer.Add(
-                source.RenderPath,
-                $"{directory}/render.wav"),
+            MicrophonePath = materializer.Add(source.MicrophonePath, $"{directory}/microphone.wav"),
+            RenderPath = materializer.Add(source.RenderPath, $"{directory}/render.wav"),
             NearEndReferencePath = source.NearEndReferencePath is null
                 ? null
-                : materializer.Add(
-                    source.NearEndReferencePath,
-                    $"{directory}/nearend-reference.wav"),
+                : materializer.Add(source.NearEndReferencePath, $"{directory}/nearend-reference.wav"),
             NearEndScale = source.NearEndScale,
             SignalToEchoRatioDb = source.SignalToEchoRatioDb,
             FarEndNonlinear = source.FarEndNonlinear,
@@ -268,9 +247,7 @@ internal static class PreparedDatasetBuilder
             Split = "test",
             MicrophoneSha256 = materializer.GetSha256(source.MicrophonePath),
             RenderSha256 = materializer.GetSha256(source.RenderPath),
-            NearEndReferenceSha256 = source.NearEndReferencePath is null
-                ? null
-                : materializer.GetSha256(source.NearEndReferencePath),
+            NearEndReferenceSha256 = source.NearEndReferencePath is null ? null : materializer.GetSha256(source.NearEndReferencePath),
         };
     }
 
@@ -304,17 +281,12 @@ internal static class PreparedDatasetBuilder
         selected.AddRange(thchsClean);
         foreach (SpeechCandidate clean in thchsClean)
         {
-            SpeechCandidate? noisy = candidates.FirstOrDefault(
-                c => c.Corpus == "thchs30-test-noisy" &&
-                     c.UtteranceId == clean.UtteranceId);
+            SpeechCandidate? noisy = candidates.FirstOrDefault(c => c.Corpus == "thchs30-test-noisy" && c.UtteranceId == clean.UtteranceId);
             if (noisy is not null)
                 selected.Add(noisy);
         }
 
-        selected.AddRange(ReadWenet(
-            options.WenetRoot,
-            countPerTier: 32,
-            options.Seed));
+        selected.AddRange(ReadWenet(options.WenetRoot, countPerTier: 32, options.Seed));
 
         SpeechCandidate[] ordered = selected
             .OrderBy(candidate => candidate.Corpus, StringComparer.Ordinal)
@@ -332,8 +304,7 @@ internal static class PreparedDatasetBuilder
         ];
 
         PreparedSpeechAsset[] assets = ordered
-            .Where(candidate =>
-                !ManualReviewExcludedSpeechAssetIds.Contains(GetSpeechAssetId(candidate)))
+            .Where(candidate => !ManualReviewExcludedSpeechAssetIds.Contains(GetSpeechAssetId(candidate)))
             .Select(candidate =>
             {
                 string id = GetSpeechAssetId(candidate);
@@ -345,9 +316,7 @@ internal static class PreparedDatasetBuilder
                     UtteranceId = candidate.UtteranceId,
                     ClusterId = candidate.ClusterId,
                     Text = NormalizeChineseText(candidate.Text),
-                    AudioPath = materializer.Add(
-                        candidate.Path,
-                        $"phase2/speech/{Safe(candidate.Corpus)}/{Safe(id)}.wav"),
+                    AudioPath = materializer.Add(candidate.Path, $"phase2/speech/{Safe(candidate.Corpus)}/{Safe(id)}.wav"),
                     Noisy = candidate.Noisy,
                     Split = "test",
                     DurationMs = GetWaveDurationMs(candidate.Path),
@@ -357,12 +326,8 @@ internal static class PreparedDatasetBuilder
             .OrderBy(a => a.Corpus, StringComparer.Ordinal)
             .ThenBy(a => a.Id, StringComparer.Ordinal)
             .ToArray();
-        IReadOnlyDictionary<string, PreparedSpeechAsset> assetsById = assets.ToDictionary(
-            asset => asset.Id,
-            StringComparer.Ordinal);
-        PreparedSpeechAsset[] endToEndAssets = endToEndCandidates
-            .Select(candidate => assetsById[GetSpeechAssetId(candidate)])
-            .ToArray();
+        IReadOnlyDictionary<string, PreparedSpeechAsset> assetsById = assets.ToDictionary(asset => asset.Id, StringComparer.Ordinal);
+        PreparedSpeechAsset[] endToEndAssets = endToEndCandidates.Select(candidate => assetsById[GetSpeechAssetId(candidate)]).ToArray();
         return new PreparedSpeechSelection(assets, endToEndAssets);
     }
 
@@ -376,9 +341,7 @@ internal static class PreparedDatasetBuilder
         int seed)
     {
         SpeechCandidate[] values = source.ToArray();
-        string[] speakers = StableShuffle(
-                values.Select(v => v.SpeakerId).Distinct(StringComparer.Ordinal),
-                seed)
+        string[] speakers = StableShuffle(values.Select(v => v.SpeakerId).Distinct(StringComparer.Ordinal), seed)
             .Take(speakerCount)
             .ToArray();
         foreach (string speaker in speakers)
@@ -399,21 +362,17 @@ internal static class PreparedDatasetBuilder
         IReadOnlyDictionary<string, SpeechCandidate> byUtterance = source
             .Where(candidate => candidate.Corpus == "aishell3-test")
             .ToDictionary(candidate => candidate.UtteranceId, StringComparer.Ordinal);
-        HashSet<string> testSpeakers = aishell3Test
-            .Select(candidate => candidate.SpeakerId)
-            .ToHashSet(StringComparer.Ordinal);
+        HashSet<string> testSpeakers = aishell3Test.Select(candidate => candidate.SpeakerId).ToHashSet(StringComparer.Ordinal);
         var selected = new List<SpeechCandidate>(CuratedConversationUtteranceIds.Length);
         foreach (string utteranceId in CuratedConversationUtteranceIds)
         {
             if (!byUtterance.TryGetValue(utteranceId, out SpeechCandidate? candidate))
             {
-                throw new InvalidDataException(
-                    $"Curated AISHELL-3 conversation '{utteranceId}' was not found.");
+                throw new InvalidDataException($"Curated AISHELL-3 conversation '{utteranceId}' was not found.");
             }
             if (testSpeakers.Contains(candidate.SpeakerId))
             {
-                throw new InvalidDataException(
-                    $"Curated AISHELL-3 speaker '{candidate.SpeakerId}' overlaps the test slice.");
+                throw new InvalidDataException($"Curated AISHELL-3 speaker '{candidate.SpeakerId}' overlaps the test slice.");
             }
             selected.Add(candidate with { Corpus = ConversationCorpus });
         }
@@ -435,14 +394,7 @@ internal static class PreparedDatasetBuilder
             string path = Path.Combine(root, relative);
             string id = Path.GetFileNameWithoutExtension(path);
             string speaker = Path.GetFileName(Path.GetDirectoryName(path)) ?? "unknown";
-            yield return new SpeechCandidate(
-                "aishell1-test",
-                speaker,
-                id,
-                $"aishell1/{id}",
-                line[(comma + 1)..],
-                path,
-                Noisy: false);
+            yield return new SpeechCandidate("aishell1-test", speaker, id, $"aishell1/{id}", line[(comma + 1)..], path, Noisy: false);
         }
     }
 
@@ -482,27 +434,13 @@ internal static class PreparedDatasetBuilder
             string id = Path.GetFileNameWithoutExtension(clean);
             string speaker = id.Split('_')[0];
             string transcript = PreparedSpeechTranscript.ReadThchs30(clean + ".trn");
-            yield return new SpeechCandidate(
-                "thchs30-test-clean",
-                speaker,
-                id,
-                $"thchs30/{id}",
-                transcript,
-                clean,
-                Noisy: false);
+            yield return new SpeechCandidate("thchs30-test-clean", speaker, id, $"thchs30/{id}", transcript, clean, Noisy: false);
 
             string noise = noiseKinds[index++ % noiseKinds.Length];
             string noisy = Path.Combine(root, "test-noise", "0db", noise, Path.GetFileName(clean));
             if (File.Exists(noisy))
             {
-                yield return new SpeechCandidate(
-                    "thchs30-test-noisy",
-                    speaker,
-                    id,
-                    $"thchs30/{id}",
-                    transcript,
-                    noisy,
-                    Noisy: true);
+                yield return new SpeechCandidate("thchs30-test-noisy", speaker, id, $"thchs30/{id}", transcript, noisy, Noisy: true);
             }
         }
     }
@@ -516,15 +454,10 @@ internal static class PreparedDatasetBuilder
             if (!Directory.Exists(tierRoot))
                 continue;
 
-            foreach (string wav in Directory.EnumerateFiles(
-                         tierRoot,
-                         "*.wav",
-                         SearchOption.AllDirectories))
+            foreach (string wav in Directory.EnumerateFiles(tierRoot, "*.wav", SearchOption.AllDirectories))
             {
                 string? wavDirectory = Path.GetDirectoryName(wav);
-                string? packageDirectory = wavDirectory is null
-                    ? null
-                    : Path.GetDirectoryName(wavDirectory);
+                string? packageDirectory = wavDirectory is null ? null : Path.GetDirectoryName(wavDirectory);
                 if (packageDirectory is null)
                     continue;
                 string id = Path.GetFileNameWithoutExtension(wav);
@@ -535,25 +468,14 @@ internal static class PreparedDatasetBuilder
                 candidates.Add((wav, txt, id, cluster));
             }
 
-            foreach ((string wav, string txt, string id, string cluster) in StableShuffle(
-                         candidates,
-                         StableSeed(seed, $"wenet-{tier}"))
+            foreach ((string wav, string txt, string id, string cluster) in StableShuffle(candidates, StableSeed(seed, $"wenet-{tier}"))
                      .GroupBy(item => item.Cluster, StringComparer.Ordinal)
                      .Select(group => group.First())
                      .Take(countPerTier))
             {
-                string text = PreparedSpeechTranscript.ParseWenet(
-                    File.ReadAllText(txt, Encoding.UTF8),
-                    id);
+                string text = PreparedSpeechTranscript.ParseWenet(File.ReadAllText(txt, Encoding.UTF8), id);
                 string corpus = $"wenet-{tier.ToLowerInvariant()}";
-                yield return new SpeechCandidate(
-                    corpus,
-                    cluster,
-                    id,
-                    $"wenet/{cluster}",
-                    text,
-                    wav,
-                    Noisy: tier == "Standard");
+                yield return new SpeechCandidate(corpus, cluster, id, $"wenet/{cluster}", text, wav, Noisy: tier == "Standard");
             }
         }
     }
@@ -581,10 +503,7 @@ internal static class PreparedDatasetBuilder
             IGrouping<string, ButRirSource>[] geometries = StableShuffle(
                     roomGroup
                         .GroupBy(source => source.GeometryId, StringComparer.Ordinal)
-                        .Where(group => group
-                            .Select(source => source.SpeakerSetupId)
-                            .Distinct(StringComparer.Ordinal)
-                            .Count() >= 2),
+                        .Where(group => group.Select(source => source.SpeakerSetupId).Distinct(StringComparer.Ordinal).Count() >= 2),
                     StableSeed(options.Seed, $"rir/{roomGroup.Key}"))
                 .Take(6)
                 .ToArray();
@@ -615,8 +534,7 @@ internal static class PreparedDatasetBuilder
                     });
                 }
 
-                string positionDirectory = Path.GetDirectoryName(
-                    Path.GetDirectoryName(pair[0].Path)!)!;
+                string positionDirectory = Path.GetDirectoryName(Path.GetDirectoryName(pair[0].Path)!)!;
                 string silenceDirectory = Path.Combine(positionDirectory, "silence");
                 string? noise = Directory.Exists(silenceDirectory)
                     ? Directory
@@ -654,11 +572,7 @@ internal static class PreparedDatasetBuilder
                      (Path.Combine("musan", "music"), "musan", "music", 12),
                      (Path.Combine("musan", "noise"), "musan", "noise", 12),
                      (
-                         Path.Combine(
-                             "ICASSP_2021_DNS_Challenge",
-                             "datasets",
-                             "datasets",
-                             "noise"),
+                         Path.Combine("ICASSP_2021_DNS_Challenge", "datasets", "datasets", "noise"),
                          "dns-challenge",
                          "noise",
                          12),
@@ -677,9 +591,7 @@ internal static class PreparedDatasetBuilder
         return selected
             .Select((source, index) =>
             {
-                string id =
-                    $"{source.Corpus}-{source.Kind}-{index:D2}-" +
-                    $"{Safe(Path.GetFileNameWithoutExtension(source.Path))}";
+                string id = $"{source.Corpus}-{source.Kind}-{index:D2}-" + $"{Safe(Path.GetFileNameWithoutExtension(source.Path))}";
                 return new PreparedNoiseAsset
                 {
                     Id = id,
@@ -687,9 +599,7 @@ internal static class PreparedDatasetBuilder
                     Corpus = source.Corpus,
                     Kind = source.Kind,
                     GeometryId = null,
-                    Path = materializer.Add(
-                        source.Path,
-                        $"phase2/noise/{Safe(source.Corpus)}/{id}.wav"),
+                    Path = materializer.Add(source.Path, $"phase2/noise/{Safe(source.Corpus)}/{id}.wav"),
                     AudioSha256 = materializer.GetSha256(source.Path),
                 };
             })
@@ -724,9 +634,7 @@ internal static class PreparedDatasetBuilder
 
     private static string GetRoomId(string path)
         => Path.GetFileName(
-            path.Split(
-                [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar],
-                StringSplitOptions.RemoveEmptyEntries)
+            path.Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries)
                 .FirstOrDefault(part => part.StartsWith("VUT_", StringComparison.OrdinalIgnoreCase))
             ?? Path.GetDirectoryName(path)
             ?? "unknown");
@@ -736,22 +644,14 @@ internal static class PreparedDatasetBuilder
         string[] parts = Path.GetRelativePath(root, path).Split(
             [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar],
             StringSplitOptions.RemoveEmptyEntries);
-        int rirIndex = Array.FindIndex(
-            parts,
-            part => part.Equals("RIR", StringComparison.OrdinalIgnoreCase));
+        int rirIndex = Array.FindIndex(parts, part => part.Equals("RIR", StringComparison.OrdinalIgnoreCase));
         if (rirIndex < 4)
             return null;
         string room = parts[0];
         string microphone = parts[1];
         string speaker = parts[2];
         string channel = parts[3];
-        return new ButRirSource(
-            path,
-            room,
-            $"{room}/{microphone}/{channel}",
-            microphone,
-            channel,
-            speaker);
+        return new ButRirSource(path, room, $"{room}/{microphone}/{channel}", microphone, channel, speaker);
     }
 
     private static IReadOnlyList<PreparedEndToEndCase> BuildEndToEndCases(
@@ -767,45 +667,29 @@ internal static class PreparedDatasetBuilder
         for (int i = 0; i < positive.Count; i++)
         {
             PreparedSpeechAsset asset = positive[i];
-            result.Add(CreateEndToEndCase(
-                $"e2e-{i:D3}-{asset.Id}",
-                asset,
-                rirs,
-                noises,
-                i,
-                seed));
+            result.Add(CreateEndToEndCase($"e2e-{i:D3}-{asset.Id}", asset, rirs, noises, i, seed));
         }
         for (int i = 0; i < 72; i++)
         {
-            result.Add(CreateEndToEndCase(
-                $"e2e-echo-only-{i:D2}",
-                speech: null,
-                rirs,
-                noises,
-                positive.Count + i,
-                seed));
+            result.Add(CreateEndToEndCase($"e2e-echo-only-{i:D2}", speech: null, rirs, noises, positive.Count + i, seed));
         }
         return result;
     }
 
     private static IReadOnlyList<SpeechCandidate> SelectForEndToEnd(IEnumerable<SpeechCandidate> speech, string corpus, int count, int seed)
     {
-        SpeechCandidate[] ranked = StableShuffle(
-                speech.Where(s => s.Corpus == corpus),
-                StableSeed(seed, corpus))
+        SpeechCandidate[] ranked = StableShuffle(speech.Where(s => s.Corpus == corpus), StableSeed(seed, corpus))
             .GroupBy(s => s.ClusterId, StringComparer.Ordinal)
             .Select(g => g.First())
             .ToArray();
         if (ranked.Length < count)
         {
-            throw new InvalidDataException(
-                $"Corpus '{corpus}' has only {ranked.Length} independent E2E candidates; {count} required.");
+            throw new InvalidDataException($"Corpus '{corpus}' has only {ranked.Length} independent E2E candidates; {count} required.");
         }
 
         SpeechCandidate[] selected = ranked.Take(count).ToArray();
         HashSet<string> assignedIds = selected
-            .Where(candidate =>
-                !ManualReviewExcludedSpeechAssetIds.Contains(GetSpeechAssetId(candidate)))
+            .Where(candidate => !ManualReviewExcludedSpeechAssetIds.Contains(GetSpeechAssetId(candidate)))
             .Select(GetSpeechAssetId)
             .ToHashSet(StringComparer.Ordinal);
         for (int i = 0; i < selected.Length; i++)
@@ -813,19 +697,12 @@ internal static class PreparedDatasetBuilder
             string excludedId = GetSpeechAssetId(selected[i]);
             if (!ManualReviewExcludedSpeechAssetIds.Contains(excludedId))
                 continue;
-            if (!ManualReviewEndToEndReplacementAssetIds.TryGetValue(
-                    excludedId,
-                    out string? replacementId))
+            if (!ManualReviewEndToEndReplacementAssetIds.TryGetValue(excludedId, out string? replacementId))
             {
-                throw new InvalidDataException(
-                    $"E2E replacement for manually excluded asset '{excludedId}' is not configured.");
+                throw new InvalidDataException($"E2E replacement for manually excluded asset '{excludedId}' is not configured.");
             }
-            SpeechCandidate? replacement = ranked
-                .Skip(count)
-                .SingleOrDefault(candidate => GetSpeechAssetId(candidate) == replacementId);
-            if (replacement is null ||
-                ManualReviewExcludedSpeechAssetIds.Contains(replacementId) ||
-                !assignedIds.Add(replacementId))
+            SpeechCandidate? replacement = ranked.Skip(count).SingleOrDefault(candidate => GetSpeechAssetId(candidate) == replacementId);
+            if (replacement is null || ManualReviewExcludedSpeechAssetIds.Contains(replacementId) || !assignedIds.Add(replacementId))
             {
                 throw new InvalidDataException(
                     $"E2E replacement '{replacementId}' for '{excludedId}' is unavailable, excluded, or duplicated.");
@@ -850,8 +727,7 @@ internal static class PreparedDatasetBuilder
             .ToArray();
         if (geometryGroups.Length == 0)
         {
-            throw new InvalidDataException(
-                "End-to-end cases require at least one geometry with two RIRs.");
+            throw new InvalidDataException("End-to-end cases require at least one geometry with two RIRs.");
         }
 
         string scenario = speech switch
@@ -870,34 +746,19 @@ internal static class PreparedDatasetBuilder
             _ when index % 7 == 0 => "startup-guard-overlap",
             _ => "valid-command",
         };
-        int[] onsets = scenario == "startup-guard-overlap"
-            ? [200, 350, 450]
-            : [700, 900, 1400, 2200, 3000];
+        int[] onsets = scenario == "startup-guard-overlap" ? [200, 350, 450] : [700, 900, 1400, 2200, 3000];
         double[] sers = [-12, -6, 0, 6, 12];
         double[] snrs = [8, 15, 25, 35];
         int[] delays = [40, 80, 120, 180];
         int[] drifts = [-80, 0, 80];
         int[] callbacks = [160, 256, 480];
-        IGrouping<string, PreparedRirAsset> geometry = Pick(
-            geometryGroups,
-            seed,
-            id,
-            "geometry");
-        PreparedRirAsset[] geometryRirs = geometry
-            .OrderBy(rir => rir.Id, StringComparer.Ordinal)
-            .ToArray();
+        IGrouping<string, PreparedRirAsset> geometry = Pick(geometryGroups, seed, id, "geometry");
+        PreparedRirAsset[] geometryRirs = geometry.OrderBy(rir => rir.Id, StringComparer.Ordinal).ToArray();
         PreparedRirAsset echoRir = Pick(geometryRirs, seed, id, "echo-rir");
-        PreparedRirAsset? nearRir = speech is null
-            ? null
-            : geometryRirs.First(rir => rir.Id != echoRir.Id);
-        PreparedNoiseAsset? matchingNoise = noises.FirstOrDefault(
-            noise => noise.GeometryId == geometry.Key);
-        PreparedNoiseAsset[] musicNoises = noises
-            .Where(noise => noise.Kind == "music")
-            .ToArray();
-        PreparedNoiseAsset[] externalNoises = noises
-            .Where(noise => noise.GeometryId is null && noise.Kind != "music")
-            .ToArray();
+        PreparedRirAsset? nearRir = speech is null ? null : geometryRirs.First(rir => rir.Id != echoRir.Id);
+        PreparedNoiseAsset? matchingNoise = noises.FirstOrDefault(noise => noise.GeometryId == geometry.Key);
+        PreparedNoiseAsset[] musicNoises = noises.Where(noise => noise.Kind == "music").ToArray();
+        PreparedNoiseAsset[] externalNoises = noises.Where(noise => noise.GeometryId is null && noise.Kind != "music").ToArray();
         PreparedNoiseAsset? selectedNoise = scenario switch
         {
             "tts-echo-with-room-noise" => matchingNoise,
@@ -905,12 +766,9 @@ internal static class PreparedDatasetBuilder
                 Pick(musicNoises, seed, id, "music-noise"),
             "tts-echo-with-environment-noise" when externalNoises.Length > 0 =>
                 Pick(externalNoises, seed, id, "environment-noise"),
-            _ when speech is not null &&
-                   Pick([false, true, true], seed, id, "noise") =>
+            _ when speech is not null && Pick([false, true, true ], seed, id, "noise") =>
                 Pick(
-                    noises.Where(noise =>
-                            noise.GeometryId is null ||
-                            noise.GeometryId == geometry.Key)
+                    noises.Where(noise => noise.GeometryId is null || noise.GeometryId == geometry.Key)
                         .ToArray(),
                     seed,
                     id,
@@ -922,9 +780,7 @@ internal static class PreparedDatasetBuilder
         string prompt = scenario == "near-tts-text-overlap" && speech is not null
             ? BuildOverlapPrompt(speech.Text)
             : Pick(Prompts, seed, id, "prompt");
-        int? renderGapStartMs = index % 11 == 0
-            ? Pick([600, 1200, 1800], seed, id, "render-gap-start")
-            : null;
+        int? renderGapStartMs = index % 11 == 0 ? Pick([600, 1200, 1800], seed, id, "render-gap-start") : null;
         return new PreparedEndToEndCase
         {
             Id = id,
@@ -941,8 +797,7 @@ internal static class PreparedDatasetBuilder
             ClockDriftPpm = Pick(drifts, seed, id, "clock-drift"),
             FarEndNonlinear = Pick([false, false, false, true], seed, id, "nonlinear"),
             CallbackSamples = Pick(callbacks, seed, id, "callback"),
-            ClusterId = speech?.ClusterId ??
-                        $"echo/{geometry.Key}/prompt-{Array.IndexOf(Prompts, prompt):D2}",
+            ClusterId = speech?.ClusterId ?? $"echo/{geometry.Key}/prompt-{Array.IndexOf(Prompts, prompt):D2}",
             Scenario = scenario,
             Split = "test",
             Suites = BuildSuites(id, seed),
@@ -954,13 +809,9 @@ internal static class PreparedDatasetBuilder
             ExpectAccepted = expected,
             ExpectPlaybackStop = expected,
             ExpectPlaybackResume = false,
-            OracleSpeechIntervals = speech is null
-                ? []
-                : [new OracleSpeechInterval(onset, onset + speech.DurationMs)],
+            OracleSpeechIntervals = speech is null ? [] : [new OracleSpeechInterval(onset, onset + speech.DurationMs)],
             RenderGapStartMs = renderGapStartMs,
-            RenderGapDurationMs = renderGapStartMs.HasValue
-                ? Pick([20, 40, 80], seed, id, "render-gap-duration")
-                : 0,
+            RenderGapDurationMs = renderGapStartMs.HasValue ? Pick([20, 40, 80], seed, id, "render-gap-duration") : 0,
         };
     }
 
@@ -971,11 +822,7 @@ internal static class PreparedDatasetBuilder
             suites.Add("release-e2e");
         if (Pick([false, false, false, false, true], seed, caseId, "suite-pr"))
             suites.Add("pr-e2e");
-        if (Pick(
-                Enumerable.Repeat(false, 16).Append(true).ToArray(),
-                seed,
-                caseId,
-                "suite-smoke"))
+        if (Pick(Enumerable.Repeat(false, 16).Append(true).ToArray(), seed, caseId, "suite-smoke"))
         {
             suites.Add("smoke");
         }
@@ -994,72 +841,51 @@ internal static class PreparedDatasetBuilder
         IReadOnlyList<PreparedRirAsset> rirs,
         IReadOnlyList<PreparedNoiseAsset> noises)
     {
-        int dailyConversationCount = cases.Count(testCase =>
-            testCase.Scenario == DailyConversationScenario);
-        if (dailyConversationCount != 12 ||
-            cases.Any(testCase => testCase.Scenario == "wake-word-interrupt"))
+        int dailyConversationCount = cases.Count(testCase => testCase.Scenario == DailyConversationScenario);
+        if (dailyConversationCount != 12 || cases.Any(testCase => testCase.Scenario == "wake-word-interrupt"))
         {
-            throw new InvalidDataException(
-                "End-to-end cases must contain 12 daily conversations and no wake-word cases.");
+            throw new InvalidDataException("End-to-end cases must contain 12 daily conversations and no wake-word cases.");
         }
 
-        IReadOnlyDictionary<string, PreparedRirAsset> rirById = rirs.ToDictionary(
-            item => item.Id,
-            StringComparer.Ordinal);
-        IReadOnlyDictionary<string, PreparedNoiseAsset> noiseById = noises.ToDictionary(
-            item => item.Id,
-            StringComparer.Ordinal);
+        IReadOnlyDictionary<string, PreparedRirAsset> rirById = rirs.ToDictionary(item => item.Id, StringComparer.Ordinal);
+        IReadOnlyDictionary<string, PreparedNoiseAsset> noiseById = noises.ToDictionary(item => item.Id, StringComparer.Ordinal);
         foreach (PreparedEndToEndCase testCase in cases)
         {
             PreparedRirAsset echo = rirById[testCase.EchoRirId];
             if (echo.GeometryId != testCase.GeometryId)
             {
-                throw new InvalidDataException(
-                    $"Case '{testCase.Id}' echo RIR does not match its geometry.");
+                throw new InvalidDataException($"Case '{testCase.Id}' echo RIR does not match its geometry.");
             }
             if (testCase.NearRirId is string nearId)
             {
                 PreparedRirAsset near = rirById[nearId];
-                if (near.GeometryId != testCase.GeometryId ||
-                    near.Id == echo.Id)
+                if (near.GeometryId != testCase.GeometryId || near.Id == echo.Id)
                 {
-                    throw new InvalidDataException(
-                        $"Case '{testCase.Id}' has an invalid near/echo RIR pair.");
+                    throw new InvalidDataException($"Case '{testCase.Id}' has an invalid near/echo RIR pair.");
                 }
             }
             if (testCase.NoiseAssetId is string noiseId &&
                 noiseById[noiseId].GeometryId is string noiseGeometry &&
                 noiseGeometry != testCase.GeometryId)
             {
-                throw new InvalidDataException(
-                    $"Case '{testCase.Id}' noise does not match its RIR geometry.");
+                throw new InvalidDataException($"Case '{testCase.Id}' noise does not match its RIR geometry.");
             }
-            if (testCase.OracleExpectHeard &&
-                (testCase.SpeechAssetId is null ||
-                 testCase.OracleSpeechIntervals.Count == 0))
+            if (testCase.OracleExpectHeard && (testCase.SpeechAssetId is null || testCase.OracleSpeechIntervals.Count == 0))
             {
-                throw new InvalidDataException(
-                    $"Case '{testCase.Id}' lacks positive speech truth.");
+                throw new InvalidDataException($"Case '{testCase.Id}' lacks positive speech truth.");
             }
         }
 
         bool onsetIsDecoupled = cases
             .Where(testCase => testCase.OracleExpectHeard)
             .GroupBy(testCase => testCase.NearEndOnsetMs)
-            .Any(group => group
-                .Select(testCase => testCase.SignalToNoiseRatioDb)
-                .Distinct()
-                .Count() > 1);
+            .Any(group => group.Select(testCase => testCase.SignalToNoiseRatioDb).Distinct().Count() > 1);
         bool callbackIsDecoupled = cases
             .GroupBy(testCase => testCase.CallbackSamples)
-            .Any(group => group
-                .Select(testCase => testCase.ClockDriftPpm)
-                .Distinct()
-                .Count() > 1);
+            .Any(group => group.Select(testCase => testCase.ClockDriftPpm).Distinct().Count() > 1);
         if (!onsetIsDecoupled || !callbackIsDecoupled)
         {
-            throw new InvalidDataException(
-                "End-to-end factor assignment is confounded; independent seeds were not effective.");
+            throw new InvalidDataException("End-to-end factor assignment is confounded; independent seeds were not effective.");
         }
     }
 
@@ -1077,19 +903,13 @@ internal static class PreparedDatasetBuilder
                 $"Wake-word speech assets are not allowed: {string.Join(", ", wakeWordAssets.Select(asset => asset.Id))}");
         }
 
-        PreparedSpeechAsset[] conversations = speech
-            .Where(asset => asset.Corpus == ConversationCorpus)
-            .ToArray();
+        PreparedSpeechAsset[] conversations = speech.Where(asset => asset.Corpus == ConversationCorpus).ToArray();
         if (conversations.Length != CuratedConversationUtteranceIds.Length ||
             conversations.Select(asset => asset.SpeakerId).Distinct(StringComparer.Ordinal).Count() !=
             conversations.Length ||
-            conversations.Any(asset =>
-                !CuratedConversationUtteranceIds.Contains(
-                    asset.UtteranceId,
-                    StringComparer.Ordinal)))
+            conversations.Any(asset => !CuratedConversationUtteranceIds.Contains(asset.UtteranceId, StringComparer.Ordinal)))
         {
-            throw new InvalidDataException(
-                "The curated daily-conversation slice is incomplete, duplicated, or unexpected.");
+            throw new InvalidDataException("The curated daily-conversation slice is incomplete, duplicated, or unexpected.");
         }
     }
 
@@ -1113,8 +933,7 @@ internal static class PreparedDatasetBuilder
         ];
         if (violations.Length != 0)
         {
-            throw new InvalidDataException(
-                $"Manual-review exclusions leaked into the prepared dataset: {string.Join(", ", violations)}");
+            throw new InvalidDataException($"Manual-review exclusions leaked into the prepared dataset: {string.Join(", ", violations)}");
         }
     }
 
@@ -1165,9 +984,7 @@ internal static class PreparedDatasetBuilder
         if (source.Count <= count)
             return source;
         return Enumerable.Range(0, count)
-            .Select(i => source[(int)Math.Round(
-                i * (source.Count - 1) / (double)(count - 1),
-                MidpointRounding.AwayFromZero)]);
+            .Select(i => source[(int)Math.Round(i * (source.Count - 1) / (double)(count - 1), MidpointRounding.AwayFromZero)]);
     }
 
     private static string NormalizeChineseText(string text)
@@ -1175,9 +992,7 @@ internal static class PreparedDatasetBuilder
 
     private static double GetWaveDurationMs(string path)
     {
-        WaveAudio audio = WaveAudioLoader.LoadMono(
-            path,
-            EvaluationOptions.TargetSampleRate);
+        WaveAudio audio = WaveAudioLoader.LoadMono(path, EvaluationOptions.TargetSampleRate);
         return audio.Samples.Length * 1000.0 / EvaluationOptions.TargetSampleRate;
     }
 
@@ -1206,9 +1021,7 @@ internal static class PreparedDatasetBuilder
         var builder = new StringBuilder(value.Length);
         foreach (char c in value)
         {
-            builder.Append(char.IsAsciiLetterOrDigit(c) || c is '-' or '_'
-                ? c
-                : '_');
+            builder.Append(char.IsAsciiLetterOrDigit(c) || c is '-' or '_' ? c : '_');
         }
         return builder.ToString();
     }
@@ -1222,8 +1035,7 @@ internal static class PreparedDatasetBuilder
     private static DatasetGeneratorMetadata CreateGeneratorMetadata(PreparedDatasetOptions options)
     {
         string commit = ReadGit("rev-parse", "HEAD") ?? "unknown";
-        bool dirty = !string.IsNullOrWhiteSpace(
-            ReadGit("status", "--porcelain", "--untracked-files=no"));
+        bool dirty = !string.IsNullOrWhiteSpace(ReadGit("status", "--porcelain", "--untracked-files=no"));
         return new DatasetGeneratorMetadata
         {
             Commit = commit,
@@ -1329,10 +1141,8 @@ internal sealed class DatasetMaterializer
 {
     private readonly string _root;
     private readonly DatasetMaterialization _mode;
-    private readonly Dictionary<string, string> _sourceToRelative =
-        new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<string, string> _sourceHashes =
-        new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string> _sourceToRelative = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string> _sourceHashes = new(StringComparer.OrdinalIgnoreCase);
 
     public DatasetMaterializer(string root, DatasetMaterialization mode)
     {
@@ -1380,21 +1190,15 @@ internal sealed class DatasetMaterializer
     private static void CreateHardLink(string destination, string source)
     {
         if (!OperatingSystem.IsWindows())
-            throw new PlatformNotSupportedException(
-                "Hard-link materialization currently requires Windows; use --materialization copy.");
+            throw new PlatformNotSupportedException("Hard-link materialization currently requires Windows; use --materialization copy.");
         if (!CreateHardLinkWindows(destination, source, IntPtr.Zero))
         {
             int error = Marshal.GetLastWin32Error();
-            throw new IOException(
-                $"Could not create hard link '{destination}' -> '{source}' (Win32 error {error}).");
+            throw new IOException($"Could not create hard link '{destination}' -> '{source}' (Win32 error {error}).");
         }
     }
 
-    [DllImport(
-        "Kernel32.dll",
-        EntryPoint = "CreateHardLinkW",
-        CharSet = CharSet.Unicode,
-        SetLastError = true)]
+    [DllImport("Kernel32.dll", EntryPoint = "CreateHardLinkW", CharSet = CharSet.Unicode, SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool CreateHardLinkWindows(string newFileName, string existingFileName, IntPtr securityAttributes);
 
@@ -1405,9 +1209,7 @@ internal sealed class DatasetMaterializer
             WaveAudio audio = WaveAudioLoader.LoadMono(
                 EvaluationDatasetManifest.ResolvePath(_root, relativePath),
                 EvaluationOptions.TargetSampleRate);
-            return audio.Samples.Length /
-                   (double)EvaluationOptions.TargetSampleRate /
-                   3600;
+            return audio.Samples.Length / (double)EvaluationOptions.TargetSampleRate / 3600;
         }
         catch
         {
@@ -1462,16 +1264,14 @@ internal static class PreparedDatasetArguments
                     {
                         "hardlink" => DatasetMaterialization.HardLink,
                         "copy" => DatasetMaterialization.Copy,
-                        string value => throw new ArgumentException(
-                            $"Unknown materialization '{value}', expected hardlink|copy."),
+                        string value => throw new ArgumentException($"Unknown materialization '{value}', expected hardlink|copy."),
                     };
                     break;
                 case "-h":
                 case "--help":
                     break;
                 default:
-                    throw new ArgumentException(
-                        $"Unknown prepare-dataset argument: {argument}");
+                    throw new ArgumentException($"Unknown prepare-dataset argument: {argument}");
             }
         }
 

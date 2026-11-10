@@ -178,8 +178,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             await EnterOwnerConversationAsync(services, assistant);
             services.Speaker.StreamingEmbedding = FakeSpeakerService.UnitEmbedding(1);
             SpeakLocatedUtterance(services, FakeSpeakerService.OwnerAudio(16000));
-            await WaitUntilAsync(() =>
-                assistant.State == AssistantState.Idle && services.Asr.FinishCount >= 1);
+            await WaitUntilAsync(() => assistant.State == AssistantState.Idle && services.Asr.FinishCount >= 1);
 
             Assert.Equal(0, userSpoke);
             Assert.Empty(services.Llm.Prompts);
@@ -215,8 +214,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             };
             services.Audio.Emit(processed);
             services.Vad.EmitSpeechEnded(TimeSpan.FromMilliseconds(1000));
-            await WaitUntilAsync(() =>
-                assistant.State == AssistantState.Idle && services.Asr.FinishCount >= 1);
+            await WaitUntilAsync(() => assistant.State == AssistantState.Idle && services.Asr.FinishCount >= 1);
 
             Assert.Equal(0, userSpoke);
             Assert.Empty(services.Llm.Prompts);
@@ -267,11 +265,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             var speakerGate = RuntimeGraphProbe.RequireField<VadSpeakerGateCoordinator>(runtime, "_speakerGate");
             var timeline = RuntimeGraphProbe.RequireField<ISpeechTimelineLocator>(speakerGate, "_timeline");
             Assert.IsType<ProcessedSpeechTimelineLocator>(timeline);
-            Assert.True(timeline.TryLocate(
-                utterance,
-                out long streamEpoch,
-                out long startSample,
-                out long endSample));
+            Assert.True(timeline.TryLocate(utterance, out long streamEpoch, out long startSample, out long endSample));
             Assert.Equal(1, streamEpoch);
             Assert.Equal(utterance.Length, endSample - startSample);
         }
@@ -331,8 +325,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             await EnterOwnerConversationAsync(services, assistant);
             services.Speaker.FeedBlock = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             SpeakLocatedUtterance(services, FakeSpeakerService.OwnerAudio(16000));
-            await WaitUntilAsync(() =>
-                assistant.State is AssistantState.Listening or AssistantState.Recognizing);
+            await WaitUntilAsync(() => assistant.State is AssistantState.Listening or AssistantState.Recognizing);
 
             await PumpSilentFramesUntilAsync(services, static () => false, maxFrames: 12);
             Assert.Equal(AssistantWakeMode.ContinuousConversation, assistant.WakeMode);

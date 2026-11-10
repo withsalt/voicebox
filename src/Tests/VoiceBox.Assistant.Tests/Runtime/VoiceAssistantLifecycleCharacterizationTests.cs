@@ -26,8 +26,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Equal(1, services.Audio.StartCount);
         await assistant.StopAsync();
 
-        InvalidOperationException afterStop = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => assistant.StartAsync());
+        InvalidOperationException afterStop = await Assert.ThrowsAsync<InvalidOperationException>(() => assistant.StartAsync());
 
         Assert.Equal("VoiceAssistant 已启动, 不可重复 Start。", afterStop.Message);
         Assert.Equal(1, services.Audio.StartCount);

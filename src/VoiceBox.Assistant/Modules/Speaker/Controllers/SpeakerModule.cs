@@ -58,11 +58,7 @@ internal sealed class SpeakerModule : ISpeakerModule
 
         string profilePath = options.ResolveProfilePath();
         OwnerSpeakerProfile profile = SpeakerProfileStore.Load(speaker, profilePath);
-        OwnerSpeakerProfileVariant variant = SpeakerProfileStore.RequireVariant(
-            profile,
-            descriptor,
-            policy.RequiredBanks,
-            profilePath);
+        OwnerSpeakerProfileVariant variant = SpeakerProfileStore.RequireVariant(profile, descriptor, policy.RequiredBanks, profilePath);
 
         _verifier = new SpeechGatedSpeakerVerifier(speaker, policy, variant, logger);
         _verificationState = new SpeakerVerificationState(_verifier);

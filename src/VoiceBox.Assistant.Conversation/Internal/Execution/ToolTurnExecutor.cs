@@ -53,8 +53,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
         await _runtime.StartAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            ToolCatalogSnapshot catalog = await _runtime.GetSnapshotAsync(cancellationToken)
-                .ConfigureAwait(false);
+            ToolCatalogSnapshot catalog = await _runtime.GetSnapshotAsync(cancellationToken).ConfigureAwait(false);
             if (catalog.IsEmpty)
                 throw new InvalidOperationException("The tool conversation session exposed no tools.");
             _catalog = catalog;
@@ -89,8 +88,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
     {
         ArgumentNullException.ThrowIfNull(context);
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
-        ToolCatalogSnapshot catalog = _catalog
-            ?? throw new InvalidOperationException("The tool conversation session is not started.");
+        ToolCatalogSnapshot catalog = _catalog ?? throw new InvalidOperationException("The tool conversation session is not started.");
 
         TurnCommitGate? pendingGate = null;
         var transcript = context.Prompt.ToList();
@@ -106,12 +104,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
                 var calls = new List<ModelTurnToolCall>();
                 var visibleText = new List<VisibleTextDelta>();
                 await foreach (ModelTurnEvent modelEvent in _client.RunAsync(
-                    new ModelTurnContext(
-                        transcript,
-                        context.Options,
-                        catalog,
-                        context.TurnId,
-                        context.RequestId),
+                    new ModelTurnContext(transcript, context.Options, catalog, context.TurnId, context.RequestId),
                     cancellationToken).ConfigureAwait(false))
                 {
                     switch (modelEvent)
@@ -129,8 +122,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
                         case ModelTurnCompleted:
                             break;
                         default:
-                            throw new InvalidOperationException(
-                                $"Unsupported model turn event '{modelEvent.GetType().Name}'.");
+                            throw new InvalidOperationException($"Unsupported model turn event '{modelEvent.GetType().Name}'.");
                     }
                 }
 
@@ -183,10 +175,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
                             _history.RecordToolActivity(
                                 context.TurnId,
                                 call,
-                                new ToolResult(
-                                    call.CallId,
-                                    ConversationToolResultKind.Accepted,
-                                    value: null));
+                                new ToolResult(call.CallId, ConversationToolResultKind.Accepted, value: null));
                         }
                         yield return new TurnFinished(commitGate);
                     }
@@ -262,18 +251,13 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
                 continue;
             }
 
-            ToolApprovalDecision approval = await _runtime.AuthorizeAsync(call, cancellationToken)
-                .ConfigureAwait(false);
+            ToolApprovalDecision approval = await _runtime.AuthorizeAsync(call, cancellationToken).ConfigureAwait(false);
             if (approval != ToolApprovalDecision.Allowed)
             {
                 results[index] = RecordToolResult(
                     turnId,
                     call,
-                    new ToolResult(
-                        call.CallId,
-                        ConversationToolResultKind.Denied,
-                        null,
-                        "approval_denied"));
+                    new ToolResult(call.CallId, ConversationToolResultKind.Denied, null, "approval_denied"));
                 continue;
             }
 
@@ -306,9 +290,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
             return results;
         }
 
-        using var concurrency = new SemaphoreSlim(
-            _options.MaxParallelToolCalls,
-            _options.MaxParallelToolCalls);
+        using var concurrency = new SemaphoreSlim(_options.MaxParallelToolCalls, _options.MaxParallelToolCalls);
         Task[] executions = pending.Select(async item =>
         {
             await concurrency.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -348,8 +330,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
     {
         CancellationToken token = _runCancellation?.Token
             ?? throw new InvalidOperationException("The tool conversation session is not started.");
-        var registered = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        var registered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         Task task;
         lock (_taskGate)
         {
@@ -479,11 +460,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
         try { await precedingPublication.ConfigureAwait(false); } catch { }
         cancellationToken.ThrowIfCancellationRequested();
         await _backgroundOutput.PublishAsync(
-            new ConversationBackgroundMessage(
-                Guid.NewGuid(),
-                context.ConversationId,
-                context.RequestId,
-                text),
+            new ConversationBackgroundMessage(Guid.NewGuid(), context.ConversationId, context.RequestId, text),
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -503,12 +480,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
             var requested = new List<ModelTurnToolCall>();
             var visible = new List<VisibleTextDelta>();
             await foreach (ModelTurnEvent modelEvent in _client.RunAsync(
-                new ModelTurnContext(
-                    transcript,
-                    context.Options,
-                    catalog,
-                    context.TurnId,
-                    context.RequestId),
+                new ModelTurnContext(transcript, context.Options, catalog, context.TurnId, context.RequestId),
                 cancellationToken).ConfigureAwait(false))
             {
                 if (modelEvent is VisibleTextDelta { Text.Length: > 0 } delta)
@@ -550,8 +522,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
 
     private ToolResult? ResolveBlockedReplay(long turnId, ToolCall call, UnknownOutcomeBlocklist retryBlockedAfterUnknownOutcome)
     {
-        if (!retryBlockedAfterUnknownOutcome.Contains(
-            new ToolInvocationFingerprint(call.ToolId, call.ArgumentsHash)))
+        if (!retryBlockedAfterUnknownOutcome.Contains(new ToolInvocationFingerprint(call.ToolId, call.ArgumentsHash)))
         {
             return null;
         }
@@ -559,11 +530,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
         return RecordToolResult(
             turnId,
             call,
-            new ToolResult(
-                call.CallId,
-                ConversationToolResultKind.UnknownOutcome,
-                null,
-                "retry_blocked_after_unknown_outcome"));
+            new ToolResult(call.CallId, ConversationToolResultKind.UnknownOutcome, null, "retry_blocked_after_unknown_outcome"));
     }
 
     /// <summary>
@@ -578,9 +545,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
         UnknownOutcomeBlocklist retryBlockedAfterUnknownOutcome,
         CancellationToken cancellationToken)
     {
-        int maxAttempts = definition.Risk == ConversationToolRisk.ReadOnly
-            ? 1 + Math.Max(0, _options.MaxToolRetryAttempts)
-            : 1;
+        int maxAttempts = definition.Risk == ConversationToolRisk.ReadOnly ? 1 + Math.Max(0, _options.MaxToolRetryAttempts) : 1;
         long configuredBudgetTicks = TimeSpan.FromMilliseconds(_options.MaxToolRetryBudgetMs).Ticks;
         // Compare before multiplication so a large, valid tool timeout cannot overflow.
         long budgetTicks = definition.Timeout.Ticks > configuredBudgetTicks / maxAttempts
@@ -596,8 +561,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
 
         for (int attempt = 1; attempt < maxAttempts && IsTransient(result); attempt++)
         {
-            TimeSpan backoff = TimeSpan.FromMilliseconds(
-                _options.ToolRetryBaseDelayMs * Math.Pow(3, attempt - 1));
+            TimeSpan backoff = TimeSpan.FromMilliseconds(_options.ToolRetryBaseDelayMs * Math.Pow(3, attempt - 1));
             TimeSpan remaining = budget - Stopwatch.GetElapsedTime(startTimestamp);
             if (remaining <= backoff)
                 break;
@@ -608,14 +572,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
             }
             catch (OperationCanceledException)
             {
-                return RecordToolResult(
-                    turnId,
-                    call,
-                    new ToolResult(
-                        call.CallId,
-                        ConversationToolResultKind.Cancelled,
-                        null,
-                        "cancelled"));
+                return RecordToolResult(turnId, call, new ToolResult(call.CallId, ConversationToolResultKind.Cancelled, null, "cancelled"));
             }
 
             remaining = budget - Stopwatch.GetElapsedTime(startTimestamp);
@@ -627,11 +584,9 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
                 cancellationToken).ConfigureAwait(false);
         }
 
-        if (result.Kind == ConversationToolResultKind.UnknownOutcome &&
-            IsSideEffecting(definition.Risk))
+        if (result.Kind == ConversationToolResultKind.UnknownOutcome && IsSideEffecting(definition.Risk))
         {
-            retryBlockedAfterUnknownOutcome.Add(
-                new ToolInvocationFingerprint(call.ToolId, call.ArgumentsHash));
+            retryBlockedAfterUnknownOutcome.Add(new ToolInvocationFingerprint(call.ToolId, call.ArgumentsHash));
         }
         return RecordToolResult(turnId, call, result);
     }
@@ -657,19 +612,11 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
         }
         catch (OperationCanceledException)
         {
-            return new ToolResult(
-                call.CallId,
-                ConversationToolResultKind.Cancelled,
-                null,
-                "cancelled");
+            return new ToolResult(call.CallId, ConversationToolResultKind.Cancelled, null, "cancelled");
         }
         catch (Exception exception)
         {
-            return new ToolResult(
-                call.CallId,
-                ConversationToolResultKind.ToolError,
-                null,
-                exception.GetType().Name);
+            return new ToolResult(call.CallId, ConversationToolResultKind.ToolError, null, exception.GetType().Name);
         }
     }
 
@@ -748,11 +695,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
         ToolDefinition definition = FindDefinition(requested.ToolId, catalog);
         (OwnedJsonValue arguments, ConversationToolExecutionPreference preference) =
             ToolExecutionPreferenceSchema.Extract(requested.Arguments, definition.ExecutionPolicy);
-        return new ToolCall(
-            requested.CallId,
-            requested.ToolId,
-            arguments,
-            preference);
+        return new ToolCall(requested.CallId, requested.ToolId, arguments, preference);
     }
 
     private static ToolDefinition FindDefinition(ConversationToolId id, ToolCatalogSnapshot catalog)
@@ -761,16 +704,13 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
 
     private static string? FindCustomBackgroundExecutionPrompt(IEnumerable<ToolCall> calls, ToolCatalogSnapshot catalog)
         => calls
-            .Where(static call =>
-                call.ExecutionPreference == ConversationToolExecutionPreference.Background)
+            .Where(static call => call.ExecutionPreference == ConversationToolExecutionPreference.Background)
             .Select(call => FindDefinition(call.ToolId, catalog).ExecutionPrompt)
             .FirstOrDefault(static prompt => !string.IsNullOrWhiteSpace(prompt));
 
     private static string CreateStandardBackgroundExecutionPrompt(IEnumerable<ToolCall> calls, ToolCatalogSnapshot catalog)
     {
-        string names = string.Join("、", calls
-            .Select(call => FindDefinition(call.ToolId, catalog).Title)
-            .Distinct(StringComparer.Ordinal));
+        string names = string.Join("、", calls.Select(call => FindDefinition(call.ToolId, catalog).Title).Distinct(StringComparer.Ordinal));
         return $"我正在后台执行{names}任务，等会给你结果。";
     }
 
@@ -782,10 +722,7 @@ internal sealed class ToolTurnExecutor : ITurnExecutor
 
     private static ChatMessage ToToolResultMessage(ToolResult result)
     {
-        return ChatMessage.ToolResult(
-            result.CallId,
-            result.ToModelResultJson(),
-            result.Kind != ConversationToolResultKind.Success);
+        return ChatMessage.ToolResult(result.CallId, result.ToModelResultJson(), result.Kind != ConversationToolResultKind.Success);
     }
 
     private void PublishToolTranscript(long turnId, List<ChatMessage> toolTranscript)

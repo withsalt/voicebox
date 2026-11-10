@@ -27,18 +27,14 @@ public sealed class DependencyBoundaryTests
         Assert.Same(abstractions, typeof(IConversationTool).Assembly);
         Assert.Same(abstractions, typeof(IConversationToolProvider).Assembly);
         Assert.Same(abstractions, typeof(IConversationToolApprovalPolicy).Assembly);
-        Assert.Equal(
-            "VoiceBox.Assistant.Conversation.Abstractions.Tools",
-            typeof(ConversationToolDefinition).Namespace);
+        Assert.Equal("VoiceBox.Assistant.Conversation.Abstractions.Tools", typeof(ConversationToolDefinition).Namespace);
     }
 
     [Fact]
     public void ThisProjectDoesNotReferenceTheDefaultConversationOrAssistant()
     {
-        Assert.Null(Type.GetType(
-            "VoiceBox.Assistant.Conversation.ConversationBuilder, VoiceBox.Assistant.Conversation"));
-        Assert.Null(Type.GetType(
-            "VoiceBox.Assistant.VoiceAssistant, VoiceBox.Assistant"));
+        Assert.Null(Type.GetType("VoiceBox.Assistant.Conversation.ConversationBuilder, VoiceBox.Assistant.Conversation"));
+        Assert.Null(Type.GetType("VoiceBox.Assistant.VoiceAssistant, VoiceBox.Assistant"));
         Assert.DoesNotContain(
             AppDomain.CurrentDomain.GetAssemblies(),
             assembly => assembly.GetName().Name is
@@ -51,9 +47,7 @@ public sealed class DependencyBoundaryTests
     public void ProjectFileHasOnlyTheAbstractionsProductReference()
     {
         string project = ReadProjectFile();
-        string[] references = Regex.Matches(
-                project,
-                "ProjectReference Include=\"([^\"]+)\"")
+        string[] references = Regex.Matches(project, "ProjectReference Include=\"([^\"]+)\"")
             .Select(match => match.Groups[1].Value.Replace('\\', '/'))
             .ToArray();
 

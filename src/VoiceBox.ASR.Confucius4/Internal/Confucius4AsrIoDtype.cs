@@ -28,8 +28,7 @@ namespace VoiceBox.ASR.Confucius4.Internal
                 // Weight-only dynamic quantization (ORT / optimum-cli output): tensors
                 // travel fp32, weights are stored int8/uint8 inside the graph.
                 "int8" or "uint8" or "q8" or "qint8" or "quint8" => Confucius4AsrIoDtype.Float32,
-                _ => throw new InvalidOperationException(
-                    $"Unsupported metadata dtype \"{dtype}\". Expected float32, float16, or int8."),
+                _ => throw new InvalidOperationException($"Unsupported metadata dtype \"{dtype}\". Expected float32, float16, or int8."),
             };
         }
     }

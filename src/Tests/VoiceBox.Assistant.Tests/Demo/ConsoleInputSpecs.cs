@@ -46,8 +46,7 @@ public sealed class ConsoleInputSpecs
         using var output = new StringWriter();
         using var display = new ConsoleDisplay(output, interactive: false);
         using var reader = new StringReader(string.Empty);
-        var interaction = new SpeakerEnrollmentConsoleInteraction(
-            display, new ConsoleInput(reader, interactive: false), "测试唤醒词");
+        var interaction = new SpeakerEnrollmentConsoleInteraction(display, new ConsoleInput(reader, interactive: false), "测试唤醒词");
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => interaction.WaitForSegmentStartAsync(
             new SpeakerEnrollmentProgressEventArgs { Stage = SpeakerEnrollmentStage.CleanEnrollment },

@@ -11,11 +11,9 @@ public sealed record ConversationToolApprovalContext(
         ? throw new ArgumentException("Server alias cannot be empty.", nameof(ServerAlias))
         : ServerAlias;
 
-    public ConversationToolDescriptor Tool { get; } = Tool
-        ?? throw new ArgumentNullException(nameof(Tool));
+    public ConversationToolDescriptor Tool { get; } = Tool ?? throw new ArgumentNullException(nameof(Tool));
 
-    public ConversationToolInvocation Invocation { get; } = Invocation
-        ?? throw new ArgumentNullException(nameof(Invocation));
+    public ConversationToolInvocation Invocation { get; } = Invocation ?? throw new ArgumentNullException(nameof(Invocation));
 
     public string ArgumentsHash { get; } = string.IsNullOrWhiteSpace(ArgumentsHash)
         ? throw new ArgumentException("Arguments hash cannot be empty.", nameof(ArgumentsHash))

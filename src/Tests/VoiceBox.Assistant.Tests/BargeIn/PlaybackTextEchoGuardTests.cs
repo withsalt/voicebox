@@ -12,9 +12,7 @@ public sealed class PlaybackTextEchoGuardTests
     {
         var guard = new PlaybackTextEchoGuard();
         guard.BeginResponse(7);
-        guard.AppendScheduledSpeech(
-            7,
-            "没问题，我给你讲个长一点的。在一座被山围着的小镇上，有个叫阿明的少年。");
+        guard.AppendScheduledSpeech(7, "没问题，我给你讲个长一点的。在一座被山围着的小镇上，有个叫阿明的少年。");
 
         PlaybackTextEchoMatch match = guard.Match("在一座被山围着的小镇上。");
 
@@ -43,9 +41,7 @@ public sealed class PlaybackTextEchoGuardTests
     {
         var guard = new PlaybackTextEchoGuard();
         guard.BeginResponse(7);
-        guard.AppendScheduledSpeech(
-            7,
-            "没问题，我给你讲个长一点的。在一座被山围着的小镇上，有个叫阿明的少年。");
+        guard.AppendScheduledSpeech(7, "没问题，我给你讲个长一点的。在一座被山围着的小镇上，有个叫阿明的少年。");
 
         Assert.False(guard.Match(text).IsMatch);
     }

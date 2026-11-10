@@ -23,8 +23,7 @@ internal static class TestServerProgram
                 Name = "voicebox-mcp-test",
                 Version = "1.0.0",
             },
-            ToolCollection = new McpServerPrimitiveCollection<McpServerTool>(
-                StringComparer.Ordinal),
+            ToolCollection = new McpServerPrimitiveCollection<McpServerTool>(StringComparer.Ordinal),
         };
         options.ToolCollection.Add(McpServerTool.Create(
             (Func<string, string>)(text => $"echo:{text}"),
@@ -45,14 +44,8 @@ internal static class TestServerProgram
                 Description = "Wait until the call is canceled.",
             }));
 
-        await using var transport = new StdioServerTransport(
-            "voicebox-mcp-test",
-            NullLoggerFactory.Instance);
-        await using McpServer server = McpServer.Create(
-            transport,
-            options,
-            NullLoggerFactory.Instance,
-            serviceProvider: null);
+        await using var transport = new StdioServerTransport("voicebox-mcp-test", NullLoggerFactory.Instance);
+        await using McpServer server = McpServer.Create(transport, options, NullLoggerFactory.Instance, serviceProvider: null);
         await server.RunAsync(CancellationToken.None);
         return 0;
     }

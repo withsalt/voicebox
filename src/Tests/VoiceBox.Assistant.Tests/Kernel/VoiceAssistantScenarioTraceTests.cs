@@ -44,19 +44,10 @@ public sealed partial class VoiceAssistantLifecycleTests
     {
         AssistantScenarioTrace actual = await CaptureBasicSplitAudioQaTraceAsync();
         const string relativePath = "CompositionReferenceTraces/basic-split-audio-qa.json";
-        if (string.Equals(
-                Environment.GetEnvironmentVariable("VOICEBOX_REGENERATE_GOLDENS"),
-                "1",
-                StringComparison.Ordinal))
+        if (string.Equals(Environment.GetEnvironmentVariable("VOICEBOX_REGENERATE_GOLDENS"), "1", StringComparison.Ordinal))
         {
             string root = FindRepositoryRoot();
-            string path = Path.Combine(
-                root,
-                "src",
-                "Tests",
-                "VoiceBox.Assistant.Tests",
-                "GoldenTraces",
-                relativePath);
+            string path = Path.Combine(root, "src", "Tests", "VoiceBox.Assistant.Tests", "GoldenTraces", relativePath);
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             File.WriteAllText(path, GoldenTraceStore.Serialize(actual));
             return;
@@ -112,15 +103,8 @@ public sealed partial class VoiceAssistantLifecycleTests
                 events.Add(value with { PublicationSeq = events.Count + 1 });
         }
 
-        assistant.StateChanged += (_, value) => AddEvent(new ScenarioEvent(
-            0,
-            "StateChanged",
-            value.From.ToString(),
-            value.To.ToString()));
-        assistant.UserSpoke += (_, value) => AddEvent(new ScenarioEvent(
-            0,
-            "UserSpoke",
-            Text: value.Text));
+        assistant.StateChanged += (_, value) => AddEvent(new ScenarioEvent(0, "StateChanged", value.From.ToString(), value.To.ToString()));
+        assistant.UserSpoke += (_, value) => AddEvent(new ScenarioEvent(0, "UserSpoke", Text: value.Text));
         assistant.AssistantText += (_, value) => AddEvent(new ScenarioEvent(
             0,
             "AssistantText",
@@ -201,8 +185,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 events.Add(value with { PublicationSeq = events.Count + 1 });
         }
 
-        assistant.StateChanged += (_, value) => Add(new ScenarioEvent(
-            0, "StateChanged", value.From.ToString(), value.To.ToString()));
+        assistant.StateChanged += (_, value) => Add(new ScenarioEvent(0, "StateChanged", value.From.ToString(), value.To.ToString()));
         assistant.AssistantReplied += (_, value) =>
         {
             Add(new ScenarioEvent(0, "AssistantReplied", Text: value.Text));
@@ -263,8 +246,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             lock (events)
                 events.Add(value with { PublicationSeq = events.Count + 1 });
         }
-        assistant.StateChanged += (_, value) => Add(new ScenarioEvent(
-            0, "StateChanged", value.From.ToString(), value.To.ToString()));
+        assistant.StateChanged += (_, value) => Add(new ScenarioEvent(0, "StateChanged", value.From.ToString(), value.To.ToString()));
         assistant.UserSpoke += (_, value) => Add(new ScenarioEvent(0, "UserSpoke", Text: value.Text));
 
         await assistant.StartAsync();
@@ -307,8 +289,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 events.Add(value with { PublicationSeq = events.Count + 1 });
         }
 
-        assistant.WakeModeChanged += (_, value) => Add(new ScenarioEvent(
-            0, "WakeModeChanged", value.From.ToString(), value.To.ToString()));
+        assistant.WakeModeChanged += (_, value) => Add(new ScenarioEvent(0, "WakeModeChanged", value.From.ToString(), value.To.ToString()));
         assistant.WakeupDetected += (_, value) =>
         {
             Add(new ScenarioEvent(0, "WakeupDetected", Text: value.Wakeup.Keyword));
@@ -355,10 +336,8 @@ public sealed partial class VoiceAssistantLifecycleTests
             lock (events)
                 events.Add(value with { PublicationSeq = events.Count + 1 });
         }
-        assistant.StateChanged += (_, value) => Add(new ScenarioEvent(
-            0, "StateChanged", value.From.ToString(), value.To.ToString()));
-        assistant.Faulted += (_, value) => Add(new ScenarioEvent(
-            0, "Faulted", Text: value.Component));
+        assistant.StateChanged += (_, value) => Add(new ScenarioEvent(0, "StateChanged", value.From.ToString(), value.To.ToString()));
+        assistant.Faulted += (_, value) => Add(new ScenarioEvent(0, "Faulted", Text: value.Component));
 
         await assistant.StartAsync();
         services.Vad.EmitSpeechStarted();
@@ -390,19 +369,10 @@ public sealed partial class VoiceAssistantLifecycleTests
 
     private static async Task AssertOrRegenerateTraceAsync(string relativePath, AssistantScenarioTrace actual)
     {
-        if (string.Equals(
-                Environment.GetEnvironmentVariable("VOICEBOX_REGENERATE_GOLDENS"),
-                "1",
-                StringComparison.Ordinal))
+        if (string.Equals(Environment.GetEnvironmentVariable("VOICEBOX_REGENERATE_GOLDENS"), "1", StringComparison.Ordinal))
         {
             string root = FindRepositoryRoot();
-            string path = Path.Combine(
-                root,
-                "src",
-                "Tests",
-                "VoiceBox.Assistant.Tests",
-                "GoldenTraces",
-                relativePath);
+            string path = Path.Combine(root, "src", "Tests", "VoiceBox.Assistant.Tests", "GoldenTraces", relativePath);
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             await File.WriteAllTextAsync(path, GoldenTraceStore.Serialize(actual));
             return;
@@ -472,33 +442,17 @@ public sealed partial class VoiceAssistantLifecycleTests
     private static KernelSemanticEffect ProjectKernelEffect(AssistantEffect effect, int index)
         => effect switch
         {
-            PublishStateChangedEffect value => new(
-                index,
-                "effect.public-event.publish.v1",
-                $"StateChanged:{value.From}->{value.To}"),
-            PublishUserSpokeEffect value => new(
-                index,
-                "effect.public-event.publish.v1",
-                $"UserSpoke:{value.Text}"),
+            PublishStateChangedEffect value => new(index, "effect.public-event.publish.v1", $"StateChanged:{value.From}->{value.To}"),
+            PublishUserSpokeEffect value => new(index, "effect.public-event.publish.v1", $"UserSpoke:{value.Text}"),
             PublishAssistantResponseGeneratedEffect value => new(
                 index,
                 "effect.public-event.publish.v1",
                 $"AssistantResponseGenerated:{value.Text}"),
-            PublishAssistantRepliedEffect value => new(
-                index,
-                "effect.public-event.publish.v1",
-                $"AssistantReplied:{value.Text}"),
-            PrepareRecognitionEffect => new(
-                index,
-                "effect.recognition.prepare.v1",
-                "turnId=T1;operationId=O1"),
-            GenerateResponseEffect => new(
-                index,
-                "effect.response.generate.v1",
-                "turnId=T1;operationId=O2"),
+            PublishAssistantRepliedEffect value => new(index, "effect.public-event.publish.v1", $"AssistantReplied:{value.Text}"),
+            PrepareRecognitionEffect => new(index, "effect.recognition.prepare.v1", "turnId=T1;operationId=O1"),
+            GenerateResponseEffect => new(index, "effect.response.generate.v1", "turnId=T1;operationId=O2"),
             CompleteTurnEffect => new(index, "effect.turn.complete.v1", "turnId=T1"),
-            _ => throw new Xunit.Sdk.XunitException(
-                $"Unexpected effect in canonical normal-turn projection: {effect.GetType().Name}"),
+            _ => throw new Xunit.Sdk.XunitException($"Unexpected effect in canonical normal-turn projection: {effect.GetType().Name}"),
         };
 
     private static string SignalDiscriminant(TurnSignalKind kind)

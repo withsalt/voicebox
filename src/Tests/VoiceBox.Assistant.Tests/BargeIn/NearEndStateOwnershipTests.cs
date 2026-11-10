@@ -53,9 +53,7 @@ public sealed class NearEndStateOwnershipTests
         NearEndCaptureStateMachine capture = NewDrainingCapture(targetSample: 800, fedThrough: 500);
         capture.ForceEndDrain("timeout");
 
-        Assert.True(capture.TryClaimEndFinalization(
-            out TimeSpan speechDuration,
-            out ActiveEndDrainOutcome outcome));
+        Assert.True(capture.TryClaimEndFinalization(out TimeSpan speechDuration, out ActiveEndDrainOutcome outcome));
 
         Assert.Equal(TimeSpan.FromMilliseconds(40), speechDuration);
         Assert.Equal("timeout", outcome.Reason);
@@ -101,8 +99,7 @@ public sealed class NearEndStateOwnershipTests
     {
         NearEndCaptureStateMachine capture = NewDrainingCapture(20, 0);
         capture.BeginEndpointObservation();
-        NearEndCaptureStateMachine.FeedDecision feed = capture.ReserveFeed(
-            new MainAudioObservation(1, 3, 0, 20, false), 1, 3);
+        NearEndCaptureStateMachine.FeedDecision feed = capture.ReserveFeed(new MainAudioObservation(1, 3, 0, 20, false), 1, 3);
         capture.CompleteFeed(1, feed.Reservation, failed: false);
 
         Assert.False(capture.TryClaimEndFinalization(out _, out _));
@@ -137,8 +134,7 @@ public sealed class NearEndStateOwnershipTests
     public void Capture_ResumingDrainPreservesInFlightFeedAccounting()
     {
         NearEndCaptureStateMachine capture = NewDrainingCapture(20, 0);
-        NearEndCaptureStateMachine.FeedDecision feed = capture.ReserveFeed(
-            new MainAudioObservation(1, 3, 0, 20, false), 1, 3);
+        NearEndCaptureStateMachine.FeedDecision feed = capture.ReserveFeed(new MainAudioObservation(1, 3, 0, 20, false), 1, 3);
 
         _ = capture.ObserveAudioFrame(1, 3, 21, false, 2, true, 4, 100);
 
@@ -216,13 +212,11 @@ public sealed class NearEndStateOwnershipTests
     public void Capture_ObserveAudioFrameIgnoresAnotherTurnOrIdleCapture()
     {
         var capture = new NearEndCaptureStateMachine();
-        Assert.False(capture.ObserveAudioFrame(
-            1, 1, 10, false, 1, latestSpeechActive: false, endSilenceMs: 1, timeoutSamples: 10).Claimed);
+        Assert.False(capture.ObserveAudioFrame(1, 1, 10, false, 1, latestSpeechActive: false, endSilenceMs: 1, timeoutSamples: 10).Claimed);
         Assert.Equal(0, capture.SpeechDurationMs);
 
         capture.Start(turnId: 1, firstFeedSample: 0, speechDurationMs: 0, "test", 0);
-        Assert.False(capture.ObserveAudioFrame(
-            2, 1, 10, false, 1, latestSpeechActive: false, endSilenceMs: 1, timeoutSamples: 10).Claimed);
+        Assert.False(capture.ObserveAudioFrame(2, 1, 10, false, 1, latestSpeechActive: false, endSilenceMs: 1, timeoutSamples: 10).Claimed);
         Assert.Equal(0, capture.SpeechDurationMs);
     }
 
@@ -275,8 +269,7 @@ public sealed class NearEndStateOwnershipTests
         _ = capture.ObserveAudioFrame(1, 3, 20, false, 4, false, 4, 100);
         Assert.True(capture.EndDrainPending);
 
-        NearEndCaptureStateMachine.Finalization resumed = capture.ObserveAudioFrame(
-            1, 3, resumedEndSample, false, 2, true, 4, 100);
+        NearEndCaptureStateMachine.Finalization resumed = capture.ObserveAudioFrame(1, 3, resumedEndSample, false, 2, true, 4, 100);
 
         Assert.False(resumed.Claimed);
         Assert.Equal(NearEndCaptureStateMachine.Status.DirectFeed, capture.State);
@@ -299,8 +292,7 @@ public sealed class NearEndStateOwnershipTests
         Assert.Equal(resumedEndSample + 120, capture.EndDrainDeadlineSample);
         Assert.False(capture.TryClaimEndFinalization(out _, out _));
 
-        feed = capture.ReserveFeed(
-            new MainAudioObservation(1, 3, resumedEndSample, resumedEndSample + 20, false), 1, 3);
+        feed = capture.ReserveFeed(new MainAudioObservation(1, 3, resumedEndSample, resumedEndSample + 20, false), 1, 3);
         capture.CompleteFeed(1, feed.Reservation, failed: false);
         Assert.True(capture.TryClaimEndFinalization(out TimeSpan duration, out ActiveEndDrainOutcome outcome));
         Assert.Equal(TimeSpan.FromMilliseconds(50), duration);
@@ -332,8 +324,7 @@ public sealed class NearEndStateOwnershipTests
         NearEndCaptureStateMachine capture = NewDrainingCapture(20, 0);
         if (claimed)
         {
-            NearEndCaptureStateMachine.FeedDecision feed = capture.ReserveFeed(
-                new MainAudioObservation(1, 3, 0, 20, false), 1, 3);
+            NearEndCaptureStateMachine.FeedDecision feed = capture.ReserveFeed(new MainAudioObservation(1, 3, 0, 20, false), 1, 3);
             capture.CompleteFeed(1, feed.Reservation, failed: false);
             Assert.True(capture.TryClaimEndFinalization(out _, out _));
         }
@@ -437,11 +428,7 @@ public sealed class NearEndStateOwnershipTests
     {
         var tracker = new NearEndEndpointTracker(new NearEndTimelineBuffer(1024));
 
-        bool located = tracker.TryLocate(
-            new float[] { 0.5f, 0.25f },
-            out _,
-            out _,
-            out _);
+        bool located = tracker.TryLocate(new float[] { 0.5f, 0.25f }, out _, out _, out _);
 
         Assert.False(located);
         Assert.True(tracker.CandidateLocationAttempted);
@@ -817,8 +804,7 @@ public sealed class NearEndStateOwnershipTests
         Assert.True(disabled.IsEmpty);
 
         BargeInDecision discontinuous = decision with { HasDiscontinuity = true };
-        PlaybackDuckingPolicy.CommandBatch unusable = policy.Update(
-            Frame(100, 20, 1), in discontinuous, false, false, true, 5, 0.2f, 200);
+        PlaybackDuckingPolicy.CommandBatch unusable = policy.Update(Frame(100, 20, 1), in discontinuous, false, false, true, 5, 0.2f, 200);
         Assert.True(unusable.IsEmpty);
     }
 
@@ -827,8 +813,7 @@ public sealed class NearEndStateOwnershipTests
     {
         var policy = new PlaybackDuckingPolicy();
         BargeInDecision decision = EvidenceDecision(end: 100);
-        PlaybackDuckingPolicy.CommandBatch duck = policy.Update(
-            Frame(100, 20, 1), in decision, false, false, true, 5, 0.2f, 200);
+        PlaybackDuckingPolicy.CommandBatch duck = policy.Update(Frame(100, 20, 1), in decision, false, false, true, 5, 0.2f, 200);
         Assert.True(policy.IsDucked);
 
         policy.RollbackDuck(duck.Second.Sequence - 1);
@@ -846,31 +831,21 @@ public sealed class NearEndStateOwnershipTests
     public void EffectExecutor_AppliesRestoresForDifferentOwnersIndependently()
     {
         var playback = new RecordingPlaybackPort();
-        var executor = new NearEndEffectExecutor(
-            playback,
-            new NullSignalSink(),
-            new NullRecognitionSink(),
-            speakerEvidence: null);
+        var executor = new NearEndEffectExecutor(playback, new NullSignalSink(), new NullRecognitionSink(), speakerEvidence: null);
 
         // A newer restore for owner B may arrive before the older restore for the owner that is
         // actually ducked. Cross-owner restores are independent and must both be applied.
         executor.Execute(new NearEndEffect.RestorePlayback(OwnerTurnId: 6, StreamEpoch: 1, Sequence: 3));
         executor.Execute(new NearEndEffect.RestorePlayback(OwnerTurnId: 5, StreamEpoch: 1, Sequence: 1));
 
-        Assert.Equal(
-            [(6L, "restore"), (5L, "restore")],
-            playback.Calls);
+        Assert.Equal([(6L, "restore"), (5L, "restore")], playback.Calls);
     }
 
     [Fact]
     public void EffectExecutor_DropsOnlyStaleCommandsForTheSameOwner()
     {
         var playback = new RecordingPlaybackPort();
-        var executor = new NearEndEffectExecutor(
-            playback,
-            new NullSignalSink(),
-            new NullRecognitionSink(),
-            speakerEvidence: null);
+        var executor = new NearEndEffectExecutor(playback, new NullSignalSink(), new NullRecognitionSink(), speakerEvidence: null);
 
         executor.Execute(new NearEndEffect.DuckPlayback(5, 1, 0.2f, 1f, Sequence: 10));
         executor.Execute(new NearEndEffect.RestorePlayback(5, 1, Sequence: 11));
@@ -886,11 +861,7 @@ public sealed class NearEndStateOwnershipTests
         DuplexAudioFrame mono = Frame(startSample: 0, sampleCount: 320, streamEpoch: 1);
         Assert.Equal(20.0, NearEndDataPlane.ComputeTailDurationMs(in mono, tailStartSample: 0), 6);
 
-        DuplexAudioFrame stereo = Frame(
-            startSample: 0,
-            sampleCount: 320,
-            streamEpoch: 1,
-            channels: 2);
+        DuplexAudioFrame stereo = Frame(startSample: 0, sampleCount: 320, streamEpoch: 1, channels: 2);
         Assert.Equal(20.0, NearEndDataPlane.ComputeTailDurationMs(in stereo, tailStartSample: 0), 6);
         Assert.Equal(10.0, NearEndDataPlane.ComputeTailDurationMs(in stereo, tailStartSample: 320), 6);
     }
@@ -902,17 +873,8 @@ public sealed class NearEndStateOwnershipTests
     private static NearEndCaptureStateMachine NewDrainingCapture(long targetSample, long fedThrough)
     {
         var capture = new NearEndCaptureStateMachine();
-        capture.Start(
-            turnId: 1,
-            firstFeedSample: fedThrough,
-            speechDurationMs: 40,
-            preRollSource: "test",
-            preRollSamples: 0);
-        capture.BeginDrain(
-            streamEpoch: 3,
-            endSampleExclusive: targetSample,
-            hasDiscontinuity: false,
-            timeoutSamples: 160);
+        capture.Start(turnId: 1, firstFeedSample: fedThrough, speechDurationMs: 40, preRollSource: "test", preRollSamples: 0);
+        capture.BeginDrain(streamEpoch: 3, endSampleExclusive: targetSample, hasDiscontinuity: false, timeoutSamples: 160);
         return capture;
     }
 

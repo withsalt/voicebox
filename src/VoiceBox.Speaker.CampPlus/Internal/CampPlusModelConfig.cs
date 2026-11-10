@@ -80,8 +80,7 @@ namespace VoiceBox.Speaker.CampPlus.Internal
                 throw new InvalidOperationException(
                     $"Unsupported mel range low_freq={LowFreq}/high_freq={HighFreq} (expect 20/0). [{configPath}]");
             if (NumMelBins != FeatureDim)
-                throw new InvalidOperationException(
-                    $"num_mel_bins {NumMelBins} != feature_dim {FeatureDim}. [{configPath}]");
+                throw new InvalidOperationException($"num_mel_bins {NumMelBins} != feature_dim {FeatureDim}. [{configPath}]");
             if (!(Preemphasis >= 0f && Preemphasis <= 1f))
                 throw new InvalidOperationException($"Invalid preemphasis {Preemphasis}. [{configPath}]");
             if (!(WaveformScale > 0f) || !float.IsFinite(WaveformScale))
@@ -110,8 +109,7 @@ namespace VoiceBox.Speaker.CampPlus.Internal
             if (!cfg.TryGetValue(key, out string? value)) return fallback;
             if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed))
                 return parsed;
-            throw new InvalidOperationException(
-                $"Invalid integer value '{value}' for {key}. [{configPath}]");
+            throw new InvalidOperationException($"Invalid integer value '{value}' for {key}. [{configPath}]");
         }
 
         private static float GetFloat(Dictionary<string, string> cfg, string key, float fallback, string configPath)
@@ -119,8 +117,7 @@ namespace VoiceBox.Speaker.CampPlus.Internal
             if (!cfg.TryGetValue(key, out string? value)) return fallback;
             if (float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsed))
                 return parsed;
-            throw new InvalidOperationException(
-                $"Invalid floating-point value '{value}' for {key}. [{configPath}]");
+            throw new InvalidOperationException($"Invalid floating-point value '{value}' for {key}. [{configPath}]");
         }
     }
 }

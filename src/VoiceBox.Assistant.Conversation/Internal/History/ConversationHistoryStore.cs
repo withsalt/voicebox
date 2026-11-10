@@ -34,15 +34,11 @@ internal sealed class ConversationHistoryStore
             throw new ArgumentOutOfRangeException(nameof(maxHistoryTurns), "Max history turns must be >= 1.");
         if (toolTranscriptRetentionTurns < 0)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(toolTranscriptRetentionTurns),
-                "Tool transcript retention turns must be >= 0.");
+            throw new ArgumentOutOfRangeException(nameof(toolTranscriptRetentionTurns), "Tool transcript retention turns must be >= 0.");
         }
         if (maxPersistedToolResultBytes < 1)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(maxPersistedToolResultBytes),
-                "Max persisted tool result bytes must be >= 1.");
+            throw new ArgumentOutOfRangeException(nameof(maxPersistedToolResultBytes), "Max persisted tool result bytes must be >= 1.");
         }
 
         _systemPrompt = systemPrompt ?? string.Empty;
@@ -114,8 +110,7 @@ internal sealed class ConversationHistoryStore
         if (_history.FindIndex(m => ReferenceEquals(m, userMessage)) == -1)
             _history.Add(userMessage);
 
-        int turnRecordIndex = _turnRecords.FindIndex(record =>
-            record.TurnId == turnId && ReferenceEquals(record.UserMessage, userMessage));
+        int turnRecordIndex = _turnRecords.FindIndex(record => record.TurnId == turnId && ReferenceEquals(record.UserMessage, userMessage));
         if (turnRecordIndex >= 0)
             AppendToolMessagesLocked(_turnRecords[turnRecordIndex].ToolMessages);
 
@@ -254,9 +249,7 @@ internal sealed class ConversationHistoryStore
                 return false;
 
             ConversationTurnRecord record = _turnRecords[index];
-            ChatMessage[] retained = _toolTranscriptRetentionTurns == 0
-                ? []
-                : toolMessages.Select(TruncateToolResultIfNeeded).ToArray();
+            ChatMessage[] retained = _toolTranscriptRetentionTurns == 0 ? [] : toolMessages.Select(TruncateToolResultIfNeeded).ToArray();
             var message = ChatMessage.Assistant(assistantText);
             _turnRecords[index] = record with
             {
@@ -326,8 +319,7 @@ internal sealed class ConversationHistoryStore
         AudioContent audio when audio.Path is not null => new AudioContent(audio.Path),
         ImageContent image when image.Bytes is not null => new ImageContent(image.Bytes),
         ImageContent image when image.Path is not null => new ImageContent(image.Path),
-        _ => throw new InvalidOperationException(
-            $"Unsupported chat content type '{content.GetType().Name}'."),
+        _ => throw new InvalidOperationException($"Unsupported chat content type '{content.GetType().Name}'."),
     };
 
     private static bool IsUserVisible(ChatMessage message)
@@ -355,11 +347,7 @@ internal sealed class ConversationHistoryStore
                     if (call is null)
                         continue;
 
-                    audit.Add(new ToolAuditRecord(
-                        record.TurnId,
-                        result.CallId,
-                        call.ToolId,
-                        result.Kind));
+                    audit.Add(new ToolAuditRecord(record.TurnId, result.CallId, call.ToolId, result.Kind));
                 }
             }
 
@@ -391,8 +379,7 @@ internal sealed class ConversationHistoryStore
         if (_history[1].Role != ChatRole.User)
             _history.RemoveAt(1);
 
-        _turnRecords.RemoveAll(record =>
-            !_history.Any(message => ReferenceEquals(message, record.UserMessage)));
+        _turnRecords.RemoveAll(record => !_history.Any(message => ReferenceEquals(message, record.UserMessage)));
         TrimCommittedResponseTurnIdsLocked();
     }
 
@@ -400,9 +387,7 @@ internal sealed class ConversationHistoryStore
     {
         foreach (ConversationTurnRecord record in _turnRecords)
         {
-            if (record.ToolCalls.Count > 0 ||
-                record.ToolResults.Count > 0 ||
-                record.ToolMessages.Count > 0)
+            if (record.ToolCalls.Count > 0 || record.ToolResults.Count > 0 || record.ToolMessages.Count > 0)
             {
                 return true;
             }
@@ -420,10 +405,8 @@ internal sealed class ConversationHistoryStore
             _committedResponseTurnIds.Remove(oldest.TurnId);
             _history.RemoveAll(message =>
                 ReferenceEquals(message, oldest.UserMessage) ||
-                (oldest.AssistantMessage is not null &&
-                    ReferenceEquals(message, oldest.AssistantMessage)) ||
-                oldest.BackgroundAssistantMessages.Any(background =>
-                    ReferenceEquals(message, background)) ||
+                (oldest.AssistantMessage is not null && ReferenceEquals(message, oldest.AssistantMessage)) ||
+                oldest.BackgroundAssistantMessages.Any(background => ReferenceEquals(message, background)) ||
                 oldest.ToolMessages.Any(tool => ReferenceEquals(message, tool)));
         }
     }
@@ -446,8 +429,7 @@ internal sealed class ConversationHistoryStore
             if (record.ToolMessages.Count == 0)
                 continue;
 
-            _history.RemoveAll(message =>
-                record.ToolMessages.Any(tool => ReferenceEquals(message, tool)));
+            _history.RemoveAll(message => record.ToolMessages.Any(tool => ReferenceEquals(message, tool)));
             _turnRecords[index] = record with { ToolMessages = Array.Empty<ChatMessage>() };
             dropCount--;
         }
@@ -471,9 +453,7 @@ internal sealed class ConversationHistoryStore
                 _turnRecords[index] = record;
             }
 
-            if (record.ToolCalls.Count > 0 ||
-                record.ToolResults.Count > 0 ||
-                record.BackgroundAssistantMessages.Count > 0)
+            if (record.ToolCalls.Count > 0 || record.ToolResults.Count > 0 || record.BackgroundAssistantMessages.Count > 0)
             {
                 continue;
             }
@@ -491,8 +471,7 @@ internal sealed class ConversationHistoryStore
     {
         ConversationTurnRecord record = _turnRecords[recordIndex];
         var calls = record.ToolCalls.ToList();
-        int existing = calls.FindIndex(value =>
-            string.Equals(value.CallId, call.CallId, StringComparison.Ordinal));
+        int existing = calls.FindIndex(value => string.Equals(value.CallId, call.CallId, StringComparison.Ordinal));
         if (existing < 0)
             calls.Add(call);
         else
@@ -504,14 +483,12 @@ internal sealed class ConversationHistoryStore
     {
         ConversationTurnRecord record = _turnRecords[recordIndex];
         var results = record.ToolResults.ToList();
-        int existing = results.FindIndex(value =>
-            string.Equals(value.CallId, result.CallId, StringComparison.Ordinal));
+        int existing = results.FindIndex(value => string.Equals(value.CallId, result.CallId, StringComparison.Ordinal));
         if (existing < 0)
         {
             results.Add(result);
         }
-        else if (result.Kind != ConversationToolResultKind.Accepted ||
-            results[existing].Kind == ConversationToolResultKind.Accepted)
+        else if (result.Kind != ConversationToolResultKind.Accepted || results[existing].Kind == ConversationToolResultKind.Accepted)
         {
             // A delayed acknowledgement must never overwrite the terminal outcome of a fast
             // background execution.
@@ -522,7 +499,6 @@ internal sealed class ConversationHistoryStore
 
     private void TrimCommittedResponseTurnIdsLocked()
     {
-        _committedResponseTurnIds.RemoveWhere(turnId =>
-            !_turnRecords.Exists(record => record.TurnId == turnId));
+        _committedResponseTurnIds.RemoveWhere(turnId => !_turnRecords.Exists(record => record.TurnId == turnId));
     }
 }

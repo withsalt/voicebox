@@ -96,10 +96,7 @@ internal sealed class WakeupPreRollTimeline
     public void Clear() => _preRoll.Clear();
 
     public float[] TakeReplayAudio(ReadOnlySpan<float> trailingAudio, WakeupEventArgs wakeup, WakeupTriggerKind triggerKind)
-        => SliceReplayAudio(
-            AppendTrailingAudio(_preRoll.SnapshotAndClear(), trailingAudio),
-            wakeup,
-            triggerKind);
+        => SliceReplayAudio(AppendTrailingAudio(_preRoll.SnapshotAndClear(), trailingAudio), wakeup, triggerKind);
 
     public long ComputeWakeStartCaptureSample(WakeupEventArgs wakeup)
         => checked(
@@ -118,18 +115,14 @@ internal sealed class WakeupPreRollTimeline
     /// growing trailing pre-roll.
     /// </summary>
     public long ComputeCandidateStartCaptureSample(long wakeStartSample)
-        => Math.Max(
-            PreRollStartCaptureSample,
-            wakeStartSample - (long)_replayLeadInMs * _sampleRate * _channels / 1000);
+        => Math.Max(PreRollStartCaptureSample, wakeStartSample - (long)_replayLeadInMs * _sampleRate * _channels / 1000);
 
     private float[] SliceReplayAudio(float[] audio, WakeupEventArgs wakeup, WakeupTriggerKind triggerKind)
     {
         if (audio.Length == 0)
             return audio;
 
-        long replayStartMs = triggerKind == WakeupTriggerKind.InSessionWakeup
-            ? wakeup.StartTimeMs
-            : wakeup.StartTimeMs - _replayLeadInMs;
+        long replayStartMs = triggerKind == WakeupTriggerKind.InSessionWakeup ? wakeup.StartTimeMs : wakeup.StartTimeMs - _replayLeadInMs;
         long wakeStartSample = _wakeDetectorStartSampleIndex + replayStartMs * _sampleRate * _channels / 1000;
         long offset = wakeStartSample - _preRollStartSampleIndex;
         if (offset <= 0)

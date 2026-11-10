@@ -64,10 +64,7 @@ namespace VoiceBox.Wakeup.OpenWakeWord
             if (_options.WakeWords == null || _options.WakeWords.Count == 0)
                 throw new ArgumentException("At least one wake word must be configured.", nameof(options));
 
-            _featureExtractor = new AudioFeatureExtractor(
-                _options.MelSpectrogramModelPath,
-                _options.EmbeddingModelPath,
-                _options);
+            _featureExtractor = new AudioFeatureExtractor(_options.MelSpectrogramModelPath, _options.EmbeddingModelPath, _options);
 
             _detectors = _options.WakeWords
                 .Select(def => new WakeWordDetector(def, _options.SampleRate, _options))
@@ -117,8 +114,7 @@ namespace VoiceBox.Wakeup.OpenWakeWord
                     detector.Definition.Threshold = threshold;
             }
 
-            _logger.LogInformation("OpenWakeWord threshold updated to {Threshold} for {Count} wakeword(s)",
-                threshold, _detectors.Length);
+            _logger.LogInformation("OpenWakeWord threshold updated to {Threshold} for {Count} wakeword(s)", threshold, _detectors.Length);
         }
 
         public void FeedAudio(ReadOnlySpan<float> audioData)

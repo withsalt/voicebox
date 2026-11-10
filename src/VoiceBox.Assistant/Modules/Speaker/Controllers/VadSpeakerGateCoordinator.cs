@@ -36,8 +36,7 @@ internal sealed class VadSpeakerGateCoordinator : ISpeakerGateBoundaryPort
         _host = host ?? throw new ArgumentNullException(nameof(host));
         _timeline = timeline ?? throw new ArgumentNullException(nameof(timeline));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _singleTalkEffective = speaker is not null &&
-            speaker.Policy.Get(SpeakerVerificationPurpose.SingleTalk).Enabled;
+        _singleTalkEffective = speaker is not null && speaker.Policy.Get(SpeakerVerificationPurpose.SingleTalk).Enabled;
     }
 
     public bool IsIdentityRequired => _speaker is not null;
@@ -92,18 +91,11 @@ internal sealed class VadSpeakerGateCoordinator : ISpeakerGateBoundaryPort
             return BargeInSpeakerGateStatus.Match;
         long version = _verificationState.CurrentVersion;
 
-        if (!_timeline.TryLocate(
-            latestAudio,
-            out long streamEpoch,
-            out long startSample,
-            out long endSample))
+        if (!_timeline.TryLocate(latestAudio, out long streamEpoch, out long startSample, out long endSample))
         {
             // The identity ring and the processed reservoir share the source timeline; without a
             // locate there is no interval to verify, which is an availability problem, not a mismatch.
-            return Deny(
-                SpeakerVerificationStatus.Unavailable,
-                SpeakerVerificationReason.NotReady,
-                latestAudioSamples: latestAudio.Length);
+            return Deny(SpeakerVerificationStatus.Unavailable, SpeakerVerificationReason.NotReady, latestAudioSamples: latestAudio.Length);
         }
 
         if (!_verificationState.TryBuildQuery(
@@ -113,11 +105,7 @@ internal sealed class VadSpeakerGateCoordinator : ISpeakerGateBoundaryPort
                 endSample,
                 Stopwatch.GetTimestamp(),
                 out SpeakerEvidenceQuery query))
-            return Deny(
-                SpeakerVerificationStatus.Unavailable,
-                SpeakerVerificationReason.CandidateRangeInvalid,
-                startSample,
-                endSample);
+            return Deny(SpeakerVerificationStatus.Unavailable, SpeakerVerificationReason.CandidateRangeInvalid, startSample, endSample);
 
         _lastQuery = query;
         _hasLastQuery = true;
@@ -150,10 +138,7 @@ internal sealed class VadSpeakerGateCoordinator : ISpeakerGateBoundaryPort
         ISpeakerVerificationStatePort state = _verificationState!;
         long version = state.CurrentVersion;
         SpeakerVerificationPurpose purpose = ActivePurpose ?? SpeakerVerificationPurpose.BargeInCommand;
-        bool hasAlignedQuery = state.TryCompleteQuery(
-            version,
-            Stopwatch.GetTimestamp(),
-            out SpeakerEvidenceQuery query);
+        bool hasAlignedQuery = state.TryCompleteQuery(version, Stopwatch.GetTimestamp(), out SpeakerEvidenceQuery query);
 
         if (!hasAlignedQuery)
         {
@@ -162,10 +147,7 @@ internal sealed class VadSpeakerGateCoordinator : ISpeakerGateBoundaryPort
             Resolve(
                 version,
                 purpose,
-                SpeakerVerificationResult.Unavailable(
-                    0,
-                    in query,
-                    SpeakerVerificationReason.CandidateRangeInvalid),
+                SpeakerVerificationResult.Unavailable(0, in query, SpeakerVerificationReason.CandidateRangeInvalid),
                 duration);
             return default;
         }
@@ -179,9 +161,7 @@ internal sealed class VadSpeakerGateCoordinator : ISpeakerGateBoundaryPort
             return default;
         }
 
-        _host.Track(
-            "speaker.vad-verification",
-            WaitForDecisionAsync(version, purpose, query, duration));
+        _host.Track("speaker.vad-verification", WaitForDecisionAsync(version, purpose, query, duration));
         return default;
     }
 

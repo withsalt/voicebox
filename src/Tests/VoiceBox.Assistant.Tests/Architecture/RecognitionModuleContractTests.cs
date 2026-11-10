@@ -50,14 +50,11 @@ public sealed class RecognitionModuleContractTests
 
         Assert.Null(assembly.GetType("VoiceBox.Assistant.Kernel.TurnReducer"));
 
-        FieldInfo[] fields = module.GetFields(
-            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+        FieldInfo[] fields = module.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
         Assert.DoesNotContain(fields, field => field.FieldType == kernel);
         Assert.DoesNotContain(fields, field => field.FieldType == snapshot);
         Assert.DoesNotContain(fields, field =>
-            field.FieldType.Namespace?.StartsWith(
-                "VoiceBox.Core.Services.ASRService",
-                StringComparison.Ordinal) == true);
+            field.FieldType.Namespace?.StartsWith("VoiceBox.Core.Services.ASRService", StringComparison.Ordinal) == true);
     }
 
     [Fact]
@@ -74,9 +71,7 @@ public sealed class RecognitionModuleContractTests
         Assert.Contains(
             typeof(BargeInRecognitionOutcomeCoordinator).GetFields(BindingFlags.Instance | BindingFlags.NonPublic),
             field => field.FieldType == typeof(IRecognitionCompletionPort));
-        Assert.Contains(
-            ShellSurface.Fields,
-            field => field.FieldType == typeof(IRecognitionAudioPort));
+        Assert.Contains(ShellSurface.Fields, field => field.FieldType == typeof(IRecognitionAudioPort));
 
         foreach (Type consumer in new[]
         {
@@ -98,10 +93,7 @@ public sealed class RecognitionModuleContractTests
         var provider = new RecordingRecognitionProvider();
         var control = new RecordingRecognitionControlPort();
         long nextOperationId = 0;
-        var module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance);
+        var module = new RecognitionModule(provider, control, NullLogger.Instance);
 
         Task prepare = module.PrepareAsync(7, Interlocked.Increment(ref nextOperationId), CancellationToken.None);
         Assert.True(module.TryFeedAudio(7, [0.1f, 0.2f]));
@@ -109,16 +101,8 @@ public sealed class RecognitionModuleContractTests
         provider.CompleteStart("session-7");
         await prepare;
 
-        RecognitionOutcome first = await module.FinishAsync(
-            7,
-            "session-7",
-            TimeSpan.FromMilliseconds(90),
-            CancellationToken.None);
-        RecognitionOutcome duplicate = await module.FinishAsync(
-            7,
-            "session-7",
-            TimeSpan.FromMilliseconds(90),
-            CancellationToken.None);
+        RecognitionOutcome first = await module.FinishAsync(7, "session-7", TimeSpan.FromMilliseconds(90), CancellationToken.None);
+        RecognitionOutcome duplicate = await module.FinishAsync(7, "session-7", TimeSpan.FromMilliseconds(90), CancellationToken.None);
         await module.CleanupAsync(7, "session-7");
 
         Assert.Equal(RecognitionOutcomeKind.Completed, first.Kind);
@@ -128,9 +112,7 @@ public sealed class RecognitionModuleContractTests
         Assert.Equal(" raw text ", first.RawText);
         Assert.Equal(1, provider.StartCount);
         Assert.Equal(1, provider.FinishCount);
-        Assert.Equal(
-            ["start", "feed:0.1,0.2", "feed:0.3", "finish"],
-            provider.Trace);
+        Assert.Equal(["start", "feed:0.1,0.2", "feed:0.3", "finish"], provider.Trace);
         Assert.Single(control.Ready);
         Assert.Equal((7L, 1L, "session-7"), control.Ready[0]);
     }
@@ -140,8 +122,7 @@ public sealed class RecognitionModuleContractTests
     {
         var provider = new RecordingRecognitionProvider();
         var snapshots = new RecordingAudioSnapshotSink();
-        var module = new RecognitionModule(
-            provider, new RecordingRecognitionControlPort(), NullLogger.Instance, snapshots);
+        var module = new RecognitionModule(provider, new RecordingRecognitionControlPort(), NullLogger.Instance, snapshots);
         Task prepare = module.PrepareAsync(7, 1, CancellationToken.None);
         float[] pending = [0.1f, 0.2f];
         Assert.True(module.TryFeedAudio(7, pending));
@@ -171,8 +152,7 @@ public sealed class RecognitionModuleContractTests
     {
         var provider = new RecordingRecognitionProvider { ImmediateSessionId = "failed-audio" };
         var snapshots = new RecordingAudioSnapshotSink();
-        var module = new RecognitionModule(
-            provider, new RecordingRecognitionControlPort(), NullLogger.Instance, snapshots);
+        var module = new RecognitionModule(provider, new RecordingRecognitionControlPort(), NullLogger.Instance, snapshots);
         await module.PrepareAsync(1, 1, CancellationToken.None);
         provider.OnFeed = _ => throw new InvalidOperationException("feed failed");
         Assert.Throws<InvalidOperationException>(() => module.TryFeedAudio(1, [0.1f]));
@@ -210,26 +190,17 @@ public sealed class RecognitionModuleContractTests
             Assert.Equal(TimeSpan.Zero, speechDuration);
             return ValueTask.FromResult(true);
         };
-        module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance);
+        module = new RecognitionModule(provider, control, NullLogger.Instance);
 
         Task prepare = module.PrepareAsync(7, Interlocked.Increment(ref nextOperationId), CancellationToken.None);
         Assert.True(module.TryFeedAudio(7, [0.7f]));
         provider.CompleteStart("session-7");
         await prepare;
 
-        RecognitionOutcome outcome = await module.FinishAsync(
-            7,
-            "session-7",
-            TimeSpan.Zero,
-            CancellationToken.None);
+        RecognitionOutcome outcome = await module.FinishAsync(7, "session-7", TimeSpan.Zero, CancellationToken.None);
 
         Assert.Equal(RecognitionOutcomeKind.Completed, outcome.Kind);
-        Assert.Equal(
-            ["start", "feed:0.1,0.2", "feed:0.7", "finish"],
-            provider.Trace);
+        Assert.Equal(["start", "feed:0.1,0.2", "feed:0.7", "finish"], provider.Trace);
     }
 
     [Fact]
@@ -261,33 +232,19 @@ public sealed class RecognitionModuleContractTests
             Assert.True(((IRecognitionAudioPort)module).TryFeedAudio(turnId, [0.3f]));
             return ValueTask.FromResult(true);
         };
-        module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance,
-            snapshots);
+        module = new RecognitionModule(provider, control, NullLogger.Instance, snapshots);
         module.PrepareCaptureTurn(7);
 
         Task prepare = module.PrepareAsync(7, Interlocked.Increment(ref nextOperationId), CancellationToken.None);
         Assert.Equal(
             SpeakingDecisionKind.None,
-            module.ObserveCaptureAudio(
-                7,
-                AssistantState.Listening,
-                [0.2f],
-                default(BargeInValidationCaptureSnapshot)).Kind);
+            module.ObserveCaptureAudio(7, AssistantState.Listening, [0.2f], default(BargeInValidationCaptureSnapshot)).Kind);
         provider.CompleteStart("session-7");
         await prepare;
-        RecognitionOutcome outcome = await module.FinishAsync(
-            7,
-            "session-7",
-            TimeSpan.Zero,
-            CancellationToken.None);
+        RecognitionOutcome outcome = await module.FinishAsync(7, "session-7", TimeSpan.Zero, CancellationToken.None);
 
         Assert.Equal(RecognitionOutcomeKind.Completed, outcome.Kind);
-        Assert.Equal(
-            ["start", "feed:0.1", "feed:0.2", "feed:0.3", "finish"],
-            provider.Trace);
+        Assert.Equal(["start", "feed:0.1", "feed:0.2", "feed:0.3", "finish"], provider.Trace);
         Assert.Equal([0.1f, 0.2f, 0.3f], Assert.Single(snapshots.Items).Samples.ToArray());
     }
 
@@ -297,10 +254,7 @@ public sealed class RecognitionModuleContractTests
         var provider = new RecordingRecognitionProvider();
         var control = new RecordingRecognitionControlPort();
         long nextOperationId = 0;
-        var module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance);
+        var module = new RecognitionModule(provider, control, NullLogger.Instance);
 
         var activeAudio = (IRecognitionAudioPort)module;
         Assert.False(activeAudio.TryGetProviderSession(7, out _, out _));
@@ -326,33 +280,17 @@ public sealed class RecognitionModuleContractTests
         var provider = new RecordingRecognitionProvider();
         var control = new RecordingRecognitionControlPort();
         long nextOperationId = 0;
-        var module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance);
+        var module = new RecognitionModule(provider, control, NullLogger.Instance);
         provider.CompleteStart("session-6");
         await module.PrepareAsync(6, Interlocked.Increment(ref nextOperationId), CancellationToken.None);
         module.PrepareCaptureTurn(6);
-        Assert.True(module.TryAttachCaptureSession(
-            6,
-            "session-6",
-            isValidationTurn: false,
-            bootstrapAudio: [],
-            out _,
-            out _));
+        Assert.True(module.TryAttachCaptureSession(6, "session-6", isValidationTurn: false, bootstrapAudio: [], out _, out _));
 
-        Assert.True(module.CanEnterCaptureRecognizing(
-            6,
-            "session-6",
-            AssistantState.Listening,
-            out bool isValidationTurn));
+        Assert.True(module.CanEnterCaptureRecognizing(6, "session-6", AssistantState.Listening, out bool isValidationTurn));
         Assert.False(isValidationTurn);
         Assert.Equal("session-6", module.GetCaptureSessionId(6, 0));
 
-        Assert.True(module.CommitEnterCaptureRecognizing(
-            6,
-            "session-6",
-            isValidationTurn: false));
+        Assert.True(module.CommitEnterCaptureRecognizing(6, "session-6", isValidationTurn: false));
         Assert.Null(module.GetCaptureSessionId(6, 0));
     }
 
@@ -362,20 +300,11 @@ public sealed class RecognitionModuleContractTests
         var provider = new RecordingRecognitionProvider();
         var control = new RecordingRecognitionControlPort();
         long nextOperationId = 0;
-        var module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance);
+        var module = new RecognitionModule(provider, control, NullLogger.Instance);
         provider.CompleteStart("validation-session");
         await module.PrepareAsync(9, Interlocked.Increment(ref nextOperationId), CancellationToken.None);
         module.PrepareCaptureTurn(9);
-        Assert.True(module.TryAttachCaptureSession(
-            9,
-            "validation-session",
-            isValidationTurn: true,
-            bootstrapAudio: [],
-            out _,
-            out _));
+        Assert.True(module.TryAttachCaptureSession(9, "validation-session", isValidationTurn: true, bootstrapAudio: [], out _, out _));
 
         var turnState = new StaticTurnStateView(new TurnSnapshot
         {
@@ -384,12 +313,7 @@ public sealed class RecognitionModuleContractTests
             NextTurnOrdinal = 10,
         });
         var validation = new StaticValidationTurnView(9);
-        var owner = new RecognitionTurnOwner(
-            module,
-            turnState,
-            validation,
-            new EmptyValidationPreRoll(),
-            new EmptyCandidatePreRoll());
+        var owner = new RecognitionTurnOwner(module, turnState, validation, new EmptyValidationPreRoll(), new EmptyCandidatePreRoll());
 
         owner.ClearActiveSessionId();
 
@@ -405,24 +329,12 @@ public sealed class RecognitionModuleContractTests
         var provider = new RecordingRecognitionProvider();
         var control = new RecordingRecognitionControlPort();
         long nextOperationId = 0;
-        var module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance);
+        var module = new RecognitionModule(provider, control, NullLogger.Instance);
         provider.CompleteStart("validation-session");
         await module.PrepareAsync(9, Interlocked.Increment(ref nextOperationId), CancellationToken.None);
         module.PrepareCaptureTurn(9);
-        Assert.True(module.TryAttachCaptureSession(
-            9,
-            "validation-session",
-            isValidationTurn: true,
-            bootstrapAudio: [],
-            out _,
-            out _));
-        Assert.True(module.CommitEnterCaptureRecognizing(
-            9,
-            "validation-session",
-            isValidationTurn: true));
+        Assert.True(module.TryAttachCaptureSession(9, "validation-session", isValidationTurn: true, bootstrapAudio: [], out _, out _));
+        Assert.True(module.CommitEnterCaptureRecognizing(9, "validation-session", isValidationTurn: true));
         Assert.Null(module.GetCaptureSessionId(9, 9));
 
         Assert.Equal("validation-session", module.TakeAbandonedCaptureSession(9, 9));
@@ -436,10 +348,7 @@ public sealed class RecognitionModuleContractTests
         var provider = new RecordingRecognitionProvider();
         var control = new RecordingRecognitionControlPort();
         long nextOperationId = 40;
-        var module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance);
+        var module = new RecognitionModule(provider, control, NullLogger.Instance);
 
         Task prepare = module.PrepareAsync(9, Interlocked.Increment(ref nextOperationId), CancellationToken.None);
         provider.FailStart(new InvalidOperationException("start failed"));
@@ -459,15 +368,9 @@ public sealed class RecognitionModuleContractTests
         var control = new RecordingRecognitionControlPort();
         long nextOperationId = 0;
         using var runCancellation = new CancellationTokenSource();
-        var module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance);
+        var module = new RecognitionModule(provider, control, NullLogger.Instance);
 
-        Task prepare = module.PrepareAsync(
-            14,
-            Interlocked.Increment(ref nextOperationId),
-            runCancellation.Token);
+        Task prepare = module.PrepareAsync(14, Interlocked.Increment(ref nextOperationId), runCancellation.Token);
         Assert.True(module.TryFeedAudio(14, [0.1f, 0.2f]));
         runCancellation.Cancel();
         provider.CompleteStart("session-disposed-start");
@@ -489,21 +392,14 @@ public sealed class RecognitionModuleContractTests
             var provider = new RecordingRecognitionProvider();
             var control = new RecordingRecognitionControlPort();
             long nextOperationId = 0;
-            var module = new RecognitionModule(
-                provider,
-                control,
-                NullLogger.Instance);
+            var module = new RecognitionModule(provider, control, NullLogger.Instance);
 
             Task prepare = module.PrepareAsync(1, Interlocked.Increment(ref nextOperationId), CancellationToken.None);
             Assert.True(module.TryFeedAudio(1, [0.1f]));
             Assert.True(module.TryFeedAudio(1, [0.2f, 0.3f]));
             provider.CompleteStart("session-1");
             await prepare;
-            RecognitionOutcome outcome = await module.FinishAsync(
-                1,
-                "session-1",
-                TimeSpan.FromMilliseconds(20),
-                CancellationToken.None);
+            RecognitionOutcome outcome = await module.FinishAsync(1, "session-1", TimeSpan.FromMilliseconds(20), CancellationToken.None);
 
             Assert.Equal(RecognitionOutcomeKind.Completed, outcome.Kind);
             string[] actual = provider.Trace.ToArray();
@@ -518,26 +414,18 @@ public sealed class RecognitionModuleContractTests
         var provider = new RecordingRecognitionProvider();
         var control = new RecordingRecognitionControlPort();
         long nextOperationId = 0;
-        var module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance);
+        var module = new RecognitionModule(provider, control, NullLogger.Instance);
         using var pumpCancellation = new CancellationTokenSource();
         Task pump = module.StartAudioPump(pumpCancellation.Token);
         provider.CompleteStart("session-3");
         await module.PrepareAsync(3, Interlocked.Increment(ref nextOperationId), CancellationToken.None);
 
-        provider.FeedEntered = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        provider.FeedEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         provider.FeedRelease = new ManualResetEventSlim(initialState: false);
         Task feed = Task.Run(() => Assert.True(module.TryFeedAudio(3, [0.4f])));
         await provider.FeedEntered.Task.WaitAsync(TimeSpan.FromSeconds(1));
 
-        Task<RecognitionOutcome> finish = module.FinishAsync(
-            3,
-            "session-3",
-            TimeSpan.FromMilliseconds(10),
-            CancellationToken.None);
+        Task<RecognitionOutcome> finish = module.FinishAsync(3, "session-3", TimeSpan.FromMilliseconds(10), CancellationToken.None);
         await Task.Yield();
         Assert.Equal(0, provider.FinishCount);
 
@@ -555,10 +443,7 @@ public sealed class RecognitionModuleContractTests
         var provider = new RecordingRecognitionProvider();
         var control = new RecordingRecognitionControlPort();
         long nextOperationId = 0;
-        var module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance);
+        var module = new RecognitionModule(provider, control, NullLogger.Instance);
         provider.CompleteStart("session-terminal-admission");
         await module.PrepareAsync(13, Interlocked.Increment(ref nextOperationId), CancellationToken.None);
 
@@ -593,10 +478,7 @@ public sealed class RecognitionModuleContractTests
         var provider = new RecordingRecognitionProvider();
         var control = new RecordingRecognitionControlPort();
         long nextOperationId = 0;
-        var module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance);
+        var module = new RecognitionModule(provider, control, NullLogger.Instance);
         provider.CompleteStart("session-5");
         await module.PrepareAsync(5, Interlocked.Increment(ref nextOperationId), CancellationToken.None);
 
@@ -614,11 +496,7 @@ public sealed class RecognitionModuleContractTests
         Assert.Equal(0, provider.FinishCount);
         Assert.Equal(
             RecognitionOutcomeKind.Completed,
-            (await module.FinishAsync(
-                5,
-                "session-5",
-                TimeSpan.Zero,
-                CancellationToken.None)).Kind);
+            (await module.FinishAsync(5, "session-5", TimeSpan.Zero, CancellationToken.None)).Kind);
         Assert.Equal(1, provider.FinishCount);
     }
 
@@ -628,10 +506,7 @@ public sealed class RecognitionModuleContractTests
         var provider = new RecordingRecognitionProvider();
         var control = new RecordingRecognitionControlPort();
         long nextOperationId = 0;
-        var module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance);
+        var module = new RecognitionModule(provider, control, NullLogger.Instance);
         provider.CompleteStart("session-8");
         await module.PrepareAsync(8, Interlocked.Increment(ref nextOperationId), CancellationToken.None);
         provider.OnFinish = () =>
@@ -642,11 +517,7 @@ public sealed class RecognitionModuleContractTests
                 "Recognition provider was invoked while the module ownership lock was held.");
         };
 
-        RecognitionOutcome outcome = await module.FinishAsync(
-            8,
-            "session-8",
-            TimeSpan.Zero,
-            CancellationToken.None);
+        RecognitionOutcome outcome = await module.FinishAsync(8, "session-8", TimeSpan.Zero, CancellationToken.None);
 
         Assert.Equal(RecognitionOutcomeKind.Completed, outcome.Kind);
     }
@@ -656,10 +527,7 @@ public sealed class RecognitionModuleContractTests
     {
         var provider = new RecordingRecognitionProvider();
         var control = new RecordingRecognitionControlPort();
-        var module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance);
+        var module = new RecognitionModule(provider, control, NullLogger.Instance);
 
         for (int i = 0; i < 256; i++)
             Assert.True(module.TryFeedAudio(7, [0.1f]));
@@ -670,20 +538,12 @@ public sealed class RecognitionModuleContractTests
         {
             Assert.Equal(
                 SpeakingDecisionKind.None,
-                module.ObserveCaptureAudio(
-                    8,
-                    AssistantState.Listening,
-                    [0.1f],
-                    default(BargeInValidationCaptureSnapshot)).Kind);
+                module.ObserveCaptureAudio(8, AssistantState.Listening, [0.1f], default(BargeInValidationCaptureSnapshot)).Kind);
         }
 
         Assert.Equal(
             SpeakingDecisionKind.RecognitionQueueOverflow,
-            module.ObserveCaptureAudio(
-                8,
-                AssistantState.Listening,
-                [0.2f],
-                default(BargeInValidationCaptureSnapshot)).Kind);
+            module.ObserveCaptureAudio(8, AssistantState.Listening, [0.2f], default(BargeInValidationCaptureSnapshot)).Kind);
     }
 
     [Fact]
@@ -698,9 +558,7 @@ public sealed class RecognitionModuleContractTests
             for (int index = 0; index < 128; index++)
                 Assert.True(module!.TryFeedAudio(turnId, [0.2f]));
 
-            float[][] oversizedBootstrap = Enumerable.Range(0, 129)
-                .Select(static _ => new[] { 0.1f })
-                .ToArray();
+            float[][] oversizedBootstrap = Enumerable.Range(0, 129).Select(static _ => new[] { 0.1f }).ToArray();
             Assert.False(module!.TryAttachCaptureSession(
                 turnId,
                 sessionId,
@@ -711,9 +569,7 @@ public sealed class RecognitionModuleContractTests
             Assert.False(rejectedSpeechEnded);
             Assert.Equal(TimeSpan.Zero, rejectedSpeechDuration);
 
-            float[][] bootstrap = Enumerable.Range(0, 128)
-                .Select(static _ => new[] { 0.1f })
-                .ToArray();
+            float[][] bootstrap = Enumerable.Range(0, 128).Select(static _ => new[] { 0.1f }).ToArray();
             Assert.True(module.TryAttachCaptureSession(
                 turnId,
                 sessionId,
@@ -725,18 +581,11 @@ public sealed class RecognitionModuleContractTests
             Assert.Equal(TimeSpan.Zero, attachedSpeechDuration);
             return ValueTask.FromResult(true);
         };
-        module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance);
+        module = new RecognitionModule(provider, control, NullLogger.Instance);
 
         provider.CompleteStart("session-capacity");
         await module.PrepareAsync(7, Interlocked.Increment(ref nextOperationId), CancellationToken.None);
-        RecognitionOutcome outcome = await module.FinishAsync(
-            7,
-            "session-capacity",
-            TimeSpan.Zero,
-            CancellationToken.None);
+        RecognitionOutcome outcome = await module.FinishAsync(7, "session-capacity", TimeSpan.Zero, CancellationToken.None);
 
         Assert.Equal(RecognitionOutcomeKind.Completed, outcome.Kind);
         Assert.Equal(256, provider.Trace.Count(entry => entry.StartsWith("feed:", StringComparison.Ordinal)));
@@ -748,23 +597,12 @@ public sealed class RecognitionModuleContractTests
         var provider = new RecordingRecognitionProvider();
         var control = new RecordingRecognitionControlPort();
         long nextOperationId = 0;
-        var module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance);
+        var module = new RecognitionModule(provider, control, NullLogger.Instance);
         provider.CompleteStart("session-oversized-bootstrap");
         await module.PrepareAsync(15, Interlocked.Increment(ref nextOperationId), CancellationToken.None);
 
-        float[][] oversized = Enumerable.Range(0, 257)
-            .Select(static _ => new[] { 0.1f })
-            .ToArray();
-        Assert.False(module.TryAttachCaptureSession(
-            15,
-            "session-oversized-bootstrap",
-            isValidationTurn: false,
-            oversized,
-            out _,
-            out _));
+        float[][] oversized = Enumerable.Range(0, 257).Select(static _ => new[] { 0.1f }).ToArray();
+        Assert.False(module.TryAttachCaptureSession(15, "session-oversized-bootstrap", isValidationTurn: false, oversized, out _, out _));
         Assert.Equal(["start"], provider.Trace);
         await module.CleanupAsync(15, "session-oversized-bootstrap");
     }
@@ -775,10 +613,7 @@ public sealed class RecognitionModuleContractTests
         var provider = new RecordingRecognitionProvider();
         var control = new RecordingRecognitionControlPort();
         long nextOperationId = 0;
-        var module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance);
+        var module = new RecognitionModule(provider, control, NullLogger.Instance);
         provider.CompleteStart("session-concurrent-finish");
         await module.PrepareAsync(12, Interlocked.Increment(ref nextOperationId), CancellationToken.None);
 
@@ -798,11 +633,7 @@ public sealed class RecognitionModuleContractTests
         await finishEntered.Task.WaitAsync(TimeSpan.FromSeconds(1));
 
         Task<RecognitionOutcome>[] duplicates = Enumerable.Range(0, 16)
-            .Select(_ => module.FinishAsync(
-                12,
-                "session-concurrent-finish",
-                TimeSpan.Zero,
-                CancellationToken.None))
+            .Select(_ => module.FinishAsync(12, "session-concurrent-finish", TimeSpan.Zero, CancellationToken.None))
             .ToArray();
         Assert.All(duplicates, duplicate => Assert.Same(duplicates[0], duplicate));
         Assert.Equal(1, provider.FinishCount);
@@ -820,19 +651,12 @@ public sealed class RecognitionModuleContractTests
         provider.ImmediateSessionId = "reused-provider-session";
         var control = new RecordingRecognitionControlPort();
         long nextOperationId = 0;
-        var module = new RecognitionModule(
-            provider,
-            control,
-            NullLogger.Instance);
+        var module = new RecognitionModule(provider, control, NullLogger.Instance);
 
         for (long turnId = 1; turnId <= 300; turnId++)
         {
             await module.PrepareAsync(turnId, Interlocked.Increment(ref nextOperationId), CancellationToken.None);
-            RecognitionOutcome outcome = await module.FinishAsync(
-                turnId,
-                "reused-provider-session",
-                TimeSpan.Zero,
-                CancellationToken.None);
+            RecognitionOutcome outcome = await module.FinishAsync(turnId, "reused-provider-session", TimeSpan.Zero, CancellationToken.None);
             Assert.Equal(RecognitionOutcomeKind.Completed, outcome.Kind);
         }
 
@@ -980,9 +804,7 @@ public sealed class RecognitionModuleContractTests
     {
         using var provider = new RetainingCancellationAsrService();
         string directory = Path.Combine(Path.GetTempPath(), "voicebox-cancelled-asr-" + Guid.NewGuid().ToString("N"));
-        using var recorder = recordAudio
-            ? new RecognitionAudioRecordingService(provider, directory, 16000, 1, NullLogger.Instance)
-            : null;
+        using var recorder = recordAudio ? new RecognitionAudioRecordingService(provider, directory, 16000, 1, NullLogger.Instance) : null;
         var module = new RecognitionModule(
             new OfflineRecognitionProviderAdapter(recorder is null ? provider : recorder),
             new RecordingRecognitionControlPort(), NullLogger.Instance);
@@ -1028,8 +850,7 @@ public sealed class RecognitionModuleContractTests
         public int FinishCount { get; private set; }
         public int CancelCount { get; private set; }
         public string LastSessionId { get; private set; } = "";
-        public TaskCompletionSource FinishEntered { get; private set; } =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource FinishEntered { get; private set; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public Task<SessionInfo> StartSessionAsync(CancellationToken ct = default)
         {
@@ -1066,20 +887,16 @@ public sealed class RecognitionModuleContractTests
 
     private static int PrivateCollectionCount(object owner, string fieldName)
     {
-        object value = owner.GetType()
-            .GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic)!
-            .GetValue(owner)!;
+        object value = owner.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(owner)!;
         return (int)value.GetType().GetProperty("Count")!.GetValue(value)!;
     }
 
     private static Type Require(Assembly assembly, string name)
-        => assembly.GetType(name)
-            ?? throw new Xunit.Sdk.XunitException($"Required recognition contract type '{name}' was not found.");
+        => assembly.GetType(name) ?? throw new Xunit.Sdk.XunitException($"Required recognition contract type '{name}' was not found.");
 
     private sealed class RecordingRecognitionProvider : IRecognitionProviderAdapter
     {
-        private readonly TaskCompletionSource<string> _start =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<string> _start = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public string? ImmediateSessionId { get; set; }
 
@@ -1144,8 +961,7 @@ public sealed class RecognitionModuleContractTests
             CancellationToken cancellationToken)
         {
             Ready.Add((turnId, operationId, sessionId));
-            return OnRecognitionStarted?.Invoke(turnId, operationId, sessionId)
-                ?? ValueTask.FromResult(true);
+            return OnRecognitionStarted?.Invoke(turnId, operationId, sessionId) ?? ValueTask.FromResult(true);
         }
 
         public ValueTask PublishRecognitionFailedAsync(RecognitionOutcome outcome, CancellationToken cancellationToken)

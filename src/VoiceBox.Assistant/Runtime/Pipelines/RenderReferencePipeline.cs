@@ -112,17 +112,12 @@ internal sealed class RenderReferencePipeline : IRenderReferenceFrameSink
             // to its end on the same acoustic authority.
             decisionEnabled =
                 !startupGuardActive &&
-                ((playbackTransportActive && _turns.IsSpeakingWithoutPendingCandidate) ||
-                 processingState.HasActiveCapture);
+                ((playbackTransportActive && _turns.IsSpeakingWithoutPendingCandidate) || processingState.HasActiveCapture);
             echoLearningEnabled =
                 playbackTransportActive &&
                 !processingState.HasActiveCapture &&
                 !processingState.HasPendingCandidate;
-            batch = _detector.Push(
-                in frame,
-                delayHint,
-                decisionEnabled,
-                echoLearningEnabled);
+            batch = _detector.Push(in frame, delayHint, decisionEnabled, echoLearningEnabled);
             snapshot = _detector.GetSnapshot();
             decision = _detector.GetRecentDecision(
                 TimeSpan.FromMilliseconds(_bargeInOptions.ActiveNearEndWindowMs),
@@ -141,10 +136,7 @@ internal sealed class RenderReferencePipeline : IRenderReferenceFrameSink
             return;
         }
 
-        _nearEnd.ObserveDuplexAudio(
-            in frame,
-            startupGuardActive,
-            batch.IsNearEndSpeech);
+        _nearEnd.ObserveDuplexAudio(in frame, startupGuardActive, batch.IsNearEndSpeech);
         // The diagnostic snapshot takes the near-end coordinator lock. Both consumers read
         // the same instant, so take it once, and skip it entirely when neither debug
         // logging nor a benchmark probe will read it.
@@ -182,8 +174,7 @@ internal sealed class RenderReferencePipeline : IRenderReferenceFrameSink
             return false;
 
         TimeSpan age = _timeProvider.GetElapsedTime(hintTimestampTicks, frameTimestampTicks);
-        return age >= TimeSpan.Zero &&
-            age <= TimeSpan.FromMilliseconds(_bargeInOptions.RenderAlignment.DelayHintMaxAgeMs);
+        return age >= TimeSpan.Zero && age <= TimeSpan.FromMilliseconds(_bargeInOptions.RenderAlignment.DelayHintMaxAgeMs);
     }
 
     private void LogNearEndDecisionDiagnosticsIfDue(
@@ -208,8 +199,7 @@ internal sealed class RenderReferencePipeline : IRenderReferenceFrameSink
 
         long now = Environment.TickCount64;
         long last = Volatile.Read(ref _lastNearEndDiagnosticTicks);
-        if (now - last < 1000 ||
-            Interlocked.CompareExchange(ref _lastNearEndDiagnosticTicks, now, last) != last)
+        if (now - last < 1000 || Interlocked.CompareExchange(ref _lastNearEndDiagnosticTicks, now, last) != last)
         {
             return;
         }

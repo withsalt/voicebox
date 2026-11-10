@@ -19,8 +19,7 @@ public class BugFixAndPerfTests
         var lex = new EnglishLexicon(british: false);
         // 1999 should be readable as a year via the 4-digit path (no currency)
         var (phonemes, _) = lex.GetNumber("1999", currency: null, isHead: true, numFlags: "");
-        Assert.False(string.IsNullOrEmpty(phonemes),
-            "4-digit number with null currency should produce phonemes");
+        Assert.False(string.IsNullOrEmpty(phonemes), "4-digit number with null currency should produce phonemes");
     }
 
     [Fact]

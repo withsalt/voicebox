@@ -47,8 +47,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Internal
             if (!string.IsNullOrWhiteSpace(options.KeywordsFile))
             {
                 if (!File.Exists(options.KeywordsFile))
-                    throw new FileNotFoundException(
-                        $"Keywords file not found: {options.KeywordsFile}", options.KeywordsFile);
+                    throw new FileNotFoundException($"Keywords file not found: {options.KeywordsFile}", options.KeywordsFile);
                 foreach (var line in File.ReadAllLines(options.KeywordsFile))
                 {
                     if (TryEncodeLine(line, symbols, options, out var ek)) AddUnique(ek);
@@ -80,8 +79,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Internal
                 }
 
                 if (auto == null)
-                    throw new InvalidOperationException(
-                        $"Keyword '{kw.Keyword}' has empty Tokens but AutoTokenizer was not initialized.");
+                    throw new InvalidOperationException($"Keyword '{kw.Keyword}' has empty Tokens but AutoTokenizer was not initialized.");
 
                 // 把 "主关键词原文 + 用户指定的发音变体" 一起送 AutoTokenizer,
                 // 全部 token 序列共享同一 Phrase (= kw.Keyword)。
@@ -102,8 +100,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Internal
             }
 
             if (encoded.Count == 0)
-                throw new InvalidOperationException(
-                    "At least one keyword must be provided via KeywordsFile or AddKeyword().");
+                throw new InvalidOperationException("At least one keyword must be provided via KeywordsFile or AddKeyword().");
             return encoded;
         }
 
@@ -157,21 +154,18 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Internal
                     case ':':
                         if (!float.TryParse(raw.AsSpan(1), System.Globalization.NumberStyles.Float,
                                 System.Globalization.CultureInfo.InvariantCulture, out score))
-                            throw new InvalidDataException(
-                                $"Cannot parse boost score '{raw}' in line: {line}");
+                            throw new InvalidDataException($"Cannot parse boost score '{raw}' in line: {line}");
                         break;
                     case '#':
                         if (!float.TryParse(raw.AsSpan(1), System.Globalization.NumberStyles.Float,
                                 System.Globalization.CultureInfo.InvariantCulture, out threshold))
-                            throw new InvalidDataException(
-                                $"Cannot parse threshold '{raw}' in line: {line}");
+                            throw new InvalidDataException($"Cannot parse threshold '{raw}' in line: {line}");
                         break;
                     case '@':
                         phrase = raw.Substring(1);
                         break;
                     default:
-                        throw new InvalidDataException(
-                            $"Token '{raw}' not in tokens.txt (line: {line}). 请检查关键词文件分词与 tokens.txt 是否匹配。");
+                        throw new InvalidDataException($"Token '{raw}' not in tokens.txt (line: {line}). 请检查关键词文件分词与 tokens.txt 是否匹配。");
                 }
             }
 
@@ -181,8 +175,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Internal
                 // 当未给出 @phrase 时, 用 tokens 拼成的字符串作为关键词原文 (与 sherpa-onnx 行为一致)
                 phrase = string.Concat(tokenIds.Select(symbols.GetSymbol));
             }
-            encoded = new EncodedKeyword(
-                tokenIds.ToArray(), score, threshold, phrase, opts.DebounceMs);
+            encoded = new EncodedKeyword(tokenIds.ToArray(), score, threshold, phrase, opts.DebounceMs);
             return true;
         }
 
@@ -192,8 +185,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Internal
             foreach (var raw in tokensText.Split(_whitespaceSeparators, StringSplitOptions.RemoveEmptyEntries))
             {
                 if (!symbols.TryGetId(raw, out int id))
-                    throw new InvalidDataException(
-                        $"Token '{raw}' for keyword '{keyword}' is not in tokens.txt.");
+                    throw new InvalidDataException($"Token '{raw}' for keyword '{keyword}' is not in tokens.txt.");
                 ids.Add(id);
             }
             if (ids.Count == 0)

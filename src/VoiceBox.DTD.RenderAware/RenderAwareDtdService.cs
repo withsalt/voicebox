@@ -76,9 +76,7 @@ public sealed class RenderAwareDtdService : IRenderAwareDtdService
                 float smoothed = AddSmoothedProbability(probability);
                 _frameCount++;
 
-                long hopTicks = TimeSpan.TicksPerSecond *
-                    HopLengthSamples /
-                    RenderAwareDtdOptions.RequiredSampleRate;
+                long hopTicks = TimeSpan.TicksPerSecond * HopLengthSamples / RenderAwareDtdOptions.RequiredSampleRate;
                 return new RenderAwareDtdObservation(
                     probability,
                     smoothed,
@@ -132,8 +130,7 @@ public sealed class RenderAwareDtdService : IRenderAwareDtdService
     {
         if (channels != RenderAwareDtdOptions.RequiredChannelCount)
         {
-            throw new NotSupportedException(
-                $"Render-aware DTD supports mono audio only, got {channels} channels.");
+            throw new NotSupportedException($"Render-aware DTD supports mono audio only, got {channels} channels.");
         }
 
         if (sampleRate != RenderAwareDtdOptions.RequiredSampleRate)
@@ -145,16 +142,12 @@ public sealed class RenderAwareDtdService : IRenderAwareDtdService
 
         if (microphone.Length != HopLengthSamples)
         {
-            throw new ArgumentException(
-                $"Microphone hop length must be {HopLengthSamples}.",
-                nameof(microphone));
+            throw new ArgumentException($"Microphone hop length must be {HopLengthSamples}.", nameof(microphone));
         }
 
         if (render.Length != HopLengthSamples)
         {
-            throw new ArgumentException(
-                $"Render hop length must be {HopLengthSamples}.",
-                nameof(render));
+            throw new ArgumentException($"Render hop length must be {HopLengthSamples}.", nameof(render));
         }
 
         EnsureFinite(microphone, nameof(microphone));
@@ -167,9 +160,7 @@ public sealed class RenderAwareDtdService : IRenderAwareDtdService
         {
             if (!float.IsFinite(samples[i]))
             {
-                throw new ArgumentException(
-                    $"Audio samples must be finite; {parameterName}[{i}] is {samples[i]}.",
-                    parameterName);
+                throw new ArgumentException($"Audio samples must be finite; {parameterName}[{i}] is {samples[i]}.", parameterName);
             }
         }
     }

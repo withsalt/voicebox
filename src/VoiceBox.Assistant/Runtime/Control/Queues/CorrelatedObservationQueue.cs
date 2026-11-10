@@ -64,10 +64,7 @@ internal sealed class CorrelatedObservationQueue<T>
     }
 
     private void Terminate(string code, string category, string messageKey)
-        => _ingress.TryTerminate(
-            new AssistantFailure(code, category, _component, messageKey),
-            Stopwatch.GetTimestamp(),
-            out _);
+        => _ingress.TryTerminate(new AssistantFailure(code, category, _component, messageKey), Stopwatch.GetTimestamp(), out _);
 
     private readonly record struct Entry(long OperationId, T Payload);
 }

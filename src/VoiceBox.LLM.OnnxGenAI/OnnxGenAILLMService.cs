@@ -197,8 +197,7 @@ namespace VoiceBox.LLM.OnnxGenAI
         {
             EnsureNotDisposed();
             bool reuse = _options.EnableSessionCache && _options.MaxConcurrentRequests == 1;
-            return new OnnxGenAILLMConversation(
-                _session, _template, _options, _gate, _shutdownCts.Token, reuse, _logger);
+            return new OnnxGenAILLMConversation(_session, _template, _options, _gate, _shutdownCts.Token, reuse, _logger);
         }
 
         public void Dispose()

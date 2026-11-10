@@ -124,10 +124,7 @@ public sealed class VoiceAssistantBuilder
     /// </summary>
     public VoiceAssistantBuilder AddAcousticDiagnostics(IAcousticProcessingMetricsSource diagnostics)
     {
-        _acousticDiagnostics = SetOnce(
-            _acousticDiagnostics,
-            diagnostics,
-            "AcousticProcessingDiagnostics");
+        _acousticDiagnostics = SetOnce(_acousticDiagnostics, diagnostics, "AcousticProcessingDiagnostics");
         _acousticDiagnosticsSpecified = true;
         return this;
     }
@@ -155,12 +152,9 @@ public sealed class VoiceAssistantBuilder
     public VoiceAssistantBuilder UseOptions(VoiceAssistantOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        if (_optionsSpecified || _wakeup is not null || _speaker is not null ||
-            _bargeInSpecified || _acousticDiagnosticsSpecified)
+        if (_optionsSpecified || _wakeup is not null || _speaker is not null || _bargeInSpecified || _acousticDiagnosticsSpecified)
         {
-            throw new AssistantCompositionException(
-                "VBX-COMP-002",
-                "VoiceAssistantOptions has already been registered for this builder.");
+            throw new AssistantCompositionException("VBX-COMP-002", "VoiceAssistantOptions has already been registered for this builder.");
         }
 
         _options = CloneOptions(options);
@@ -182,11 +176,7 @@ public sealed class VoiceAssistantBuilder
     {
         AssistantComposition composition = BuildComposition(out VoiceAssistantOptions options);
         var assistant = new VoiceAssistant(composition, Options.Create(options), logger);
-        return (
-            assistant,
-            composition.Snapshot.ProfileId,
-            composition.Snapshot.CapabilityGraphHash,
-            composition.Snapshot.Capabilities);
+        return (assistant, composition.Snapshot.ProfileId, composition.Snapshot.CapabilityGraphHash, composition.Snapshot.Capabilities);
     }
 
     /// <summary>
@@ -282,9 +272,7 @@ public sealed class VoiceAssistantBuilder
     {
         if (_duplexAudio is not null || _splitAudio is not null)
         {
-            throw new AssistantCompositionException(
-                "VBX-COMP-002",
-                "Audio endpoint has already been registered for this builder.");
+            throw new AssistantCompositionException("VBX-COMP-002", "Audio endpoint has already been registered for this builder.");
         }
     }
 
@@ -294,9 +282,7 @@ public sealed class VoiceAssistantBuilder
         ArgumentNullException.ThrowIfNull(value);
         if (existing is not null)
         {
-            throw new AssistantCompositionException(
-                "VBX-COMP-002",
-                $"{role} has already been registered for this builder.");
+            throw new AssistantCompositionException("VBX-COMP-002", $"{role} has already been registered for this builder.");
         }
 
         return value;
@@ -304,9 +290,7 @@ public sealed class VoiceAssistantBuilder
 
     private static T Require<T>(T? value, string code, string role)
         where T : class
-        => value ?? throw new AssistantCompositionException(
-            code,
-            $"Required role '{role}' is missing before Build.");
+        => value ?? throw new AssistantCompositionException(code, $"Required role '{role}' is missing before Build.");
 
     private static VoiceAssistantOptions CloneOptions(VoiceAssistantOptions options) => options.Clone();
 
@@ -320,8 +304,7 @@ public sealed class VoiceAssistantBuilder
             json,
             AssistantOptionsCloneSerializer.Json)
             ?? throw new InvalidOperationException("VoiceAssistantBargeInOptions could not be cloned.");
-        if (options.Dtd?.Model?.SessionOptionsFactory is { } sessionOptionsFactory &&
-            clone.Dtd?.Model is { } clonedModel)
+        if (options.Dtd?.Model?.SessionOptionsFactory is { } sessionOptionsFactory && clone.Dtd?.Model is { } clonedModel)
         {
             clonedModel.SessionOptionsFactory = sessionOptionsFactory;
         }

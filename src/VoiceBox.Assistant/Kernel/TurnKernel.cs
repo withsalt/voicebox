@@ -68,9 +68,7 @@ internal static class TurnKernel
         if (current.InputGateOpen == signal.Flag)
             return Rejected(current);
 
-        return Accepted(
-            current with { InputGateOpen = signal.Flag },
-            new SetInputGateEffect(current.TurnId, signal.Flag));
+        return Accepted(current with { InputGateOpen = signal.Flag }, new SetInputGateEffect(current.TurnId, signal.Flag));
     }
 
     private static TurnDecision ReduceWakeupDetected(TurnSnapshot current, TurnSignal signal)
@@ -82,19 +80,13 @@ internal static class TurnKernel
         var effects = new List<AssistantEffect>(2);
         if (observation.ModeChanged)
         {
-            effects.Add(new PublishWakeModeChangedEffect(
-                current.TurnId,
-                observation.FromMode,
-                observation.ToMode,
-                signal.OperationId));
+            effects.Add(new PublishWakeModeChangedEffect(current.TurnId, observation.FromMode, observation.ToMode, signal.OperationId));
         }
 
         if (observation.HasWakeup)
             effects.Add(new PublishWakeupDetectedEffect(current.TurnId, observation, signal.OperationId));
 
-        return Accepted(
-            current with { WakeMode = observation.ToMode },
-            effects.ToArray());
+        return Accepted(current with { WakeMode = observation.ToMode }, effects.ToArray());
     }
 
     /// <summary>
@@ -105,9 +97,7 @@ internal static class TurnKernel
     /// </summary>
     private static TurnDecision ReduceSpeechStarted(TurnSnapshot current, TurnSignal signal)
     {
-        if (current.ConversationState != AssistantState.Idle ||
-            signal.TurnId <= 0 ||
-            signal.TurnId != current.NextTurnOrdinal)
+        if (current.ConversationState != AssistantState.Idle || signal.TurnId <= 0 || signal.TurnId != current.NextTurnOrdinal)
             return Rejected(current);
         if (signal.Authorization is not (TurnAuthorizationStatus.NotRequired or TurnAuthorizationStatus.PendingSpeaker))
             return Rejected(current);
@@ -127,27 +117,18 @@ internal static class TurnKernel
         };
         return Accepted(
             next,
-            new PublishStateChangedEffect(
-                signal.TurnId,
-                AssistantState.Idle,
-                AssistantState.Listening),
+            new PublishStateChangedEffect(signal.TurnId, AssistantState.Idle, AssistantState.Listening),
             new PrepareRecognitionEffect(signal.TurnId, signal.OperationId));
     }
 
     private static TurnDecision ReduceRecognitionReady(TurnSnapshot current, TurnSignal signal)
     {
-        if (!IsCurrent(current, signal) ||
-            current.ConversationState != AssistantState.Listening ||
-            signal.OperationId <= 0)
+        if (!IsCurrent(current, signal) || current.ConversationState != AssistantState.Listening || signal.OperationId <= 0)
             return Rejected(current);
 
         return Accepted(
             current with { ConversationState = AssistantState.Recognizing },
-            new PublishStateChangedEffect(
-                signal.TurnId,
-                AssistantState.Listening,
-                AssistantState.Recognizing,
-                signal.OperationId));
+            new PublishStateChangedEffect(signal.TurnId, AssistantState.Listening, AssistantState.Recognizing, signal.OperationId));
     }
 
     private static TurnDecision ReduceSpeechEnded(TurnSnapshot current, TurnSignal signal)
@@ -160,9 +141,7 @@ internal static class TurnKernel
             return Rejected(current);
         }
 
-        return Accepted(
-            current,
-            new FinishRecognitionEffect(signal.TurnId, signal.OperationId, signal.Text));
+        return Accepted(current, new FinishRecognitionEffect(signal.TurnId, signal.OperationId, signal.Text));
     }
 
     private static TurnDecision ReduceRecognitionCompleted(TurnSnapshot current, TurnSignal signal)
@@ -189,11 +168,7 @@ internal static class TurnKernel
                 signal.Text ?? string.Empty,
                 TimeSpan.FromTicks(signal.DurationTicks),
                 signal.OperationId),
-            new PublishStateChangedEffect(
-                signal.TurnId,
-                current.ConversationState,
-                AssistantState.Thinking,
-                signal.OperationId),
+            new PublishStateChangedEffect(signal.TurnId, current.ConversationState, AssistantState.Thinking, signal.OperationId),
             new GenerateResponseEffect(signal.TurnId, signal.OperationId, signal.Text ?? string.Empty));
     }
 
@@ -221,8 +196,7 @@ internal static class TurnKernel
                 PhysicalStopIssued = false,
                 PhysicalStopTrigger = PhysicalStopTrigger.None,
             },
-            new PublishStateChangedEffect(
-                signal.TurnId, AssistantState.Idle, AssistantState.Thinking, signal.OperationId));
+            new PublishStateChangedEffect(signal.TurnId, AssistantState.Idle, AssistantState.Thinking, signal.OperationId));
     }
 
     private static TurnDecision ReduceResponseGenerated(TurnSnapshot current, TurnSignal signal)
@@ -236,10 +210,7 @@ internal static class TurnKernel
 
         return Accepted(
             current with { ResponseLifecycle = ResponseLifecycle.Generated },
-            new PublishAssistantResponseGeneratedEffect(
-                signal.TurnId,
-                signal.Text ?? string.Empty,
-                signal.OperationId));
+            new PublishAssistantResponseGeneratedEffect(signal.TurnId, signal.Text ?? string.Empty, signal.OperationId));
     }
 
     private static TurnDecision ReducePlaybackStarted(TurnSnapshot current, TurnSignal signal)
@@ -260,19 +231,13 @@ internal static class TurnKernel
         return stateChanged
             ? Accepted(
                 next,
-                new PublishStateChangedEffect(
-                    signal.TurnId,
-                    AssistantState.Thinking,
-                    AssistantState.Speaking,
-                    signal.OperationId))
+                new PublishStateChangedEffect(signal.TurnId, AssistantState.Thinking, AssistantState.Speaking, signal.OperationId))
             : Accepted(next);
     }
 
     private static TurnDecision ReducePlaybackCompleted(TurnSnapshot current, TurnSignal signal)
     {
-        if (!IsCurrent(current, signal) ||
-            current.ConversationState != AssistantState.Speaking ||
-            signal.OperationId <= 0)
+        if (!IsCurrent(current, signal) || current.ConversationState != AssistantState.Speaking || signal.OperationId <= 0)
             return Rejected(current);
 
         return Accepted(
@@ -287,18 +252,12 @@ internal static class TurnKernel
                 TimeSpan.FromTicks(signal.DurationTicks),
                 signal.OperationId),
             new CompleteTurnEffect(signal.TurnId, signal.OperationId),
-            new PublishStateChangedEffect(
-                signal.TurnId,
-                AssistantState.Speaking,
-                AssistantState.Idle,
-                signal.OperationId));
+            new PublishStateChangedEffect(signal.TurnId, AssistantState.Speaking, AssistantState.Idle, signal.OperationId));
     }
 
     private static TurnDecision ReduceInterruptionRequested(TurnSnapshot current, TurnSignal signal)
     {
-        if (!IsCurrent(current, signal) ||
-            signal.OperationId <= 0 ||
-            signal.OperationId != current.NextTurnOrdinal)
+        if (!IsCurrent(current, signal) || signal.OperationId <= 0 || signal.OperationId != current.NextTurnOrdinal)
             return Rejected(current);
 
         if (current.ConversationState == AssistantState.Thinking)
@@ -320,11 +279,7 @@ internal static class TurnKernel
                     PhysicalStopTrigger = PhysicalStopTrigger.None,
                 },
                 new CancelResponseEffect(current.TurnId, signal.OperationId),
-                new PublishStateChangedEffect(
-                    signal.OperationId,
-                    AssistantState.Thinking,
-                    AssistantState.Listening,
-                    signal.OperationId),
+                new PublishStateChangedEffect(signal.OperationId, AssistantState.Thinking, AssistantState.Listening, signal.OperationId),
                 new PrepareRecognitionEffect(signal.OperationId, signal.OperationId));
         }
 
@@ -449,9 +404,7 @@ internal static class TurnKernel
 
     private static TurnDecision ReduceInterruptionResolved(TurnSnapshot current, TurnSignal signal)
     {
-        if (current.ValidationTurnId == 0 ||
-            signal.TurnId != current.ValidationTurnId ||
-            signal.OperationId <= 0)
+        if (current.ValidationTurnId == 0 || signal.TurnId != current.ValidationTurnId || signal.OperationId <= 0)
             return Rejected(current);
 
         if (!signal.Flag)
@@ -470,11 +423,7 @@ internal static class TurnKernel
             // changed the interrupted reply or its gain in the first place.
             if (signal.RestoreState is { } restored && restored != current.ConversationState)
             {
-                rejected.Add(new PublishStateChangedEffect(
-                    signal.TurnId,
-                    current.ConversationState,
-                    restored,
-                    signal.OperationId));
+                rejected.Add(new PublishStateChangedEffect(signal.TurnId, current.ConversationState, restored, signal.OperationId));
             }
 
             return Accepted(
@@ -551,11 +500,7 @@ internal static class TurnKernel
                 Authorization = current.ValidationTurnId == 0 ? TurnAuthorizationStatus.NotRequired : current.Authorization,
                 CandidateId = current.ValidationTurnId == 0 ? 0 : current.CandidateId,
             },
-            new PublishStateChangedEffect(
-                signal.TurnId,
-                current.ConversationState,
-                AssistantState.Idle,
-                signal.OperationId));
+            new PublishStateChangedEffect(signal.TurnId, current.ConversationState, AssistantState.Idle, signal.OperationId));
     }
 
     private static TurnDecision ReduceOperationFailed(TurnSnapshot current, TurnSignal signal)
@@ -566,11 +511,7 @@ internal static class TurnKernel
         return Accepted(
             current with { ConversationState = AssistantState.Idle, ResponseLifecycle = ResponseLifecycle.Failed },
             new CancelOperationEffect(signal.TurnId, signal.OperationId),
-            new PublishStateChangedEffect(
-                signal.TurnId,
-                current.ConversationState,
-                AssistantState.Idle,
-                signal.OperationId));
+            new PublishStateChangedEffect(signal.TurnId, current.ConversationState, AssistantState.Idle, signal.OperationId));
     }
 
     private static TurnDecision ReduceCancelled(TurnSnapshot current, TurnSignal signal)
@@ -578,17 +519,11 @@ internal static class TurnKernel
         if (!IsCurrent(current, signal) || signal.OperationId <= 0)
             return Rejected(current);
 
-        bool wakeupInterrupt = string.Equals(
-            signal.Reason,
-            "wakeup-interrupt",
-            StringComparison.Ordinal);
+        bool wakeupInterrupt = string.Equals(signal.Reason, "wakeup-interrupt", StringComparison.Ordinal);
         if (wakeupInterrupt && signal.OperationId != current.NextTurnOrdinal)
             return Rejected(current);
 
-        bool turnCompleted = string.Equals(
-            signal.Reason,
-            "turn-completed",
-            StringComparison.Ordinal);
+        bool turnCompleted = string.Equals(signal.Reason, "turn-completed", StringComparison.Ordinal);
         if (turnCompleted)
         {
             if (current.ConversationState == AssistantState.Idle)
@@ -605,11 +540,7 @@ internal static class TurnKernel
                     CandidateId = current.ValidationTurnId == 0 ? 0 : current.CandidateId,
                 },
                 new CompleteTurnEffect(signal.TurnId, signal.OperationId),
-                new PublishStateChangedEffect(
-                    signal.TurnId,
-                    current.ConversationState,
-                    AssistantState.Idle,
-                    signal.OperationId));
+                new PublishStateChangedEffect(signal.TurnId, current.ConversationState, AssistantState.Idle, signal.OperationId));
         }
 
         var cancelled = new List<AssistantEffect>(6)
@@ -624,18 +555,12 @@ internal static class TurnKernel
             cancelled.Add(new ClearPlaybackQueueEffect(signal.TurnId, signal.OperationId));
         }
         cancelled.Add(new CompleteTurnEffect(signal.TurnId, signal.OperationId));
-        cancelled.Add(new PublishStateChangedEffect(
-            signal.TurnId,
-            current.ConversationState,
-            AssistantState.Idle,
-            signal.OperationId));
+        cancelled.Add(new PublishStateChangedEffect(signal.TurnId, current.ConversationState, AssistantState.Idle, signal.OperationId));
         return Accepted(
             current with
             {
                 ConversationState = AssistantState.Idle,
-                NextTurnOrdinal = wakeupInterrupt
-                    ? checked(signal.OperationId + 1)
-                    : current.NextTurnOrdinal,
+                NextTurnOrdinal = wakeupInterrupt ? checked(signal.OperationId + 1) : current.NextTurnOrdinal,
                 ResponseLifecycle = ResponseLifecycle.Cancelled,
                 InterruptedTurnId = 0,
                 ValidationTurnId = 0,

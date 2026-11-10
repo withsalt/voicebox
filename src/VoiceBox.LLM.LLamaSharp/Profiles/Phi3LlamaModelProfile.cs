@@ -9,16 +9,14 @@ namespace VoiceBox.LLM.LLamaSharp
     /// <summary>Phi-3 role/end 模板。</summary>
     public sealed class Phi3LlamaModelProfile : DefaultLlamaModelProfile
     {
-        private static readonly string[] Strip =
-        ["<|system|>", "<|user|>", "<|assistant|>", "<|end|>"];
+        private static readonly string[] Strip = ["<|system|>", "<|user|>", "<|assistant|>", "<|end|>"];
 
         public override string Name => "phi3";
 
         public override bool Matches(LlamaModelInfo info) =>
             info.Architecture.StartsWith("phi3", StringComparison.OrdinalIgnoreCase) ||
             Contains(info.Name, "Phi-3") ||
-            (Contains(info.ChatTemplate, "<|system|>") &&
-             Contains(info.ChatTemplate, "<|end|>"));
+            (Contains(info.ChatTemplate, "<|system|>") && Contains(info.ChatTemplate, "<|end|>"));
 
         public override string BuildPrompt(
             LLamaWeights weights,

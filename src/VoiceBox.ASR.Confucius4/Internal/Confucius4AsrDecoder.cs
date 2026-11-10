@@ -149,9 +149,7 @@ namespace VoiceBox.ASR.Confucius4.Internal
                 var decodeInputs = sessions.Decode.InputMetadata;
                 _prefillInputIdsRank = prefillInputs[_prefillInputNames[0]].Dimensions.Length;
                 _decodeInputIdsRank = decodeInputs[_decodeInputNames[0]].Dimensions.Length;
-                _prefillCachePositionRank = _prefillHasCachePosition
-                    ? prefillInputs[_prefillInputNames[2]].Dimensions.Length
-                    : 0;
+                _prefillCachePositionRank = _prefillHasCachePosition ? prefillInputs[_prefillInputNames[2]].Dimensions.Length : 0;
                 int decodeCachePositionIndex = sessions.SharedDecoder ? 2 : 1;
                 _decodeCachePositionRank = decodeInputs[_decodeInputNames[decodeCachePositionIndex]].Dimensions.Length;
 
@@ -172,9 +170,7 @@ namespace VoiceBox.ASR.Confucius4.Internal
                 }
                 _numCacheTensors = cacheCount;
 
-                _cache = _useFloat16
-                    ? CacheStore.AllocateFloat16(_cacheShapes)
-                    : CacheStore.AllocateFloat32(_cacheShapes);
+                _cache = _useFloat16 ? CacheStore.AllocateFloat16(_cacheShapes) : CacheStore.AllocateFloat32(_cacheShapes);
 
                 _decodeTokenShape = _decodeInputIdsRank == 1 ? new long[] { 1L } : new long[] { 1L, 1L };
                 _decodeCachePosShape = _decodeCachePositionRank == 1 ? new long[] { 1L } : new long[] { 1L, 1L };

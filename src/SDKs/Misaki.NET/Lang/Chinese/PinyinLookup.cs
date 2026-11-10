@@ -63,8 +63,7 @@ public class PinyinLookup
 
         using var reader = new StreamReader(stream);
         var json = reader.ReadToEnd();
-        return JsonSerializer.Deserialize<Dictionary<string, string>>(json)
-            ?? new Dictionary<string, string>();
+        return JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
     }
 
     /// <summary>
@@ -333,8 +332,7 @@ public class PinyinLookup
             }
         }
         // j/q/x + u → j/q/x + ü (covers ju, jue, juan, jun, qu, que, quan, qun, xu, xue, xuan, xun)
-        else if ((body[0] == 'j' || body[0] == 'q' || body[0] == 'x')
-                 && body.Length >= 2 && body[1] == 'u')
+        else if ((body[0] == 'j' || body[0] == 'q' || body[0] == 'x') && body.Length >= 2 && body[1] == 'u')
         {
             body = body[..1] + "ü" + body[2..];
         }

@@ -95,8 +95,7 @@ public sealed class WakeupSessionGateTests
             channels: 1,
             replayLeadInMs: 0,
             speakerEvidence: new FakeSpeakerEvidenceProvider([
-                VerificationResult(
-                    SpeakerVerificationStatus.Mismatch, 0.1f, SpeakerVerificationReason.MajorityMismatch)
+                VerificationResult(SpeakerVerificationStatus.Mismatch, 0.1f, SpeakerVerificationReason.MajorityMismatch)
             ]));
         gate.Start();
         gate.OnAudio(new float[8000]);
@@ -280,8 +279,7 @@ public sealed class WakeupSessionGateTests
         var wakeup = new FakeWakeupService();
         var speakerEvidence = new FakeSpeakerEvidenceProvider([
             PendingResult(),
-            VerificationResult(
-                SpeakerVerificationStatus.InsufficientEvidence, 0.3f, SpeakerVerificationReason.AmbiguousEvidence),
+            VerificationResult(SpeakerVerificationStatus.InsufficientEvidence, 0.3f, SpeakerVerificationReason.AmbiguousEvidence),
         ]);
         using var gate = CreateGate(
             wakeup,
@@ -694,9 +692,7 @@ public sealed class WakeupSessionGateTests
         }
 
         public void EmitWakeup(long startTimeMs = 0, long durationMs = 0, int score = 90, int threshold = 20)
-            => OnWakeup?.Invoke(
-                this,
-                new WakeupEventArgs("小爱同学", score, threshold, durationMs, startTimeMs));
+            => OnWakeup?.Invoke(this, new WakeupEventArgs("小爱同学", score, threshold, durationMs, startTimeMs));
 
         public void Dispose() { }
     }
@@ -833,8 +829,7 @@ internal static class WakeupGateTestAudioExtensions
         timeline.Position += audio.Length;
         long sequence = ++timeline.Sequence;
         var range = new CaptureRange(1, sequence, sequence, start, timeline.Position, sequence);
-        var frame = new ProcessedCaptureFrame(
-            range, timeline.SampleRate, timeline.Channels, audio, 0, false);
+        var frame = new ProcessedCaptureFrame(range, timeline.SampleRate, timeline.Channels, audio, 0, false);
         return gate.OnAudio(in frame);
     }
 
@@ -842,8 +837,7 @@ internal static class WakeupGateTestAudioExtensions
     {
         public Timeline(WakeupSessionGate gate)
         {
-            const System.Reflection.BindingFlags Flags =
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            const System.Reflection.BindingFlags Flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
             SampleRate = (uint)(int)(typeof(WakeupSessionGate).GetField("_sampleRate", Flags)?.GetValue(gate)
                 ?? throw new InvalidOperationException("Wakeup sample-rate field not found."));
             Channels = (uint)(int)(typeof(WakeupSessionGate).GetField("_channels", Flags)?.GetValue(gate)

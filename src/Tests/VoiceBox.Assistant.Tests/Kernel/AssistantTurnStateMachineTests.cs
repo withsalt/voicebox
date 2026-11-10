@@ -16,12 +16,9 @@ public sealed class AssistantTurnObservationStoreTests
     [Fact]
     public void RuntimeProjection_ChangesOnlyAfterKernelSynchronization()
     {
-        var turns = new AssistantTurnObservationStoreHarness(
-            new BargeInDetector(0, 0, 16000, 1));
+        var turns = new AssistantTurnObservationStoreHarness(new BargeInDetector(0, 0, 16000, 1));
 
-        SpeechStartedDecision decision = turns.ObserveSpeechStartedWithoutCommit(
-            enableBargeIn: false,
-            proposedTurnId: 1);
+        SpeechStartedDecision decision = turns.ObserveSpeechStartedWithoutCommit(enableBargeIn: false, proposedTurnId: 1);
 
         Assert.Equal(SpeechStartedDecisionKind.StartListening, decision.Kind);
         Assert.Equal(1, decision.TurnId);
@@ -149,12 +146,8 @@ public sealed class AssistantTurnObservationStoreTests
         Assert.True(turns.TryTransitionForTurn(activeTurnId, AssistantState.Thinking, out _, out _));
         SpeechStartedDecision started = turns.OnSpeechStarted(enableBargeIn: true);
 
-        SpeakingDecision pending = turns.OnSpeaking(
-            [0.4f],
-            BargeInSpeakerGateStatus.Pending);
-        SpeakingDecision rejected = turns.OnSpeaking(
-            [0.5f],
-            BargeInSpeakerGateStatus.Rejected);
+        SpeakingDecision pending = turns.OnSpeaking([0.4f], BargeInSpeakerGateStatus.Pending);
+        SpeakingDecision rejected = turns.OnSpeaking([0.5f], BargeInSpeakerGateStatus.Rejected);
 
         Assert.Equal(SpeechStartedDecisionKind.BargeInCandidate, started.Kind);
         Assert.Equal(SpeakingDecisionKind.None, pending.Kind);
@@ -171,16 +164,10 @@ public sealed class AssistantTurnObservationStoreTests
         var turns = CreateTurns();
         long activeTurnId = turns.OnSpeechStarted(enableBargeIn: true).TurnId;
         Assert.True(turns.TryTransitionForTurn(activeTurnId, AssistantState.Thinking, out _, out _));
-        Assert.Equal(
-            SpeechStartedDecisionKind.BargeInCandidate,
-            turns.OnSpeechStarted(enableBargeIn: true).Kind);
+        Assert.Equal(SpeechStartedDecisionKind.BargeInCandidate, turns.OnSpeechStarted(enableBargeIn: true).Kind);
 
-        Assert.Equal(
-            SpeakingDecisionKind.None,
-            turns.OnSpeaking([0.4f], BargeInSpeakerGateStatus.Pending).Kind);
-        Assert.Equal(
-            SpeakingDecisionKind.None,
-            turns.OnSpeaking([0.5f], BargeInSpeakerGateStatus.Pending).Kind);
+        Assert.Equal(SpeakingDecisionKind.None, turns.OnSpeaking([0.4f], BargeInSpeakerGateStatus.Pending).Kind);
+        Assert.Equal(SpeakingDecisionKind.None, turns.OnSpeaking([0.5f], BargeInSpeakerGateStatus.Pending).Kind);
         Assert.True(turns.IsBargeInAwaitingSpeaker);
 
         SpeakingDecision matched = turns.ResolveBargeInSpeakerGate(BargeInSpeakerGateStatus.Match);
@@ -283,10 +270,7 @@ public sealed class AssistantTurnObservationStoreTests
 
         SpeakingDecision confirmed = ConfirmSpeakingBargeIn(turns, [0.4f]);
 
-        bool rejected = turns.TryRejectValidatedBargeIn(
-            confirmed.TurnId,
-            out AssistantState oldState,
-            out AssistantState restoredState);
+        bool rejected = turns.TryRejectValidatedBargeIn(confirmed.TurnId, out AssistantState oldState, out AssistantState restoredState);
 
         Assert.True(rejected);
         Assert.Equal(AssistantState.Speaking, oldState);
@@ -307,10 +291,7 @@ public sealed class AssistantTurnObservationStoreTests
         Assert.True(turns.TryCompleteTurn(firstTurnId, out _, out _, out bool completedInterruptedTurn));
         Assert.True(completedInterruptedTurn);
 
-        bool rejected = turns.TryRejectValidatedBargeIn(
-            confirmed.TurnId,
-            out _,
-            out AssistantState restoredState);
+        bool rejected = turns.TryRejectValidatedBargeIn(confirmed.TurnId, out _, out AssistantState restoredState);
 
         Assert.True(rejected);
         Assert.Equal(AssistantState.Idle, restoredState);
@@ -328,12 +309,7 @@ public sealed class AssistantTurnObservationStoreTests
         Assert.True(turns.TryCompleteTurn(firstTurnId, out _, out _, out _));
 
         var fed = new List<float[]>();
-        bool attached = turns.TryAttachStartedAsrSession(
-            confirmed.TurnId,
-            "session-2",
-            audio => fed.Add(audio),
-            out _,
-            out _);
+        bool attached = turns.TryAttachStartedAsrSession(confirmed.TurnId, "session-2", audio => fed.Add(audio), out _, out _);
 
         Assert.True(attached);
         Assert.Single(fed);
@@ -468,12 +444,7 @@ public sealed class AssistantTurnObservationStoreTests
         Assert.Equal(SpeakingDecisionKind.None, later.Kind);
 
         var fed = new List<float[]>();
-        bool attached = turns.TryAttachStartedAsrSession(
-            confirmed.TurnId,
-            "session-1",
-            audio => fed.Add(audio),
-            out _,
-            out _);
+        bool attached = turns.TryAttachStartedAsrSession(confirmed.TurnId, "session-1", audio => fed.Add(audio), out _, out _);
 
         Assert.True(attached);
         Assert.Equal(2, fed.Count);
@@ -565,9 +536,7 @@ public sealed class AssistantTurnObservationStoreTests
         long firstTurnId = turns.OnSpeechStarted(enableBargeIn: true).TurnId;
         Assert.True(turns.TryTransitionForTurn(firstTurnId, AssistantState.Speaking, out _, out _));
 
-        SpeakingDecision confirmed = ConfirmSpeakingBargeIn(
-            turns,
-            ConstantSamples(0.1f, 200));
+        SpeakingDecision confirmed = ConfirmSpeakingBargeIn(turns, ConstantSamples(0.1f, 200));
         Assert.Equal(SpeakingDecisionKind.ConfirmedBargeIn, confirmed.Kind);
 
         SpeakingDecision later = turns.OnSpeaking(ConstantSamples(0.2f, 50));
@@ -679,11 +648,7 @@ public sealed class AssistantTurnObservationStoreTests
         long turnId = turns.OnSpeechStarted(enableBargeIn: false).TurnId;
         turns.TryTransitionForTurn(turnId, AssistantState.Thinking, out _, out _);
 
-        bool completed = turns.TryCompleteTurn(
-            turnId,
-            out AssistantState oldState,
-            out bool changed,
-            out bool completedInterruptedTurn);
+        bool completed = turns.TryCompleteTurn(turnId, out AssistantState oldState, out bool changed, out bool completedInterruptedTurn);
 
         Assert.True(completed);
         Assert.True(changed);
@@ -733,9 +698,7 @@ public sealed class AssistantTurnObservationStoreTests
     private static AssistantTurnObservationStoreHarness CreateTurnsWithListeningGate(int minDurationMs, float minRms, int sampleRate)
     {
         var bargeIn = new BargeInDetector(minDurationMs: 0, minRms: 0, sampleRate: sampleRate, channels: 1);
-        return new AssistantTurnObservationStoreHarness(
-            bargeIn,
-            listeningGate: new BargeInConfirmationSettings(minDurationMs, minRms));
+        return new AssistantTurnObservationStoreHarness(bargeIn, listeningGate: new BargeInConfirmationSettings(minDurationMs, minRms));
     }
 
     private static float[] ConstantSamples(float value, int count)
@@ -747,10 +710,7 @@ public sealed class AssistantTurnObservationStoreTests
 
     private static SpeakingDecision ConfirmSpeakingBargeIn(AssistantTurnObservationStoreHarness turns, params float[][] initialAudio)
     {
-        Assert.True(turns.TryConfirmBargeInFromNearEndWindow(
-            initialAudio,
-            ConfirmedNearEndWindow(),
-            out SpeakingDecision decision));
+        Assert.True(turns.TryConfirmBargeInFromNearEndWindow(initialAudio, ConfirmedNearEndWindow(), out SpeakingDecision decision));
         return decision;
     }
 

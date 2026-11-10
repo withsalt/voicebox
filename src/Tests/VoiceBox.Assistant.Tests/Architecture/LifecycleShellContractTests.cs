@@ -15,9 +15,7 @@ public sealed class LifecycleShellContractTests
 
         Type state = Require(assembly, "VoiceBox.Assistant.Runtime.Lifecycle.Models.AssistantRuntimeLifecycleState");
         Assert.True(state.IsEnum);
-        Assert.Equal(
-            ["Created", "Starting", "Running", "Stopping", "Stopped", "Faulted", "Disposed"],
-            Enum.GetNames(state));
+        Assert.Equal(["Created", "Starting", "Running", "Stopping", "Stopped", "Faulted", "Disposed"], Enum.GetNames(state));
 
         Type stateMachine = Require(assembly, "VoiceBox.Assistant.Runtime.Lifecycle.Controllers.AssistantRuntimeLifecycleStateMachine");
         Assert.NotNull(stateMachine.GetProperty("State", BindingFlags.Instance | BindingFlags.Public));
@@ -65,6 +63,5 @@ public sealed class LifecycleShellContractTests
     }
 
     private static Type Require(Assembly assembly, string name)
-        => assembly.GetType(name)
-            ?? throw new Xunit.Sdk.XunitException($"Required lifecycle contract type '{name}' was not found.");
+        => assembly.GetType(name) ?? throw new Xunit.Sdk.XunitException($"Required lifecycle contract type '{name}' was not found.");
 }

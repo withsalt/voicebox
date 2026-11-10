@@ -104,10 +104,7 @@ public sealed class SpeakerEnrollmentCoordinatorTests : IDisposable
             if (e.ReasonCode != SpeakerEnrollmentReasonCode.None)
                 lock (reasons) reasons.Add(e.ReasonCode);
         };
-        DriveSegments(
-            coordinator,
-            _ => 0.9f,
-            gapOn: announce => announce.SegmentIndex == 2 && announce.Attempt == 1);
+        DriveSegments(coordinator, _ => 0.9f, gapOn: announce => announce.SegmentIndex == 2 && announce.Attempt == 1);
 
         SpeakerEnrollmentResult result = await coordinator.EnrollAsync().WaitAsync(TimeSpan.FromSeconds(10));
 

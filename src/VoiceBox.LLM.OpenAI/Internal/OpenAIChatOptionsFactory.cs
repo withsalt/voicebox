@@ -20,13 +20,9 @@ namespace VoiceBox.LLM.OpenAI.Internal
             int maxTokens = perCall?.MaxTokens ?? baseOptions.MaxTokens;
             bool doSample = perCall?.DoSample ?? baseOptions.DoSample;
 
-            float temperature = doSample
-                ? (perCall?.Temperature ?? baseOptions.Temperature)
-                : 0f;
+            float temperature = doSample ? (perCall?.Temperature ?? baseOptions.Temperature) : 0f;
 
-            float topP = doSample
-                ? (perCall?.TopP ?? baseOptions.TopP)
-                : 1f;
+            float topP = doSample ? (perCall?.TopP ?? baseOptions.TopP) : 1f;
 
             var options = new ChatCompletionOptions
             {

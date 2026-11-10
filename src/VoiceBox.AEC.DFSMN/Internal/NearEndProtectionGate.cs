@@ -95,8 +95,7 @@ namespace VoiceBox.AEC.DFSMN.Internal
         /// </summary>
         public bool ShouldFreezeAdaptation(float vadProbability)
             => _enabled && _freezeAdaptation &&
-               ((float.IsFinite(vadProbability) && vadProbability >= _freezeProbability) ||
-                _envelope >= FreezeEnvelopeFloor);
+               ((float.IsFinite(vadProbability) && vadProbability >= _freezeProbability) || _envelope >= FreezeEnvelopeFloor);
 
         public void Reset() => _envelope = 0f;
     }

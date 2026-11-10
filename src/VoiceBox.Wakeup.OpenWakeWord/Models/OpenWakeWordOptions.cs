@@ -8,8 +8,7 @@ namespace VoiceBox.Wakeup.OpenWakeWord.Models
     /// </summary>
     public class OpenWakeWordOptions : OnnxExecutionOptions
     {
-        private static readonly string DefaultModelDir =
-            Path.Combine(AppContext.BaseDirectory, "runtimes", "models", "wakewords");
+        private static readonly string DefaultModelDir = Path.Combine(AppContext.BaseDirectory, "runtimes", "models", "wakewords");
 
         /// <summary>
         /// 录音采样率 (Hz)。OpenWakeWord 仅支持 16000Hz。
@@ -29,14 +28,12 @@ namespace VoiceBox.Wakeup.OpenWakeWord.Models
         /// <summary>
         /// Mel 频谱图特征提取模型 (melspectrogram.onnx) 路径。
         /// </summary>
-        public string MelSpectrogramModelPath { get; set; } =
-            Path.Combine(DefaultModelDir, "melspectrogram.onnx");
+        public string MelSpectrogramModelPath { get; set; } = Path.Combine(DefaultModelDir, "melspectrogram.onnx");
 
         /// <summary>
         /// 音频嵌入特征模型 (embedding_model.onnx, Google speech_embedding) 路径。
         /// </summary>
-        public string EmbeddingModelPath { get; set; } =
-            Path.Combine(DefaultModelDir, "embedding_model.onnx");
+        public string EmbeddingModelPath { get; set; } = Path.Combine(DefaultModelDir, "embedding_model.onnx");
 
         /// <summary>
         /// 启用的唤醒词模型列表。至少需要 1 个。

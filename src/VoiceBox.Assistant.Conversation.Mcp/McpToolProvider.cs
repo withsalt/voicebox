@@ -34,8 +34,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
         _servers = servers.ToArray();
         if (_servers.Length == 0)
             throw new ArgumentException("At least one MCP server registration is required.", nameof(servers));
-        if (_servers.Select(static server => server.Alias)
-            .Distinct(StringComparer.Ordinal).Count() != _servers.Length)
+        if (_servers.Select(static server => server.Alias).Distinct(StringComparer.Ordinal).Count() != _servers.Length)
         {
             throw new ArgumentException("MCP server aliases must be unique.", nameof(servers));
         }
@@ -75,8 +74,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
             foreach (McpServerRegistration registration in _servers)
                 await AddServerAsync(registration, cancellationToken).ConfigureAwait(false);
 
-            _catalog = Array.AsReadOnly(
-                _tools.Values.Select(static value => value.Definition).ToArray());
+            _catalog = Array.AsReadOnly(_tools.Values.Select(static value => value.Definition).ToArray());
             _started = true;
         }
         catch
@@ -104,10 +102,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
             throw new InvalidOperationException("The MCP tool provider is not started.");
         if (!_tools.TryGetValue(call.ToolId, out RegisteredTool? registered))
         {
-            return new ConversationToolResult(
-                call.CallId,
-                ConversationToolResultKind.ProtocolError,
-                ErrorCode: "unknown_mcp_tool");
+            return new ConversationToolResult(call.CallId, ConversationToolResultKind.ProtocolError, ErrorCode: "unknown_mcp_tool");
         }
 
         return await ExecuteMcpAsync(registered, call, cancellationToken).ConfigureAwait(false);
@@ -160,19 +155,14 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
         }
 
         _clients.Add(client);
-        var executionGate = new SemaphoreSlim(
-            registration.MaxConcurrentCalls,
-            registration.MaxConcurrentCalls);
+        var executionGate = new SemaphoreSlim(registration.MaxConcurrentCalls, registration.MaxConcurrentCalls);
         _serverGates.Add(executionGate);
         using var discovery = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         discovery.CancelAfter(registration.RequestTimeout);
-        IList<McpClientTool> discovered = await client.ListToolsAsync(
-            options: null,
-            discovery.Token).ConfigureAwait(false);
+        IList<McpClientTool> discovered = await client.ListToolsAsync(options: null, discovery.Token).ConfigureAwait(false);
         foreach (McpClientTool mcpTool in discovered)
         {
-            if (registration.AllowedTools.Count > 0 &&
-                !registration.AllowedTools.Contains(mcpTool.Name))
+            if (registration.AllowedTools.Count > 0 && !registration.AllowedTools.Contains(mcpTool.Name))
             {
                 continue;
             }
@@ -188,18 +178,10 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
                 registration.ExecutionPolicy,
                 executionPrompt: null,
                 timeout: registration.RequestTimeout);
-            var definition = new ConversationToolDefinition(
-                new ConversationToolId(registration.Alias, protocol.Name),
-                descriptor);
-            if (!_tools.TryAdd(definition.Id, new RegisteredTool(
-                definition,
-                mcpTool,
-                client,
-                registration,
-                executionGate)))
+            var definition = new ConversationToolDefinition(new ConversationToolId(registration.Alias, protocol.Name), descriptor);
+            if (!_tools.TryAdd(definition.Id, new RegisteredTool(definition, mcpTool, client, registration, executionGate)))
             {
-                throw new InvalidOperationException(
-                    $"Duplicate MCP tool identity '{definition.Id}'.");
+                throw new InvalidOperationException($"Duplicate MCP tool identity '{definition.Id}'.");
             }
         }
     }
@@ -208,8 +190,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
     {
         if (registration.Transport == McpServerTransport.Stdio)
         {
-            Dictionary<string, string?> environment =
-                StdioClientTransportOptions.GetDefaultEnvironmentVariables();
+            Dictionary<string, string?> environment = StdioClientTransportOptions.GetDefaultEnvironmentVariables();
             foreach ((string name, string? value) in registration.EnvironmentVariables)
                 environment[name] = value;
             return new StdioClientTransport(new StdioClientTransportOptions
@@ -238,20 +219,15 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
         ConversationToolCall call,
         CancellationToken cancellationToken)
     {
-        McpClientTool tool = registered.McpTool
-            ?? throw new InvalidOperationException("MCP tool registration has no client tool.");
+        McpClientTool tool = registered.McpTool ?? throw new InvalidOperationException("MCP tool registration has no client tool.");
         McpServerRegistration server = registered.Server
             ?? throw new InvalidOperationException("MCP tool registration has no server options.");
         if (Encoding.UTF8.GetByteCount(call.ArgumentsJson) > server.MaxArgumentBytes)
         {
-            return new ConversationToolResult(
-                call.CallId,
-                ConversationToolResultKind.ProtocolError,
-                ErrorCode: "arguments_too_large");
+            return new ConversationToolResult(call.CallId, ConversationToolResultKind.ProtocolError, ErrorCode: "arguments_too_large");
         }
 
-        using JsonDocument document = JsonDocument.Parse(
-            string.IsNullOrWhiteSpace(call.ArgumentsJson) ? "{}" : call.ArgumentsJson);
+        using JsonDocument document = JsonDocument.Parse(string.IsNullOrWhiteSpace(call.ArgumentsJson) ? "{}" : call.ArgumentsJson);
         var arguments = new Dictionary<string, object?>(StringComparer.Ordinal);
         foreach (JsonProperty property in document.RootElement.EnumerateObject())
             arguments.Add(property.Name, property.Value.Clone());
@@ -270,8 +246,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
             timeout.Token.ThrowIfCancellationRequested();
             if (server.UseMcpTasks)
             {
-                McpClient client = registered.McpClient
-                    ?? throw new InvalidOperationException("MCP task tool registration has no client.");
+                McpClient client = registered.McpClient ?? throw new InvalidOperationException("MCP task tool registration has no client.");
                 var taskArguments = arguments.ToDictionary(
                     static item => item.Key,
                     static item => (JsonElement)item.Value!,
@@ -289,11 +264,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
             else
             {
                 dispatched = true;
-                result = await tool.CallAsync(
-                    arguments,
-                    progress: null,
-                    options: null,
-                    timeout.Token).ConfigureAwait(false);
+                result = await tool.CallAsync(arguments, progress: null, options: null, timeout.Token).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException) when (
@@ -326,10 +297,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
         string resultJson = NormalizeMcpResult(result);
         if (Encoding.UTF8.GetByteCount(resultJson) > server.MaxResultBytes)
         {
-            return new ConversationToolResult(
-                call.CallId,
-                ConversationToolResultKind.ProtocolError,
-                ErrorCode: "result_too_large");
+            return new ConversationToolResult(call.CallId, ConversationToolResultKind.ProtocolError, ErrorCode: "result_too_large");
         }
 
         return new ConversationToolResult(
@@ -370,9 +338,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
         if (result.StructuredContent is JsonElement structured)
             return structured.GetRawText();
 
-        string[] text = result.Content.OfType<TextContentBlock>()
-            .Select(static block => block.Text)
-            .ToArray();
+        string[] text = result.Content.OfType<TextContentBlock>().Select(static block => block.Text).ToArray();
         return JsonSerializer.Serialize(new { content = string.Join("\n", text) });
     }
 

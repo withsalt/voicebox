@@ -12,8 +12,7 @@ internal sealed class RecognitionNearEndAudioSink : INearEndRecognitionAudioSink
     private readonly IRecognitionAudioPort _recognitionAudio;
 
     public RecognitionNearEndAudioSink(IRecognitionAudioPort recognitionAudio)
-        => _recognitionAudio = recognitionAudio
-            ?? throw new ArgumentNullException(nameof(recognitionAudio));
+        => _recognitionAudio = recognitionAudio ?? throw new ArgumentNullException(nameof(recognitionAudio));
 
     public bool TryFeed(long turnId, ReadOnlySpan<float> audio)
         => _recognitionAudio.TryFeedAudio(turnId, audio);

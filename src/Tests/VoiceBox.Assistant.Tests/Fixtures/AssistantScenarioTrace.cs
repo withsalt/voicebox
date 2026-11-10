@@ -98,9 +98,7 @@ internal static class GoldenTraceStore
     {
         string path = Path.Combine(AppContext.BaseDirectory, "GoldenTraces", relativePath);
         string normalized = File.ReadAllText(path).Replace("\r\n", "\n", StringComparison.Ordinal);
-        return Convert.ToHexString(
-            System.Security.Cryptography.SHA256.HashData(
-                System.Text.Encoding.UTF8.GetBytes(normalized)))
+        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(normalized)))
             .ToLowerInvariant();
     }
 }

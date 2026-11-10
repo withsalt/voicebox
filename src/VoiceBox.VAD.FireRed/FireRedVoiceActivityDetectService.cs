@@ -525,31 +525,16 @@ namespace VoiceBox.VAD.FireRed
             if (frameCount <= slotsRemainingFromStart)
             {
                 // 单段连续拷贝
-                Buffer.BlockCopy(
-                    _frameAudioRing,
-                    startSlot * frameShift * sizeof(float),
-                    result,
-                    0,
-                    totalSamples * sizeof(float));
+                Buffer.BlockCopy(_frameAudioRing, startSlot * frameShift * sizeof(float), result, 0, totalSamples * sizeof(float));
             }
             else
             {
                 // 跨边界，分两段拷贝
                 int firstSamples = slotsRemainingFromStart * frameShift;
-                Buffer.BlockCopy(
-                    _frameAudioRing,
-                    startSlot * frameShift * sizeof(float),
-                    result,
-                    0,
-                    firstSamples * sizeof(float));
+                Buffer.BlockCopy(_frameAudioRing, startSlot * frameShift * sizeof(float), result, 0, firstSamples * sizeof(float));
 
                 int secondSamples = totalSamples - firstSamples;
-                Buffer.BlockCopy(
-                    _frameAudioRing,
-                    0,
-                    result,
-                    firstSamples * sizeof(float),
-                    secondSamples * sizeof(float));
+                Buffer.BlockCopy(_frameAudioRing, 0, result, firstSamples * sizeof(float), secondSamples * sizeof(float));
             }
 
             return result;

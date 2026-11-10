@@ -38,8 +38,7 @@ namespace VoiceBox.ASR.DoubaoOnline.Transport
             await _socket.ConnectAsync(_uri, timeoutCts.Token).ConfigureAwait(false);
 
             // 记录服务端 logid，便于排障 (强烈建议)。
-            if (_socket.HttpResponseHeaders is { } respHeaders &&
-                respHeaders.TryGetValue("X-Tt-Logid", out var values))
+            if (_socket.HttpResponseHeaders is { } respHeaders && respHeaders.TryGetValue("X-Tt-Logid", out var values))
             {
                 LogId = values.FirstOrDefault();
             }
@@ -56,9 +55,7 @@ namespace VoiceBox.ASR.DoubaoOnline.Transport
                 using var ms = new MemoryStream();
                 while (true)
                 {
-                    WebSocketReceiveResult result = await _socket
-                        .ReceiveAsync(new ArraySegment<byte>(rented), ct)
-                        .ConfigureAwait(false);
+                    WebSocketReceiveResult result = await _socket.ReceiveAsync(new ArraySegment<byte>(rented), ct).ConfigureAwait(false);
 
                     if (result.MessageType == WebSocketMessageType.Close)
                         return null;

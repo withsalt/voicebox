@@ -31,12 +31,8 @@ internal readonly record struct SpeakerVerificationDiagnosticsSnapshot(
     long FinalCandidates)
 {
     public double AverageInferenceMilliseconds
-        => InferenceCompleted == 0
-            ? 0
-            : InferenceLatencyTicks * 1000d / System.Diagnostics.Stopwatch.Frequency / InferenceCompleted;
+        => InferenceCompleted == 0 ? 0 : InferenceLatencyTicks * 1000d / System.Diagnostics.Stopwatch.Frequency / InferenceCompleted;
 
     public double MaxInferenceMilliseconds
-        => InferenceLatencyMaxTicks <= 0
-            ? 0
-            : InferenceLatencyMaxTicks * 1000d / System.Diagnostics.Stopwatch.Frequency;
+        => InferenceLatencyMaxTicks <= 0 ? 0 : InferenceLatencyMaxTicks * 1000d / System.Diagnostics.Stopwatch.Frequency;
 }

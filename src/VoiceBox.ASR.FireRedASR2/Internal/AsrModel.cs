@@ -84,9 +84,7 @@ namespace VoiceBox.ASR.FireRedASR2.Internal
 
         private static AsrModelMetadata BuildMetadata(CustomMetadata raw)
         {
-            int requiredCacheSize = raw.LeftChunks <= 0
-                ? 0
-                : raw.ChunkSize * raw.LeftChunks;
+            int requiredCacheSize = raw.LeftChunks <= 0 ? 0 : raw.ChunkSize * raw.LeftChunks;
 
             int chunkLength = (raw.ChunkSize - 1) * raw.SubsamplingRate + raw.RightContext + 1;
             int shiftLength = raw.SubsamplingRate * raw.ChunkSize;
@@ -199,9 +197,7 @@ namespace VoiceBox.ASR.FireRedASR2.Internal
 
         private static SessionOptions CreateSessionOptions(OnnxExecutionOptions? onnxOptions)
         {
-            var options = onnxOptions is null
-                ? OnnxSessionFactory.CreateCpu(0)
-                : OnnxSessionFactory.Create(onnxOptions);
+            var options = onnxOptions is null ? OnnxSessionFactory.CreateCpu(0) : OnnxSessionFactory.Create(onnxOptions);
             options.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_FATAL;
             return options;
         }

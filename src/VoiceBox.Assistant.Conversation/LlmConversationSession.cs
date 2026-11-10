@@ -23,15 +23,8 @@ public sealed class LlmConversationSession : IConversationSession
         IReadOnlyList<IConversationContextProvider> contextProviders,
         IStreamLLMService service)
     {
-        var history = new ConversationHistoryStore(
-            options.SystemPrompt,
-            options.MaxHistoryTurns);
-        _core = new ConversationSessionCore(
-            conversationId,
-            history,
-            options,
-            contextProviders,
-            new TextOnlyTurnExecutor(service));
+        var history = new ConversationHistoryStore(options.SystemPrompt, options.MaxHistoryTurns);
+        _core = new ConversationSessionCore(conversationId, history, options, contextProviders, new TextOnlyTurnExecutor(service));
     }
 
     public string ConversationId => _core.ConversationId;

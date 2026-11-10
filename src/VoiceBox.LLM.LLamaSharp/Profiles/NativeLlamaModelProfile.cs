@@ -12,8 +12,7 @@ namespace VoiceBox.LLM.LLamaSharp
 
         public override string Name => "native";
 
-        public override bool Matches(LlamaModelInfo info) =>
-            !string.IsNullOrWhiteSpace(info.ChatTemplate);
+        public override bool Matches(LlamaModelInfo info) => !string.IsNullOrWhiteSpace(info.ChatTemplate);
 
         public override string BuildPrompt(
             LLamaWeights weights,
@@ -34,15 +33,13 @@ namespace VoiceBox.LLM.LLamaSharp
 
                 string prompt = PromptTemplateTransformer.ToModelPrompt(template);
                 return string.IsNullOrWhiteSpace(prompt)
-                    ? _fallback.BuildPrompt(
-                        weights, messages, addGenerationPrompt, enableThinking)
+                    ? _fallback.BuildPrompt(weights, messages, addGenerationPrompt, enableThinking)
                     : prompt;
             }
             catch (Exception exception) when (
                 exception is not OutOfMemoryException and not AccessViolationException)
             {
-                return _fallback.BuildPrompt(
-                    weights, messages, addGenerationPrompt, enableThinking);
+                return _fallback.BuildPrompt(weights, messages, addGenerationPrompt, enableThinking);
             }
         }
     }

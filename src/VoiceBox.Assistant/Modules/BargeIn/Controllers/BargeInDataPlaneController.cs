@@ -16,10 +16,7 @@ namespace VoiceBox.Assistant.Modules.BargeIn.Controllers;
 /// state, the near-end module's buffers and the decision journal. A detector fault converges
 /// exactly once as a terminal control-ingress fault instead of mutating any turn.
 /// </summary>
-internal sealed class BargeInDataPlaneController :
-    IBargeInDataPlaneResetPort,
-    IRenderAwareFaultSink,
-    IRuntimeFaultPublicationGate
+internal sealed class BargeInDataPlaneController : IBargeInDataPlaneResetPort, IRenderAwareFaultSink, IRuntimeFaultPublicationGate
 {
     private readonly IPlaybackBargeInDetector? _detector;
     private readonly BargeInDecisionJournal _journal;
@@ -79,11 +76,7 @@ internal sealed class BargeInDataPlaneController :
             return;
 
         _ingress.TryTerminate(
-            new AssistantFailure(
-                "VBX-CTRL-006",
-                "runtime",
-                "render-aware-dtd",
-                "playback-detector-fault"),
+            new AssistantFailure("VBX-CTRL-006", "runtime", "render-aware-dtd", "playback-detector-fault"),
             Stopwatch.GetTimestamp(),
             out _);
     }

@@ -142,9 +142,7 @@ namespace VoiceBox.LLM.OpenAI
             EnsureNotDisposed();
             ValidateMessages(request.Messages);
 
-            using var linked = CancellationTokenSource.CreateLinkedTokenSource(
-                cancellationToken,
-                _shutdownCts.Token);
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _shutdownCts.Token);
             CancellationToken token = linked.Token;
             await _gate.WaitAsync(token).ConfigureAwait(false);
             try
@@ -162,11 +160,9 @@ namespace VoiceBox.LLM.OpenAI
 
                 var calls = new Dictionary<int, StreamingToolCallBuilder>();
                 ChatTokenUsage? usage = null;
-                bool surfaceReasoning = _options.SurfaceReasoning ||
-                    (request.Options?.EnableThinking ?? false);
+                bool surfaceReasoning = _options.SurfaceReasoning || (request.Options?.EnableThinking ?? false);
 
-                AsyncCollectionResult<StreamingChatCompletionUpdate> stream =
-                    _client.CompleteChatStreamingAsync(messages, options, token);
+                AsyncCollectionResult<StreamingChatCompletionUpdate> stream = _client.CompleteChatStreamingAsync(messages, options, token);
                 await foreach (StreamingChatCompletionUpdate update in stream
                     .WithCancellation(token)
                     .ConfigureAwait(false))
@@ -424,13 +420,10 @@ namespace VoiceBox.LLM.OpenAI
             {
                 if (string.IsNullOrWhiteSpace(_callId) || string.IsNullOrWhiteSpace(_functionName))
                 {
-                    throw new InvalidOperationException(
-                        "OpenAI returned an incomplete streaming tool call.");
+                    throw new InvalidOperationException("OpenAI returned an incomplete streaming tool call.");
                 }
 
-                string arguments = _arguments.Length == 0
-                    ? "{}"
-                    : Encoding.UTF8.GetString(_arguments.ToArray());
+                string arguments = _arguments.Length == 0 ? "{}" : Encoding.UTF8.GetString(_arguments.ToArray());
                 return new LlmToolCallEvent(_callId, _functionName, arguments);
             }
         }

@@ -14,9 +14,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     public void AssistantReferencesTheConversationContractButNotConcreteImplementations()
     {
         Assembly assistant = typeof(VoiceAssistant).Assembly;
-        Assert.Contains(
-            assistant.GetReferencedAssemblies(),
-            reference => reference.Name == "VoiceBox.Assistant.Conversation.Abstractions");
+        Assert.Contains(assistant.GetReferencedAssemblies(), reference => reference.Name == "VoiceBox.Assistant.Conversation.Abstractions");
         Assert.DoesNotContain(
             assistant.GetReferencedAssemblies(),
             reference => reference.Name is
@@ -25,10 +23,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         string project = ReadSource("src", "VoiceBox.Assistant", "VoiceBox.Assistant.csproj");
         Assert.Contains("VoiceBox.Assistant.Conversation.Abstractions.csproj", project, StringComparison.Ordinal);
-        Assert.DoesNotContain(
-            "VoiceBox.Assistant.Conversation\\VoiceBox.Assistant.Conversation.csproj",
-            project,
-            StringComparison.Ordinal);
+        Assert.DoesNotContain("VoiceBox.Assistant.Conversation\\VoiceBox.Assistant.Conversation.csproj", project, StringComparison.Ordinal);
         Assert.DoesNotContain("Conversation.Mcp", project, StringComparison.Ordinal);
     }
 
@@ -50,8 +45,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                 string source = File.ReadAllText(path);
                 return forbiddenNamespaces
                     .SelectMany(pattern => Regex.Matches(source, pattern))
-                    .Select(match =>
-                        $"{Path.GetRelativePath(assistantRoot, path)} references '{match.Value}'.");
+                    .Select(match => $"{Path.GetRelativePath(assistantRoot, path)} references '{match.Value}'.");
             })
             .Order(StringComparer.Ordinal)
             .ToArray();

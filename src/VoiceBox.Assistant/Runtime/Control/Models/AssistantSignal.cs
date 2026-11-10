@@ -140,16 +140,7 @@ internal readonly record struct AssistantSignal
             admissionEpoch: admissionEpoch);
 
     public static AssistantSignal SpeechAudioAvailable()
-        => new(
-            AssistantSignalKind.SpeechAudioAvailable,
-            0,
-            0,
-            0,
-            false,
-            default,
-            null,
-            null,
-            default);
+        => new(AssistantSignalKind.SpeechAudioAvailable, 0, 0, 0, false, default, null, null, default);
 
     public static AssistantSignal WakeupObserved(long operationId)
         => new(AssistantSignalKind.WakeupObserved, 0, operationId, 0, false, default, null, null, default, default);
@@ -174,185 +165,50 @@ internal readonly record struct AssistantSignal
         => new(AssistantSignalKind.BackgroundResponseStarted, turnId, operationId, 0, false, default, null, null, default);
 
     public static AssistantSignal RecognitionCompleted(long turnId, long operationId, string text, TimeSpan speechDuration = default)
-        => new(
-            AssistantSignalKind.RecognitionCompleted,
-            turnId,
-            operationId,
-            speechDuration.Ticks,
-            false,
-            default,
-            text,
-            null,
-            default);
+        => new(AssistantSignalKind.RecognitionCompleted, turnId, operationId, speechDuration.Ticks, false, default, text, null, default);
 
     public static AssistantSignal ActiveNearEndInterruptionRequested(long operationId)
-        => new(
-            AssistantSignalKind.ActiveNearEndInterruptionRequested,
-            0,
-            operationId,
-            0,
-            false,
-            default,
-            null,
-            null,
-            default);
+        => new(AssistantSignalKind.ActiveNearEndInterruptionRequested, 0, operationId, 0, false, default, null, null, default);
 
     public static AssistantSignal ActiveNearEndSpeechEnded(long turnId, TimeSpan duration)
-        => new(
-            AssistantSignalKind.ActiveNearEndSpeechEnded,
-            turnId,
-            0,
-            duration.Ticks,
-            false,
-            default,
-            null,
-            null,
-            default);
+        => new(AssistantSignalKind.ActiveNearEndSpeechEnded, turnId, 0, duration.Ticks, false, default, null, null, default);
 
     public static AssistantSignal ActiveNearEndSpeechDrainCompleted(long turnId, TimeSpan duration)
-        => new(
-            AssistantSignalKind.ActiveNearEndSpeechDrainCompleted,
-            turnId,
-            0,
-            duration.Ticks,
-            false,
-            default,
-            null,
-            null,
-            default);
+        => new(AssistantSignalKind.ActiveNearEndSpeechDrainCompleted, turnId, 0, duration.Ticks, false, default, null, null, default);
 
     public static AssistantSignal PlaybackTransportStarted(long turnId)
-        => new(
-            AssistantSignalKind.PlaybackTransportStarted,
-            turnId,
-            0,
-            0,
-            false,
-            default,
-            null,
-            null,
-            default);
+        => new(AssistantSignalKind.PlaybackTransportStarted, turnId, 0, 0, false, default, null, null, default);
 
 
     public static AssistantSignal SpeakerGateResolved(long operationId)
-        => new(
-            AssistantSignalKind.SpeakerGateResolved,
-            0,
-            operationId,
-            0,
-            false,
-            default,
-            null,
-            null,
-            default);
+        => new(AssistantSignalKind.SpeakerGateResolved, 0, operationId, 0, false, default, null, null, default);
 
     public static AssistantSignal RecognitionStarted(long turnId, long operationId, string sessionId)
-        => new(
-            AssistantSignalKind.RecognitionStarted,
-            turnId,
-            operationId,
-            0,
-            false,
-            default,
-            sessionId,
-            null,
-            default);
+        => new(AssistantSignalKind.RecognitionStarted, turnId, operationId, 0, false, default, sessionId, null, default);
 
     public static AssistantSignal ResponseStarted(long turnId, long operationId)
-        => new(
-            AssistantSignalKind.ResponseStarted,
-            turnId,
-            operationId,
-            0,
-            false,
-            AssistantState.Thinking,
-            null,
-            null,
-            default);
+        => new(AssistantSignalKind.ResponseStarted, turnId, operationId, 0, false, AssistantState.Thinking, null, null, default);
 
     public static AssistantSignal ResponseSpeakableStarted(long turnId, long operationId)
-        => new(
-            AssistantSignalKind.ResponseSpeakableStarted,
-            turnId,
-            operationId,
-            0,
-            false,
-            AssistantState.Speaking,
-            null,
-            null,
-            default);
+        => new(AssistantSignalKind.ResponseSpeakableStarted, turnId, operationId, 0, false, AssistantState.Speaking, null, null, default);
 
     public static AssistantSignal ResponseCompleted(long turnId, long operationId, string text)
-        => new(
-            AssistantSignalKind.ResponseCompleted,
-            turnId,
-            operationId,
-            0,
-            false,
-            default,
-            text,
-            null,
-            default);
+        => new(AssistantSignalKind.ResponseCompleted, turnId, operationId, 0, false, default, text, null, default);
 
     public static AssistantSignal PlaybackCompleted(long turnId, long operationId, string text, TimeSpan elapsed)
-        => new(
-            AssistantSignalKind.PlaybackCompleted,
-            turnId,
-            operationId,
-            elapsed.Ticks,
-            false,
-            default,
-            text,
-            null,
-            default);
+        => new(AssistantSignalKind.PlaybackCompleted, turnId, operationId, elapsed.Ticks, false, default, text, null, default);
 
     public static AssistantSignal OperationCancelled(long turnId, long operationId)
-        => new(
-            AssistantSignalKind.OperationCanceled,
-            turnId,
-            operationId,
-            0,
-            false,
-            default,
-            null,
-            null,
-            default);
+        => new(AssistantSignalKind.OperationCanceled, turnId, operationId, 0, false, default, null, null, default);
 
     public static AssistantSignal ValidationResolved(long turnId, long operationId, string? text, string reason, bool meaningful)
-        => new(
-            AssistantSignalKind.InterruptionResolved,
-            turnId,
-            operationId,
-            0,
-            meaningful,
-            default,
-            text,
-            reason,
-            default);
+        => new(AssistantSignalKind.InterruptionResolved, turnId, operationId, 0, meaningful, default, text, reason, default);
 
     public static AssistantSignal ValidationTurnCompleted(long turnId, long operationId, bool endConversationRequested)
-        => new(
-            AssistantSignalKind.TurnCompleted,
-            turnId,
-            operationId,
-            0,
-            endConversationRequested,
-            default,
-            null,
-            null,
-            default);
+        => new(AssistantSignalKind.TurnCompleted, turnId, operationId, 0, endConversationRequested, default, null, null, default);
 
     public static AssistantSignal ValidationCancelled(long turnId, long operationId)
-        => new(
-            AssistantSignalKind.ValidationCancelled,
-            turnId,
-            operationId,
-            0,
-            false,
-            default,
-            null,
-            null,
-            default);
+        => new(AssistantSignalKind.ValidationCancelled, turnId, operationId, 0, false, default, null, null, default);
 
     public static AssistantSignal OperationFailed(AssistantSignalKind kind, long turnId, long operationId, AssistantFailure failure)
     {

@@ -98,8 +98,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         try
         {
-            verifier.OnSpeakerCapture(SpeakerTestProfiles.Frame(1, 0,
-                ScriptedSpeakerService.OwnerScoreAudio(0.6f, 8000)));
+            verifier.OnSpeakerCapture(SpeakerTestProfiles.Frame(1, 0, ScriptedSpeakerService.OwnerScoreAudio(0.6f, 8000)));
             if (reuseRunningPrefetch)
                 await provider.ExtractEntered.Task.WaitAsync(TimeSpan.FromSeconds(2));
             harness.ObserveDuplexAudio(CreateDuplexFrame(1, 0, 8000), false);
@@ -108,8 +107,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             for (int hop = 0; hop < 4; hop++)
             {
                 long start = 8000 + hop * 3200;
-                verifier.OnSpeakerCapture(SpeakerTestProfiles.Frame(1, start,
-                    ScriptedSpeakerService.OwnerScoreAudio(0.6f, 3200)));
+                verifier.OnSpeakerCapture(SpeakerTestProfiles.Frame(1, start, ScriptedSpeakerService.OwnerScoreAudio(0.6f, 3200)));
                 clock.Advance(TimeSpan.FromMilliseconds(40));
                 harness.ObserveDuplexAudio(CreateDuplexFrame(hop + 2, start, 3200), false);
                 // Even after the first window leaves the recent selection, it still owns the
@@ -121,8 +119,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             Assert.Equal(1, provider.ExtractCount);
             Assert.Equal(1, harness.CommandDeniedCount);
             Assert.Equal(0, harness.CommandAuthorizedCount);
-            Assert.Equal("command-denied-speaker-unavailable:InferenceTimeout",
-                harness.GetDiagnosticSnapshot().LastCandidateOutcome);
+            Assert.Equal("command-denied-speaker-unavailable:InferenceTimeout", harness.GetDiagnosticSnapshot().LastCandidateOutcome);
             Assert.True(evidence.Query.InputComplete);
             Assert.Equal(19200, evidence.Query.CandidateEndSampleExclusive); // Original 1200ms input limit.
         }

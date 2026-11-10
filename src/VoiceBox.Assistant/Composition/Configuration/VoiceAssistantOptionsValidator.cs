@@ -205,9 +205,7 @@ namespace VoiceBox.Assistant.Composition.Configuration
             int hopMs = SamplesToMilliseconds(hopSamples, speakerService.SampleRate);
             if (windowMs <= 0 || hopMs <= 0)
             {
-                throw new ArgumentException(
-                    "Speaker streaming window/hop is not representable in milliseconds.",
-                    optionsParameterName);
+                throw new ArgumentException("Speaker streaming window/hop is not representable in milliseconds.", optionsParameterName);
             }
 
             if ((effective.Wakeup || effective.BargeInCommand) && windowMs > speaker.MaxRealtimeWindowMs)
@@ -229,9 +227,7 @@ namespace VoiceBox.Assistant.Composition.Configuration
             long maxCoverageMs = 0;
             if (effective.Any)
             {
-                long coverageMs = Math.Max(
-                    confirmation.MinimumSpeechMs,
-                    (long)windowMs + (long)(confirmation.WindowCount - 1) * hopMs);
+                long coverageMs = Math.Max(confirmation.MinimumSpeechMs, (long)windowMs + (long)(confirmation.WindowCount - 1) * hopMs);
                 if (coverageMs > 60000)
                     throw new ArgumentException("Speaker.Confirmation window coverage must be <= 60000ms.", optionsParameterName);
                 if (ComputeWindowSlots(coverageMs, windowMs, hopMs) > 64)

@@ -195,9 +195,7 @@ internal static class Program
 
             try
             {
-                Span<float> denoiseBuffer = samples.Length <= 4096
-                    ? stackalloc float[samples.Length]
-                    : new float[samples.Length];
+                Span<float> denoiseBuffer = samples.Length <= 4096 ? stackalloc float[samples.Length] : new float[samples.Length];
                 samples.CopyTo(denoiseBuffer);
 
                 int produced = dnrService.Process(denoiseBuffer);

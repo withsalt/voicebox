@@ -57,9 +57,7 @@ public sealed class ButterworthHighPassFilterService : IHighPassFilterService
         int channelCount = checked((int)channels);
         if (capture.Length % channelCount != 0)
         {
-            throw new ArgumentException(
-                "The sample count must be divisible by the number of interleaved channels.",
-                nameof(capture));
+            throw new ArgumentException("The sample count must be divisible by the number of interleaved channels.", nameof(capture));
         }
 
         if (capture.IsEmpty)

@@ -80,22 +80,16 @@ internal static partial class SelfChecks
             GPU UUID : GPU-456
             """;
 
-        string normalizedBaseline =
-            ComparisonProgram.NormalizeEnvironmentForSelfTest("nvidia-smi-q.txt", baseline);
-        string normalizedCandidate =
-            ComparisonProgram.NormalizeEnvironmentForSelfTest("nvidia-smi-q.txt", candidate);
-        string normalizedDifferentGpu =
-            ComparisonProgram.NormalizeEnvironmentForSelfTest("nvidia-smi-q.txt", differentGpu);
-        Assert(normalizedBaseline == normalizedCandidate,
-            "volatile GPU telemetry must not change environment identity");
-        Assert(normalizedBaseline != normalizedDifferentGpu,
-            "GPU identity changes must remain comparable evidence failures");
+        string normalizedBaseline = ComparisonProgram.NormalizeEnvironmentForSelfTest("nvidia-smi-q.txt", baseline);
+        string normalizedCandidate = ComparisonProgram.NormalizeEnvironmentForSelfTest("nvidia-smi-q.txt", candidate);
+        string normalizedDifferentGpu = ComparisonProgram.NormalizeEnvironmentForSelfTest("nvidia-smi-q.txt", differentGpu);
+        Assert(normalizedBaseline == normalizedCandidate, "volatile GPU telemetry must not change environment identity");
+        Assert(normalizedBaseline != normalizedDifferentGpu, "GPU identity changes must remain comparable evidence failures");
 
         string os = ComparisonProgram.NormalizeEnvironmentForSelfTest(
             "os.txt",
             "Caption : Windows\nBuildNumber : 26200\nLastBootUpTime : yesterday");
-        Assert(!os.Contains("LastBootUpTime", StringComparison.Ordinal),
-            "OS boot time must not change environment identity");
+        Assert(!os.Contains("LastBootUpTime", StringComparison.Ordinal), "OS boot time must not change environment identity");
     }
 
     private static void ComparisonNormalizesLocalizedDotnetInfoButKeepsRuntimeIdentity()
@@ -150,28 +144,20 @@ internal static partial class SelfChecks
             .NET runtimes installed:
               Microsoft.NETCore.App 10.0.11 [C:\Program Files\dotnet\shared\Microsoft.NETCore.App]
             """;
-        string normalizedLocalized =
-            ComparisonProgram.NormalizeEnvironmentForSelfTest("dotnet-info.txt", localized);
-        string normalizedMojibake =
-            ComparisonProgram.NormalizeEnvironmentForSelfTest("dotnet-info.txt", mojibake);
+        string normalizedLocalized = ComparisonProgram.NormalizeEnvironmentForSelfTest("dotnet-info.txt", localized);
+        string normalizedMojibake = ComparisonProgram.NormalizeEnvironmentForSelfTest("dotnet-info.txt", mojibake);
         Assert(normalizedLocalized == normalizedMojibake,
             "localized dotnet labels must not make an otherwise identical runtime incomparable");
 
         string changedSdk = mojibake.Replace("10.0.400", "10.0.401", StringComparison.Ordinal);
-        string normalizedChanged =
-            ComparisonProgram.NormalizeEnvironmentForSelfTest("dotnet-info.txt", changedSdk);
-        Assert(normalizedLocalized != normalizedChanged,
-            "a .NET SDK identity change must remain incomparable");
+        string normalizedChanged = ComparisonProgram.NormalizeEnvironmentForSelfTest("dotnet-info.txt", changedSdk);
+        Assert(normalizedLocalized != normalizedChanged, "a .NET SDK identity change must remain incomparable");
     }
 
     private static void ComparisonCliIsStrictAndDoesNotCaptureExistingModes()
     {
-        Assert(
-            ComparisonProgram.IsRequested(["--mode", "compare"]),
-            "compare mode should be recognized");
-        Assert(
-            !ComparisonProgram.IsRequested(["--mode", "e2e"]),
-            "existing e2e mode must not be captured by comparison mode");
+        Assert(ComparisonProgram.IsRequested(["--mode", "compare"]), "compare mode should be recognized");
+        Assert(!ComparisonProgram.IsRequested(["--mode", "e2e"]), "existing e2e mode must not be captured by comparison mode");
         Assert(
             !ComparisonProgram.IsRequested(["--dataset", "compare"]),
             "a dataset value equal to compare must not select comparison mode");

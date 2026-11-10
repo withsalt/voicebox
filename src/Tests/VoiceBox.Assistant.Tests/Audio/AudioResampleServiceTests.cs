@@ -327,8 +327,7 @@ public sealed class AudioResampleServiceTests
     {
         var x = new float[n];
         for (int i = 0; i < n; i++)
-            x[i] = (float)(0.5 * Math.Sin(2.0 * Math.PI * 500 * i / rate)
-                         + 0.3 * Math.Sin(2.0 * Math.PI * 2000 * i / rate));
+            x[i] = (float)(0.5 * Math.Sin(2.0 * Math.PI * 500 * i / rate) + 0.3 * Math.Sin(2.0 * Math.PI * 2000 * i / rate));
         return x;
     }
 

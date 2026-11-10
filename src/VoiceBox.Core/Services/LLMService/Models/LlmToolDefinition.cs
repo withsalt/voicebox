@@ -8,9 +8,7 @@ public sealed record LlmToolDefinition
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         Name = name;
         Description = description ?? string.Empty;
-        InputSchemaJson = string.IsNullOrWhiteSpace(inputSchemaJson)
-            ? "{\"type\":\"object\"}"
-            : inputSchemaJson;
+        InputSchemaJson = string.IsNullOrWhiteSpace(inputSchemaJson) ? "{\"type\":\"object\"}" : inputSchemaJson;
         Strict = strict;
     }
 

@@ -201,9 +201,7 @@ namespace VoiceBox.TTS.VoxCPM.Internal
             _so = so; _vaeSo = vaeSo; _lm = lm; _cfm = cfm; _featEncoder = fe; _vae = vae;
 
             _voices = new VoiceStore(options.CloneVoices, _vae, _cfg, logger);
-            DefaultVoiceName = !string.IsNullOrWhiteSpace(options.DefaultVoice)
-                ? options.DefaultVoice!
-                : VoiceStore.DefaultVoiceName;
+            DefaultVoiceName = !string.IsNullOrWhiteSpace(options.DefaultVoice) ? options.DefaultVoice! : VoiceStore.DefaultVoiceName;
             if (!_voices.Contains(DefaultVoiceName))
                 throw new ArgumentException($"默认音色 {DefaultVoiceName} 未注册。");
 
@@ -240,8 +238,7 @@ namespace VoiceBox.TTS.VoxCPM.Internal
                 finally { _lm.EndGeneration(); }
                 ct.ThrowIfCancellationRequested();
 
-                if (patches.Count < run.TargetTokens * _cfg.Generation.MaxLenTextRatio ||
-                    attempt == maxAttempts - 1)
+                if (patches.Count < run.TargetTokens * _cfg.Generation.MaxLenTextRatio || attempt == maxAttempts - 1)
                     break;
                 _logger?.LogWarning(
                     "VoxCPM badcase: {Patches} patches ≥ {Tokens} tokens × {Ratio}, 换 seed 重试 ({Attempt}/{Max})",

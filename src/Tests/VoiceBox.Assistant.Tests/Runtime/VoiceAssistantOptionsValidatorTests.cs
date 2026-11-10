@@ -127,16 +127,14 @@ public sealed class VoiceAssistantOptionsValidatorTests
         Parallel.For(0, clones.Length, index => clones[index] = options.Clone());
 
         Assert.Same(factory, options.BargeIn.Dtd.Model.SessionOptionsFactory);
-        Assert.All(clones, clone =>
-            Assert.Same(factory, clone.BargeIn.Dtd.Model.SessionOptionsFactory));
+        Assert.All(clones, clone => Assert.Same(factory, clone.BargeIn.Dtd.Model.SessionOptionsFactory));
     }
 
     [Theory]
     [MemberData(nameof(InvalidOptions))]
     public void Validate_RejectsInvalidOptions(VoiceAssistantOptions options, string expectedMessage)
     {
-        ArgumentException ex = Assert.Throws<ArgumentException>(() =>
-            VoiceAssistantOptionsValidator.Validate(options, "options"));
+        ArgumentException ex = Assert.Throws<ArgumentException>(() => VoiceAssistantOptionsValidator.Validate(options, "options"));
 
         Assert.Contains(expectedMessage, ex.Message);
     }

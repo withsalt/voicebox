@@ -183,13 +183,7 @@ namespace VoiceBox.ASR.Qwen3.Pump
             try
             {
                 ct.ThrowIfCancellationRequested();
-                transcription = _runtime.Transcribe(
-                    waveform.AsSpan(),
-                    _session.Context,
-                    _session.Language,
-                    prefix,
-                    ct,
-                    _melState);
+                transcription = _runtime.Transcribe(waveform.AsSpan(), _session.Context, _session.Language, prefix, ct, _melState);
                 ct.ThrowIfCancellationRequested();
             }
             finally
@@ -202,9 +196,7 @@ namespace VoiceBox.ASR.Qwen3.Pump
             // tag is only emitted on the first uncued pass, so retain the last
             // detected value if this round returned an empty one.
             string fullText = (prefix ?? string.Empty) + transcription.Text;
-            string language = string.IsNullOrEmpty(transcription.Language)
-                ? _session.LatestLanguage
-                : transcription.Language;
+            string language = string.IsNullOrEmpty(transcription.Language) ? _session.LatestLanguage : transcription.Language;
 
             _accumulatedRaw = fullText;
             _session.LatestText = fullText;

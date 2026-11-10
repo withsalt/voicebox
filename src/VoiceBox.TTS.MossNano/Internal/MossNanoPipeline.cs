@@ -54,8 +54,7 @@ namespace VoiceBox.TTS.MossNano.Internal
             var ttsMeta = LoadJson<TtsMeta>(ttsMetaPath);
             var codecMeta = LoadJson<CodecMeta>(codecMetaPath);
 
-            string codecDir = Path.GetDirectoryName(codecMetaPath)
-                ?? throw new InvalidDataException("codec_meta 路径无父目录。");
+            string codecDir = Path.GetDirectoryName(codecMetaPath) ?? throw new InvalidDataException("codec_meta 路径无父目录。");
 
             // ---- 创建 SessionOptions ----
             var ttsSessionOptions = OnnxSessionFactory.Create(options);
@@ -63,8 +62,7 @@ namespace VoiceBox.TTS.MossNano.Internal
             _ownsTtsSessionOptions = options.SessionOptionsFactory is null;
 
             // ---- 加载 ONNX session ----
-            _bundle = new ModelBundle(manifest, ttsMeta, codecMeta, ttsDir, codecDir,
-                ttsSessionOptions, ttsSessionOptions);
+            _bundle = new ModelBundle(manifest, ttsMeta, codecMeta, ttsDir, codecDir, ttsSessionOptions, ttsSessionOptions);
 
             // ---- 加载 SentencePiece tokenizer ----
             // addBeginningOfSentence / addEndOfSentence 都关掉, 与 Python sentencepiece 库的默认行为一致;
@@ -74,10 +72,7 @@ namespace VoiceBox.TTS.MossNano.Internal
                 throw new FileNotFoundException($"tokenizer.model 不存在: {tokenizerPath}", tokenizerPath);
             using (var tkStream = File.OpenRead(tokenizerPath))
             {
-                _tokenizer = SentencePieceTokenizer.Create(
-                    tkStream,
-                    addBeginningOfSentence: false,
-                    addEndOfSentence: false);
+                _tokenizer = SentencePieceTokenizer.Create(tkStream, addBeginningOfSentence: false, addEndOfSentence: false);
             }
 
             _engine = new InferenceEngine(_bundle);
@@ -496,14 +491,10 @@ namespace VoiceBox.TTS.MossNano.Internal
             if (string.IsNullOrWhiteSpace(chunk)) return gen;
             var (cjk, letterSegments, letterChars) = CountChunkLengthSignals(chunk);
             bool shortNumeric = TryCountShortNumericUnits(chunk, out int numericUnits);
-            bool ultraShort = cjk > 0
-                ? cjk <= 2
-                : letterSegments == 1 && letterChars <= 3;
+            bool ultraShort = cjk > 0 ? cjk <= 2 : letterSegments == 1 && letterChars <= 3;
             if (!ultraShort && !shortNumeric) return gen;
 
-            double capSeconds = shortNumeric
-                ? Math.Clamp(numericUnits * 0.9, 1.2, 10.8)
-                : 1.0;
+            double capSeconds = shortNumeric ? Math.Clamp(numericUnits * 0.9, 1.2, 10.8) : 1.0;
             int cap = Math.Max(1, (int)Math.Ceiling(FramesPerSecond * capSeconds));
             // 仅当原 MaxNewFrames 严格大于 cap 时才截断并打日志; 否则保持不变, 不打日志。
             if (gen.MaxNewFrames <= cap) return gen;
@@ -578,11 +569,8 @@ namespace VoiceBox.TTS.MossNano.Internal
             // WeTextProcessing.NET 仅提供中英文模型，日语和韩语保持原样。
             if (voiceLanguage is "ja" or "ko" || ContainsJapaneseOrKorean(text)) return text;
 
-            bool useChinese = ContainsChineseChar(text)
-                || (!ContainsLatinLetter(text) && voiceLanguage == "zh");
-            WetextProcessor? normalizer = useChinese
-                ? _chineseTextNormalizer
-                : _englishTextNormalizer;
+            bool useChinese = ContainsChineseChar(text) || (!ContainsLatinLetter(text) && voiceLanguage == "zh");
+            WetextProcessor? normalizer = useChinese ? _chineseTextNormalizer : _englishTextNormalizer;
             if (normalizer is null) return text;
 
             try
@@ -724,8 +712,7 @@ namespace VoiceBox.TTS.MossNano.Internal
                 var requestRows = _engine.BuildVoiceCloneRequestRows(promptCodes, textTokens);
 
                 var gen = GenerationParams.FromManifest(_bundle.Manifest.GenerationDefaults,
-                    SampleModeUtil.Normalize(_bundle.Manifest.GenerationDefaults.SampleMode,
-                        _bundle.Manifest.GenerationDefaults.DoSample));
+                    SampleModeUtil.Normalize(_bundle.Manifest.GenerationDefaults.SampleMode, _bundle.Manifest.GenerationDefaults.DoSample));
                 gen.MaxNewFrames = 2;
 
                 // 预热阶段会消耗 RNG; 跑完恢复初始种子, 让真实请求从干净状态开始,

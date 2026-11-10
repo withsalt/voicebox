@@ -68,12 +68,9 @@ namespace VoiceBox.Assistant.Api.Configuration
             // reference here. A factory is a borrowed collaborator, so sharing it is correct, and
             // dropping it would silently downgrade a caller-supplied ONNX session to the default.
             string json = JsonSerializer.Serialize(this, AssistantOptionsCloneSerializer.Json);
-            VoiceAssistantOptions clone = JsonSerializer.Deserialize<VoiceAssistantOptions>(
-                json,
-                AssistantOptionsCloneSerializer.Json)
+            VoiceAssistantOptions clone = JsonSerializer.Deserialize<VoiceAssistantOptions>(json, AssistantOptionsCloneSerializer.Json)
                 ?? throw new InvalidOperationException("VoiceAssistantOptions could not be cloned.");
-            if (BargeIn?.Dtd?.Model?.SessionOptionsFactory is { } sessionOptionsFactory &&
-                clone.BargeIn?.Dtd?.Model is { } clonedModel)
+            if (BargeIn?.Dtd?.Model?.SessionOptionsFactory is { } sessionOptionsFactory && clone.BargeIn?.Dtd?.Model is { } clonedModel)
             {
                 clonedModel.SessionOptionsFactory = sessionOptionsFactory;
             }

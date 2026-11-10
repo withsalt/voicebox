@@ -70,11 +70,7 @@ public sealed class SpeakerProfileStoreTests : IDisposable
         await SpeakerProfileStore.SaveAsync(_speaker, path, SpeakerTestProfiles.Profile(_speaker, noAec, includeDoubleTalk: false));
         OwnerSpeakerProfile profile = SpeakerProfileStore.Load(_speaker, path);
 
-        OwnerSpeakerProfileVariant variant = SpeakerProfileStore.RequireVariant(
-            profile,
-            noAec,
-            [SpeakerPurposeBank.CleanNearEnd],
-            path);
+        OwnerSpeakerProfileVariant variant = SpeakerProfileStore.RequireVariant(profile, noAec, [SpeakerPurposeBank.CleanNearEnd], path);
         Assert.Equal(noAec.FrontendFingerprint, variant.FrontendFingerprint);
 
         InvalidOperationException missingVariant = Assert.Throws<InvalidOperationException>(() =>

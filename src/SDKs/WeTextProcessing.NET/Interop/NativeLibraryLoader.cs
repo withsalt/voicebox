@@ -114,8 +114,7 @@ public static class NativeLibraryLoader
         }
 
         var assemblyLocation = Path.GetDirectoryName(typeof(NativeLibraryLoader).Assembly.Location);
-        if (!string.IsNullOrEmpty(assemblyLocation) &&
-            !string.Equals(assemblyLocation, baseDir, StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrEmpty(assemblyLocation) && !string.Equals(assemblyLocation, baseDir, StringComparison.OrdinalIgnoreCase))
         {
             yield return assemblyLocation;
         }
@@ -144,8 +143,7 @@ public static class NativeLibraryLoader
             };
         }
 
-        throw new PlatformNotSupportedException(
-            $"Unsupported operating system: {RuntimeInformation.OSDescription}");
+        throw new PlatformNotSupportedException($"Unsupported operating system: {RuntimeInformation.OSDescription}");
     }
 
     private static string GetNativeLibraryFileName()

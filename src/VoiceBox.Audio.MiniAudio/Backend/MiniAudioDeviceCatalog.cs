@@ -9,8 +9,7 @@ internal sealed unsafe class MiniAudioDeviceCatalog
 {
     private const int DeviceNameBufferSize = 256;
 
-    private static readonly UTF8Encoding StrictUtf8 =
-        new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+    private static readonly UTF8Encoding StrictUtf8 = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
     private static readonly Lazy<Encoding?> AnsiEncoding = new(CreateAnsiEncoding);
 
@@ -54,11 +53,7 @@ internal sealed unsafe class MiniAudioDeviceCatalog
                 builder.DefaultSampleRate,
                 builder.DeviceType,
                 MapHostApi(builder.Backend));
-            result[i] = new MiniAudioDeviceSelection(
-                audioDevice,
-                builder.Backend,
-                builder.CaptureId,
-                builder.PlaybackId);
+            result[i] = new MiniAudioDeviceSelection(audioDevice, builder.Backend, builder.CaptureId, builder.PlaybackId);
         }
 
         return new MiniAudioDeviceCatalog(result);
@@ -185,9 +180,7 @@ internal sealed unsafe class MiniAudioDeviceCatalog
 
         existing.DeviceType = existing.CaptureId.HasValue && existing.PlaybackId.HasValue
             ? AudioDeviceType.InputOutput
-            : existing.CaptureId.HasValue
-                ? AudioDeviceType.Input
-                : AudioDeviceType.Output;
+            : existing.CaptureId.HasValue ? AudioDeviceType.Input : AudioDeviceType.Output;
 
         if (existing.DefaultSampleRate <= 0 && defaultSampleRate > 0)
         {

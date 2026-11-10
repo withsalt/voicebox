@@ -78,11 +78,9 @@ namespace VoiceBox.TTS.MossNano.Internal
             if (bitsPerSample != 16)
                 throw new NotSupportedException($"仅支持 16-bit PCM, 实际 {bitsPerSample}-bit。");
             if (sampleRate != expectedSampleRate)
-                throw new NotSupportedException(
-                    $"参考音频采样率必须为 {expectedSampleRate}Hz, 实际 {sampleRate}Hz。请用 ffmpeg 先重采样。");
+                throw new NotSupportedException($"参考音频采样率必须为 {expectedSampleRate}Hz, 实际 {sampleRate}Hz。请用 ffmpeg 先重采样。");
             if (channels != expectedChannels)
-                throw new NotSupportedException(
-                    $"参考音频声道数必须为 {expectedChannels}, 实际 {channels}。请用 ffmpeg 调整 (-ac {expectedChannels})。");
+                throw new NotSupportedException($"参考音频声道数必须为 {expectedChannels}, 实际 {channels}。请用 ffmpeg 调整 (-ac {expectedChannels})。");
 
             int totalSamples = pcmBytes.Length / (bitsPerSample / 8);
             int samplesPerChannel = totalSamples / channels;

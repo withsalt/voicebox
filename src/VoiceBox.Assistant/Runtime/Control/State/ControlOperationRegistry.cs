@@ -82,15 +82,13 @@ internal sealed class ControlOperationRegistry : IInterruptionAdmissionProgressV
 
     public TaskCompletionSource<AssistantControlSignalResult> RegisterSignal(AssistantSignal signal)
     {
-        var completion = new TaskCompletionSource<AssistantControlSignalResult>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        var completion = new TaskCompletionSource<AssistantControlSignalResult>(TaskCreationOptions.RunContinuationsAsynchronously);
         var key = new SignalCompletionKey(signal.OperationId, signal.Kind);
         lock (_lock)
         {
             if (_signalTerminationReason is { } reason)
             {
-                throw new OperationCanceledException(
-                    $"Assistant control signal terminated: {reason}.");
+                throw new OperationCanceledException($"Assistant control signal terminated: {reason}.");
             }
 
             if (!_signalCompletions.TryAdd(key, completion))
@@ -141,14 +139,12 @@ internal sealed class ControlOperationRegistry : IInterruptionAdmissionProgressV
 
         foreach (TaskCompletionSource completion in commands)
         {
-            completion.TrySetException(new OperationCanceledException(
-                $"Assistant control operation terminated: {reason}."));
+            completion.TrySetException(new OperationCanceledException($"Assistant control operation terminated: {reason}."));
         }
 
         foreach (TaskCompletionSource<AssistantControlSignalResult> completion in signals)
         {
-            completion.TrySetException(new OperationCanceledException(
-                $"Assistant control signal terminated: {reason}."));
+            completion.TrySetException(new OperationCanceledException($"Assistant control signal terminated: {reason}."));
         }
     }
 

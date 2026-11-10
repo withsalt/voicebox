@@ -57,24 +57,9 @@ internal sealed class AssistantTurnObservationStoreHarness
         _candidates = new SpeechCandidateOwner(bargeIn, policy, listeningGate, _turnState, _turnContexts);
         _validation = new BargeInValidationTurnOwner(_turnState);
         _recognitionCapture = new TestRecognitionCaptureOwner();
-        _recognitionTurn = new RecognitionTurnOwner(
-            _recognitionCapture,
-            _turnState,
-            _validation,
-            _validation,
-            _candidates);
-        _applier = new ConfirmedBargeInApplier(
-            _turnState,
-            _candidates,
-            _validation,
-            _recognitionTurn,
-            _turnContexts);
-        _release = new TurnObservationRelease(
-            _turnState,
-            _recognitionTurn,
-            _validation,
-            _candidates,
-            _turnContexts);
+        _recognitionTurn = new RecognitionTurnOwner(_recognitionCapture, _turnState, _validation, _validation, _candidates);
+        _applier = new ConfirmedBargeInApplier(_turnState, _candidates, _validation, _recognitionTurn, _turnContexts);
+        _release = new TurnObservationRelease(_turnState, _recognitionTurn, _validation, _candidates, _turnContexts);
         _turnState.PublishNextOrdinal(_nextTurnId);
     }
 
@@ -105,12 +90,7 @@ internal sealed class AssistantTurnObservationStoreHarness
             return;
         }
 
-        _validation.Begin(
-            turnId,
-            interruptedTurnId,
-            _validation.ResponseCts,
-            AssistantState.Speaking,
-            initialAudio: null);
+        _validation.Begin(turnId, interruptedTurnId, _validation.ResponseCts, AssistantState.Speaking, initialAudio: null);
     }
 
     public bool IsIdleWithoutCandidate
@@ -135,11 +115,7 @@ internal sealed class AssistantTurnObservationStoreHarness
         _nextTurnId = proposedTurnId;
         _turnState.PublishNextOrdinal(proposedTurnId);
         return _validation.HasValidation
-            ? new SpeechStartedDecision(
-                SpeechStartedDecisionKind.Ignored,
-                State,
-                State,
-                _validation.ValidationTurnId)
+            ? new SpeechStartedDecision(SpeechStartedDecisionKind.Ignored, State, State, _validation.ValidationTurnId)
             : _candidates.ObserveSpeechStarted(enableBargeIn, proposedTurnId);
     }
 
@@ -175,11 +151,7 @@ internal sealed class AssistantTurnObservationStoreHarness
     public SpeechStartedDecision OnSpeechStarted(bool enableBargeIn)
     {
         SpeechStartedDecision decision = _validation.HasValidation
-            ? new SpeechStartedDecision(
-                SpeechStartedDecisionKind.Ignored,
-                State,
-                State,
-                _validation.ValidationTurnId)
+            ? new SpeechStartedDecision(SpeechStartedDecisionKind.Ignored, State, State, _validation.ValidationTurnId)
             : _candidates.ObserveSpeechStarted(enableBargeIn, _nextTurnId);
         if (decision.Kind != SpeechStartedDecisionKind.StartListening)
             return decision;
@@ -282,11 +254,7 @@ internal sealed class AssistantTurnObservationStoreHarness
         _recognitionCapture.BootstrapSink = feedAudio;
         try
         {
-            return _recognitionTurn.TryAttachStartedSession(
-                turnId,
-                sessionId,
-                out speechAlreadyEnded,
-                out speechDuration);
+            return _recognitionTurn.TryAttachStartedSession(turnId, sessionId, out speechAlreadyEnded, out speechDuration);
         }
         finally
         {
@@ -297,16 +265,10 @@ internal sealed class AssistantTurnObservationStoreHarness
     public bool TryEnterRecognizing(long turnId, string sessionId, out AssistantState oldState, out bool isValidationTurn)
     {
         oldState = State;
-        bool accepted = _recognitionTurn.CanEnterRecognizing(
-            turnId,
-            sessionId,
-            out isValidationTurn);
+        bool accepted = _recognitionTurn.CanEnterRecognizing(turnId, sessionId, out isValidationTurn);
         if (!accepted)
             return false;
-        accepted = _recognitionTurn.CommitEnterRecognizing(
-            turnId,
-            sessionId,
-            isValidationTurn);
+        accepted = _recognitionTurn.CommitEnterRecognizing(turnId, sessionId, isValidationTurn);
         if (!accepted)
             return false;
 
@@ -329,16 +291,14 @@ internal sealed class AssistantTurnObservationStoreHarness
         bool accepted;
         if (isValidationTurn)
         {
-            accepted = _validation.TryObserveAsrStartFailure(turnId, out restoredState) &&
-                _validation.CommitAsrStartFailure(turnId);
+            accepted = _validation.TryObserveAsrStartFailure(turnId, out restoredState) && _validation.CommitAsrStartFailure(turnId);
             if (accepted)
                 _candidates.Clear();
         }
         else
         {
             restoredState = AssistantState.Idle;
-            accepted = _recognitionTurn.CanObserveActiveAsrStartFailure(turnId) &&
-                _recognitionTurn.CommitAsrStartFailure(turnId);
+            accepted = _recognitionTurn.CanObserveActiveAsrStartFailure(turnId) && _recognitionTurn.CommitAsrStartFailure(turnId);
             if (accepted)
                 _candidates.Clear();
         }
@@ -437,11 +397,7 @@ internal sealed class AssistantTurnObservationStoreHarness
 
     public bool TryCompleteTurn(long turnId, out AssistantState oldState, out bool changed, out bool completedInterruptedTurn)
     {
-        bool accepted = _release.TryReleaseCompletedTurn(
-            turnId,
-            out oldState,
-            out changed,
-            out completedInterruptedTurn);
+        bool accepted = _release.TryReleaseCompletedTurn(turnId, out oldState, out changed, out completedInterruptedTurn);
         if (accepted && changed)
             Synchronize(AssistantState.Idle, turnId);
         return accepted;
@@ -472,11 +428,7 @@ internal sealed class AssistantTurnObservationStoreHarness
         out CancellationTokenSource? responseToCancel,
         out long interruptedTurnId)
     {
-        bool accepted = TryObserveValidatedBargeIn(
-            turnId,
-            out oldState,
-            out responseToCancel,
-            out interruptedTurnId);
+        bool accepted = TryObserveValidatedBargeIn(turnId, out oldState, out responseToCancel, out interruptedTurnId);
         if (!accepted)
             return false;
 
@@ -519,8 +471,7 @@ internal sealed class AssistantTurnObservationStoreHarness
         }
 
         Advance(decision.TurnId);
-        if (decision.Kind == SpeakingDecisionKind.ConfirmedListening ||
-            decision.OldState != AssistantState.Speaking)
+        if (decision.Kind == SpeakingDecisionKind.ConfirmedListening || decision.OldState != AssistantState.Speaking)
         {
             Synchronize(AssistantState.Listening, decision.TurnId);
         }
@@ -615,8 +566,7 @@ internal sealed class AssistantTurnObservationStoreHarness
         public Action<float[]>? BootstrapSink { get; set; }
 
         public string? GetCaptureSessionId(long activeTurnId, long validationTurnId)
-            => GetOrNull(activeTurnId)?.SessionId ??
-                (validationTurnId != 0 ? GetOrNull(validationTurnId)?.SessionId : null);
+            => GetOrNull(activeTurnId)?.SessionId ?? (validationTurnId != 0 ? GetOrNull(validationTurnId)?.SessionId : null);
 
         public SpeakingDecision ObserveCaptureAudio(
             long activeTurnId,
@@ -645,8 +595,7 @@ internal sealed class AssistantTurnObservationStoreHarness
                     default);
             }
 
-            if (!state.SpeechEnded &&
-                (validationTurnId != 0 || conversationState == AssistantState.Listening))
+            if (!state.SpeechEnded && (validationTurnId != 0 || conversationState == AssistantState.Listening))
                 state.PendingAudio.Add(audio.ToArray());
             return default;
         }
@@ -731,9 +680,7 @@ internal sealed class AssistantTurnObservationStoreHarness
         public bool CommitEnterCaptureRecognizing(long turnId, string asrSessionId, bool isValidationTurn)
         {
             CaptureState? state = GetOrNull(turnId);
-            if (state is null ||
-                !StringComparer.Ordinal.Equals(state.SessionId, asrSessionId) ||
-                state.IsValidation != isValidationTurn)
+            if (state is null || !StringComparer.Ordinal.Equals(state.SessionId, asrSessionId) || state.IsValidation != isValidationTurn)
             {
                 return false;
             }
@@ -785,8 +732,7 @@ internal sealed class AssistantTurnObservationStoreHarness
 
         public string? TakeAbandonedCaptureSession(long activeTurnId, long validationTurnId)
         {
-            long selectedTurnId = activeTurnId != 0 &&
-                GetOrNull(activeTurnId)?.SessionId is not null
+            long selectedTurnId = activeTurnId != 0 && GetOrNull(activeTurnId)?.SessionId is not null
                 ? activeTurnId
                 : validationTurnId != 0 ? validationTurnId : activeTurnId;
             CaptureState? state = GetOrNull(selectedTurnId);
@@ -813,9 +759,7 @@ internal sealed class AssistantTurnObservationStoreHarness
         {
             if (fieldName == "_validatingBargeInAsrSessionId")
                 return GetOrNull(validation.ValidationTurnId)?.SessionId;
-            long turnId = fieldName.StartsWith("_validating", StringComparison.Ordinal)
-                ? validation.ValidationTurnId
-                : activeTurnId;
+            long turnId = fieldName.StartsWith("_validating", StringComparison.Ordinal) ? validation.ValidationTurnId : activeTurnId;
             CaptureState state = Get(turnId);
             return fieldName switch
             {
@@ -835,9 +779,7 @@ internal sealed class AssistantTurnObservationStoreHarness
                 Get(validation.ValidationTurnId).SessionId = value as string;
                 return;
             }
-            long turnId = fieldName.StartsWith("_validating", StringComparison.Ordinal)
-                ? validation.ValidationTurnId
-                : activeTurnId;
+            long turnId = fieldName.StartsWith("_validating", StringComparison.Ordinal) ? validation.ValidationTurnId : activeTurnId;
             CaptureState state = Get(turnId);
             switch (fieldName)
             {
@@ -909,9 +851,7 @@ internal sealed class AssistantTurnObservationStoreHarness
         public bool IsCurrentTurn(long turnId) => Snapshot.TurnId == turnId;
 
         public void Publish(AssistantState state, long turnId)
-            => Volatile.Write(
-                ref _snapshot,
-                Snapshot with { ConversationState = state, TurnId = turnId });
+            => Volatile.Write(ref _snapshot, Snapshot with { ConversationState = state, TurnId = turnId });
 
         public void PublishNextOrdinal(long nextTurnOrdinal)
             => Volatile.Write(ref _snapshot, Snapshot with { NextTurnOrdinal = nextTurnOrdinal });

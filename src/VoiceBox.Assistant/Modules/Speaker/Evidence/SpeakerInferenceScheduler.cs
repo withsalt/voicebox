@@ -174,8 +174,7 @@ internal sealed class SpeakerInferenceScheduler : IDisposable
     {
         lock (_lock)
         {
-            if (_candidateWindows.TryGetValue(candidateId, out var window) &&
-                _cache.IsInFlight(window.Epoch, window.Start, window.End))
+            if (_candidateWindows.TryGetValue(candidateId, out var window) && _cache.IsInFlight(window.Epoch, window.Start, window.End))
             {
                 start = window.Start;
                 end = window.End;
@@ -205,10 +204,7 @@ internal sealed class SpeakerInferenceScheduler : IDisposable
 
         _queue.Remove(prefetch);
         _queuedPrefetchCount--;
-        _cache.Release(
-            prefetch.Job.StreamEpoch,
-            prefetch.Job.StartSample,
-            prefetch.Job.EndSampleExclusive);
+        _cache.Release(prefetch.Job.StreamEpoch, prefetch.Job.StartSample, prefetch.Job.EndSampleExclusive);
         return true;
     }
 

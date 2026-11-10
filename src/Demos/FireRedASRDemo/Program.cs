@@ -132,9 +132,7 @@ namespace FireRedASRDemo
 
             recordService.OnDataAvailable += (e) =>
             {
-                Span<float> denoiseBuffer = e.Length <= 4096
-                    ? stackalloc float[e.Length]
-                    : new float[e.Length];
+                Span<float> denoiseBuffer = e.Length <= 4096 ? stackalloc float[e.Length] : new float[e.Length];
                 e.CopyTo(denoiseBuffer);
 
                 int produced = dnrService.Process(denoiseBuffer);

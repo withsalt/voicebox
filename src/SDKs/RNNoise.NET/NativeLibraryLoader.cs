@@ -56,9 +56,7 @@ namespace RNNoise.NET
                 path = s_nativeLibraryPath;
             }
 
-            return path is not null && NativeLibrary.TryLoad(path, out var handle)
-                ? handle
-                : IntPtr.Zero;
+            return path is not null && NativeLibrary.TryLoad(path, out var handle) ? handle : IntPtr.Zero;
         }
 
         private static string? TryResolveBundledLibraryPath()
@@ -92,8 +90,7 @@ namespace RNNoise.NET
                 }
             }
 
-            throw new FileNotFoundException(
-                $"The native library '{fileName}' was not found under 'runtimes/{rid}/native/'.");
+            throw new FileNotFoundException($"The native library '{fileName}' was not found under 'runtimes/{rid}/native/'.");
         }
 
         [UnconditionalSuppressMessage(
@@ -140,8 +137,7 @@ namespace RNNoise.NET
                 };
             }
 
-            throw new PlatformNotSupportedException(
-                $"Unsupported operating system: {RuntimeInformation.OSDescription}");
+            throw new PlatformNotSupportedException($"Unsupported operating system: {RuntimeInformation.OSDescription}");
         }
 
         private static string GetNativeLibraryFileName()

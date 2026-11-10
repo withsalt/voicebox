@@ -79,12 +79,7 @@ internal static partial class SelfChecks
         for (int i = sampleRate * 3 / 5; i < sampleRate * 6 / 5; i++)
             audio[i] = 0.1f;
 
-        OracleActivity activity = OracleActivityAnalyzer.Analyze(
-            audio,
-            scale: 1,
-            sampleRate,
-            startupGuardMs: 500,
-            minimumSpeechMs: 300);
+        OracleActivity activity = OracleActivityAnalyzer.Analyze(audio, scale: 1, sampleRate, startupGuardMs: 500, minimumSpeechMs: 300);
 
         Assert(activity.Available, "oracle should be available");
         Assert(activity.Eligible, "oracle should find eligible speech");
@@ -98,17 +93,10 @@ internal static partial class SelfChecks
         for (int i = sampleRate / 2; i < sampleRate * 3 / 5; i++)
             audio[i] = 0.1f;
 
-        OracleActivity activity = OracleActivityAnalyzer.Analyze(
-            audio,
-            scale: 1,
-            sampleRate,
-            startupGuardMs: 501,
-            minimumSpeechMs: 20);
+        OracleActivity activity = OracleActivityAnalyzer.Analyze(audio, scale: 1, sampleRate, startupGuardMs: 501, minimumSpeechMs: 20);
 
         Assert(activity.Eligible, "oracle should find speech after a non-aligned guard");
-        Assert(
-            activity.EligibleOnsetSample == sampleRate * 520 / 1000,
-            "non-aligned startup guard must round up to the next 20 ms frame");
+        Assert(activity.EligibleOnsetSample == sampleRate * 520 / 1000, "non-aligned startup guard must round up to the next 20 ms frame");
     }
 
     private static void AggregateComputesExpectedRates()
@@ -153,12 +141,7 @@ internal static partial class SelfChecks
         var cases = new List<CaseResult>();
         for (int i = 0; i < 19; i++)
         {
-            cases.Add(Result(
-                $"tp-{i}",
-                expected: true,
-                detected: true,
-                tp: true,
-                eligibleLatencyMs: 100));
+            cases.Add(Result($"tp-{i}", expected: true, detected: true, tp: true, eligibleLatencyMs: 100));
         }
         cases.Add(Result("fn", expected: true, detected: false, fn: true));
 
@@ -177,19 +160,8 @@ internal static partial class SelfChecks
     {
         EndToEndCaseResult[] cases =
         [
-            EndToEndResult(
-                "early",
-                heard: true,
-                accepted: true,
-                earlyFalseTrigger: true,
-                heardLatencyMs: -50,
-                stopLatencyMs: 500),
-            EndToEndResult(
-                "valid",
-                heard: true,
-                accepted: true,
-                heardLatencyMs: 100,
-                stopLatencyMs: 600),
+            EndToEndResult("early", heard: true, accepted: true, earlyFalseTrigger: true, heardLatencyMs: -50, stopLatencyMs: 500),
+            EndToEndResult("valid", heard: true, accepted: true, heardLatencyMs: 100, stopLatencyMs: 600),
         ];
 
         EndToEndSummary summary = EndToEndMetrics.Aggregate(cases);
@@ -208,26 +180,20 @@ internal static partial class SelfChecks
     private static void PreparedTranscriptFormatsAreParsed()
     {
         const string utteranceId = "X0000000021_240514196_S00041";
-        string wenet =
-            $"{utteranceId}\t跟随的炮船传回了回波。\r\n" +
-            "\t[[440, 560], [560, 800]]";
+        string wenet = $"{utteranceId}\t跟随的炮船传回了回波。\r\n" + "\t[[440, 560], [560, 800]]";
         Assert(
             PreparedSpeechTranscript.ParseWenet(wenet, utteranceId) ==
             "跟随的炮船传回了回波。",
             "Wenet transcript parser should remove the utterance id and timing annotations");
 
-        string root = Path.Combine(
-            Path.GetTempPath(),
-            "voicebox-transcript-self-check-" + Guid.NewGuid().ToString("N"));
+        string root = Path.Combine(Path.GetTempPath(), "voicebox-transcript-self-check-" + Guid.NewGuid().ToString("N"));
         string data = Path.Combine(root, "data");
         string test = Path.Combine(root, "test");
         Directory.CreateDirectory(data);
         Directory.CreateDirectory(test);
         try
         {
-            File.WriteAllText(
-                Path.Combine(data, "D11_915.wav.trn"),
-                "除了 付给 教师 们 工资 外\r\nchu2 le5");
+            File.WriteAllText(Path.Combine(data, "D11_915.wav.trn"), "除了 付给 教师 们 工资 外\r\nchu2 le5");
             string pointer = Path.Combine(test, "D11_915.wav.trn");
             File.WriteAllText(pointer, "../data/D11_915.wav.trn");
             Assert(
@@ -248,9 +214,7 @@ internal static partial class SelfChecks
         time.AdvanceSamples(99, sampleRate: 1000, channels: 1);
         Assert(!delay.IsCompleted, "benchmark delay should not complete before its virtual due time");
         time.AdvanceSamples(1, sampleRate: 1000, channels: 1);
-        Assert(
-            delay.IsCompletedSuccessfully,
-            "benchmark delay should complete when dataset time reaches its due time");
+        Assert(delay.IsCompletedSuccessfully, "benchmark delay should complete when dataset time reaches its due time");
     }
 
     private static void EndToEndMetricsCountClusters()
@@ -275,9 +239,7 @@ internal static partial class SelfChecks
 
     private static void LegacyManifestStillLoads()
     {
-        string root = Path.Combine(
-            Path.GetTempPath(),
-            $"voicebox-manifest-self-test-{Guid.NewGuid():N}");
+        string root = Path.Combine(Path.GetTempPath(), $"voicebox-manifest-self-test-{Guid.NewGuid():N}");
         Directory.CreateDirectory(root);
         try
         {
@@ -310,9 +272,7 @@ internal static partial class SelfChecks
 
     private static void PlaybackFifoHonorsGainAndClear()
     {
-        using var ingress = new BenchmarkDuplexAudioIngress(
-            new PassthroughCaptureProcessor(),
-            TimeProvider.System)
+        using var ingress = new BenchmarkDuplexAudioIngress(new PassthroughCaptureProcessor(), TimeProvider.System)
         {
             PlaybackGainRampMs = 0,
         };
@@ -324,15 +284,11 @@ internal static partial class SelfChecks
         ingress.SetPlaybackGain(0.5f);
         var first = new float[2];
         ingress.ReadPlayback(first);
-        Assert(
-            first.SequenceEqual([0.5f, 0.25f]),
-            "playback gain must affect samples read from the FIFO");
+        Assert(first.SequenceEqual([0.5f, 0.25f]), "playback gain must affect samples read from the FIFO");
         ingress.ClearQueue();
         var afterClear = new float[2];
         ingress.ReadPlayback(afterClear);
-        Assert(
-            afterClear.All(sample => sample == 0),
-            "ClearQueue must silence all future render samples");
+        Assert(afterClear.All(sample => sample == 0), "ClearQueue must silence all future render samples");
     }
 
     private static void PartitionedFirMatchesOfflineConvolution()
@@ -341,9 +297,7 @@ internal static partial class SelfChecks
         float[] signal = [0.4f, -0.2f, 0.1f, 0.8f, 0.3f, -0.5f, 0.2f];
         float[] impulse = [0.7f, -0.1f, 0.25f, 0.05f, -0.02f];
         float[] expected = AcousticSceneRenderer.Convolve(signal, impulse);
-        var filter = new AcousticSceneRenderer.PartitionedFirFilter(
-            impulse,
-            blockSize);
+        var filter = new AcousticSceneRenderer.PartitionedFirFilter(impulse, blockSize);
         int outputLength = ((expected.Length + blockSize - 1) / blockSize) * blockSize;
         var actual = new float[outputLength];
         for (int offset = 0; offset < outputLength; offset += blockSize)
@@ -356,9 +310,7 @@ internal static partial class SelfChecks
         }
         for (int i = 0; i < expected.Length; i++)
         {
-            Assert(
-                Math.Abs(expected[i] - actual[i]) < 1e-5,
-                $"partitioned FIR sample {i} should match offline convolution");
+            Assert(Math.Abs(expected[i] - actual[i]) < 1e-5, $"partitioned FIR sample {i} should match offline convolution");
         }
     }
 
@@ -419,19 +371,9 @@ internal static partial class SelfChecks
 
     private static void DeviceFullbandHyphenatedScenariosAreDiscovered()
     {
-        string root = Path.Combine(
-            Path.GetTempPath(),
-            $"voicebox-aec-self-test-{Guid.NewGuid():N}");
-        string positiveDirectory = Path.Combine(
-            root,
-            "datasets",
-            "fullband",
-            "doubletalk-with-movement");
-        string negativeDirectory = Path.Combine(
-            root,
-            "datasets",
-            "fullband",
-            "farend-singletalk");
+        string root = Path.Combine(Path.GetTempPath(), $"voicebox-aec-self-test-{Guid.NewGuid():N}");
+        string positiveDirectory = Path.Combine(root, "datasets", "fullband", "doubletalk-with-movement");
+        string negativeDirectory = Path.Combine(root, "datasets", "fullband", "farend-singletalk");
         Directory.CreateDirectory(positiveDirectory);
         Directory.CreateDirectory(negativeDirectory);
         try
@@ -454,14 +396,10 @@ internal static partial class SelfChecks
             IReadOnlyList<EvaluationCase> cases = DatasetCatalog.Discover(options);
             Assert(cases.Count == 2, "fullband hyphenated scenario directories should be discovered");
             Assert(
-                cases.Any(item =>
-                    item.Scenario == "doubletalk_with_movement" &&
-                    item.ExpectedNearEnd),
+                cases.Any(item => item.Scenario == "doubletalk_with_movement" && item.ExpectedNearEnd),
                 "fullband movement double-talk should be a positive case");
             Assert(
-                cases.Any(item =>
-                    item.Scenario == "farend_singletalk" &&
-                    !item.ExpectedNearEnd),
+                cases.Any(item => item.Scenario == "farend_singletalk" && !item.ExpectedNearEnd),
                 "fullband far-end single-talk should be a negative case");
         }
         finally
@@ -473,19 +411,13 @@ internal static partial class SelfChecks
 
     private static void DeviceDirectoryAcceptsMicCFiles()
     {
-        string root = Path.Combine(
-            Path.GetTempPath(),
-            $"voicebox-aec-self-test-{Guid.NewGuid():N}");
+        string root = Path.Combine(Path.GetTempPath(), $"voicebox-aec-self-test-{Guid.NewGuid():N}");
         string directory = Path.Combine(root, "datasets", "real");
         Directory.CreateDirectory(directory);
         try
         {
-            File.WriteAllBytes(
-                Path.Combine(directory, "session_doubletalk_mic_c.wav"),
-                []);
-            File.WriteAllBytes(
-                Path.Combine(directory, "session_doubletalk_lpb.wav"),
-                []);
+            File.WriteAllBytes(Path.Combine(directory, "session_doubletalk_mic_c.wav"), []);
+            File.WriteAllBytes(Path.Combine(directory, "session_doubletalk_lpb.wav"), []);
 
             var options = new EvaluationOptions
             {
@@ -507,17 +439,8 @@ internal static partial class SelfChecks
     {
         CaseResult[] cases =
         [
-            Result(
-                "windows-positive",
-                expected: true,
-                detected: true,
-                tp: true,
-                deviceClass: DatasetCatalog.WindowsPcDeviceClass),
-            Result(
-                "windows-negative",
-                expected: false,
-                detected: false,
-                deviceClass: DatasetCatalog.WindowsPcDeviceClass),
+            Result("windows-positive", expected: true, detected: true, tp: true, deviceClass: DatasetCatalog.WindowsPcDeviceClass),
+            Result("windows-negative", expected: false, detected: false, deviceClass: DatasetCatalog.WindowsPcDeviceClass),
         ];
         var options = new EvaluationOptions
         {
@@ -527,13 +450,9 @@ internal static partial class SelfChecks
         };
         IReadOnlyList<QualityGate> gates = MetricAggregator.EvaluateGates(cases, options);
         QualityGate windows = gates.Single(g =>
-            g.Name.EndsWith(
-                $"/device-coverage:{DatasetCatalog.WindowsPcDeviceClass}",
-                StringComparison.Ordinal));
+            g.Name.EndsWith($"/device-coverage:{DatasetCatalog.WindowsPcDeviceClass}", StringComparison.Ordinal));
         QualityGate mobile = gates.Single(g =>
-            g.Name.EndsWith(
-                $"/device-coverage:{DatasetCatalog.AndroidMobileDeviceClass}",
-                StringComparison.Ordinal));
+            g.Name.EndsWith($"/device-coverage:{DatasetCatalog.AndroidMobileDeviceClass}", StringComparison.Ordinal));
         Assert(windows.Status == GateStatus.Passed, "present Windows device coverage should pass");
         Assert(mobile.Status == GateStatus.Inconclusive, "missing mobile coverage must be inconclusive");
     }
@@ -574,9 +493,7 @@ internal static partial class SelfChecks
             DecisionPeakScoreDurationMs = tp ? 300 : 0,
             PeakNearEndProbability = tp ? 1 : 0,
             PeakSmoothedNearEndProbability = tp ? 1 : 0,
-            Oracle = expected
-                ? new OracleActivity(true, true, 0, 0, 16000, 1000, 0.001)
-                : OracleActivity.Unavailable,
+            Oracle = expected ? new OracleActivity(true, true, 0, 0, 16000, 1000, 0.001) : OracleActivity.Unavailable,
             EligibleLatencyMs = tp ? eligibleLatencyMs ?? 500 : null,
             EarlyFalseTrigger = false,
             TruePositive = tp,

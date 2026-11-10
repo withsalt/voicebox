@@ -141,10 +141,7 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
 
                 case AssistantSignalKind.ActiveNearEndSpeechEnded:
                     _ = _tasks.Track(
-                        _nearEnd.DrainSpeechAsync(
-                            signal.TurnId,
-                            TimeSpan.FromTicks(signal.DurationTicks),
-                            cancellationToken),
+                        _nearEnd.DrainSpeechAsync(signal.TurnId, TimeSpan.FromTicks(signal.DurationTicks), cancellationToken),
                         "active-near-end.speech-drain",
                         signal.TurnId,
                         AssistantTaskFaultPolicy.ObserveAndLog);
@@ -207,9 +204,7 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
                     DrainSpeechIngressAudio();
                     await _recognition.DrainAudioAsync();
                     ProcessSpeechBoundaryObservation(
-                        _speechBoundary.ProcessSpeechEnded(
-                            TimeSpan.FromTicks(signal.DurationTicks),
-                            signal.Flag));
+                        _speechBoundary.ProcessSpeechEnded(TimeSpan.FromTicks(signal.DurationTicks), signal.Flag));
                     break;
 
                 case AssistantSignalKind.WakeupObserved:
@@ -217,18 +212,12 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
                     break;
 
                 case AssistantSignalKind.RecognitionStarted:
-                    ProcessRecognitionPlan(
-                        _recognition.CommitSessionStarted(sessionStart, kernel));
+                    ProcessRecognitionPlan(_recognition.CommitSessionStarted(sessionStart, kernel));
                     bool sessionAccepted = sessionStart.Attached &&
-                        (sessionStart.IsValidationTurn ||
-                         sessionStart.RecognitionReadyWasDeferred ||
-                         kernel.Accepted);
+                        (sessionStart.IsValidationTurn || sessionStart.RecognitionReadyWasDeferred || kernel.Accepted);
                     _operations.CompleteSignal(
                         signal,
-                        new AssistantControlSignalResult(
-                            sessionAccepted,
-                            false,
-                            kernel.PublicationSequence));
+                        new AssistantControlSignalResult(sessionAccepted, false, kernel.PublicationSequence));
                     break;
 
                 case AssistantSignalKind.RecognitionFailed:
@@ -248,8 +237,7 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
                 case AssistantSignalKind.InterruptionResolved:
                     if (validationPlan.Kind != BargeInSemanticPlanKind.None)
                     {
-                        AssistantControlSignalResult validationResult =
-                            _bargeInTurns.CommitValidationPlan(validationPlan, kernel);
+                        AssistantControlSignalResult validationResult = _bargeInTurns.CommitValidationPlan(validationPlan, kernel);
                         _operations.CompleteSignal(signal, validationResult);
                     }
                     else
@@ -284,9 +272,7 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
                     break;
 
                 case AssistantSignalKind.ResponseStarted:
-                    _operations.CompleteSignal(
-                        signal,
-                        new AssistantControlSignalResult(_turnState.IsCurrentTurn(signal.TurnId), false, 0));
+                    _operations.CompleteSignal(signal, new AssistantControlSignalResult(_turnState.IsCurrentTurn(signal.TurnId), false, 0));
                     break;
 
                 case AssistantSignalKind.BackgroundResponseStarted:
@@ -340,8 +326,7 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
         try
         {
             _loopHost.MarkTerminated();
-            _kernel.Commit(TurnSignal.RuntimeFaultObserved(
-                AssistantSignalKernelProjection.ProjectFailure(failure)));
+            _kernel.Commit(TurnSignal.RuntimeFaultObserved(AssistantSignalKernelProjection.ProjectFailure(failure)));
             _faults.Converge(failure);
             return ValueTask.CompletedTask;
         }
@@ -361,9 +346,7 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
         else if (envelope.Kind == ControlEnvelopeKind.AssistantSignal)
         {
             _operations.SettleInterruptionAdmission(envelope.Signal);
-            _operations.CompleteSignal(
-                envelope.Signal,
-                new AssistantControlSignalResult(false, false, 0));
+            _operations.CompleteSignal(envelope.Signal, new AssistantControlSignalResult(false, false, 0));
         }
 
         return ValueTask.CompletedTask;
@@ -415,10 +398,7 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
 
             case SpeechBoundaryObservationKind.BeginRecognition:
                 ProcessRecognitionPlan(
-                    _recognition.BeginRecognition(
-                        observation.TurnId,
-                        observation.AsrSessionId!,
-                        observation.SpeechDuration));
+                    _recognition.BeginRecognition(observation.TurnId, observation.AsrSessionId!, observation.SpeechDuration));
                 break;
 
             case SpeechBoundaryObservationKind.SingleTalkAuthorization:
@@ -473,8 +453,7 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
     {
         while (_speechIngress.TryReadAdmittedAudio(out float[] audio))
         {
-            ProcessSpeechBoundaryObservation(
-                _speechBoundary.ProcessSpeaking(audio, _operations.NextOperationId()));
+            ProcessSpeechBoundaryObservation(_speechBoundary.ProcessSpeaking(audio, _operations.NextOperationId()));
         }
     }
 
@@ -482,9 +461,7 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
     {
         while (plan.Kind != RecognitionSemanticPlanKind.None)
         {
-            KernelCommitResult kernel = plan.Signal is { } signal
-                ? CommitRequired(signal, $"recognition-{plan.Kind}")
-                : default;
+            KernelCommitResult kernel = plan.Signal is { } signal ? CommitRequired(signal, $"recognition-{plan.Kind}") : default;
 
             plan = _recognition.CommitSemanticPlan(plan, kernel);
         }
@@ -526,9 +503,7 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
     {
         while (plan.Kind != WakeupSemanticPlanKind.None)
         {
-            KernelCommitResult kernel = plan.Signal is { } signal
-                ? CommitRequired(signal, $"wakeup-{plan.Kind}")
-                : default;
+            KernelCommitResult kernel = plan.Signal is { } signal ? CommitRequired(signal, $"wakeup-{plan.Kind}") : default;
             plan = plan.Kind switch
             {
                 WakeupSemanticPlanKind.Observed => _wakeup.CommitObservation(plan, kernel),
@@ -553,8 +528,7 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
         KernelCommitResult result = _kernel.Commit(value);
         if (!result.Accepted)
         {
-            throw new InvalidOperationException(
-                $"TurnKernel rejected a runtime-owned semantic decision from '{source}'.");
+            throw new InvalidOperationException($"TurnKernel rejected a runtime-owned semantic decision from '{source}'.");
         }
 
         return result;
@@ -566,10 +540,7 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
             return;
 
         _turnContexts.TryGetRecognitionMetadata(signal.TurnId, out string? rawText, out _);
-        _turnContexts.TrySetRecognitionMetadata(
-            signal.TurnId,
-            rawText,
-            TimeSpan.FromTicks(signal.DurationTicks));
+        _turnContexts.TrySetRecognitionMetadata(signal.TurnId, rawText, TimeSpan.FromTicks(signal.DurationTicks));
     }
 
     private void CompleteFromKernel(AssistantSignal signal, KernelCommitResult kernel)

@@ -21,8 +21,7 @@ namespace VoiceBox.LLM.LLamaSharp.Internal
             string prompt = session.Profile.BuildPrompt(session.Weights, flat, addGenerationPrompt, enableThinking);
             if (string.IsNullOrEmpty(prompt))
             {
-                throw new InvalidOperationException(
-                    $"Model profile '{session.Profile.Name}' rendered an empty prompt.");
+                throw new InvalidOperationException($"Model profile '{session.Profile.Name}' rendered an empty prompt.");
             }
             return prompt;
         }
@@ -33,9 +32,7 @@ namespace VoiceBox.LLM.LLamaSharp.Internal
             var flat = new List<LlamaChatMessage>(messages.Count);
             foreach (var message in messages)
             {
-                flat.Add(new LlamaChatMessage(
-                    RoleString(message.Role),
-                    LlamaChatContentFormatter.Format(message)));
+                flat.Add(new LlamaChatMessage(RoleString(message.Role), LlamaChatContentFormatter.Format(message)));
             }
             return flat;
         }

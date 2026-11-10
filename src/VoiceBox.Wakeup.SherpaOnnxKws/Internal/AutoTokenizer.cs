@@ -254,8 +254,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Internal
             FlushEnglish(enBuffer, plan, keyword);
 
             if (plan.Count == 0)
-                throw new InvalidDataException(
-                    $"Cannot auto-tokenize keyword '{keyword}': no recognizable Chinese/English content.");
+                throw new InvalidDataException($"Cannot auto-tokenize keyword '{keyword}': no recognizable Chinese/English content.");
             return plan;
         }
 
@@ -334,8 +333,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Internal
             foreach (var p in phones)
             {
                 if (!_symbols.Contains(p))
-                    throw new InvalidDataException(
-                        $"CMU phone '{p}' (for word '{word}') not in tokens.txt.");
+                    throw new InvalidDataException($"CMU phone '{p}' (for word '{word}') not in tokens.txt.");
             }
             plan.Add(Segment.English(phones));
         }
@@ -354,8 +352,7 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Internal
                 {
                     if (!plan[i].IsChinese) { effectiveTones[i] = 0; continue; }
                     int tone = plan[i].Readings![choice[i]].Tone;
-                    if (tone == 3 && i + 1 < plan.Count && plan[i + 1].IsChinese
-                        && plan[i + 1].Readings![choice[i + 1]].Tone == 3)
+                    if (tone == 3 && i + 1 < plan.Count && plan[i + 1].IsChinese && plan[i + 1].Readings![choice[i + 1]].Tone == 3)
                         tone = 2;
                     effectiveTones[i] = tone;
                 }
@@ -378,13 +375,11 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Internal
                 if (!string.IsNullOrEmpty(reading.Initial))
                 {
                     if (!_symbols.Contains(reading.Initial))
-                        throw new InvalidDataException(
-                            $"Initial '{reading.Initial}' (from '{seg.SourceChar}') not found in tokens.txt.");
+                        throw new InvalidDataException($"Initial '{reading.Initial}' (from '{seg.SourceChar}') not found in tokens.txt.");
                     output.Add(reading.Initial);
                 }
                 if (!_symbols.Contains(finalToken))
-                    throw new InvalidDataException(
-                        $"Final '{finalToken}' (from '{seg.SourceChar}', tone={tone}) not found in tokens.txt.");
+                    throw new InvalidDataException($"Final '{finalToken}' (from '{seg.SourceChar}', tone={tone}) not found in tokens.txt.");
                 output.Add(finalToken);
             }
             return string.Join(' ', output);
@@ -508,11 +503,9 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Internal
             return string.Concat(final.AsSpan(0, idx), marked.ToString(), final.AsSpan(idx + 1));
         }
 
-        private static bool IsCjk(char ch) =>
-            (ch >= 0x4E00 && ch <= 0x9FFF) || (ch >= 0x3400 && ch <= 0x4DBF);
+        private static bool IsCjk(char ch) => (ch >= 0x4E00 && ch <= 0x9FFF) || (ch >= 0x3400 && ch <= 0x4DBF);
 
-        private static bool IsAsciiLetter(char ch) =>
-            (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z');
+        private static bool IsAsciiLetter(char ch) => (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z');
 
         // ---- 内部计划单元 ---------------------------------------------------
 
@@ -539,10 +532,8 @@ namespace VoiceBox.Wakeup.SherpaOnnxKws.Internal
                 IsChinese = isCh; Readings = readings; SourceChar = src; EnglishPhones = phones;
             }
 
-            public static Segment Chinese(Reading[] readings, char src) =>
-                new(true, readings, src, null);
-            public static Segment English(string[] phones) =>
-                new(false, null, '\0', phones);
+            public static Segment Chinese(Reading[] readings, char src) => new(true, readings, src, null);
+            public static Segment English(string[] phones) => new(false, null, '\0', phones);
         }
     }
 }

@@ -31,8 +31,7 @@ namespace VoiceBox.LLM.OpenAI.Internal
                     || choices.GetArrayLength() == 0)
                     return null;
 
-                if (!choices[0].TryGetProperty("delta", out var delta)
-                    || delta.ValueKind != JsonValueKind.Object)
+                if (!choices[0].TryGetProperty("delta", out var delta) || delta.ValueKind != JsonValueKind.Object)
                     return null;
 
                 // 主流命名是 reasoning_content; 个别网关用 reasoning, 一并兼容。

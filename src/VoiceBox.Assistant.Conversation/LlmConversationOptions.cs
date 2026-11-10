@@ -43,12 +43,8 @@ public sealed class LlmConversationOptions
     {
         ArgumentNullException.ThrowIfNull(options);
         if (options.MaxHistoryTurns < 1)
-            throw new ArgumentOutOfRangeException(
-                nameof(options.MaxHistoryTurns),
-                "MaxHistoryTurns must be >= 1.");
+            throw new ArgumentOutOfRangeException(nameof(options.MaxHistoryTurns), "MaxHistoryTurns must be >= 1.");
         if (options.MaxResponseTokens is <= 0)
-            throw new ArgumentOutOfRangeException(
-                nameof(options.MaxResponseTokens),
-                "MaxResponseTokens must be positive when specified.");
+            throw new ArgumentOutOfRangeException(nameof(options.MaxResponseTokens), "MaxResponseTokens must be positive when specified.");
     }
 }

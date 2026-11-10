@@ -6,8 +6,7 @@ namespace VoiceBox.Assistant.Conversation.Internal.Execution;
 /// </summary>
 internal sealed class TurnCommitGate
 {
-    private readonly TaskCompletionSource<bool> _completion =
-        new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource<bool> _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     public Task<bool> WaitAsync() => _completion.Task;
 

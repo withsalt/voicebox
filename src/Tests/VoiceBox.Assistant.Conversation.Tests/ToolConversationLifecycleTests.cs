@@ -29,8 +29,7 @@ public sealed class ToolConversationLifecycleTests
             {
                 Assert.Same(shutdown, lifecycle.StopAsync());
                 await Assert.ThrowsAsync<InvalidOperationException>(() => lifecycle.StartAsync());
-                Assert.Throws<InvalidOperationException>(() => session.StreamAsync(
-                    new ConversationRequest(Guid.NewGuid(), "停止期间的请求")));
+                Assert.Throws<InvalidOperationException>(() => session.StreamAsync(new ConversationRequest(Guid.NewGuid(), "停止期间的请求")));
             }
 
             provider.ReleaseCleanup.TrySetResult();
@@ -142,8 +141,7 @@ public sealed class ToolConversationLifecycleTests
             StartEntered.TrySetResult();
             try
             {
-                await ReleaseStart.Task.WaitAsync(
-                    IgnoreStartupCancellation ? CancellationToken.None : cancellationToken);
+                await ReleaseStart.Task.WaitAsync(IgnoreStartupCancellation ? CancellationToken.None : cancellationToken);
             }
             catch (OperationCanceledException)
             {
@@ -156,8 +154,7 @@ public sealed class ToolConversationLifecycleTests
 
         public ValueTask<IReadOnlyList<ConversationToolDefinition>> GetToolsAsync(CancellationToken cancellationToken = default)
             => ValueTask.FromResult<IReadOnlyList<ConversationToolDefinition>>(
-                [new(new("external", "probe"), new ConversationToolDescriptor(
-                    "probe", "Probe", "Probe tool", "{\"type\":\"object\"}"))]);
+                [new(new("external", "probe"), new ConversationToolDescriptor("probe", "Probe", "Probe tool", "{\"type\":\"object\"}"))]);
 
         public ValueTask<ConversationToolResult> InvokeAsync(ConversationToolCall call, CancellationToken cancellationToken = default)
             => ValueTask.FromResult(new ConversationToolResult(call.CallId, ConversationToolResultKind.Success, "{}"));

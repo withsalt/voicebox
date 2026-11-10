@@ -114,8 +114,7 @@ namespace VoiceBox.TTS.Qwen3.Internal
         /// the KV cache is advanced by S.
         /// </summary>
         public (float[] logits, float[] hidden) Step(float[] inputsEmbeds, int attnLen, int posStart, int s)
-            => _ioBinding ? StepIoBinding(inputsEmbeds, attnLen, posStart, s)
-                          : StepDictionary(inputsEmbeds, attnLen, posStart, s);
+            => _ioBinding ? StepIoBinding(inputsEmbeds, attnLen, posStart, s) : StepDictionary(inputsEmbeds, attnLen, posStart, s);
 
         private (long[] am, long[] pos) BuildPositions(int attnLen, int posStart, int s)
         {

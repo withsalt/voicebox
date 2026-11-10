@@ -72,9 +72,7 @@ namespace VoiceBox.ASR.Qwen3.Benchmark
             using var preprocessor = new AudioPreprocessor(_config.Preproc, _config.PreprocParams);
 
             // 真实噪声源 (若指定 --noise-file): 整批复用一个实例, 内部按文件路径缓存噪声数组。
-            RealNoiseSource? realNoise = !string.IsNullOrWhiteSpace(_config.NoiseFile)
-                ? new RealNoiseSource(_config.NoiseFile!)
-                : null;
+            RealNoiseSource? realNoise = !string.IsNullOrWhiteSpace(_config.NoiseFile) ? new RealNoiseSource(_config.NoiseFile!) : null;
             if (realNoise is not null)
                 _logger.LogInformation("真实噪声源就绪: {Count} 个 wav (root: {Root})", realNoise.FileCount, realNoise.Root);
 
@@ -111,9 +109,7 @@ namespace VoiceBox.ASR.Qwen3.Benchmark
             int successCount = summary.SampleCount - summary.FailedCount;
             int exactCount = summary.Samples.Count(s => s.Error is null && s.ExactMatch);
             summary.ExactMatchRate = successCount > 0 ? (double)exactCount / successCount : 0;
-            summary.AggregateRtf = summary.TotalAudioSeconds > 0
-                ? summary.TotalInferenceSeconds / summary.TotalAudioSeconds
-                : 0;
+            summary.AggregateRtf = summary.TotalAudioSeconds > 0 ? summary.TotalInferenceSeconds / summary.TotalAudioSeconds : 0;
 
             return summary;
         }

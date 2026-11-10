@@ -52,9 +52,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         await assistant.StartAsync();
         await assistant.StopAsync();
 
-        object runtime = typeof(VoiceAssistant)
-            .GetField("_runtime", BindingFlags.Instance | BindingFlags.NonPublic)!
-            .GetValue(assistant)!;
+        object runtime = typeof(VoiceAssistant).GetField("_runtime", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(assistant)!;
         object subscriptions = RuntimeGraphProbe.RequireField(runtime, "_subscriptions");
         object supervisor = RuntimeGraphProbe.RequireField(runtime, "_tasks");
 

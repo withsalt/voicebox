@@ -23,9 +23,7 @@ namespace VoiceBox.AEC.DTLN.Internal
 
         public WebRtcAec3DelayAdapter(int sampleRate)
         {
-            _estimator = new WebRtcAec3DelayEstimatorFactory().Create(
-                sampleRate,
-                channelCount: 1);
+            _estimator = new WebRtcAec3DelayEstimatorFactory().Create(sampleRate, channelCount: 1);
         }
 
         public int? FeedFrame(ReadOnlySpan<float> render, ReadOnlySpan<float> capture)
