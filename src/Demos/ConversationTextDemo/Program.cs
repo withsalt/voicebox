@@ -12,7 +12,7 @@ namespace ConversationTextDemo;
 /// <summary>
 /// 独立文字会话示例: 不创建音频设备、不启动 Assistant, 直接消费
 /// <see cref="IConversationSession.StreamAsync"/>。设置 OPENAI_API_KEY 时接入 OpenAI 兼容端点,
-/// 否则使用进程内的演示模型。
+/// 并要求设置 OPENAI_BASE_URL 和 OPENAI_MODEL；未设置 OPENAI_API_KEY 时使用进程内的演示模型。
 /// </summary>
 internal static class Program
 {
@@ -94,8 +94,8 @@ internal static class Program
             return new EchoLlmService();
         }
 
-        string baseUrl = Environment.GetEnvironmentVariable("OPENAI_BASE_URL") ?? "https://api.deepseek.com";
-        string model = Environment.GetEnvironmentVariable("OPENAI_MODEL") ?? "deepseek-flash";
+        string baseUrl = GetRequiredEnvironmentVariable("OPENAI_BASE_URL");
+        string model = GetRequiredEnvironmentVariable("OPENAI_MODEL");
         Console.WriteLine($"[OpenAI] {baseUrl} (model={model})");
         return new OpenAILLMService(
             Options.Create(new OpenAILLMOptions
@@ -109,6 +109,14 @@ internal static class Program
                 TopP = 0.9f,
             }),
             loggerFactory.CreateLogger<OpenAILLMService>());
+    }
+
+    private static string GetRequiredEnvironmentVariable(string name)
+    {
+        string? value = Environment.GetEnvironmentVariable(name);
+        return !string.IsNullOrWhiteSpace(value)
+            ? value
+            : throw new InvalidOperationException($"Missing required environment variable: {name}.");
     }
 
     /// <summary>
@@ -160,7 +168,7 @@ internal static class Program
             string memory = system.Contains("用户的名字是", StringComparison.Ordinal)
                 ? "（我记得你的名字）"
                 : string.Empty;
-            string response = $"演示模型{memory}收到: {lastUser}。设置 OPENAI_API_KEY 可接入真实模型。";
+            string response = $"演示模型{memory}收到: {lastUser}。设置 OPENAI_API_KEY、OPENAI_BASE_URL 和 OPENAI_MODEL 可接入真实模型。";
 
             foreach (string piece in Split(response, 6))
             {

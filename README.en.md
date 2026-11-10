@@ -198,13 +198,15 @@ The current [Program.cs](src/Demos/VoiceAssistantDemo/Program.cs) selects **Plan
 Before running:
 
 1. Download the models listed above and update `BASE_MODEL_DIR` and the model paths in [AudioDefaults.cs](src/Demos/VoiceAssistantDemo/AudioDefaults.cs).
-2. Set `LlmEndpoint` and `LlmModelName` in the same file. The default endpoint is Volcengine Ark; the API key must match the endpoint.
+2. Set the environment variables `OPENAI_API_KEY`, `OPENAI_BASE_URL` (the endpoint's base URL, without `/chat/completions`), and `OPENAI_MODEL` (the model name). `AudioDefaults` reads these values by default; only Plan02/Plan04, which use an online LLM, validate that they are provided. The API key and model must match the endpoint. Local configurations do not require these variables.
 3. Prepare your CUDA/cuDNN environment. To change the ASR, TTS, or audio backend, update the service registrations in [Plan04](src/Demos/VoiceAssistantDemo/Plan04_MIX_8GVRAM_ASR_GPU_TTS_CPU_LLM_ONLINE.cs) and the project's runtime references.
 
 Run the following PowerShell commands from the repository root. **Enter the demo directory first** so that the relative paths to the `./voices/*.wav` voice reference files resolve correctly:
 
 ```powershell
 $env:OPENAI_API_KEY = "your service API key"
+$env:OPENAI_BASE_URL = "https://api.deepseek.com"
+$env:OPENAI_MODEL = "deepseek-flash"
 cd src/Demos/VoiceAssistantDemo
 dotnet run -c Release
 ```
@@ -226,7 +228,9 @@ When using `VoiceBox.LLM.OnnxGenAI` for local inference, do not call `UseTools(.
 
 For local LLM inference, the recommended approach is to serve a model with ollama or llama.cpp and connect to it through `VoiceBox.LLM.OpenAI`.
 
-Plan02 requires `VOLC_ASR_API_KEY`, `OPENAI_API_KEY`, and `VOLC_TTS_API_KEY`. Audio preprocessing, VAD, wake word detection, and speaker verification still run locally. The VRAM sizes in the configuration filenames are labels for those configurations; measure actual usage with your selected models.
+Plan02 requires the three `OPENAI_*` environment variables above, plus `VOLC_ASR_API_KEY` and `VOLC_TTS_API_KEY`. Audio preprocessing, VAD, wake word detection, and speaker verification still run locally. The VRAM sizes in the configuration filenames are labels for those configurations; measure actual usage with your selected models.
+
+`ConversationTextDemo` uses the same three `OPENAI_*` environment variables for an online model; when `OPENAI_API_KEY` is not set, it uses an in-process echo model. In online mode, neither demo provides defaults for `OPENAI_BASE_URL` or `OPENAI_MODEL`; missing or whitespace-only values cause an error.
 
 ## Demos
 

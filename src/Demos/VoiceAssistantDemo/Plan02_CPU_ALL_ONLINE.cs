@@ -22,9 +22,12 @@ namespace VoiceAssistantDemo
         public static AssistantRequiredServices Buid(ILoggerFactory? loggerFactory = null)
         {
             string asrApiKey = GetRequiredEnvironmentVariable("VOLC_ASR_API_KEY");
-            string llmApiKey = GetRequiredEnvironmentVariable("OPENAI_API_KEY");
             string ttsApiKey = GetRequiredEnvironmentVariable("VOLC_TTS_API_KEY");
 
+            ArgumentException.ThrowIfNullOrWhiteSpace(AudioDefaults.LlmApiKey, "OPENAI_API_KEY");
+            ArgumentException.ThrowIfNullOrWhiteSpace(AudioDefaults.LlmEndpoint, "OPENAI_BASE_URL");
+            ArgumentException.ThrowIfNullOrWhiteSpace(AudioDefaults.LlmModelName, "OPENAI_MODEL");
+            var llmEndpoint = new Uri(AudioDefaults.LlmEndpoint);
 
             IAudioServiceManager manager = new AudioServiceManager()
                 .AddLogger(loggerFactory ?? NullLoggerFactory.Instance)
@@ -108,8 +111,8 @@ namespace VoiceAssistantDemo
                 })
                 .AddOpenAILLMService(o =>
                 {
-                    o.ApiKey = llmApiKey;
-                    o.Endpoint = AudioDefaults.LlmEndpoint;
+                    o.ApiKey = AudioDefaults.LlmApiKey;
+                    o.Endpoint = llmEndpoint;
                     o.Model = AudioDefaults.LlmModelName;
                     o.MaxTokens = 4096;
                     o.Thinking = AudioDefaults.IsEnableThinking ? ThinkingMode.Enabled : ThinkingMode.Disabled;
@@ -128,8 +131,11 @@ namespace VoiceAssistantDemo
         }
 
         private static string GetRequiredEnvironmentVariable(string name)
-            => Environment.GetEnvironmentVariable(name) is { Length: > 0 } value
+        {
+            string? value = Environment.GetEnvironmentVariable(name);
+            return !string.IsNullOrWhiteSpace(value)
                 ? value
                 : throw new InvalidOperationException($"Missing required environment variable: {name}.");
+        }
     }
 }

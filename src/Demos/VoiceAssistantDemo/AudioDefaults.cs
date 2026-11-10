@@ -14,18 +14,11 @@ namespace VoiceAssistantDemo
 
         public static string WakeupWord = "小木小木";
 
-        /// <summary>
-        /// 模型名称
-        /// </summary>
-        /// <remarks>
-        /// "deepseek-flash", "doubao-seed-2-1-turbo-260628"; "deepseek-v4-1-flash-260910"; "doubao-seed-2-1-lite-260915";
-        /// </remarks>
-        public static string LlmModelName = "deepseek-flash";
+        public static string LlmEndpoint = Environment.GetEnvironmentVariable("OPENAI_BASE_URL") ?? string.Empty;
 
-        /// <summary>
-        /// 火山引擎
-        /// </summary>
-        public static Uri LlmEndpoint = new Uri("https://api.deepseek.com");
+        public static string LlmModelName = Environment.GetEnvironmentVariable("OPENAI_MODEL") ?? string.Empty;
+
+        public static string LlmApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? string.Empty;
 
         public static string AssistantName = ConvertWakeupWordToAssistantName(WakeupWord);
 

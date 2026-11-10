@@ -199,13 +199,15 @@ dotnet run --project src/Demos/AudioRecordDemo -c Release -- recording.wav
 运行前完成以下配置：
 
 1. 下载上文列出的模型，修改 [AudioDefaults.cs](src/Demos/VoiceAssistantDemo/AudioDefaults.cs) 的 `BASE_MODEL_DIR` 和各模型路径。
-2. 在同一文件中设置 `LlmEndpoint`、`LlmModelName`；默认指向火山方舟，API Key 必须与端点对应。
+2. 设置环境变量 `OPENAI_API_KEY`、`OPENAI_BASE_URL`（请求端点的 base URL，不含 `/chat/completions`）和 `OPENAI_MODEL`（模型名称）。`AudioDefaults` 默认读取这三项，仅使用在线 LLM 的 Plan02/Plan04 校验必填值；API Key 和模型必须与端点对应，本地方案无需配置这三项。
 3. 准备 CUDA/cuDNN 环境。需要更换 ASR、TTS 或音频后端时，修改 [Plan04](src/Demos/VoiceAssistantDemo/Plan04_MIX_8GVRAM_ASR_GPU_TTS_CPU_LLM_ONLINE.cs) 中的服务注册及项目运行时引用。
 
 以下为 PowerShell 命令，从仓库根目录执行。**先进入 Demo 目录**，使 `./voices/*.wav` 音色参考文件的相对路径可用：
 
 ```powershell
 $env:OPENAI_API_KEY = "你的服务 API Key"
+$env:OPENAI_BASE_URL = "https://api.deepseek.com"
+$env:OPENAI_MODEL = "deepseek-flash"
 cd src/Demos/VoiceAssistantDemo
 dotnet run -c Release
 ```
@@ -227,7 +229,9 @@ Demo 还提供以下组合，在 `Program.cs` 中切换 `Plan*.Buid(...)`：
 
 LLM本地推理建议使用ollama或llama.cpp等本地部署模型，然后通过`VoiceBox.LLM.OpenAI`接入。  
 
-Plan02 需要 `VOLC_ASR_API_KEY`、`OPENAI_API_KEY`、`VOLC_TTS_API_KEY`，音频前处理、VAD、唤醒及声纹仍在本地运行。方案文件名中的显存大小仅为方案命名，实际占用请按所选模型实测。
+Plan02 需要上述三个 `OPENAI_*` 环境变量，以及 `VOLC_ASR_API_KEY` 和 `VOLC_TTS_API_KEY`，音频前处理、VAD、唤醒及声纹仍在本地运行。方案文件名中的显存大小仅为方案命名，实际占用请按所选模型实测。
+
+`ConversationTextDemo` 接入在线模型时也使用上述三个 `OPENAI_*` 环境变量；未设置 `OPENAI_API_KEY` 时使用进程内回声模型。在线模式下，两个 Demo 的 `OPENAI_BASE_URL` 和 `OPENAI_MODEL` 均无默认值，缺失或仅含空白时会报错。
 
 ## Demo
 
