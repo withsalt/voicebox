@@ -74,7 +74,8 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
         bool canEndContinuousConversation = false,
         bool recognitionAlreadyPublished = false,
         CancellationToken runtimeCancellationToken = default,
-        IResponseTurnResourcePort? turnResources = null)
+        IResponseTurnResourcePort? turnResources = null,
+        ReadOnlyMemory<float> audio = default)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         if (operationId <= 0)
@@ -171,7 +172,7 @@ internal sealed class ResponseModule : IDisposable, IActiveResponseCancellationP
                 [EnumeratorCancellation] CancellationToken streamCancellation = default)
             {
                 await foreach (ConversationTurnEvent update in _conversation
-                    .StreamAsync(userText, streamCancellation)
+                    .StreamAsync(userText, audio, streamCancellation)
                     .WithCancellation(streamCancellation)
                     .ConfigureAwait(false))
                 {

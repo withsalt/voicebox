@@ -81,7 +81,8 @@ internal sealed class ResponseEffectHandler : IResponseEffectHandler
                     _wakeup?.Mode == AssistantWakeMode.ContinuousConversation,
                 recognitionAlreadyPublished: true,
                 runtimeCancellationToken: _turnResources.RunToken,
-                turnResources: _turnResources).ConfigureAwait(false);
+                turnResources: _turnResources,
+                audio: _turnContexts.TakeRecognitionAudio(effect.TurnId)).ConfigureAwait(false);
             endConversationRequested = response.EndConversationRequested;
         }
         catch (ResponseModule.ResponseOperationAdmissionRejectedException)

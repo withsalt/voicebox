@@ -5,7 +5,7 @@ using VoiceBox.Assistant.Modules.BargeIn.Models;
 using VoiceBox.Assistant.Modules.BargeIn.Policies;
 using VoiceBox.Assistant.Modules.TurnBoundary.Models;
 using VoiceBox.Assistant.Runtime.Control.Contracts;
-using VoiceBox.Assistant.Runtime.TurnContext.Contracts;
+using VoiceBox.Assistant.Runtime.TurnContext;
 
 namespace VoiceBox.Assistant.Modules.BargeIn.Controllers;
 
@@ -21,7 +21,7 @@ internal sealed class SpeechCandidateOwner : ICandidatePreRollSource, ISpeechCan
     private readonly BargeInConfirmationPolicy _policy;
     private readonly BargeInConfirmationSettings? _listeningGate;
     private readonly ITurnStateView _turnState;
-    private readonly ITurnResourcePort _resources;
+    private readonly ITurnResource _resources;
     private SpeechCandidateKind _kind;
 
     public SpeechCandidateOwner(
@@ -29,7 +29,7 @@ internal sealed class SpeechCandidateOwner : ICandidatePreRollSource, ISpeechCan
         BargeInConfirmationPolicy policy,
         BargeInConfirmationSettings? listeningGate,
         ITurnStateView turnState,
-        ITurnResourcePort resources)
+        ITurnResource resources)
     {
         _detector = detector ?? throw new ArgumentNullException(nameof(detector));
         _policy = policy ?? throw new ArgumentNullException(nameof(policy));

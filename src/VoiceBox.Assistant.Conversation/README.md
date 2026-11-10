@@ -28,6 +28,7 @@ await foreach (ConversationEvent conversationEvent in conversation.StreamAsync(
 - 同一会话的请求串行执行；不同会话互不影响。
 - 借用调用方的 `IStreamLLMService`；会话创建并拥有 provider 的 `ILLMConversation`，释放会话不会释放 LLM 服务。
 - 构造完成即可使用，不需要启动步骤。
+- `ConversationRequest.Audio` 可携带本轮语音快照；默认实现使用 `Text`，不会自动把音频发送给 LLM 或存入历史。
 
 ## 上下文扩展
 

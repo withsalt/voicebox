@@ -135,7 +135,10 @@ internal static class AssistantRuntimeCompositionFactory
         BargeInDiagnosticsCoordinator diagnostics = new(listeningOptions, audioFormat, journal, logger);
         AecMetricsSampler aecMetrics = new(runtimePlan.AcousticDiagnostics, logger, timeProvider);
         AudioResamplerPool resamplers = new(audioFormat.AudioSampleRate, audioFormat.AudioChannels);
-        var conversation = new ConversationResponseAdapter(installed.Conversation);
+        var conversation = new ConversationResponseAdapter(
+            installed.Conversation,
+            audioFormat.AudioSampleRate,
+            audioFormat.AudioChannels);
 
         BargeInDataPlaneController bargeInDataPlane = new(
             detector,
@@ -184,7 +187,8 @@ internal static class AssistantRuntimeCompositionFactory
         RecognitionModule recognition = new(
             installed.Recognition,
             controlSignals,
-            logger);
+            logger,
+            turnContexts);
         RecognitionTurnOwner recognitionTurn = new(
             recognition,
             snapshots,

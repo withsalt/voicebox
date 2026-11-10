@@ -32,6 +32,75 @@ public sealed partial class VoiceAssistantLifecycleTests
         await assistant.StopAsync();
     }
 
+    [Fact]
+    public async Task CustomSessionReceivesOnlyTheCurrentUtteranceAudio()
+    {
+        var services = TestServices.Create();
+        var requests = Channel.CreateUnbounded<ConversationRequest>();
+        await using var session = new DelegateConversationSession
+        {
+            Script = (request, _) =>
+            {
+                requests.Writer.TryWrite(request);
+                return SingleTurnAsync("业务答复");
+            },
+        };
+        using VoiceAssistant assistant = CreateAssistantWith(services, session);
+        await assistant.StartAsync();
+
+        services.Asr.SetResult("first-audio", "第一句");
+        RunTurn(services, "first-audio");
+        ConversationRequest first = await requests.Reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
+        ConversationAudio audio = Assert.IsType<ConversationAudio>(first.Audio);
+        Assert.Equal("第一句", first.Text);
+        Assert.Equal(16_000, audio.SampleRate);
+        Assert.Equal(1, audio.Channels);
+        Assert.Equal([0.1f, 0.2f, 0.3f], audio.Samples.ToArray());
+        Assert.Equal(services.Asr.FedAudio["first-audio"].SelectMany(chunk => chunk), audio.Samples.ToArray());
+        await WaitUntilAsync(() => assistant.State == AssistantState.Idle);
+
+        services.Asr.SetResult("second-audio", "第二句");
+        services.Vad.EmitSpeechStarted();
+        services.Vad.EmitSpeaking([-0.4f, -0.5f]);
+        services.Vad.EmitSpeechEnded(TimeSpan.FromMilliseconds(120));
+        services.Asr.CompleteStart("second-audio");
+        ConversationRequest second = await requests.Reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
+
+        Assert.Equal("第二句", second.Text);
+        Assert.Equal([-0.4f, -0.5f], Assert.IsType<ConversationAudio>(second.Audio).Samples.ToArray());
+        Assert.NotEqual(first.RequestId, second.RequestId);
+        await assistant.StopAsync();
+        Assert.Equal([0.1f, 0.2f, 0.3f], audio.Samples.ToArray());
+    }
+
+    [Fact]
+    public async Task RecognitionWithoutSamplesDoesNotReusePreviousAudio()
+    {
+        var services = TestServices.Create();
+        var requests = Channel.CreateUnbounded<ConversationRequest>();
+        await using var session = new DelegateConversationSession
+        {
+            Script = (request, _) =>
+            {
+                requests.Writer.TryWrite(request);
+                return SingleTurnAsync("业务答复");
+            },
+        };
+        using VoiceAssistant assistant = CreateAssistantWith(services, session);
+        await assistant.StartAsync();
+        RunTurn(services, "with-audio");
+        ConversationRequest first = await requests.Reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
+        Assert.NotNull(first.Audio);
+        await WaitUntilAsync(() => assistant.State == AssistantState.Idle);
+
+        services.Vad.EmitSpeechStarted();
+        services.Vad.EmitSpeechEnded(TimeSpan.FromMilliseconds(120));
+        services.Asr.CompleteStart("without-audio");
+        ConversationRequest second = await requests.Reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
+        Assert.Null(second.Audio);
+        await assistant.StopAsync();
+    }
+
     [Theory]
     [InlineData("missing")]
     [InlineData("duplicate")]
@@ -230,6 +299,14 @@ public sealed partial class VoiceAssistantLifecycleTests
             await WaitUntilAsync(() => assistant.State == AssistantState.Listening && services.Audio.ClearQueueCount > 0);
             EmitSilenceFrames(services, count: 8, renderRms: 0);
             await WaitUntilAsync(() => replies.Count == 2 && assistant.State == AssistantState.Idle);
+            ConversationRequest interruption;
+            lock (session.Requests)
+                interruption = session.Requests.Last();
+            Assert.Equal("好了，我知道了，退下吧", interruption.Text);
+            ConversationAudio audio = Assert.IsType<ConversationAudio>(interruption.Audio);
+            Assert.Equal(services.Asr.FedAudio["interruption"].SelectMany(chunk => chunk), audio.Samples.ToArray());
+            Assert.Equal(16_000, audio.SampleRate);
+            Assert.Equal(1, audio.Channels);
         }
 
         // A later background result must still be consumed after the interrupted one.

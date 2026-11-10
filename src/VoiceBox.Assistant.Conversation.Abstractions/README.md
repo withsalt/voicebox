@@ -15,7 +15,7 @@ public interface IConversationSession : IAsyncDisposable
 }
 ```
 
-- `ConversationRequest` 只携带本轮文字和调用方生成的 `RequestId`；不包含 prompt、历史或模型参数。
+- `ConversationRequest` 携带本轮文字、调用方生成的 `RequestId` 和可选的 `Audio`；不包含 prompt、历史或模型参数。
 - 一次正常请求输出零个或多个 `ConversationTextDelta` / `ConversationThinkingDelta`，随后恰好一个
   `ConversationCompleted`，之后结束。
 - `ConversationCompleted.Text` 是全部可见文字增量的顺序拼接；空回复也输出 `Completed("")`。
@@ -43,6 +43,27 @@ internal sealed class OrderSession : IConversationSession
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }
 ```
+
+## 请求音频
+
+`ConversationRequest.Audio` 是与本轮 `Text` 对应的用户语音快照。纯文字输入或没有采样时为 `null`。
+音频类型 `ConversationAudio` 只依赖 BCL：
+
+```csharp
+var audio = new ConversationAudio(samples, sampleRate: 16_000, channels: 1);
+var request = new ConversationRequest(Guid.NewGuid(), "今天的天气如何", audio);
+
+// 自定义会话按需读取；Samples 是 ReadOnlyMemory<float>。
+ReadOnlyMemory<float> pcm = request.Audio!.Samples;
+```
+
+- `Samples` 为 Float32 PCM，多声道按帧交错排列，不包含 WAV 文件头；`SampleRate`、`Channels` 描述格式，
+  `Duration` 根据实际采样帧数计算。
+- 构造时复制采样数据；原缓冲区可以复用。快照不需要释放，可以在请求完成、Assistant 停止后继续持有。
+- Assistant 传入本轮实际送入 ASR 的音频，包含 ASR 收到的预录音和后续采样，保持顺序一致。
+  它可能经过音频前端处理，不表示未经处理的麦克风原始录音，也不提供逐字时间对齐。
+- 音频按活动轮次暂存，交给请求后移交给会话。Assistant 不保存历轮音频；会话自行决定是否存储、编码或提交给模型。
+- 默认文本会话使用 `Text` 生成模型请求；自定义会话可以直接使用音频进行业务处理。
 
 ## 可选能力
 

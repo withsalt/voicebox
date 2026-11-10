@@ -14,6 +14,21 @@ public sealed class ConversationSessionContractTests
         => string.Concat(message.Content.OfType<TextContent>().Select(content => content.Text));
 
     [Fact]
+    public async Task DefaultSessionUsesTextWhenTheRequestAlsoHasAudio()
+    {
+        var llm = new RecordingLlmService { ResponseText = "收到" };
+        await using IConversationSession session = new ConversationBuilder(llm).Build();
+        var request = new ConversationRequest(
+            Guid.NewGuid(), "你好", new ConversationAudio([0.1f, -0.1f], 16_000));
+
+        List<ConversationEvent> updates = await ConversationEvents.CollectAsync(session.StreamAsync(request));
+
+        Assert.Equal("收到", Assert.IsType<ConversationCompleted>(updates[^1]).Text);
+        ChatMessage user = Assert.Single(Assert.Single(llm.Prompts), message => message.Role == ChatRole.User);
+        Assert.Equal("你好", Assert.IsType<TextContent>(Assert.Single(user.Content)).Text);
+    }
+
+    [Fact]
     public async Task SecondTurnPromptContainsCommittedFirstTurn()
     {
         var llm = new RecordingLlmService { ResponseText = "第一答" };

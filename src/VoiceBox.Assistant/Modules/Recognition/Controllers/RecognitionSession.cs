@@ -1,3 +1,5 @@
+using System.Buffers;
+
 namespace VoiceBox.Assistant.Modules.Recognition.Controllers;
 
 internal sealed class RecognitionSession
@@ -5,6 +7,7 @@ internal sealed class RecognitionSession
     private readonly object _lock = new();
     private readonly Queue<float[]> _bootstrapAudio = new();
     private readonly Queue<float[]> _pendingAudio = new();
+    private ArrayBufferWriter<float>? _capturedAudio;
     private string? _providerSessionId;
     private bool _finishing;
     private bool _terminal;
@@ -13,7 +16,7 @@ internal sealed class RecognitionSession
     private int _drainActive;
     private int _directFeedActive;
 
-    public RecognitionSession(long turnId, long operationId)
+    public RecognitionSession(long turnId, long operationId, bool captureAudio = false)
     {
         if (turnId <= 0)
             throw new ArgumentOutOfRangeException(nameof(turnId));
@@ -22,6 +25,7 @@ internal sealed class RecognitionSession
 
         TurnId = turnId;
         OperationId = operationId;
+        _capturedAudio = captureAudio ? new ArrayBufferWriter<float>() : null;
     }
 
     public long TurnId { get; }
@@ -62,6 +66,7 @@ internal sealed class RecognitionSession
         lock (_lock)
         {
             _audioFeedFailure ??= failure;
+            _capturedAudio = null;
             _finishing = true;
             _bootstrapAudio.Clear();
             _pendingAudio.Clear();
@@ -181,6 +186,22 @@ internal sealed class RecognitionSession
         }
     }
 
+    internal void CaptureForwardedAudio(ReadOnlySpan<float> audio)
+    {
+        lock (_lock)
+            _capturedAudio?.Write(audio);
+    }
+
+    internal ReadOnlyMemory<float> TakeAudioSnapshot()
+    {
+        lock (_lock)
+        {
+            ReadOnlyMemory<float> samples = _capturedAudio?.WrittenMemory ?? default;
+            _capturedAudio = null;
+            return samples;
+        }
+    }
+
     internal void EndDirectFeed()
         => Volatile.Write(ref _directFeedActive, 0);
 
@@ -233,6 +254,7 @@ internal sealed class RecognitionSession
         lock (_lock)
         {
             _terminal = true;
+            _capturedAudio = null;
             _finishing = true;
             _bootstrapAudio.Clear();
             _pendingAudio.Clear();

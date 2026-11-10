@@ -4,7 +4,6 @@ using VoiceBox.Assistant.Modules.BargeIn.Controllers;
 using VoiceBox.Assistant.Modules.Recognition.Controllers;
 using VoiceBox.Assistant.Modules.Wakeup.Models;
 using VoiceBox.Assistant.Runtime.Control.Contracts;
-using VoiceBox.Assistant.Runtime.TurnContext.Contracts;
 
 namespace VoiceBox.Assistant.Runtime.TurnContext;
 
@@ -19,14 +18,14 @@ internal sealed class TurnObservationRelease
     private readonly RecognitionTurnOwner _recognitionTurn;
     private readonly BargeInValidationTurnOwner _validation;
     private readonly SpeechCandidateOwner _candidates;
-    private readonly ITurnResourcePort _resources;
+    private readonly ITurnResource _resources;
 
     public TurnObservationRelease(
         ITurnStateView turnState,
         RecognitionTurnOwner recognitionTurn,
         BargeInValidationTurnOwner validation,
         SpeechCandidateOwner candidates,
-        ITurnResourcePort resources)
+        ITurnResource resources)
     {
         _turnState = turnState ?? throw new ArgumentNullException(nameof(turnState));
         _recognitionTurn = recognitionTurn ?? throw new ArgumentNullException(nameof(recognitionTurn));
@@ -103,7 +102,7 @@ internal sealed class TurnObservationRelease
 
         if (decision.ResponseToCancel is not null)
             _resources.TryRemoveResponseCts(decision.ResponseToCancel);
-        if (_resources.TryGet(_turnState.TurnId, out TurnResourceSlot slot))
+        if (_resources.TryGet(_turnState.TurnId, out TurnResources slot))
             slot.ResponseCts = null;
         _recognitionTurn.PrepareTurn();
         _validation.Clear();
@@ -112,5 +111,5 @@ internal sealed class TurnObservationRelease
     }
 
     private CancellationTokenSource? PeekResponseCts(long turnId)
-        => _resources.TryGet(turnId, out TurnResourceSlot slot) ? slot.ResponseCts : null;
+        => _resources.TryGet(turnId, out TurnResources slot) ? slot.ResponseCts : null;
 }

@@ -4,7 +4,7 @@ using VoiceBox.Assistant.Modules.BargeIn.Models;
 using VoiceBox.Assistant.Modules.Recognition.Contracts;
 using VoiceBox.Assistant.Modules.TurnBoundary.Models;
 using VoiceBox.Assistant.Runtime.Control.Contracts;
-using VoiceBox.Assistant.Runtime.TurnContext.Contracts;
+using VoiceBox.Assistant.Runtime.TurnContext;
 
 namespace VoiceBox.Assistant.Modules.BargeIn.Controllers;
 
@@ -20,14 +20,14 @@ internal sealed class ConfirmedBargeInApplier
     private readonly SpeechCandidateOwner _candidates;
     private readonly BargeInValidationTurnOwner _validation;
     private readonly IRecognitionTurnLifecyclePort _recognitionTurn;
-    private readonly ITurnResourcePort _resources;
+    private readonly ITurnResource _resources;
 
     public ConfirmedBargeInApplier(
         ITurnStateView turnState,
         SpeechCandidateOwner candidates,
         BargeInValidationTurnOwner validation,
         IRecognitionTurnLifecyclePort recognitionTurn,
-        ITurnResourcePort resources)
+        ITurnResource resources)
     {
         _turnState = turnState ?? throw new ArgumentNullException(nameof(turnState));
         _candidates = candidates ?? throw new ArgumentNullException(nameof(candidates));

@@ -11,7 +11,6 @@ using VoiceBox.Assistant.Runtime;
 using VoiceBox.Assistant.Runtime.Control.Contracts;
 using VoiceBox.Assistant.Runtime.Gates;
 using VoiceBox.Assistant.Runtime.TurnContext;
-using VoiceBox.Assistant.Runtime.TurnContext.Contracts;
 using Xunit;
 
 namespace VoiceBox.Assistant.Tests;
@@ -25,7 +24,7 @@ internal sealed class AssistantTurnObservationStoreHarness
 {
     private readonly HarnessTurnState _turnState = new();
     private readonly TurnContextStore _turnContexts;
-    private readonly ITurnResourcePort _resources;
+    private readonly ITurnResource _resources;
     private readonly SpeechCandidateOwner _candidates;
     private readonly BargeInValidationTurnOwner _validation;
     private readonly TestRecognitionCaptureOwner _recognitionCapture;
@@ -86,7 +85,7 @@ internal sealed class AssistantTurnObservationStoreHarness
 
     public long ValidationTurnId => _validation.ValidationTurnId;
 
-    public ITurnResourcePort Resources => _resources;
+    public ITurnResource Resources => _resources;
 
     /// <summary>
     /// Forces validation ownership the way a mutation test needs it, without going through the
@@ -399,7 +398,7 @@ internal sealed class AssistantTurnObservationStoreHarness
     public bool TryClearResponseCtsForTurn(long turnId, CancellationTokenSource responseCts)
     {
         ArgumentNullException.ThrowIfNull(responseCts);
-        TurnResourceSlot slot = _resources.GetOrCreate(turnId);
+        TurnResources slot = _resources.GetOrCreate(turnId);
         if (!_turnState.IsCurrentTurn(turnId) || !ReferenceEquals(slot.ResponseCts, responseCts))
             return false;
 

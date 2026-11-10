@@ -24,6 +24,7 @@ internal sealed class RecognitionModule :
     private readonly IRecognitionProviderAdapter _provider;
     private readonly IRecognitionControlSignalPort _control;
     private readonly ILogger _logger;
+    private readonly IRecognitionAudioSnapshot? _audioSnapshots;
     private readonly object _lock = new();
     private readonly Dictionary<long, RecognitionSession> _sessionsByTurn = [];
     private readonly Dictionary<long, Queue<float[]>> _pendingAudioByTurn = [];
@@ -39,11 +40,16 @@ internal sealed class RecognitionModule :
     private int _audioWakeupPending;
     private int _audioPumpStarted;
 
-    public RecognitionModule(IRecognitionProviderAdapter provider, IRecognitionControlSignalPort control, ILogger logger)
+    public RecognitionModule(
+        IRecognitionProviderAdapter provider,
+        IRecognitionControlSignalPort control,
+        ILogger logger,
+        IRecognitionAudioSnapshot? audioSnapshots = null)
     {
         _provider = provider ?? throw new ArgumentNullException(nameof(provider));
         _control = control ?? throw new ArgumentNullException(nameof(control));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _audioSnapshots = audioSnapshots;
     }
 
     public async Task PrepareAsync(long turnId, long operationId, CancellationToken cancellationToken)
@@ -56,7 +62,7 @@ internal sealed class RecognitionModule :
             if (_sessionsByTurn.ContainsKey(turnId))
                 return;
 
-            session = new RecognitionSession(turnId, operationId);
+            session = new RecognitionSession(turnId, operationId, captureAudio: _audioSnapshots is not null);
             _sessionsByTurn.Add(turnId, session);
             if (_pendingAudioByTurn.Remove(turnId, out Queue<float[]>? pending))
             {
@@ -170,6 +176,7 @@ internal sealed class RecognitionModule :
             try
             {
                 _provider.FeedAudio(sessionId, audio);
+                session.CaptureForwardedAudio(audio);
             }
             catch (Exception ex)
             {
@@ -830,6 +837,8 @@ internal sealed class RecognitionModule :
             if (session.AudioFeedFailure is { } feedFailure)
                 throw new InvalidOperationException("ASR audio feed failed.", feedFailure);
             string text = AsrTextNormalizer.Sanitize(rawText);
+            if (!string.IsNullOrEmpty(text))
+                _audioSnapshots?.Store(session.TurnId, session.TakeAudioSnapshot());
             return new RecognitionOutcome(
                 session.TurnId,
                 session.OperationId,
@@ -983,7 +992,10 @@ internal sealed class RecognitionModule :
         try
         {
             while (session.TryDequeue(out float[] audio))
+            {
                 _provider.FeedAudio(sessionId, audio);
+                session.CaptureForwardedAudio(audio);
+            }
         }
         catch (Exception ex)
         {

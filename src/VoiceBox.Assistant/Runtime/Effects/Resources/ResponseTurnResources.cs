@@ -5,7 +5,6 @@ using VoiceBox.Assistant.Runtime.Control.State;
 using VoiceBox.Assistant.Runtime.Effects.Contracts;
 using VoiceBox.Assistant.Runtime.Lifecycle.Controllers;
 using VoiceBox.Assistant.Runtime.TurnContext;
-using VoiceBox.Assistant.Runtime.TurnContext.Contracts;
 
 namespace VoiceBox.Assistant.Runtime.Effects.Resources;
 
@@ -17,7 +16,7 @@ namespace VoiceBox.Assistant.Runtime.Effects.Resources;
 internal sealed class ResponseTurnResources : IResponseTurnResourcePort
 {
     private readonly TurnContextStore _turnContexts;
-    private readonly ITurnResourcePort _resources;
+    private readonly ITurnResource _resources;
     private readonly ITurnStateView _turnState;
     private readonly ControlOperationRegistry _operations;
     private readonly ControlPlaneAvailability _availability;
@@ -26,7 +25,7 @@ internal sealed class ResponseTurnResources : IResponseTurnResourcePort
 
     public ResponseTurnResources(
         TurnContextStore turnContexts,
-        ITurnResourcePort resources,
+        ITurnResource resources,
         ITurnStateView turnState,
         ControlOperationRegistry operations,
         ControlPlaneAvailability availability,
@@ -63,7 +62,7 @@ internal sealed class ResponseTurnResources : IResponseTurnResourcePort
     public void ReleaseResponseContext(long turnId, CancellationTokenSource responseCts)
     {
         ArgumentNullException.ThrowIfNull(responseCts);
-        TurnResourceSlot slot = _resources.GetOrCreate(turnId);
+        TurnResources slot = _resources.GetOrCreate(turnId);
         if (_turnState.IsCurrentTurn(turnId) && ReferenceEquals(slot.ResponseCts, responseCts))
             slot.ResponseCts = null;
 

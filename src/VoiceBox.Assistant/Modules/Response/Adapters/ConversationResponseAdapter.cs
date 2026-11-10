@@ -23,15 +23,24 @@ internal sealed class ConversationProtocolException(string message) : Exception(
 internal sealed class ConversationResponseAdapter
 {
     private readonly IConversationSession _conversation;
+    private readonly int _sampleRate;
+    private readonly int _channels;
     private readonly ConcurrentDictionary<Guid, TaskCompletionSource> _pendingForeground = new();
 
-    public ConversationResponseAdapter(IConversationSession conversation)
-        => _conversation = conversation ?? throw new ArgumentNullException(nameof(conversation));
+    public ConversationResponseAdapter(IConversationSession conversation, int sampleRate, int channels)
+    {
+        _conversation = conversation ?? throw new ArgumentNullException(nameof(conversation));
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sampleRate);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(channels);
+        _sampleRate = sampleRate;
+        _channels = channels;
+    }
 
     public string ConversationId => _conversation.ConversationId;
 
     public async IAsyncEnumerable<ConversationTurnEvent> StreamAsync(
         string text,
+        ReadOnlyMemory<float> audio,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         Guid requestId = Guid.NewGuid();
@@ -41,8 +50,11 @@ internal sealed class ConversationResponseAdapter
         var visible = new StringBuilder();
         try
         {
+            ConversationAudio? snapshot = audio.IsEmpty
+                ? null
+                : new ConversationAudio(audio.Span, _sampleRate, _channels);
             await foreach (ConversationEvent update in _conversation
-                .StreamAsync(new ConversationRequest(requestId, text), cancellationToken)
+                .StreamAsync(new ConversationRequest(requestId, text, snapshot), cancellationToken)
                 .WithCancellation(cancellationToken)
                 .ConfigureAwait(false))
             {

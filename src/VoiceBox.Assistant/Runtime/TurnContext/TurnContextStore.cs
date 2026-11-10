@@ -1,17 +1,17 @@
 using VoiceBox.Assistant.Runtime.Gates;
-using VoiceBox.Assistant.Runtime.TurnContext.Contracts;
+using VoiceBox.Assistant.Modules.Recognition.Contracts;
 
 namespace VoiceBox.Assistant.Runtime.TurnContext;
 
 /// <summary>
-/// Runtime-owned resources for active turns. This store tracks operation/session ownership only;
-/// semantic state transitions remain decisions returned by the pure TurnKernel.
+/// Runtime-owned resources for active turns: operations, sessions and the recognized audio waiting
+/// for response handoff. Semantic state transitions remain decisions returned by the pure TurnKernel.
 /// </summary>
-internal sealed class TurnContextStore : IDisposable, ITurnResourcePort
+internal sealed class TurnContextStore : IDisposable, ITurnResource, IRecognitionAudioSnapshot
 {
     private readonly object _lock = new();
     private readonly Dictionary<long, TurnContext> _contexts = [];
-    private readonly TurnResourceSlot _preTurnResources = new();
+    private readonly TurnResources _preTurnResources = new();
     private readonly OperationCorrelationGate _correlation;
     private int _disposed;
 
@@ -51,7 +51,7 @@ internal sealed class TurnContextStore : IDisposable, ITurnResourcePort
         }
     }
 
-    TurnResourceSlot ITurnResourcePort.GetOrCreate(long turnId)
+    TurnResources ITurnResource.GetOrCreate(long turnId)
     {
         if (turnId < 0)
             throw new ArgumentOutOfRangeException(nameof(turnId));
@@ -72,7 +72,7 @@ internal sealed class TurnContextStore : IDisposable, ITurnResourcePort
         }
     }
 
-    bool ITurnResourcePort.TryGet(long turnId, out TurnResourceSlot slot)
+    bool ITurnResource.TryGet(long turnId, out TurnResources slot)
     {
         if (turnId < 0)
         {
@@ -126,11 +126,11 @@ internal sealed class TurnContextStore : IDisposable, ITurnResourcePort
         _correlation.ForgetTurn(turnId);
     }
 
-    bool ITurnResourcePort.TryRemoveResponseCts(CancellationTokenSource responseCts)
+    bool ITurnResource.TryRemoveResponseCts(CancellationTokenSource responseCts)
     {
         lock (_lock)
         {
-            foreach (TurnResourceSlot slot in _contexts.Values
+            foreach (TurnResources slot in _contexts.Values
                 .Select(static context => context.Resources)
                 .Append(_preTurnResources))
             {
@@ -143,6 +143,27 @@ internal sealed class TurnContextStore : IDisposable, ITurnResourcePort
             }
 
             return false;
+        }
+    }
+
+    void IRecognitionAudioSnapshot.Store(long turnId, ReadOnlyMemory<float> samples)
+    {
+        lock (_lock)
+        {
+            if (_contexts.TryGetValue(turnId, out TurnContext? context))
+                context.RecognitionAudio = samples;
+        }
+    }
+
+    public ReadOnlyMemory<float> TakeRecognitionAudio(long turnId)
+    {
+        lock (_lock)
+        {
+            if (!_contexts.TryGetValue(turnId, out TurnContext? context))
+                return default;
+            ReadOnlyMemory<float> samples = context.RecognitionAudio;
+            context.RecognitionAudio = default;
+            return samples;
         }
     }
 
@@ -280,9 +301,10 @@ internal sealed class TurnContextStore : IDisposable, ITurnResourcePort
     private sealed class TurnContext
     {
         public OperationResource? AsrSession { get; set; }
-        public TurnResourceSlot Resources { get; } = new();
+        public TurnResources Resources { get; } = new();
         public string? RawRecognitionText { get; set; }
         public TimeSpan SpeechDuration { get; set; }
+        public ReadOnlyMemory<float> RecognitionAudio { get; set; }
     }
 
     private sealed class OperationResource(long operationId, string value)

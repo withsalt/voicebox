@@ -18,7 +18,6 @@ using VoiceBox.Assistant.Runtime.Control.Models;
 using VoiceBox.Assistant.Runtime.Gates;
 using VoiceBox.Assistant.Runtime.Lifecycle.Controllers;
 using VoiceBox.Assistant.Runtime.TurnContext;
-using VoiceBox.Assistant.Runtime.TurnContext.Contracts;
 
 namespace VoiceBox.Assistant.Modules.BargeIn.Controllers;
 
@@ -40,7 +39,7 @@ internal sealed class BargeInTurnCoordinator :
     private readonly BargeInDecisionJournal _journal;
     private readonly IPlaybackInterruptionPort _playbackInterruption;
     private readonly TurnContextStore _turnContexts;
-    private readonly ITurnResourcePort _resources;
+    private readonly ITurnResource _resources;
     // Bound by composition once the recognition owner exists; see BindRecognition.
     private IRecognitionPreparationPort? _boundRecognitionPreparation;
     private readonly AssistantControlSignalGateway _controlSignals;
@@ -68,7 +67,7 @@ internal sealed class BargeInTurnCoordinator :
         BargeInDecisionJournal journal,
         IPlaybackInterruptionPort playbackInterruption,
         TurnContextStore turnContexts,
-        ITurnResourcePort resources,
+        ITurnResource resources,
         AssistantControlSignalGateway controlSignals,
         RuntimeRunScope runScope,
         InputGate gate,

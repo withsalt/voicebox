@@ -58,13 +58,10 @@ namespace VoiceAssistantDemo
                     MinimumSpeechMs = 300,
                 },
             };
-            using var calibrationStimulus = new TtsCalibrationStimulusPlayer(
-                services.Audio,
-                tts,
-                ttsVoiceName,
-                AudioDefaults.TtsSpeed);
             if (speakerOptions.Confirmation.Enable)
             {
+                using var calibrationStimulus = new TtsCalibrationStimulusPlayer(services.Audio, tts, ttsVoiceName, AudioDefaults.TtsSpeed);
+
                 // 注册使用与在线验证相同的 identity tap 和前端指纹，包含受控双讲校准。
                 var enrollment = new SpeakerEnrollmentCoordinator(
                     services.Audio,

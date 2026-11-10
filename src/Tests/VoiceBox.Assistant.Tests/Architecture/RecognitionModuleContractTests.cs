@@ -136,6 +136,61 @@ public sealed class RecognitionModuleContractTests
     }
 
     [Fact]
+    public async Task CompletedTurnSnapshotPreservesQueuedAndDirectAudioExactlyOnce()
+    {
+        var provider = new RecordingRecognitionProvider();
+        var snapshots = new RecordingAudioSnapshotSink();
+        var module = new RecognitionModule(
+            provider, new RecordingRecognitionControlPort(), NullLogger.Instance, snapshots);
+        Task prepare = module.PrepareAsync(7, 1, CancellationToken.None);
+        float[] pending = [0.1f, 0.2f];
+        Assert.True(module.TryFeedAudio(7, pending));
+        Array.Clear(pending);
+        provider.CompleteStart("audio-snapshot");
+        await prepare;
+        provider.OnFeed = audio =>
+        {
+            if (audio[0] == 0.3f)
+                Assert.True(module.TryFeedAudio(7, [0.4f]));
+        };
+        float[] direct = [0.3f];
+        Assert.True(module.TryFeedAudio(7, direct));
+        Array.Clear(direct);
+
+        await module.FinishAsync(7, "audio-snapshot", TimeSpan.Zero, CancellationToken.None);
+        await module.FinishAsync(7, "audio-snapshot", TimeSpan.Zero, CancellationToken.None);
+
+        (long turnId, ReadOnlyMemory<float> samples) = Assert.Single(snapshots.Items);
+        Assert.Equal(7, turnId);
+        Assert.Equal([0.1f, 0.2f, 0.3f, 0.4f], samples.ToArray());
+        Assert.Equal(1, provider.FinishCount);
+    }
+
+    [Fact]
+    public async Task FailedRecognitionDoesNotPublishAnAudioSnapshot()
+    {
+        var provider = new RecordingRecognitionProvider { ImmediateSessionId = "failed-audio" };
+        var snapshots = new RecordingAudioSnapshotSink();
+        var module = new RecognitionModule(
+            provider, new RecordingRecognitionControlPort(), NullLogger.Instance, snapshots);
+        await module.PrepareAsync(1, 1, CancellationToken.None);
+        provider.OnFeed = _ => throw new InvalidOperationException("feed failed");
+        Assert.Throws<InvalidOperationException>(() => module.TryFeedAudio(1, [0.1f]));
+
+        RecognitionOutcome outcome = await module.FinishAsync(1, "failed-audio", TimeSpan.Zero, CancellationToken.None);
+
+        Assert.Equal(RecognitionOutcomeKind.Failed, outcome.Kind);
+        Assert.Empty(snapshots.Items);
+    }
+
+    private sealed class RecordingAudioSnapshotSink : IRecognitionAudioSnapshot
+    {
+        public List<(long TurnId, ReadOnlyMemory<float> Samples)> Items { get; } = [];
+
+        public void Store(long turnId, ReadOnlyMemory<float> samples) => Items.Add((turnId, samples));
+    }
+
+    [Fact]
     public async Task Prepare_BootstrapAudioPrecedesCaptureFramesQueuedWhileProviderStarts()
     {
         var provider = new RecordingRecognitionProvider();
@@ -182,6 +237,7 @@ public sealed class RecognitionModuleContractTests
     {
         var provider = new RecordingRecognitionProvider();
         var control = new RecordingRecognitionControlPort();
+        var snapshots = new RecordingAudioSnapshotSink();
         long nextOperationId = 0;
         RecognitionModule? module = null;
         control.OnRecognitionStarted = (turnId, _, sessionId) =>
@@ -208,7 +264,8 @@ public sealed class RecognitionModuleContractTests
         module = new RecognitionModule(
             provider,
             control,
-            NullLogger.Instance);
+            NullLogger.Instance,
+            snapshots);
         module.PrepareCaptureTurn(7);
 
         Task prepare = module.PrepareAsync(7, Interlocked.Increment(ref nextOperationId), CancellationToken.None);
@@ -231,6 +288,7 @@ public sealed class RecognitionModuleContractTests
         Assert.Equal(
             ["start", "feed:0.1", "feed:0.2", "feed:0.3", "finish"],
             provider.Trace);
+        Assert.Equal([0.1f, 0.2f, 0.3f], Assert.Single(snapshots.Items).Samples.ToArray());
     }
 
     [Fact]
@@ -873,7 +931,8 @@ public sealed class RecognitionModuleContractTests
     public async Task Finish_CancellationBeforeProviderFinishStillReleasesSession(bool feedInFlight)
     {
         var provider = new RecordingRecognitionProvider { ImmediateSessionId = "cancelled-session" };
-        var module = new RecognitionModule(provider, new RecordingRecognitionControlPort(), NullLogger.Instance);
+        var snapshots = new RecordingAudioSnapshotSink();
+        var module = new RecognitionModule(provider, new RecordingRecognitionControlPort(), NullLogger.Instance, snapshots);
         await module.PrepareAsync(1, 1, CancellationToken.None);
         using var cancellation = new CancellationTokenSource();
         using var feedRelease = new ManualResetEventSlim(false);
@@ -899,6 +958,7 @@ public sealed class RecognitionModuleContractTests
             RecognitionOutcome outcome = await finish.WaitAsync(TimeSpan.FromSeconds(2));
             Assert.Equal(RecognitionOutcomeKind.Cancelled, outcome.Kind);
             Assert.Null(outcome.RawText);
+            Assert.Empty(snapshots.Items);
             Assert.Equal(1, provider.FinishCount);
             Assert.Equal(0, PrivateCollectionCount(module, "_sessionsByProviderId"));
             Assert.Equal(outcome, await module.FinishAsync(1, "cancelled-session", TimeSpan.Zero, CancellationToken.None));

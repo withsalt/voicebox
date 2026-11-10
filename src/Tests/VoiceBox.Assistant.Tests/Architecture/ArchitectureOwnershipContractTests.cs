@@ -13,7 +13,7 @@ using VoiceBox.Assistant.Runtime.Effects.Execution;
 using VoiceBox.Assistant.Runtime.Effects.Handlers;
 using VoiceBox.Assistant.Runtime.Gates;
 using VoiceBox.Assistant.Runtime.Lifecycle.Controllers;
-using VoiceBox.Assistant.Runtime.TurnContext.Contracts;
+using VoiceBox.Assistant.Runtime.TurnContext;
 using VoiceBox.Core.Services.AcousticProcessing;
 using VoiceBox.Core.Services.AECService;
 using Xunit;
@@ -425,7 +425,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         FieldInfo[] routerFields = recognitionRouter.GetFields(
             BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.DoesNotContain(routerFields, field => field.FieldType == typeof(ITurnResourcePort));
+        Assert.DoesNotContain(routerFields, field => field.FieldType == typeof(ITurnResource));
         Assert.DoesNotContain(routerFields, field => field.FieldType == typeof(CancellationTokenSource));
         Assert.DoesNotContain(routerFields, field =>
             field.FieldType == typeof(List<float[]>) ||
@@ -450,7 +450,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.Contains(validationFields, field => field.Name == "_responseCts");
         Assert.Contains(validationFields, field => field.Name == "_pendingAudio");
-        Assert.DoesNotContain(validationFields, field => field.FieldType == typeof(ITurnResourcePort));
+        Assert.DoesNotContain(validationFields, field => field.FieldType == typeof(ITurnResource));
     }
 
     /// <summary>

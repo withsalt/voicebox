@@ -709,7 +709,10 @@ public interface IConversationSession : IAsyncDisposable
 }
 ```
 
-- `ConversationRequest` 只包含调用方生成的 `RequestId` 和本轮文字；不包含 prompt、历史、模型参数或音频时间线。
+- `ConversationRequest` 包含调用方生成的 `RequestId`、本轮文字和可选的 `ConversationAudio` 快照。
+  音频为本轮送入 ASR 的 Float32 PCM，携带采样率和声道数；纯文字输入时为 null。
+  请求不包含 prompt、历史、模型参数或音频时间线。快照独立持有采样数据，可在请求完成后继续使用；
+  Assistant 只保留活动轮次的音频，跨轮记忆和音频存储由会话实现负责。
 - 一次正常请求输出零个或多个 `ConversationTextDelta` / `ConversationThinkingDelta`，随后恰好一个 `ConversationCompleted`，之后结束。
 - `ConversationCompleted.Text` 等于本轮全部可见文字增量的顺序拼接，不含思考、工具参数或原始结果；空回复和仅思考也输出 `Completed("")`。
 - 故障通过异步枚举异常传播，取消使用 `OperationCanceledException`；没有另一套 Failed/Cancelled DTO。
