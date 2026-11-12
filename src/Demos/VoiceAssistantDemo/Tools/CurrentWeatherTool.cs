@@ -107,34 +107,33 @@ internal sealed partial class CurrentWeatherTool : IConversationTool
         executionPrompt: "正在查询，请稍后",
         timeout: TimeSpan.FromSeconds(20));
 
-    public async ValueTask<ConversationToolExecutionResult> ExecuteAsync(
-        ConversationToolInvocation invocation,
-        CancellationToken cancellationToken)
+    public async ValueTask<ConversationToolResult> ExecuteAsync(ConversationToolCall call, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(invocation);
+        ArgumentNullException.ThrowIfNull(call);
         try
         {
-            WeatherToolArguments arguments = ParseArguments(invocation.Arguments);
+            WeatherToolArguments arguments = ParseArguments(call.Arguments);
             WeatherPosition position = await ResolvePositionAsync(arguments, cancellationToken).ConfigureAwait(false);
             CurrentWeatherReport report = await _client.QueryCurrentWeatherAsync(position, cancellationToken).ConfigureAwait(false);
-            return ConversationToolExecutionResult.Success(CreateSpokenSummary(report), JsonSerializer.Serialize(report, JsonOptions));
+            return ConversationToolResult.Success(CreateSpokenSummary(report), JsonSerializer.Serialize(report, JsonOptions));
         }
         catch (WeatherLocationException exception)
         {
-            return ConversationToolExecutionResult.Error("weather_location_invalid", exception.Message);
+            return ConversationToolResult.Error("weather_location_invalid", exception.Message);
         }
         catch (BaiduWeatherApiException exception)
         {
             string message = exception.IsIpLocationRequest ? "无法通过公网 IP 确定当前位置，请让用户明确提供城市或区县。" : $"天气服务暂时不可用（状态码 {exception.Status}）。";
-            return ConversationToolExecutionResult.Error("weather_api_error", message);
+            return ConversationToolResult.Error("weather_api_error", message);
         }
         catch (HttpRequestException)
         {
-            return ConversationToolExecutionResult.Error("weather_network_error", "天气服务网络请求失败，请稍后重试。");
+            // 网络故障是瞬时的: 标记后, 会话会对这个只读工具自动重试。
+            return ConversationToolResult.Error("weather_network_error", "天气服务网络请求失败，请稍后重试。", isTransient: true);
         }
         catch (JsonException)
         {
-            return ConversationToolExecutionResult.Error("weather_response_invalid", "天气服务返回了无法识别的数据。");
+            return ConversationToolResult.Error("weather_response_invalid", "天气服务返回了无法识别的数据。");
         }
     }
 

@@ -73,7 +73,7 @@ public sealed class McpToolProviderTests
 
         ConversationToolResult first = await provider.InvokeAsync(EchoCall("one"));
         Assert.Equal(ConversationToolResultKind.Success, first.Kind);
-        Assert.Contains("echo:one", first.ValueJson, StringComparison.Ordinal);
+        Assert.Contains("echo:one", first.Content, StringComparison.Ordinal);
         await provider.StopAsync();
 
         await provider.StartAsync();
@@ -81,7 +81,7 @@ public sealed class McpToolProviderTests
         {
             ConversationToolResult second = await provider.InvokeAsync(EchoCall("two"));
             Assert.Equal(ConversationToolResultKind.Success, second.Kind);
-            Assert.Contains("echo:two", second.ValueJson, StringComparison.Ordinal);
+            Assert.Contains("echo:two", second.Content, StringComparison.Ordinal);
         }
         finally
         {
@@ -134,13 +134,14 @@ public sealed class McpToolProviderTests
         ConversationToolResult result = await provider.InvokeAsync(call, cancellation.Token);
 
         Assert.False(cancellation.IsCancellationRequested);
-        Assert.Equal(call.CallId, result.CallId);
         Assert.Equal(expectedKind, result.Kind);
         Assert.Equal("timeout", result.ErrorCode);
+        // Only a timeout that cannot have changed anything is offered for a retry.
+        Assert.Equal(expectedKind == ConversationToolResultKind.TimedOut, result.IsTransient);
 
         ConversationToolResult next = await provider.InvokeAsync(EchoCall("after-timeout"), cancellation.Token);
         Assert.Equal(ConversationToolResultKind.Success, next.Kind);
-        Assert.Contains("echo:after-timeout", next.ValueJson, StringComparison.Ordinal);
+        Assert.Contains("echo:after-timeout", next.Content, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -300,7 +301,7 @@ public sealed class McpToolProviderTests
             ConversationToolDefinition echo = Assert.Single(tools, tool => tool.Id.ToolName == "echo");
             var call = new ConversationToolCall(request.RequestId.ToString("N"), echo.Id, $$"""{"text":"{{request.Text}}"}""");
             ConversationToolResult result = await provider.InvokeAsync(call, cancellationToken);
-            string text = result.ValueJson ?? string.Empty;
+            string text = result.Content;
 
             yield return new ConversationTextDelta(text);
             yield return new ConversationCompleted(text);

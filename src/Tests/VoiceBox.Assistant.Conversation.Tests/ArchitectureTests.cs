@@ -41,8 +41,6 @@ public sealed class ArchitectureTests
             typeof(ConversationToolId),
             typeof(ConversationToolDescriptor),
             typeof(ConversationToolDefinition),
-            typeof(ConversationToolInvocation),
-            typeof(ConversationToolExecutionResult),
             typeof(ConversationToolCall),
             typeof(ConversationToolResult),
             typeof(ConversationToolResultKind),
@@ -53,6 +51,24 @@ public sealed class ArchitectureTests
 
         Assert.All(toolContracts, type => Assert.Same(abstractions, type.Assembly));
         Assert.Equal("VoiceBox.Assistant.Conversation.Abstractions.Tools", typeof(IConversationTool).Namespace);
+    }
+
+    [Fact]
+    public void LocalToolsToolProvidersAndApprovalShareOneCallAndOneResultType()
+    {
+        MethodInfo execute = typeof(IConversationTool).GetMethod(nameof(IConversationTool.ExecuteAsync))!;
+        MethodInfo invoke = typeof(IConversationToolProvider).GetMethod(nameof(IConversationToolProvider.InvokeAsync))!;
+
+        Assert.Equal(typeof(ConversationToolCall), execute.GetParameters()[0].ParameterType);
+        Assert.Equal(typeof(ConversationToolCall), invoke.GetParameters()[0].ParameterType);
+        Assert.Equal(typeof(ValueTask<ConversationToolResult>), execute.ReturnType);
+        Assert.Equal(typeof(ValueTask<ConversationToolResult>), invoke.ReturnType);
+        PropertyInfo approvedCall = typeof(ConversationToolApprovalContext).GetProperty(nameof(ConversationToolApprovalContext.Call))!;
+        Assert.Equal(typeof(ConversationToolCall), approvedCall.PropertyType);
+
+        string[] toolTypeNames = typeof(IConversationTool).Assembly.GetExportedTypes().Select(static type => type.Name).ToArray();
+        Assert.DoesNotContain("ConversationToolInvocation", toolTypeNames);
+        Assert.DoesNotContain("ConversationToolExecutionResult", toolTypeNames);
     }
 
     [Fact]

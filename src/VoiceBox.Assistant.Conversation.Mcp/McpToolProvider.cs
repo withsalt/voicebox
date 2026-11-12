@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using ModelContextProtocol;
 using ModelContextProtocol.Client;
@@ -21,6 +22,8 @@ namespace VoiceBox.Assistant.Conversation.Mcp;
 public sealed class McpToolProvider : IConversationToolProvider, IConversationToolProviderMetadata
 {
     private readonly McpServerRegistration[] _servers;
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly ILogger _logger;
     private readonly Dictionary<ConversationToolId, RegisteredTool> _tools = [];
     private readonly List<McpClient> _clients = [];
     private readonly List<SemaphoreSlim> _serverGates = [];
@@ -28,7 +31,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
     private bool _started;
     private int _disposed;
 
-    private McpToolProvider(IReadOnlyList<McpServerRegistration> servers)
+    private McpToolProvider(IReadOnlyList<McpServerRegistration> servers, ILoggerFactory? loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(servers);
         _servers = servers.ToArray();
@@ -39,24 +42,35 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
             throw new ArgumentException("MCP server aliases must be unique.", nameof(servers));
         }
         ServerAliases = Array.AsReadOnly(_servers.Select(static server => server.Alias).ToArray());
+        _loggerFactory = loggerFactory ?? NullLoggerFactory.Instance;
+        _logger = _loggerFactory.CreateLogger<McpToolProvider>();
     }
 
     /// <summary>创建 stdio MCP 工具来源。</summary>
-    public static McpToolProvider CreateStdio(string alias, Action<StdioMcpServerOptions> configure)
+    /// <param name="alias">工具来源别名。</param>
+    /// <param name="configure">配置 server 选项; 返回后配置即被冻结。</param>
+    /// <param name="loggerFactory">可选。接收 MCP client、transport 与本来源的诊断日志; 未提供时不输出日志。</param>
+    public static McpToolProvider CreateStdio(string alias, Action<StdioMcpServerOptions> configure, ILoggerFactory? loggerFactory = null)
     {
         ArgumentNullException.ThrowIfNull(configure);
         var options = new StdioMcpServerOptions();
         configure(options);
-        return new McpToolProvider([options.Freeze(alias)]);
+        return new McpToolProvider([options.Freeze(alias)], loggerFactory);
     }
 
     /// <summary>创建 Streamable HTTP MCP 工具来源。</summary>
-    public static McpToolProvider CreateStreamableHttp(string alias, Action<StreamableHttpMcpServerOptions> configure)
+    /// <param name="alias">工具来源别名。</param>
+    /// <param name="configure">配置 server 选项; 返回后配置即被冻结。</param>
+    /// <param name="loggerFactory">可选。接收 MCP client、transport 与本来源的诊断日志; 未提供时不输出日志。</param>
+    public static McpToolProvider CreateStreamableHttp(
+        string alias,
+        Action<StreamableHttpMcpServerOptions> configure,
+        ILoggerFactory? loggerFactory = null)
     {
         ArgumentNullException.ThrowIfNull(configure);
         var options = new StreamableHttpMcpServerOptions();
         configure(options);
-        return new McpToolProvider([options.Freeze(alias)]);
+        return new McpToolProvider([options.Freeze(alias)], loggerFactory);
     }
 
     /// <summary>本来源在连接前即可确定的 server 别名。</summary>
@@ -97,13 +111,12 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
 
     public async ValueTask<ConversationToolResult> InvokeAsync(ConversationToolCall call, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(call);
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         if (!_started)
             throw new InvalidOperationException("The MCP tool provider is not started.");
         if (!_tools.TryGetValue(call.ToolId, out RegisteredTool? registered))
-        {
-            return new ConversationToolResult(call.CallId, ConversationToolResultKind.ProtocolError, ErrorCode: "unknown_mcp_tool");
-        }
+            return ConversationToolResult.Failure(ConversationToolResultKind.ProtocolError, "unknown_mcp_tool");
 
         return await ExecuteMcpAsync(registered, call, cancellationToken).ConfigureAwait(false);
     }
@@ -141,11 +154,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
         McpClient client;
         try
         {
-            client = await McpClient.CreateAsync(
-                transport,
-                clientOptions: null,
-                NullLoggerFactory.Instance,
-                connect.Token).ConfigureAwait(false);
+            client = await McpClient.CreateAsync(transport, clientOptions: null, _loggerFactory, connect.Token).ConfigureAwait(false);
         }
         catch
         {
@@ -186,7 +195,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
         }
     }
 
-    private static IClientTransport CreateTransport(McpServerRegistration registration)
+    private IClientTransport CreateTransport(McpServerRegistration registration)
     {
         if (registration.Transport == McpServerTransport.Stdio)
         {
@@ -201,7 +210,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
                 EnvironmentVariables = environment,
                 InheritEnvironmentVariables = false,
                 WorkingDirectory = registration.WorkingDirectory,
-            }, NullLoggerFactory.Instance);
+            }, _loggerFactory);
         }
 
         return new HttpClientTransport(new HttpClientTransportOptions
@@ -211,7 +220,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
             TransportMode = HttpTransportMode.StreamableHttp,
             ConnectionTimeout = registration.ConnectTimeout,
             AdditionalHeaders = new Dictionary<string, string>(registration.Headers),
-        }, NullLoggerFactory.Instance);
+        }, _loggerFactory);
     }
 
     private static async ValueTask<ConversationToolResult> ExecuteMcpAsync(
@@ -219,21 +228,16 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
         ConversationToolCall call,
         CancellationToken cancellationToken)
     {
-        McpClientTool tool = registered.McpTool ?? throw new InvalidOperationException("MCP tool registration has no client tool.");
-        McpServerRegistration server = registered.Server
-            ?? throw new InvalidOperationException("MCP tool registration has no server options.");
-        if (Encoding.UTF8.GetByteCount(call.ArgumentsJson) > server.MaxArgumentBytes)
-        {
-            return new ConversationToolResult(call.CallId, ConversationToolResultKind.ProtocolError, ErrorCode: "arguments_too_large");
-        }
+        McpServerRegistration server = registered.Server;
+        if (Encoding.UTF8.GetByteCount(call.Arguments.GetRawText()) > server.MaxArgumentBytes)
+            return ConversationToolResult.Failure(ConversationToolResultKind.ProtocolError, "arguments_too_large");
 
-        using JsonDocument document = JsonDocument.Parse(string.IsNullOrWhiteSpace(call.ArgumentsJson) ? "{}" : call.ArgumentsJson);
+        // The call owns its arguments, so the property values stay valid for the whole request.
         var arguments = new Dictionary<string, object?>(StringComparer.Ordinal);
-        foreach (JsonProperty property in document.RootElement.EnumerateObject())
-            arguments.Add(property.Name, property.Value.Clone());
+        foreach (JsonProperty property in call.Arguments.EnumerateObject())
+            arguments.Add(property.Name, property.Value);
 
-        SemaphoreSlim executionGate = registered.ExecutionGate
-            ?? throw new InvalidOperationException("MCP tool registration has no execution gate.");
+        SemaphoreSlim executionGate = registered.ExecutionGate;
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(server.RequestTimeout);
         bool acquired = false;
@@ -246,16 +250,15 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
             timeout.Token.ThrowIfCancellationRequested();
             if (server.UseMcpTasks)
             {
-                McpClient client = registered.McpClient ?? throw new InvalidOperationException("MCP task tool registration has no client.");
                 var taskArguments = arguments.ToDictionary(
                     static item => item.Key,
                     static item => (JsonElement)item.Value!,
                     StringComparer.Ordinal);
                 dispatched = true;
-                result = await client.CallToolWithPollingAsync(
+                result = await registered.McpClient.CallToolWithPollingAsync(
                     new CallToolRequestParams
                     {
-                        Name = tool.ProtocolTool.Name,
+                        Name = registered.McpTool.ProtocolTool.Name,
                         Arguments = taskArguments,
                     },
                     server.TaskPollingIntervalMs,
@@ -264,7 +267,7 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
             else
             {
                 dispatched = true;
-                result = await tool.CallAsync(arguments, progress: null, options: null, timeout.Token).ConfigureAwait(false);
+                result = await registered.McpTool.CallAsync(arguments, progress: null, options: null, timeout.Token).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException) when (
@@ -275,38 +278,35 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
                 ConversationToolRisk.SideEffecting or
                 ConversationToolRisk.Destructive or
                 ConversationToolRisk.Privileged;
-            return new ConversationToolResult(
-                call.CallId,
-                unknownOutcome ? ConversationToolResultKind.UnknownOutcome : ConversationToolResultKind.TimedOut,
-                ErrorCode: "timeout");
+            return unknownOutcome
+                ? ConversationToolResult.Failure(ConversationToolResultKind.UnknownOutcome, "timeout")
+                : ConversationToolResult.Failure(ConversationToolResultKind.TimedOut, "timeout", isTransient: true);
         }
         finally
         {
             if (acquired)
                 executionGate.Release();
         }
+
         if (TryDescribeUnsupportedContent(result) is { } unsupported)
         {
-            return new ConversationToolResult(
-                call.CallId,
+            return ConversationToolResult.Failure(
                 ConversationToolResultKind.UnsupportedCapability,
-                unsupported,
-                "unsupported_content_type");
+                "unsupported_content_type",
+                structuredContentJson: unsupported);
         }
 
-        string resultJson = NormalizeMcpResult(result);
-        if (Encoding.UTF8.GetByteCount(resultJson) > server.MaxResultBytes)
+        string text = string.Join("\n", result.Content.OfType<TextContentBlock>().Select(static block => block.Text));
+        string? structured = result.StructuredContent is JsonElement element ? element.GetRawText() : null;
+        if (Encoding.UTF8.GetByteCount(text) > server.MaxResultBytes ||
+            (structured is not null && Encoding.UTF8.GetByteCount(structured) > server.MaxResultBytes))
         {
-            return new ConversationToolResult(call.CallId, ConversationToolResultKind.ProtocolError, ErrorCode: "result_too_large");
+            return ConversationToolResult.Failure(ConversationToolResultKind.ProtocolError, "result_too_large");
         }
 
-        return new ConversationToolResult(
-            call.CallId,
-            result.IsError == true
-                ? ConversationToolResultKind.ToolError
-                : ConversationToolResultKind.Success,
-            resultJson,
-            result.IsError == true ? "mcp_tool_error" : null);
+        return result.IsError == true
+            ? ConversationToolResult.Failure(ConversationToolResultKind.ToolError, "mcp_tool_error", text, structured)
+            : ConversationToolResult.Success(text, structured);
     }
 
     /// <summary>
@@ -333,20 +333,18 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
         });
     }
 
-    private static string NormalizeMcpResult(CallToolResult result)
-    {
-        if (result.StructuredContent is JsonElement structured)
-            return structured.GetRawText();
-
-        string[] text = result.Content.OfType<TextContentBlock>().Select(static block => block.Text).ToArray();
-        return JsonSerializer.Serialize(new { content = string.Join("\n", text) });
-    }
-
     private async Task DisposeClientsAsync()
     {
         for (int index = _clients.Count - 1; index >= 0; index--)
         {
-            try { await _clients[index].DisposeAsync().ConfigureAwait(false); } catch { }
+            try
+            {
+                await _clients[index].DisposeAsync().ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "Closing an MCP client connection failed.");
+            }
         }
         _clients.Clear();
     }
@@ -360,8 +358,8 @@ public sealed class McpToolProvider : IConversationToolProvider, IConversationTo
 
     private sealed record RegisteredTool(
         ConversationToolDefinition Definition,
-        McpClientTool? McpTool,
-        McpClient? McpClient,
-        McpServerRegistration? Server,
-        SemaphoreSlim? ExecutionGate);
+        McpClientTool McpTool,
+        McpClient McpClient,
+        McpServerRegistration Server,
+        SemaphoreSlim ExecutionGate);
 }

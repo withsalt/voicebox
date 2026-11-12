@@ -1,5 +1,4 @@
-﻿using VoiceBox.Assistant.Conversation.Internal.Execution;
-using System.Text.Json;
+﻿using System.Text.Json;
 using VoiceBox.Assistant.Conversation.Abstractions.Tools;
 
 namespace VoiceBox.Assistant.Conversation.Internal.Tools;
@@ -15,8 +14,7 @@ internal static class ToolExecutionPreferenceSchema
     public static string AddTo(string inputSchemaJson, ConversationToolExecutionPolicy policy)
     {
         using JsonDocument document = JsonDocument.Parse(inputSchemaJson);
-        using var buffer = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(buffer))
+        return ModelJson.Write(writer =>
         {
             writer.WriteStartObject();
             bool wroteProperties = false;
@@ -27,9 +25,7 @@ internal static class ToolExecutionPreferenceSchema
                     writer.WritePropertyName("properties");
                     writer.WriteStartObject();
                     foreach (JsonProperty inner in property.Value.EnumerateObject())
-                    {
                         inner.WriteTo(writer);
-                    }
                     WritePreferenceProperty(writer, policy);
                     writer.WriteEndObject();
                     wroteProperties = true;
@@ -48,9 +44,7 @@ internal static class ToolExecutionPreferenceSchema
                 writer.WriteEndObject();
             }
             writer.WriteEndObject();
-        }
-
-        return System.Text.Encoding.UTF8.GetString(buffer.ToArray());
+        });
     }
 
     private static void WritePreferenceProperty(Utf8JsonWriter writer, ConversationToolExecutionPolicy policy)
@@ -82,35 +76,34 @@ internal static class ToolExecutionPreferenceSchema
         writer.WriteEndObject();
     }
 
-    public static (OwnedJsonValue Arguments, ConversationToolExecutionPreference Preference) Extract(
-        OwnedJsonValue arguments,
+    /// <summary>
+    /// Removes the preference from the model's arguments. Arguments that are not a JSON object are returned
+    /// unchanged; argument validation reports them to the model.
+    /// </summary>
+    public static (JsonElement Arguments, ConversationToolExecutionPreference Preference) Extract(
+        JsonElement arguments,
         ConversationToolExecutionPolicy policy)
     {
-        ArgumentNullException.ThrowIfNull(arguments);
-        JsonElement element = arguments.ToJsonElement();
-        if (element.ValueKind != JsonValueKind.Object || !element.TryGetProperty(PropertyName, out JsonElement preferenceElement))
-        {
+        if (arguments.ValueKind != JsonValueKind.Object || !arguments.TryGetProperty(PropertyName, out JsonElement preferenceElement))
             return (arguments, DefaultPreference(policy));
-        }
 
-        using var buffer = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(buffer))
+        string strippedJson = ModelJson.Write(writer =>
         {
             writer.WriteStartObject();
-            foreach (JsonProperty property in element.EnumerateObject())
+            foreach (JsonProperty property in arguments.EnumerateObject())
             {
                 if (!property.NameEquals(PropertyName))
                     property.WriteTo(writer);
             }
             writer.WriteEndObject();
-        }
+        });
+        using JsonDocument stripped = JsonDocument.Parse(strippedJson);
 
-        var stripped = OwnedJsonValue.Parse(System.Text.Encoding.UTF8.GetString(buffer.ToArray()));
         ConversationToolExecutionPreference preference = preferenceElement.ValueKind == JsonValueKind.String &&
             string.Equals(preferenceElement.GetString(), "background", StringComparison.Ordinal)
                 ? ConversationToolExecutionPreference.Background
                 : ConversationToolExecutionPreference.Foreground;
-        return (stripped, Coerce(preference, policy));
+        return (stripped.RootElement.Clone(), Coerce(preference, policy));
     }
 
     private static ConversationToolExecutionPreference DefaultPreference(ConversationToolExecutionPolicy policy) => policy switch

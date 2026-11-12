@@ -122,6 +122,7 @@ namespace VoiceAssistantDemo
 
             // 语音助手自己的会话配置: 朗读/ASR 纠错等语音策略属于 Demo 的业务提示词, 不注入通用会话。
             await using IConversationSession conversation = new ConversationBuilder(services.Llm)
+                .UseLoggerFactory(loggerFactory)
                 .UseOptions(new LlmConversationOptions
                 {
                     SystemPrompt = AudioDefaults.DefaultAssistantPrompt,

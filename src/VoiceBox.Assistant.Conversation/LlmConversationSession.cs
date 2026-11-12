@@ -1,4 +1,5 @@
-﻿using VoiceBox.Assistant.Conversation.Abstractions;
+﻿using Microsoft.Extensions.Logging;
+using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Assistant.Conversation.Internal;
 using VoiceBox.Assistant.Conversation.Internal.Execution;
 using VoiceBox.Assistant.Conversation.Internal.History;
@@ -21,10 +22,11 @@ public sealed class LlmConversationSession : IConversationSession
         string conversationId,
         LlmConversationOptions options,
         IReadOnlyList<IConversationContextProvider> contextProviders,
-        IStreamLLMService service)
+        IStreamLLMService service,
+        ILogger logger)
     {
         var history = new ConversationHistoryStore(options.SystemPrompt, options.MaxHistoryTurns);
-        _core = new ConversationSessionCore(conversationId, history, options, contextProviders, new TextOnlyTurnExecutor(service));
+        _core = new ConversationSessionCore(conversationId, history, options, contextProviders, new TextOnlyTurnExecutor(service), logger);
     }
 
     public string ConversationId => _core.ConversationId;

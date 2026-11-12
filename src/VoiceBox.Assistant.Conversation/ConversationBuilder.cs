@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Core.Services.LLMService;
 
@@ -16,6 +18,7 @@ public sealed class ConversationBuilder
     private LlmConversationOptions _options = new();
     private bool _optionsSpecified;
     private ConversationToolsBuilder? _toolsBuilder;
+    private ILoggerFactory? _loggerFactory;
     private string? _conversationId;
     private int _built;
 
@@ -41,6 +44,19 @@ public sealed class ConversationBuilder
             throw new InvalidOperationException("Conversation options are already registered.");
         _options = options.Clone();
         _optionsSpecified = true;
+        return this;
+    }
+
+    /// <summary>
+    /// 指定会话使用的日志工厂。未调用时不输出日志。工具调用的结果与失败、后台任务故障和资源释放故障
+    /// 都写入这里。日志包含工具身份、调用 ID、结果分类、耗时和异常; 会话自身不写入对话文字、工具参数或工具返回内容。
+    /// </summary>
+    public ConversationBuilder UseLoggerFactory(ILoggerFactory loggerFactory)
+    {
+        ArgumentNullException.ThrowIfNull(loggerFactory);
+        if (_loggerFactory is not null)
+            throw new InvalidOperationException("A logger factory is already registered.");
+        _loggerFactory = loggerFactory;
         return this;
     }
 
@@ -80,9 +96,13 @@ public sealed class ConversationBuilder
         LlmConversationOptions options = _options;
         IConversationContextProvider[] contextProviders = _contextProviders.ToArray();
         string conversationId = _conversationId ?? Guid.NewGuid().ToString("N");
+        ILoggerFactory loggerFactory = _loggerFactory ?? NullLoggerFactory.Instance;
 
         if (_toolsBuilder is null)
-            return new LlmConversationSession(conversationId, options, contextProviders, _llm);
+        {
+            ILogger logger = loggerFactory.CreateLogger<LlmConversationSession>();
+            return new LlmConversationSession(conversationId, options, contextProviders, _llm, logger);
+        }
 
         ToolConfiguration tools = _toolsBuilder.Build();
         if (_llm is not IToolCallingStreamLLMService toolCallingService)
@@ -92,6 +112,7 @@ public sealed class ConversationBuilder
                 "so a tool-enabled conversation cannot be built.");
         }
 
-        return new LlmToolConversationSession(conversationId, options, contextProviders, toolCallingService, tools);
+        ILogger toolLogger = loggerFactory.CreateLogger<LlmToolConversationSession>();
+        return new LlmToolConversationSession(conversationId, options, contextProviders, toolCallingService, tools, toolLogger);
     }
 }

@@ -14,6 +14,10 @@
 /// 直接调用 <see cref="InvokeAsync"/> 不会自动执行任何默认会话策略。
 /// </para>
 /// <para>拥有来源的宿主负责协调生命周期, 并在关闭连接前取消并等待自己的活动调用。</para>
+/// <para>
+/// <see cref="InvokeAsync"/> 必须响应取消令牌。消费方可以在调用超时或被取消后不再等待本次调用;
+/// 此后才返回的结果会被丢弃。
+/// </para>
 /// </remarks>
 public interface IConversationToolProvider : IAsyncDisposable
 {

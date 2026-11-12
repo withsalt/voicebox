@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Assistant.Conversation.Internal.Execution;
 using VoiceBox.Assistant.Conversation.Internal.History;
@@ -19,6 +20,7 @@ internal sealed class ConversationSessionCore : IAsyncDisposable
     private readonly LlmConversationOptions _options;
     private readonly IConversationContextProvider[] _contextProviders;
     private readonly ITurnExecutor _executor;
+    private readonly ILogger _logger;
     private readonly object _runLock = new();
     private CancellationTokenSource? _activeRun;
     private long _turnOrdinal;
@@ -29,7 +31,8 @@ internal sealed class ConversationSessionCore : IAsyncDisposable
         ConversationHistoryStore history,
         LlmConversationOptions options,
         IReadOnlyList<IConversationContextProvider> contextProviders,
-        ITurnExecutor executor)
+        ITurnExecutor executor,
+        ILogger logger)
     {
         if (string.IsNullOrWhiteSpace(conversationId))
             throw new ArgumentException("Conversation id cannot be empty.", nameof(conversationId));
@@ -38,6 +41,7 @@ internal sealed class ConversationSessionCore : IAsyncDisposable
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _contextProviders = contextProviders.ToArray();
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public string ConversationId { get; }
@@ -181,7 +185,12 @@ internal sealed class ConversationSessionCore : IAsyncDisposable
             {
                 commitGate?.Abort();
                 if (turnId > 0)
+                {
                     _history.RemoveUnansweredUserMessage(turnId);
+                    _logger.LogDebug(
+                        "Conversation {ConversationId} turn {TurnId} did not complete (canceled: {Canceled}); pending history rolled back.",
+                        ConversationId, turnId, token.IsCancellationRequested);
+                }
             }
 
             _turnGate.Release();
@@ -247,7 +256,14 @@ internal sealed class ConversationSessionCore : IAsyncDisposable
         await WaitForTurnToFinishAsync().ConfigureAwait(false);
         run?.Dispose();
 
-        try { await _executor.DisposeAsync().ConfigureAwait(false); } catch { }
+        try
+        {
+            await _executor.DisposeAsync().ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Releasing conversation {ConversationId} resources failed.", ConversationId);
+        }
         // The semaphore is deliberately not disposed: a queued request may still be unwinding
         // from its cancellation and could otherwise observe ObjectDisposedException from Release.
         _lifetimeCancellation.Dispose();

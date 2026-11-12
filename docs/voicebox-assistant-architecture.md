@@ -743,18 +743,26 @@ public interface IConversationSession : IAsyncDisposable
 
 工具公共契约（`IConversationTool`、`IConversationToolProvider`、审批与工具 DTO）位于
 `VoiceBox.Assistant.Conversation.Abstractions.Tools`，仅依赖 BCL。调用方可以只引用
-Abstractions 实现自己的会话、本地工具、工具来源和审批策略。
+Abstractions 实现自己的会话、本地工具、工具来源和审批策略。本地工具、工具来源和审批策略使用同一对
+`ConversationToolCall` / `ConversationToolResult`。
 
 `VoiceBox.Assistant.Conversation` 提供可选默认实现：
 
 - `ConversationBuilder(IStreamLLMService)` 组合默认文本会话；`UseTools(...)` 组合工具会话。
+  `UseLoggerFactory(...)` 是可选的诊断出口，未配置时不输出日志。
 - `ConversationToolsBuilder.AddTool(IConversationTool)` 注册进程内工具；`AddToolProvider` 注册外部来源。
   默认工具运行时把本地工具接入与外部来源相同的执行路径。
 - `LlmConversationOptions` 保存 system prompt、历史轮数、响应 token 上限和 thinking 开关。提示词属于调用方，Assistant 不注入语音助手提示。
 - `IConversationContextProvider` 每轮在构建模型请求前调用一次；返回的背景只进入本轮 system 消息，不写入正式历史。工具续推复用本轮背景。
 - 单会话串行门覆盖“构建 prompt → 生成 → 提交/清理”。生成完成时先检查取消，再原子提交内存历史，然后才产出 `Completed`；任何未提交退出路径都清理本轮暂存消息。
 - 工具会话要求 `IToolCallingStreamLLMService`，在 Build 阶段校验。工具运行时负责聚合、稳定命名、审批、参数校验、并发/重试预算与结果关联；本地工具和外部来源行走同一条执行路径。
-- 工具提示通过 `ConversationTextDelta(prompt, EndsTextSegment: true)` 表达；消费者消费并继续拉取后，工具才开始执行。前台状态提交成功后释放后台接受门，且该动作发生在 `Completed` 之前。
+- 工具会话与文本会话一样逐段转发模型的可见文字，不等整轮生成结束。模型在发起工具调用之前说出的文字照常输出并计入本轮回答，
+  同时随该调用回传给模型；工具之后的文字另起一行。
+- 调用的超时与取消由会话强制执行：到期或取消后会话不再等待该调用，迟到的结果被丢弃。同一批调用中，连续的无副作用调用并行执行，
+  有副作用的调用保持模型给出的位置。只有只读工具会重试，且仅在超时或结果标记为瞬时故障时。
+- 会话自己说出的固定文字（后台执行提示、无法由模型总结时的结果兜底）来自 `ConversationToolOptions.Announcements`，默认中文，可整体替换。
+  工具的 `ExecutionPrompt` 通过 `ConversationTextDelta(prompt, EndsTextSegment: true)` 表达；消费者消费并继续拉取后，工具才开始执行。
+  前台状态提交成功后释放后台接受门，且该动作发生在 `Completed` 之前。
 - 工具会话拥有一个有界单消费者后台通道（容量 64，Wait 背压）；`StartAsync` 创建本次运行的通道和取消域，`StopAsync` 取消阻塞读写、完成通道并等待后台任务退出。结果在入队前已经写入会话历史。
 
 ### 13.4 MCP 工具来源
@@ -780,6 +788,7 @@ IConversationToolProvider files = McpToolProvider.CreateStdio("filesystem", opti
   启动、发现、调用、停止和释放。
 - 支持 MCP stdio、Streamable HTTP 与可选 MCP Tasks。收到不支持的内容类型时返回
   `UnsupportedCapability`，不静默等待或当成成功。
+- 创建方法可选接收 `ILoggerFactory`，用于 MCP client、transport 与连接关闭故障的诊断；未提供时不输出日志。
 - MCP wire model 与 SDK 生命周期只存在于 Conversation.Mcp。
 
 
@@ -816,7 +825,8 @@ IConversationToolProvider files = McpToolProvider.CreateStdio("filesystem", opti
 - stdio 必须使用固定 executable 与 arguments，不经过 shell 拼接，只继承 allowlist 环境变量，子进程关闭由 Conversation.Mcp provider 拥有；
 - HTTP server 必须经过 URI / DNS allowlist、TLS 和目标受众绑定的授权；
 - 敏感、状态变更、破坏性或高权限工具必须提供明确拒绝路径和可审计的人类确认；
-- 用户文本、prompt、speaker embedding 和 secret 默认不进入日志或 trace；
+- 用户文本、prompt、speaker embedding 和 secret 默认不进入日志或 trace；默认会话的日志只记录工具身份、调用 ID、结果分类、
+  耗时和异常，不记录对话文字、工具参数或工具返回内容（工具自己抛出的异常消息除外）；
 - Demo 与宿主的 API key 从环境变量、用户机密或外部 secret provider 读取，不写入源码；
 - diagnostics 只暴露脱敏的 profile ID、capability graph hash 和 module lifecycle 状态，不暴露 service instance、密钥或完整 prompt。
 

@@ -1,5 +1,4 @@
-﻿using VoiceBox.Assistant.Conversation.Internal.Execution;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Text.Json;
 using Json.Schema;
 using VoiceBox.Assistant.Conversation.Abstractions.Tools;
@@ -17,11 +16,11 @@ internal sealed class ToolArgumentValidator(bool validateSchema = true)
     private readonly ConcurrentDictionary<ConversationToolId, JsonSchema?> _schemas = new();
 
     /// <summary>Returns JSON errors for invalid arguments. An unusable schema is skipped.</summary>
-    public string? Validate(ToolDefinition definition, OwnedJsonValue arguments)
+    public string? Validate(ToolCatalogEntry tool, JsonElement arguments)
     {
-        if (arguments.ToJsonElement().ValueKind != JsonValueKind.Object)
+        if (arguments.ValueKind != JsonValueKind.Object)
         {
-            return JsonSerializer.Serialize(new ValidationFailure(
+            return Serialize(new ValidationFailure(
                 "invalid_arguments",
                 "Tool arguments must be a JSON object. Correct them and call the tool again.",
                 [new Violation("", "Expected a JSON object.")]));
@@ -29,28 +28,25 @@ internal sealed class ToolArgumentValidator(bool validateSchema = true)
         if (!validateSchema)
             return null;
 
-        JsonSchema? schema = _schemas.GetOrAdd(definition.Id, _ => TryCompile(definition));
+        JsonSchema? schema = _schemas.GetOrAdd(tool.Id, _ => TryCompile(tool.Descriptor.InputSchemaJson));
         if (schema is null)
             return null;
 
         EvaluationResults results = schema.Evaluate(
-            arguments.ToJsonElement(),
+            arguments,
             new EvaluationOptions
             {
                 OutputFormat = OutputFormat.List,
                 RequireFormatValidation = false,
             });
-        if (results.IsValid)
-            return null;
-
-        return CreateViolationJson(results);
+        return results.IsValid ? null : CreateViolationJson(results);
     }
 
-    private static JsonSchema? TryCompile(ToolDefinition definition)
+    private static JsonSchema? TryCompile(string inputSchemaJson)
     {
         try
         {
-            return JsonSchema.FromText(definition.InputSchema.CanonicalJson);
+            return JsonSchema.FromText(inputSchemaJson);
         }
         catch (JsonException)
         {
@@ -69,11 +65,13 @@ internal sealed class ToolArgumentValidator(bool validateSchema = true)
         if (violations.Count == 0)
             violations.Add(new Violation("", "The arguments do not satisfy the tool input schema."));
 
-        return JsonSerializer.Serialize(new ValidationFailure(
+        return Serialize(new ValidationFailure(
             "invalid_arguments",
             "The arguments do not satisfy the tool input schema. Correct them and call the tool again.",
             violations.Take(MaxReportedViolations).ToArray()));
     }
+
+    private static string Serialize(ValidationFailure failure) => JsonSerializer.Serialize(failure, ModelJson.SerializerOptions);
 
     private static void Collect(EvaluationResults results, List<Violation> violations)
     {

@@ -1,56 +1,55 @@
-﻿using VoiceBox.Assistant.Conversation.Internal.Execution;
-using System.Collections.ObjectModel;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using VoiceBox.Assistant.Conversation.Abstractions.Tools;
+using VoiceBox.Core.Services.LLMService.Models;
 
 namespace VoiceBox.Assistant.Conversation.Internal.Tools;
 
+/// <summary>The immutable tool catalog of one run, in a stable order.</summary>
 internal sealed class ToolCatalogSnapshot
 {
-    private static readonly IComparer<ToolDefinition> DefinitionComparer =
-        Comparer<ToolDefinition>.Create(static (left, right) =>
+    private readonly Dictionary<string, ToolCatalogEntry> _byExposedName = new(StringComparer.Ordinal);
+
+    public ToolCatalogSnapshot(IEnumerable<ConversationToolDefinition> definitions)
+    {
+        ArgumentNullException.ThrowIfNull(definitions);
+        ConversationToolDefinition[] sorted = definitions.ToArray();
+        if (sorted.Any(static definition => definition is null))
+            throw new ArgumentException("Tool definitions cannot contain null values.", nameof(definitions));
+        Array.Sort(sorted, static (left, right) =>
         {
             int alias = StringComparer.Ordinal.Compare(left.Id.ServerAlias, right.Id.ServerAlias);
             return alias != 0 ? alias : StringComparer.Ordinal.Compare(left.Id.ToolName, right.Id.ToolName);
         });
 
-    public static ToolCatalogSnapshot Empty { get; } = new(Array.Empty<ToolDefinition>());
-
-    public ToolCatalogSnapshot(IEnumerable<ToolDefinition> definitions)
-    {
-        ArgumentNullException.ThrowIfNull(definitions);
-        ToolDefinition[] sorted = definitions.ToArray();
-        Array.Sort(sorted, DefinitionComparer);
-        Definitions = Array.AsReadOnly(sorted);
-        if (Definitions.Any(static definition => definition is null))
-            throw new ArgumentException("Tool definitions cannot contain null values.", nameof(definitions));
-
-        var exposedNames = new Dictionary<ConversationToolId, string>();
-        var identitiesByExposedName = new Dictionary<string, ConversationToolId>(StringComparer.Ordinal);
-        foreach (ToolDefinition definition in Definitions)
+        var tools = new List<ToolCatalogEntry>(sorted.Length);
+        foreach (ConversationToolDefinition definition in sorted)
         {
             string exposedName = CreateProviderSafeName(definition.Id);
-            if (identitiesByExposedName.TryGetValue(exposedName, out ConversationToolId existing))
+            if (_byExposedName.TryGetValue(exposedName, out ToolCatalogEntry? existing))
             {
                 throw new InvalidOperationException(
-                    $"Tool identities '{existing.ServerAlias}/{existing.ToolName}' and " +
-                    $"'{definition.Id.ServerAlias}/{definition.Id.ToolName}' map to the same exposed name '{exposedName}'.");
+                    $"Tool identities '{existing.Id}' and '{definition.Id}' map to the same exposed name '{exposedName}'.");
             }
-            identitiesByExposedName.Add(exposedName, definition.Id);
-            exposedNames.Add(definition.Id, exposedName);
+
+            var entry = new ToolCatalogEntry(definition, exposedName);
+            _byExposedName.Add(exposedName, entry);
+            tools.Add(entry);
         }
 
-        ExposedNames = new ReadOnlyDictionary<ConversationToolId, string>(exposedNames);
-        Hash = ComputeHash(Definitions, ExposedNames);
+        Tools = tools.AsReadOnly();
+        ModelDefinitions = tools.Select(static tool => tool.ModelDefinition).ToArray();
     }
 
-    public ReadOnlyCollection<ToolDefinition> Definitions { get; }
+    public IReadOnlyList<ToolCatalogEntry> Tools { get; }
 
-    public ReadOnlyDictionary<ConversationToolId, string> ExposedNames { get; }
+    /// <summary>Function definitions for the provider request, in catalog order.</summary>
+    public IReadOnlyList<LlmToolDefinition> ModelDefinitions { get; }
 
-    public string Hash { get; }
+    public bool IsEmpty => Tools.Count == 0;
 
-    public bool IsEmpty => Definitions.Count == 0;
+    public bool TryGetByExposedName(string exposedName, [NotNullWhen(true)] out ToolCatalogEntry? tool)
+        => _byExposedName.TryGetValue(exposedName, out tool);
 
     private static string CreateProviderSafeName(ConversationToolId id)
     {
@@ -59,7 +58,7 @@ internal sealed class ToolCatalogSnapshot
         if (value.Length <= maxProviderNameLength)
             return value;
 
-        string suffix = OwnedJsonValue.ComputeStableHash($"{id.ServerAlias}\0{id.ToolName}");
+        string suffix = ModelJson.StableHash($"{id.ServerAlias}\0{id.ToolName}");
         int prefixLength = maxProviderNameLength - suffix.Length - 2;
         return $"{value[..prefixLength]}__{suffix}";
     }
@@ -68,32 +67,7 @@ internal sealed class ToolCatalogSnapshot
     {
         var result = new StringBuilder(value.Length);
         foreach (char character in value)
-        {
             result.Append(char.IsAsciiLetterOrDigit(character) || character == '_' ? character : '_');
-        }
         return result.ToString();
-    }
-
-    private static string ComputeHash(
-        ReadOnlyCollection<ToolDefinition> definitions,
-        ReadOnlyDictionary<ConversationToolId, string> exposedNames)
-    {
-        var canonical = new StringBuilder();
-        foreach (ToolDefinition definition in definitions)
-        {
-            canonical
-                .Append(definition.Id.ServerAlias).Append('\0')
-                .Append(definition.Id.ToolName).Append('\0')
-                .Append(exposedNames[definition.Id]).Append('\0')
-                .Append(definition.Title).Append('\0')
-                .Append(definition.Description).Append('\0')
-                .Append((int)definition.Risk).Append('\0')
-                .Append((int)definition.ExecutionPolicy).Append('\0')
-                .Append(definition.ExecutionPrompt ?? string.Empty).Append('\0')
-                .Append(definition.Timeout.Ticks).Append('\0')
-                .Append(definition.InputSchema.CanonicalHash).Append('\0')
-                .Append(definition.OutputSchema?.CanonicalHash ?? string.Empty).Append('\n');
-        }
-        return OwnedJsonValue.ComputeStableHash(canonical.ToString());
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Threading.Channels;
+using Microsoft.Extensions.Logging;
 using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Assistant.Conversation.Internal;
 using VoiceBox.Assistant.Conversation.Internal.Execution;
@@ -33,16 +34,22 @@ public sealed class LlmToolConversationSession : IConversationSession, IConversa
         LlmConversationOptions options,
         IReadOnlyList<IConversationContextProvider> contextProviders,
         IToolCallingStreamLLMService service,
-        ToolConfiguration tools)
+        ToolConfiguration tools,
+        ILogger logger)
     {
         var history = new ConversationHistoryStore(
             options.SystemPrompt,
             options.MaxHistoryTurns,
             tools.Options.ToolTranscriptRetentionTurns,
             tools.Options.MaxPersistedToolResultBytes);
-        var runtime = new ConversationToolRuntime(tools.Tools, tools.Providers, tools.ApprovalPolicy, tools.Options);
-        _executor = new ToolTurnExecutor(new StructuredLlmTurnClient(service), runtime, history, this, tools.Options);
-        _core = new ConversationSessionCore(conversationId, history, options, contextProviders, _executor);
+        var runtime = new ConversationToolRuntime(
+            tools.Tools,
+            tools.Providers,
+            tools.ApprovalPolicy,
+            tools.Options.ValidateToolArguments,
+            logger);
+        _executor = new ToolTurnExecutor(new StructuredLlmTurnClient(service), runtime, history, this, tools.Options, logger);
+        _core = new ConversationSessionCore(conversationId, history, options, contextProviders, _executor, logger);
     }
 
     public string ConversationId => _core.ConversationId;

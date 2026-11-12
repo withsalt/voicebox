@@ -1,12 +1,21 @@
 using System.Buffers;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Unicode;
 using VoiceBox.Core.Services.LLMService.Models;
 
 namespace VoiceBox.LLM.LLamaSharp.Internal;
 
 internal static class LlamaChatContentFormatter
 {
+    /// <summary>
+    /// Keeps non-ASCII text such as CJK literal in JSON rendered into the prompt, instead of escaping every
+    /// character. '&lt;' and '&gt;' stay escaped, so tool data cannot spell an angle-bracket special token once
+    /// the prompt is tokenized.
+    /// </summary>
+    internal static JavaScriptEncoder PromptEncoder { get; } = JavaScriptEncoder.Create(UnicodeRanges.All);
+
     public static string Format(ChatMessage message)
     {
         ArgumentNullException.ThrowIfNull(message);
@@ -80,7 +89,7 @@ internal static class LlamaChatContentFormatter
     private static string Write(Action<Utf8JsonWriter> write)
     {
         var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer))
+        using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Encoder = PromptEncoder }))
             write(writer);
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }

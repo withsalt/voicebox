@@ -11,6 +11,7 @@ internal sealed class LlamaToolCallCatalog
     private const int MaxTools = 64;
     private const int MaxSchemaCharacters = 32_768;
     private const int MaxCatalogCharacters = 65_536;
+    private static readonly JsonSerializerOptions PromptJson = new() { Encoder = LlamaChatContentFormatter.PromptEncoder };
     private static readonly Regex ToolNamePattern = new(
         "^[A-Za-z_][A-Za-z0-9_.-]{0,63}$",
         RegexOptions.CultureInvariant | RegexOptions.Compiled);
@@ -121,8 +122,8 @@ internal sealed class LlamaToolCallCatalog
                 .AppendLine("TOOLS_DATA");
             foreach (LlmToolDefinition tool in tools)
             {
-                prompt.Append("name=").Append(JsonSerializer.Serialize(tool.Name)).AppendLine()
-                    .Append("description=").Append(JsonSerializer.Serialize(tool.Description)).AppendLine()
+                prompt.Append("name=").Append(JsonSerializer.Serialize(tool.Name, PromptJson)).AppendLine()
+                    .Append("description=").Append(JsonSerializer.Serialize(tool.Description, PromptJson)).AppendLine()
                     .Append("input_schema=").AppendLine(tool.InputSchemaJson);
             }
             prompt.AppendLine("END_TOOLS_DATA");

@@ -1,35 +1,38 @@
-﻿using VoiceBox.Assistant.Conversation.Internal.Execution;
+using System.Text.Json;
 using VoiceBox.Assistant.Conversation.Abstractions.Tools;
 
 namespace VoiceBox.Assistant.Conversation.Internal.Tools;
 
-internal sealed record ToolCall
+/// <summary>
+/// A model-requested call bound to its catalog entry. The arguments may still be invalid: anything that is not
+/// a JSON object is reported back to the model by argument validation instead of failing the turn.
+/// </summary>
+internal sealed class ToolCall
 {
-    public ToolCall(
-        string callId,
-        ConversationToolId toolId,
-        OwnedJsonValue arguments,
-        ConversationToolExecutionPreference executionPreference = ConversationToolExecutionPreference.Foreground)
+    private string? _argumentsHash;
+
+    public ToolCall(string callId, ToolCatalogEntry tool, JsonElement arguments, ConversationToolExecutionPreference executionPreference)
     {
-        if (string.IsNullOrWhiteSpace(callId))
-            throw new ArgumentException("Tool call id cannot be empty.", nameof(callId));
-        ArgumentNullException.ThrowIfNull(arguments);
-        if (string.IsNullOrWhiteSpace(toolId.ServerAlias) || string.IsNullOrWhiteSpace(toolId.ToolName))
-            throw new ArgumentException("Tool identity must contain a server alias and tool name.", nameof(toolId));
         CallId = callId;
-        ToolId = toolId;
-        Arguments = arguments;
-        ArgumentsHash = arguments.CanonicalHash;
+        Tool = tool;
+        Arguments = arguments.Clone();
+        ArgumentsJson = ModelJson.Canonicalize(Arguments);
         ExecutionPreference = executionPreference;
     }
 
     public string CallId { get; }
 
-    public ConversationToolId ToolId { get; }
+    public ToolCatalogEntry Tool { get; }
 
-    public OwnedJsonValue Arguments { get; }
+    public JsonElement Arguments { get; }
 
-    public string ArgumentsHash { get; }
+    /// <summary>Canonical argument text: written to the provider transcript and used to recognise a replayed call.</summary>
+    public string ArgumentsJson { get; }
 
     public ConversationToolExecutionPreference ExecutionPreference { get; }
+
+    public string ArgumentsHash => _argumentsHash ??= ModelJson.StableHash(ArgumentsJson);
+
+    /// <summary>The public call handed to the approval policy and the tool. Requires validated object arguments.</summary>
+    public ConversationToolCall ToCall() => new(CallId, Tool.Id, Arguments, ExecutionPreference);
 }

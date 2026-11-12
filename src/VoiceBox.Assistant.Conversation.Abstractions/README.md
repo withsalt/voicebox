@@ -85,25 +85,57 @@ ReadOnlyMemory<float> pcm = request.Audio!.Samples;
 | `IConversationToolProviderMetadata` | 可选的连接前静态别名元数据 |
 | `IConversationToolApprovalPolicy` | 宿主审批策略 |
 | `ConversationToolDescriptor` / `ConversationToolDefinition` | 受信任元数据、Schema 与目录项 |
-| `ConversationToolCall` / `ConversationToolResult` | 工具来源的输入与规范化结果 |
-| `ConversationToolInvocation` / `ConversationToolExecutionResult` | 本地工具的输入与结果 |
+| `ConversationToolCall` / `ConversationToolResult` | 一次调用及其规范化结果；本地工具、工具来源和审批策略共用 |
+| `ConversationToolApprovalContext` | 审批策略看到的工具元数据、调用和参数摘要 |
 | `ConversationToolId`、风险/执行策略/结果分类枚举 | 公共协作协议 |
 
-第三方程序集可以独立构造调用输入并调用本地工具：
+本地工具与工具来源使用同一对调用/结果类型：
 
 ```csharp
 using VoiceBox.Assistant.Conversation.Abstractions.Tools;
 
-using JsonDocument document = JsonDocument.Parse("""{"city":"北京"}""");
-var invocation = new ConversationToolInvocation(
-    "call-1",
-    document.RootElement,
-    ConversationToolExecutionPreference.Foreground);
-// document 释放后 invocation.Arguments 仍然有效。
-ConversationToolExecutionResult result = await tool.ExecuteAsync(invocation, cancellationToken);
+internal sealed class WeatherTool : IConversationTool
+{
+    public ConversationToolDescriptor Descriptor { get; } = new(
+        name: "get_weather",
+        displayName: "天气查询",
+        description: "查询城市的当前天气。",
+        inputSchemaJson: """{"type":"object","properties":{"city":{"type":"string"}},"required":["city"]}""",
+        executionPolicy: ConversationToolExecutionPolicy.ForegroundOnly);
+
+    public async ValueTask<ConversationToolResult> ExecuteAsync(ConversationToolCall call, CancellationToken cancellationToken)
+    {
+        string city = call.Arguments.GetProperty("city").GetString()!;
+        try
+        {
+            WeatherReport report = await QueryAsync(city, cancellationToken);
+            return ConversationToolResult.Success(report.Summary, JsonSerializer.Serialize(report));
+        }
+        catch (HttpRequestException)
+        {
+            // IsTransient 允许消费方对只读工具重试这次调用。
+            return ConversationToolResult.Error("weather_network_error", "天气服务暂时不可用。", isTransient: true);
+        }
+    }
+
+    public void Dispose() { }
+}
 ```
 
-`ConversationToolInvocation` 在构造时验证调用 ID、枚举值和 JSON 对象参数，并复制 `JsonElement`。
+第三方程序集可以独立构造调用并调用工具：
+
+```csharp
+var call = new ConversationToolCall("call-1", new ConversationToolId("local", "get_weather"), """{"city":"北京"}""");
+ConversationToolResult result = await tool.ExecuteAsync(call, cancellationToken);
+```
+
+- `ConversationToolCall` 在构造时验证调用 ID、工具身份、枚举值和 JSON 对象参数，并持有参数的独立副本：
+  从 `JsonElement` 构造后，原 `JsonDocument` 可以立即释放；也可以直接从 JSON 文本构造。
+- `ConversationToolResult` 通过工厂方法创建：`Success(content, structuredContentJson)`、`Error(errorCode, content, isTransient)`，
+  以及用于超时、协议错误等其他分类的 `Failure(kind, errorCode, ...)`。`Content` 是文字说明，
+  `StructuredContentJson` 是可选的结构化结果，`IsTransient` 表示失败是否值得重试。
+- 工具和工具来源必须响应取消令牌。消费方可以在超时或取消后不再等待某次调用，此后返回的结果会被丢弃。
+
 Abstractions 不执行 JSON Schema 求值、不调用模型或工具，也不隐含工具/来源的所有权转移。
 审批、Schema 校验、并发/重试和历史关联由消费这些契约的会话或宿主决定。
 

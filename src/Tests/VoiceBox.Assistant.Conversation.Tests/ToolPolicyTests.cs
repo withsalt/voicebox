@@ -33,11 +33,11 @@ public sealed class ToolPolicyTests
         var second = new ProbeTool("b", ConversationToolRisk.ReadOnly);
         TaskCompletionSource bothStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
         int started = 0;
-        ValueTask<ConversationToolExecutionResult> WaitAsync(CancellationToken cancellationToken)
+        ValueTask<ConversationToolResult> WaitAsync(CancellationToken cancellationToken)
         {
             if (Interlocked.Increment(ref started) == 2)
                 bothStarted.TrySetResult();
-            return new ValueTask<ConversationToolExecutionResult>(WaitAndReturnAsync());
+            return new ValueTask<ConversationToolResult>(WaitAndReturnAsync());
         }
         first.OnExecute = WaitAsync;
         second.OnExecute = WaitAsync;
@@ -68,10 +68,10 @@ public sealed class ToolPolicyTests
             await ((IConversationLifecycle)session).StopAsync();
         }
 
-        async Task<ConversationToolExecutionResult> WaitAndReturnAsync()
+        async Task<ConversationToolResult> WaitAndReturnAsync()
         {
             await bothStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
-            return ConversationToolExecutionResult.Success("ok");
+            return ConversationToolResult.Success("ok");
         }
     }
 
@@ -87,7 +87,7 @@ public sealed class ToolPolicyTests
                 lock (order) order.Add("enter");
                 await Task.Delay(20, cancellationToken);
                 lock (order) order.Add("exit");
-                return ConversationToolExecutionResult.Success("ok");
+                return ConversationToolResult.Success("ok");
             },
         };
         llm.ToolTurnScript = (call, request) => call switch
@@ -122,8 +122,8 @@ public sealed class ToolPolicyTests
         var tool = new ProbeTool("flaky", ConversationToolRisk.ReadOnly);
         tool.OnExecute = _ => ValueTask.FromResult(
             tool.ExecuteCount == 1
-                ? ConversationToolExecutionResult.Error("IOException", "transient")
-                : ConversationToolExecutionResult.Success("recovered"));
+                ? ConversationToolResult.Error("upstream_busy", "transient", isTransient: true)
+                : ConversationToolResult.Success("recovered"));
         llm.ToolTurnScript = (call, request) => call switch
         {
             1 => Events(new LlmToolCallEvent("c1", OnlyToolName(request), "{}"), new LlmTurnCompletedEvent()),
@@ -333,14 +333,12 @@ public sealed class ToolPolicyTests
 
         public int ExecuteCount { get; private set; }
 
-        public Func<CancellationToken, ValueTask<ConversationToolExecutionResult>>? OnExecute { get; set; }
+        public Func<CancellationToken, ValueTask<ConversationToolResult>>? OnExecute { get; set; }
 
-        public ValueTask<ConversationToolExecutionResult> ExecuteAsync(
-            ConversationToolInvocation invocation,
-            CancellationToken cancellationToken)
+        public ValueTask<ConversationToolResult> ExecuteAsync(ConversationToolCall call, CancellationToken cancellationToken)
         {
             ExecuteCount++;
-            return OnExecute is null ? ValueTask.FromResult(ConversationToolExecutionResult.Success("ok")) : OnExecute(cancellationToken);
+            return OnExecute is null ? ValueTask.FromResult(ConversationToolResult.Success("ok")) : OnExecute(cancellationToken);
         }
 
         public void Dispose()
@@ -384,7 +382,7 @@ public sealed class ToolPolicyTests
         public ValueTask<ConversationToolResult> InvokeAsync(ConversationToolCall call, CancellationToken cancellationToken = default)
         {
             Interlocked.Increment(ref _invokeCount);
-            return ValueTask.FromResult(new ConversationToolResult(call.CallId, resultKind, ErrorCode: "unknown"));
+            return ValueTask.FromResult(ConversationToolResult.Failure(resultKind, "unknown"));
         }
 
         public Task StopAsync() => Task.CompletedTask;

@@ -59,11 +59,9 @@ internal sealed class CurrentDateTimeTool : IConversationTool
         executionPolicy: ConversationToolExecutionPolicy.ForegroundOnly,
         timeout: TimeSpan.FromSeconds(2));
 
-    public ValueTask<ConversationToolExecutionResult> ExecuteAsync(
-        ConversationToolInvocation invocation,
-        CancellationToken cancellationToken)
+    public ValueTask<ConversationToolResult> ExecuteAsync(ConversationToolCall call, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(invocation);
+        ArgumentNullException.ThrowIfNull(call);
         cancellationToken.ThrowIfCancellationRequested();
 
         DateTimeOffset now = _timeProvider.GetLocalNow();
@@ -88,7 +86,7 @@ internal sealed class CurrentDateTimeTool : IConversationTool
             $"当前日期是 {date}（{dayOfWeek}），{lunarDateContent}当前时间是 {time}，" +
             $"时区为 {_timeProvider.LocalTimeZone.Id}（UTC{utcOffset}）。";
 
-        return ValueTask.FromResult(ConversationToolExecutionResult.Success(content, structuredContent));
+        return ValueTask.FromResult(ConversationToolResult.Success(content, structuredContent));
     }
 
     private static string FormatUtcOffset(TimeSpan offset)

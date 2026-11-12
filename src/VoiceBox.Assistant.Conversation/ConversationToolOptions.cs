@@ -22,17 +22,26 @@ public sealed class ConversationToolOptions
     /// </summary>
     public int MaxParallelToolCalls { get; set; } = 4;
 
-    /// <summary>只读工具瞬时失败的最大重试次数。</summary>
+    /// <summary>
+    /// 只读工具的最大重试次数。只有超时, 或结果标记为瞬时故障 (<c>ConversationToolResult.IsTransient</c>)
+    /// 的失败才会重试; 有副作用的工具从不重试。
+    /// </summary>
     public int MaxToolRetryAttempts { get; set; } = 2;
 
     /// <summary>首次重试前的退避时长, 之后每次乘 3。</summary>
     public int ToolRetryBaseDelayMs { get; set; } = 200;
 
-    /// <summary>单个工具调用含全部重试的总耗时上限。</summary>
+    /// <summary>
+    /// 重试的时间预算, 从首次调用开始计时。预算用尽后不再发起重试, 重试也不会超出预算。
+    /// 它不限制首次调用: 首次调用的超时只由工具自己的 <c>ConversationToolDescriptor.Timeout</c> 决定。
+    /// </summary>
     public int MaxToolRetryBudgetMs { get; set; } = 60_000;
 
     /// <summary>是否在审批前按工具的 input JSON Schema 校验参数。参数始终必须是 JSON 对象。</summary>
     public bool ValidateToolArguments { get; set; } = true;
+
+    /// <summary>工具会话自行生成的固定播报文字, 例如后台执行提示。</summary>
+    public ConversationToolAnnouncements Announcements { get; set; } = new();
 
     internal ConversationToolOptions Clone()
     {
@@ -45,6 +54,7 @@ public sealed class ConversationToolOptions
             ToolRetryBaseDelayMs = ToolRetryBaseDelayMs,
             MaxToolRetryBudgetMs = MaxToolRetryBudgetMs,
             ValidateToolArguments = ValidateToolArguments,
+            Announcements = (Announcements ?? throw new ArgumentNullException(nameof(Announcements))).Clone(),
         };
         Validate(clone);
         return clone;

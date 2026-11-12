@@ -157,7 +157,7 @@ public sealed class ToolConversationLifecycleTests
                 [new(new("external", "probe"), new ConversationToolDescriptor("probe", "Probe", "Probe tool", "{\"type\":\"object\"}"))]);
 
         public ValueTask<ConversationToolResult> InvokeAsync(ConversationToolCall call, CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(new ConversationToolResult(call.CallId, ConversationToolResultKind.Success, "{}"));
+            => ValueTask.FromResult(ConversationToolResult.Success(string.Empty, "{}"));
 
         public Task StopAsync()
         {

@@ -16,6 +16,7 @@ namespace VoiceBox.LLM.OpenAI.Internal
     /// 行为约定:
     /// <list type="bullet">
     ///   <item>多个 <see cref="TextContent"/> 按出现顺序拼接。</item>
+    ///   <item>assistant 消息可以同时携带文字和 <see cref="ToolCallContent"/>: 文字作为 content, 调用作为 tool_calls。</item>
     ///   <item><see cref="ImageContent"/> 仅在 <c>user</c> 消息上转为图片 part (要求模型本身是
     ///         vision 模型); 出现在 system/assistant 上时按文本处理 (忽略图片)。</item>
     ///   <item><see cref="AudioContent"/> 在标准 <c>/chat/completions</c> 文本协议下没有通用映射,
@@ -40,10 +41,16 @@ namespace VoiceBox.LLM.OpenAI.Internal
             ToolResultContent[] toolResults = msg.Content.OfType<ToolResultContent>().ToArray();
             if (toolCalls.Length > 0 || toolResults.Length > 0)
             {
-                if (msg.Role == ChatRole.Assistant && toolCalls.Length == msg.Content.Count)
+                bool onlyTextAndCalls = msg.Content.All(static item => item is ToolCallContent or TextContent);
+                if (msg.Role == ChatRole.Assistant && toolCalls.Length > 0 && onlyTextAndCalls)
                 {
-                    return new AssistantChatMessage(toolCalls.Select(static call =>
+                    var assistant = new AssistantChatMessage(toolCalls.Select(static call =>
                         ChatToolCall.CreateFunctionToolCall(call.CallId, call.ToolName, BinaryData.FromString(call.ArgumentsJson))));
+                    // 模型在同一轮发起调用之前已经说出的文字: 作为 content 与 tool_calls 一起回传。
+                    string spoken = string.Concat(msg.Content.OfType<TextContent>().Select(static item => item.Text));
+                    if (spoken.Length > 0)
+                        assistant.Content.Add(ChatMessageContentPart.CreateTextPart(spoken));
+                    return assistant;
                 }
 
                 if (msg.Role == ChatRole.Tool && toolResults.Length == 1 && msg.Content.Count == 1)
@@ -52,7 +59,7 @@ namespace VoiceBox.LLM.OpenAI.Internal
                     return new ToolChatMessage(result.CallId, result.ResultJson);
                 }
 
-                throw new NotSupportedException("OpenAI tool messages must contain only assistant tool calls or one tool result.");
+                throw new NotSupportedException("An OpenAI tool message must be assistant text with tool calls, or one tool result.");
             }
 
             // 按原始顺序收集 parts (多模态时文本与图片的相对顺序对模型有意义),

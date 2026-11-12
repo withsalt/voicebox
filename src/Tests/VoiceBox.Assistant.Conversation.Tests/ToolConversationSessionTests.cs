@@ -192,7 +192,7 @@ public sealed class ToolConversationSessionTests
         ToolResultContent invalid = Assert.Single(llm.Prompts[1].SelectMany(message => message.Content).OfType<ToolResultContent>());
         Assert.Equal("invalid", invalid.CallId);
         Assert.Contains("invalid_arguments", invalid.ResultJson, StringComparison.Ordinal);
-        Assert.Equal("corrected", Assert.Single(policy.Invocations).CallId);
+        Assert.Equal("corrected", Assert.Single(policy.Calls).CallId);
         Assert.Equal(1, tool.ExecuteCount);
         Assert.Contains(llm.Prompts[2].SelectMany(message => message.Content).OfType<ToolResultContent>(),
             result => result.CallId == "corrected");
@@ -207,7 +207,7 @@ public sealed class ToolConversationSessionTests
         tool.OnExecute = async cancellationToken =>
         {
             await release.Task.WaitAsync(cancellationToken);
-            return ConversationToolExecutionResult.Success("晴");
+            return ConversationToolResult.Success("晴");
         };
         llm.ToolTurnScript = (call, request) => call switch
         {
@@ -328,7 +328,7 @@ public sealed class ToolConversationSessionTests
             OnExecute = async token =>
             {
                 await releaseTool.Task.WaitAsync(token);
-                return ConversationToolExecutionResult.Success("晴");
+                return ConversationToolResult.Success("晴");
             },
         };
         async IAsyncEnumerable<LlmTurnEvent> Pending()
@@ -414,7 +414,7 @@ public sealed class ToolConversationSessionTests
     }
 
     [Fact]
-    public async Task ToolThinkingIsObservableButExcludedFromTheFinalAnswer()
+    public async Task TextBeforeAToolCallIsStreamedAndThinkingStaysOutOfTheAnswer()
     {
         var llm = new RecordingLlmService();
         var tool = new EchoTool();
@@ -436,8 +436,9 @@ public sealed class ToolConversationSessionTests
             List<ConversationEvent> events = await ConversationEvents.CollectAsync(session.StreamAsync(Request("思考")));
 
             Assert.Contains(events, item => item is ConversationThinkingDelta { Text: "思考中" });
-            Assert.DoesNotContain(events, item => item is ConversationTextDelta { Text: "工具前附带文本" });
-            Assert.Equal("最终回答", Assert.IsType<ConversationCompleted>(events[^1]).Text);
+            // Text is forwarded as it arrives, so what the model said ahead of its tool call is part of the answer.
+            Assert.Equal(["工具前附带文本", "\n最终回答"], events.OfType<ConversationTextDelta>().Select(item => item.Text));
+            Assert.Equal("工具前附带文本\n最终回答", Assert.IsType<ConversationCompleted>(events[^1]).Text);
         }
         finally
         {
@@ -647,16 +648,14 @@ public sealed class ToolConversationSessionTests
 
         public int ExecuteCount { get; private set; }
 
-        public Func<CancellationToken, ValueTask<ConversationToolExecutionResult>>? OnExecute { get; set; }
+        public Func<CancellationToken, ValueTask<ConversationToolResult>>? OnExecute { get; set; }
 
-        public async ValueTask<ConversationToolExecutionResult> ExecuteAsync(
-            ConversationToolInvocation invocation,
-            CancellationToken cancellationToken)
+        public async ValueTask<ConversationToolResult> ExecuteAsync(ConversationToolCall call, CancellationToken cancellationToken)
         {
             ExecuteCount++;
             if (OnExecute is not null)
                 return await OnExecute(cancellationToken);
-            return ConversationToolExecutionResult.Success("晴");
+            return ConversationToolResult.Success("晴");
         }
 
         public void Dispose()
@@ -689,13 +688,13 @@ public sealed class ToolConversationSessionTests
     private sealed class FixedApprovalPolicy(ConversationToolApproval decision)
         : IConversationToolApprovalPolicy
     {
-        public List<ConversationToolInvocation> Invocations { get; } = [];
+        public List<ConversationToolCall> Calls { get; } = [];
 
         public ValueTask<ConversationToolApproval> AuthorizeAsync(
             ConversationToolApprovalContext context,
             CancellationToken cancellationToken)
         {
-            Invocations.Add(context.Invocation);
+            Calls.Add(context.Call);
             return ValueTask.FromResult(decision);
         }
     }

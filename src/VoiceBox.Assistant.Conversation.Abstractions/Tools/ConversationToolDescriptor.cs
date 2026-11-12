@@ -63,6 +63,7 @@ public sealed class ConversationToolDescriptor
     /// </summary>
     public string? ExecutionPrompt { get; }
 
+    /// <summary>单次调用的超时, 默认 30 秒。到期后消费方取消本次调用并停止等待。</summary>
     public TimeSpan Timeout { get; }
 
     private static void ValidateSchema(string value, string parameterName, bool requireObject)

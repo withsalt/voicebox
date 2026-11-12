@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using System.Text.Json;
-using VoiceBox.Assistant.Conversation.Internal.Tools;
 using VoiceBox.Assistant.Conversation.Abstractions.Tools;
 using VoiceBox.Core.Services.LLMService.Models;
 
@@ -60,13 +59,7 @@ internal sealed class ConversationHistoryStore
         {
             _history.Add(userMessage);
             _turnUserMessages[turnId] = userMessage;
-            _turnRecords.Add(new ConversationTurnRecord(
-                turnId,
-                userMessage,
-                AssistantMessage: null,
-                Array.Empty<ToolCall>(),
-                Array.Empty<ToolResult>(),
-                Array.Empty<ChatMessage>()));
+            _turnRecords.Add(new ConversationTurnRecord(turnId, userMessage, AssistantMessage: null, [], []));
             prompt = BuildPromptLocked(additionalContext);
         }
 
@@ -122,13 +115,7 @@ internal sealed class ConversationHistoryStore
         }
         if (turnRecordIndex == -1)
         {
-            _turnRecords.Add(new ConversationTurnRecord(
-                turnId,
-                userMessage,
-                assistantMessage,
-                Array.Empty<ToolCall>(),
-                Array.Empty<ToolResult>(),
-                Array.Empty<ChatMessage>()));
+            _turnRecords.Add(new ConversationTurnRecord(turnId, userMessage, assistantMessage, [], []));
         }
         else
         {
@@ -174,16 +161,34 @@ internal sealed class ConversationHistoryStore
         }
     }
 
-    public void RecordToolActivity(long turnId, ToolCall call, ToolResult result)
+    /// <summary>
+    /// Records the outcome of one tool call for the audit trail. A call keeps one entry: a later terminal
+    /// outcome replaces an earlier acknowledgement, never the other way round.
+    /// </summary>
+    public void RecordToolActivity(long turnId, string callId, ConversationToolId toolId, ConversationToolResultKind kind)
     {
-        ArgumentNullException.ThrowIfNull(call);
-        ArgumentNullException.ThrowIfNull(result);
+        ArgumentException.ThrowIfNullOrWhiteSpace(callId);
         lock (_lock)
         {
             int index = _turnRecords.FindLastIndex(record => record.TurnId == turnId);
             if (index < 0)
                 return;
-            UpsertToolCallAndResultLocked(index, call, result);
+
+            ConversationTurnRecord record = _turnRecords[index];
+            var activity = record.ToolActivity.ToList();
+            var entry = new ToolAuditRecord(turnId, callId, toolId, kind);
+            int existing = activity.FindIndex(value => string.Equals(value.CallId, callId, StringComparison.Ordinal));
+            if (existing < 0)
+            {
+                activity.Add(entry);
+            }
+            else if (kind != ConversationToolResultKind.Accepted || activity[existing].ResultKind == ConversationToolResultKind.Accepted)
+            {
+                // A delayed acknowledgement must never overwrite the terminal outcome of a fast
+                // background execution.
+                activity[existing] = entry;
+            }
+            _turnRecords[index] = record with { ToolActivity = activity.ToArray() };
         }
     }
 
@@ -330,29 +335,13 @@ internal sealed class ConversationHistoryStore
     }
 
     /// <summary>
-    /// Audit projection over per-turn records. A result contributes one entry when its call ID is
-    /// correlated in the same turn, including outcomes recorded before a model round completes.
+    /// Audit projection over per-turn records: one entry per tool call, including outcomes recorded
+    /// before a model round completes.
     /// </summary>
     public ToolAuditRecord[] GetToolAuditTrailSnapshot()
     {
         lock (_lock)
-        {
-            var audit = new List<ToolAuditRecord>();
-            foreach (ConversationTurnRecord record in _turnRecords)
-            {
-                foreach (ToolResult result in record.ToolResults)
-                {
-                    ToolCall? call = record.ToolCalls.FirstOrDefault(
-                        value => string.Equals(value.CallId, result.CallId, StringComparison.Ordinal));
-                    if (call is null)
-                        continue;
-
-                    audit.Add(new ToolAuditRecord(record.TurnId, result.CallId, call.ToolId, result.Kind));
-                }
-            }
-
-            return audit.ToArray();
-        }
+            return _turnRecords.SelectMany(static record => record.ToolActivity).ToArray();
     }
 
     /// <summary>
@@ -387,10 +376,8 @@ internal sealed class ConversationHistoryStore
     {
         foreach (ConversationTurnRecord record in _turnRecords)
         {
-            if (record.ToolCalls.Count > 0 || record.ToolResults.Count > 0 || record.ToolMessages.Count > 0)
-            {
+            if (record.ToolActivity.Count > 0 || record.ToolMessages.Count > 0)
                 return true;
-            }
         }
 
         return false;
@@ -453,48 +440,10 @@ internal sealed class ConversationHistoryStore
                 _turnRecords[index] = record;
             }
 
-            if (record.ToolCalls.Count > 0 || record.ToolResults.Count > 0 || record.BackgroundAssistantMessages.Count > 0)
-            {
+            if (record.ToolActivity.Count > 0 || record.BackgroundAssistantMessages.Count > 0)
                 continue;
-            }
             _turnRecords.RemoveAt(index);
         }
-    }
-
-    private void UpsertToolCallAndResultLocked(int recordIndex, ToolCall call, ToolResult result)
-    {
-        UpsertToolCallLocked(recordIndex, call);
-        UpsertToolResultLocked(recordIndex, result);
-    }
-
-    private void UpsertToolCallLocked(int recordIndex, ToolCall call)
-    {
-        ConversationTurnRecord record = _turnRecords[recordIndex];
-        var calls = record.ToolCalls.ToList();
-        int existing = calls.FindIndex(value => string.Equals(value.CallId, call.CallId, StringComparison.Ordinal));
-        if (existing < 0)
-            calls.Add(call);
-        else
-            calls[existing] = call;
-        _turnRecords[recordIndex] = record with { ToolCalls = calls.ToArray() };
-    }
-
-    private void UpsertToolResultLocked(int recordIndex, ToolResult result)
-    {
-        ConversationTurnRecord record = _turnRecords[recordIndex];
-        var results = record.ToolResults.ToList();
-        int existing = results.FindIndex(value => string.Equals(value.CallId, result.CallId, StringComparison.Ordinal));
-        if (existing < 0)
-        {
-            results.Add(result);
-        }
-        else if (result.Kind != ConversationToolResultKind.Accepted || results[existing].Kind == ConversationToolResultKind.Accepted)
-        {
-            // A delayed acknowledgement must never overwrite the terminal outcome of a fast
-            // background execution.
-            results[existing] = result;
-        }
-        _turnRecords[recordIndex] = record with { ToolResults = results.ToArray() };
     }
 
     private void TrimCommittedResponseTurnIdsLocked()

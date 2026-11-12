@@ -40,6 +40,7 @@ finally
 
 - `CreateStdio` / `CreateStreamableHttp` 只校验并冻结配置：不启动进程、不连接网络、不发现工具。
   创建后修改原始 options 不会影响 provider。
+- 两个创建方法都可以传入可选的 `ILoggerFactory`，接收 MCP client、transport 与连接关闭故障的诊断日志；未提供时不输出日志。
 - 一个 provider 对应一个 MCP Server；多个来源由宿主分别创建并组合。
 - `StartAsync` 建立 client、启动 stdio 子进程并执行 `tools/list`；启动失败会清理已创建的连接。
 - `StopAsync` 结束本次运行，允许随后再次 `StartAsync`；`DisposeAsync` 负责最终释放。
@@ -76,12 +77,13 @@ await using IConversationSession session = new ConversationBuilder(llm)
 | MCP Server | 实际工具实现 |
 
 - 工具 identity 为 `(ServerAlias, ToolName)`；provider-safe 暴露名由消费会话生成并检测碰撞。
-- MCP 返回值只支持文本和 structured content；仅含不支持内容类型时返回 `UnsupportedCapability`，
-  不静默等待或当成成功。
+- MCP 返回值只支持文本和 structured content：文本块进入 `ConversationToolResult.Content`，structured content 进入
+  `StructuredContentJson`。仅含不支持内容类型时返回 `UnsupportedCapability`，不静默等待或当成成功。
 - 参数/结果大小、连接与请求超时、并发数、allowlist、默认风险等级和执行策略来自 server options。
+  `MaxResultBytes` 分别限制文本结果和 structured content 的 UTF-8 字节数，任一超出即返回 `result_too_large`。
 - `RequestTimeout` 由 provider 执行，覆盖工具调用等待并发名额、请求执行和 MCP Tasks 轮询。
-  调用超时返回 `TimedOut`；已发出请求的 `SideEffecting` / `Destructive` / `Privileged` 工具返回
-  `UnknownOutcome`，调用方应避免重复执行。超时结果保留原 `CallId`，`ErrorCode` 为 `timeout`。
+  调用超时返回 `TimedOut`（标记为 `IsTransient`，可以重试）；已发出请求的 `SideEffecting` / `Destructive` /
+  `Privileged` 工具返回 `UnknownOutcome`，调用方应避免重复执行。两种结果的 `ErrorCode` 都是 `timeout`。
   调用方主动取消仍抛出 `OperationCanceledException`。
 - 直接调用 `IConversationToolProvider.InvokeAsync` 不会自动执行默认会话的审批、重试或历史逻辑。
 

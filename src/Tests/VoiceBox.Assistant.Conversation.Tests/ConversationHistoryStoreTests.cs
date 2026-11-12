@@ -1,7 +1,4 @@
-﻿using System.Reflection;
-using VoiceBox.Assistant.Conversation.Internal.Execution;
-using VoiceBox.Assistant.Conversation.Internal.History;
-using VoiceBox.Assistant.Conversation.Internal.Tools;
+﻿using VoiceBox.Assistant.Conversation.Internal.History;
 using VoiceBox.Assistant.Conversation.Abstractions.Tools;
 using VoiceBox.Core.Services.LLMService.Models;
 using Xunit;
@@ -56,6 +53,25 @@ public sealed class ConversationHistoryStoreTests
         Assert.Equal("srv", audit.ToolId.ServerAlias);
         Assert.Equal("lookup", audit.ToolId.ToolName);
         Assert.Equal(ConversationToolResultKind.Success, audit.ResultKind);
+    }
+
+    [Theory]
+    [InlineData(ConversationToolResultKind.Accepted, ConversationToolResultKind.Success)]
+    [InlineData(ConversationToolResultKind.Success, ConversationToolResultKind.Accepted)]
+    public void ToolAuditTrail_KeepsTheTerminalOutcomeWhateverOrderItArrivesIn(
+        ConversationToolResultKind first,
+        ConversationToolResultKind second)
+    {
+        var history = new ConversationHistoryStore("system", maxHistoryTurns: 4);
+        var toolId = new ConversationToolId("srv", "lookup");
+        history.AddUserMessage(1, "question", null, out _);
+        Assert.True(history.CommitGeneratedResponse(1, "answer"));
+
+        // A fast background execution can finish before its acknowledgement is recorded.
+        history.RecordToolActivity(1, "call-1", toolId, first);
+        history.RecordToolActivity(1, "call-1", toolId, second);
+
+        Assert.Equal(ConversationToolResultKind.Success, Assert.Single(history.GetToolAuditTrailSnapshot()).ResultKind);
     }
 
     [Fact]
@@ -222,26 +238,8 @@ public sealed class ConversationHistoryStoreTests
         Assert.Equal("maxHistoryTurns", negative.ParamName);
     }
 
-    private static void AttachToolCorrelation(
-        ConversationHistoryStore history,
-        long turnId,
-        string callId,
-        bool includeCall = true,
-        bool includeResult = true)
-    {
-        Assert.True(includeCall || includeResult);
-        var records = (List<ConversationTurnRecord>)typeof(ConversationHistoryStore)
-            .GetField("_turnRecords", BindingFlags.Instance | BindingFlags.NonPublic)!
-            .GetValue(history)!;
-        int index = records.FindIndex(record => record.TurnId == turnId);
-        Assert.True(index >= 0);
-        var toolId = new ConversationToolId("srv", "lookup");
-        records[index] = records[index] with
-        {
-            ToolCalls = includeCall ? [new ToolCall(callId, toolId, OwnedJsonValue.Parse("{}"))] : [],
-            ToolResults = includeResult ? [new ToolResult(callId, ConversationToolResultKind.Success, null)] : [],
-        };
-    }
+    private static void AttachToolCorrelation(ConversationHistoryStore history, long turnId, string callId)
+        => history.RecordToolActivity(turnId, callId, new ConversationToolId("srv", "lookup"), ConversationToolResultKind.Success);
 
     private static string MessageText(ChatMessage message) => string.Concat(message.Content.OfType<TextContent>().Select(c => c.Text));
 }

@@ -1,15 +1,13 @@
-using VoiceBox.Assistant.Conversation.Internal.Tools;
 using VoiceBox.Core.Services.LLMService.Models;
 
 namespace VoiceBox.Assistant.Conversation.Internal.History;
 
 internal sealed record ConversationTurnRecord(
-        long TurnId,
-        ChatMessage UserMessage,
-        ChatMessage? AssistantMessage,
-        IReadOnlyList<ToolCall> ToolCalls,
-        IReadOnlyList<ToolResult> ToolResults,
-        IReadOnlyList<ChatMessage> BackgroundAssistantMessages)
+    long TurnId,
+    ChatMessage UserMessage,
+    ChatMessage? AssistantMessage,
+    IReadOnlyList<ToolAuditRecord> ToolActivity,
+    IReadOnlyList<ChatMessage> BackgroundAssistantMessages)
 {
     /// <summary>
     /// Provider transcript slice this turn's tool rounds produced, in append order: assistant
