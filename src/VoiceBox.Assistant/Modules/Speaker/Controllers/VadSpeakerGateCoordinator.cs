@@ -20,22 +20,27 @@ internal sealed class VadSpeakerGateCoordinator : ISpeakerGateBoundaryPort
     private readonly IVadSpeakerGateHost _host;
     private readonly ILogger _logger;
     private readonly bool _singleTalkEffective;
+    private readonly TimeProvider _timeProvider;
     private readonly object _deadlineLock = new();
     private long _inferenceReadyTimestamp = -1;
     private long _deadlineVersion = -1;
+    private long _pendingWindowStart = -1;
+    private long _pendingWindowEnd = -1;
     private int _lastDeniedStatus = (int)SpeakerVerificationStatus.Unavailable;
     private SpeakerEvidenceQuery _lastQuery;
     private bool _hasLastQuery;
     // -1 when no candidate is active; otherwise the SpeakerVerificationPurpose of the candidate.
     private int _activePurpose = -1;
 
-    public VadSpeakerGateCoordinator(ISpeakerModule? speaker, IVadSpeakerGateHost host, ISpeechTimelineLocator timeline, ILogger logger)
+    public VadSpeakerGateCoordinator(ISpeakerModule? speaker, IVadSpeakerGateHost host, ISpeechTimelineLocator timeline, ILogger logger,
+        TimeProvider? timeProvider = null)
     {
         _speaker = speaker;
         _verificationState = speaker;
         _host = host ?? throw new ArgumentNullException(nameof(host));
         _timeline = timeline ?? throw new ArgumentNullException(nameof(timeline));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _timeProvider = timeProvider ?? TimeProvider.System;
         _singleTalkEffective = speaker is not null && speaker.Policy.Get(SpeakerVerificationPurpose.SingleTalk).Enabled;
     }
 
@@ -82,6 +87,7 @@ internal sealed class VadSpeakerGateCoordinator : ISpeakerGateBoundaryPort
         {
             _inferenceReadyTimestamp = -1;
             _deadlineVersion = -1;
+            _pendingWindowStart = _pendingWindowEnd = -1;
         }
     }
 
@@ -197,30 +203,36 @@ internal sealed class VadSpeakerGateCoordinator : ISpeakerGateBoundaryPort
     }
 
     /// <summary>
-    /// The first complete window is the only thing the realtime Wakeup/BargeIn gate waits for;
-    /// once it exists the worker gets the purpose's bounded inference timeout. SingleTalk is
+    /// Each outstanding worker window gets the purpose's bounded inference timeout. SingleTalk is
     /// deliberately excluded while its input is open because it verifies in parallel with ASR.
     /// </summary>
     private SpeakerVerificationResult ApplyBoundedDeadline(long version, in SpeakerEvidenceQuery query, SpeakerVerificationResult result)
     {
-        if (result.IsFinal || result.Reason != SpeakerVerificationReason.WaitingForInference)
-            return result;
-
-        long now = Stopwatch.GetTimestamp();
+        long now = _timeProvider.GetTimestamp();
         lock (_deadlineLock)
         {
-            if (_deadlineVersion != version)
+            if (result.IsFinal || result.Reason != SpeakerVerificationReason.WaitingForInference)
+            {
+                _inferenceReadyTimestamp = -1;
+                _pendingWindowStart = _pendingWindowEnd = -1;
+                return result;
+            }
+
+            bool hasWindow = result.PendingWindowStartSample >= 0 &&
+                result.PendingWindowEndSampleExclusive > result.PendingWindowStartSample;
+            if (_deadlineVersion != version || _inferenceReadyTimestamp < 0 ||
+                (hasWindow && (_pendingWindowStart != result.PendingWindowStartSample ||
+                               _pendingWindowEnd != result.PendingWindowEndSampleExclusive)))
             {
                 _deadlineVersion = version;
                 _inferenceReadyTimestamp = now;
-                return result;
             }
-            if (_inferenceReadyTimestamp < 0)
+            if (hasWindow)
             {
-                _inferenceReadyTimestamp = now;
-                return result;
+                _pendingWindowStart = result.PendingWindowStartSample;
+                _pendingWindowEnd = result.PendingWindowEndSampleExclusive;
             }
-            if (Stopwatch.GetElapsedTime(_inferenceReadyTimestamp, now) < _speaker!.GetInferenceTimeout(query.Purpose))
+            if (_timeProvider.GetElapsedTime(_inferenceReadyTimestamp, now) < _speaker!.GetInferenceTimeout(query.Purpose))
                 return result;
         }
 

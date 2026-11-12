@@ -194,24 +194,24 @@ internal sealed class NearEndDataPlane
         ActiveEndDrainOutcome drainOutcome = default;
         lock (_lock)
         {
+            if (_capture.DirectFeed && captureCommittedAfterEndpoint &&
+                (!_endpoint.UnownedObserved || _endpoint.UnownedProcessed ||
+                 _endpoint.UnownedGeneration != _timeline.Generation ||
+                 _endpoint.UnownedStreamEpoch != _timeline.StreamEpoch))
+            {
+                // Commit already retired this queued endpoint, or a fresh onset superseded it.
+                return;
+            }
+
             _endpoint.ClearCandidate();
             if (_capture.DirectFeed)
             {
                 _endpoint.MarkCaptureSpeechEnded();
-                bool dtdTailPredatesCaptureCommit = captureCommittedAfterEndpoint &&
-                    _endpoint.UnownedObserved &&
-                    _endpoint.UnownedGeneration == _timeline.Generation &&
-                    _endpoint.UnownedStreamEpoch == _timeline.StreamEpoch &&
-                    _timeline.EndSample > _endpoint.UnownedEndSample;
-                if (dtdTailPredatesCaptureCommit)
-                {
-                    activeTurnId = _capture.ActiveTurnId;
-                    // The control plane committed the capture after both the VAD endpoint and a
-                    // later DTD frame. Those tail frames cannot be replayed as future callbacks,
-                    // so drain to the known main-AEC boundary now.
-                    _capture.BeginDrain(_timeline.StreamEpoch, _timeline.EndSample, hasDiscontinuity: false, _options.DrainTimeoutSamples);
-                    finalize = _capture.TryClaimEndFinalization(out speechDuration, out drainOutcome);
-                }
+                activeTurnId = _capture.ActiveTurnId;
+                // VAD already waited for its own silence threshold. Drain the observed primary
+                // audio now; in-flight endpoint observations and feeds still protect the tail.
+                _capture.BeginDrain(_timeline.StreamEpoch, _timeline.EndSample, hasDiscontinuity: false, _options.DrainTimeoutSamples);
+                finalize = _capture.TryClaimEndFinalization(out speechDuration, out drainOutcome);
 
                 _endpoint.ClearUnowned();
             }
@@ -421,9 +421,12 @@ internal sealed class NearEndDataPlane
             rebasedAfterStreamEpochChange = lease.Selection.StreamEpoch != committedStreamEpoch;
             firstFeedSample = rebasedAfterStreamEpochChange ? _timeline.EndSample : lease.Selection.SelectedEndSample;
             _capture.Start(confirmed.TurnId, firstFeedSample, speechMs, lease.Selection.Source, lease.Selection.Samples);
-            // A restarted stream may never publish the old VAD utterance's endpoint. Until VAD
-            // observes speech on the new stream, use its current DTD frames for end detection.
-            _endpoint.ObserveCaptureStarted(lease.EndpointVadCandidate && !rebasedAfterStreamEpochChange);
+            // A restarted stream may never publish the old VAD endpoint, and an already-ended
+            // utterance cannot publish it again. Both cases must fall back to current DTD frames.
+            bool hasCurrentEndpoint = _endpoint.UnownedObserved &&
+                _endpoint.UnownedGeneration == _timeline.Generation &&
+                _endpoint.UnownedStreamEpoch == committedStreamEpoch;
+            _endpoint.ObserveCaptureStarted(lease.EndpointVadCandidate && !rebasedAfterStreamEpochChange && !hasCurrentEndpoint);
             bool endpointPredatesCaptureCommit =
                 _endpoint.UnownedObserved &&
                 _endpoint.UnownedProcessed &&
@@ -441,7 +444,10 @@ internal sealed class NearEndDataPlane
                 _capture.BeginDrain(_timeline.StreamEpoch, _timeline.EndSample, hasDiscontinuity: false, _options.DrainTimeoutSamples);
             }
 
-            _endpoint.ClearUnowned();
+            // Keep a pending acknowledgement only when its endpoint reaches this capture's
+            // boundary. Older endpoints must not terminate a later capture when replayed.
+            if (!hasCurrentEndpoint || _endpoint.UnownedProcessed || _endpoint.UnownedEndSample < firstFeedSample)
+                _endpoint.ClearUnowned();
             _endpoint.ClearCandidate();
         }
 
@@ -772,7 +778,8 @@ internal sealed class NearEndDataPlane
 
         if (!TryClearSpeakerCandidate(generation))
             return;
-        ClearAudioReservoirs();
+        // A later window of the same utterance may still authorize. Its onset and primary-AEC
+        // audio belong to the timeline, not to the rejected identity candidate.
         if (_options.ActiveNearEndCooldownMs > 0)
         {
             Volatile.Write(ref _cooldownUntilTicks, Environment.TickCount64 + _options.ActiveNearEndCooldownMs);
@@ -1196,11 +1203,12 @@ internal sealed class NearEndDataPlane
             long selectedStreamEpoch;
             long selectedStartSample;
             long selectedEndSample;
-            endpointVadCandidate = TryGetEndpointVadCandidateStartLocked(
+            bool hasEndpointVadAudio = TryGetEndpointVadCandidateStartLocked(
                 decision,
                 out long endpointVadStreamEpoch,
                 out long endpointVadStartSample,
                 out bool waitForEndpointVadLocation);
+            endpointVadCandidate = hasEndpointVadAudio && !_endpoint.UnownedObserved;
             if (waitForEndpointVadLocation)
             {
                 waitingForEndpointVadLocation = true;
@@ -1210,7 +1218,7 @@ internal sealed class NearEndDataPlane
                 return false;
             }
 
-            if (endpointVadCandidate)
+            if (hasEndpointVadAudio)
             {
                 // VAD can recognize the onset after the first syllables. Its exact location
                 // still needs the configured lead-in from the same recognition timeline.

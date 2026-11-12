@@ -1678,7 +1678,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     }
 
     [Fact]
-    public async Task ActiveNearEndEndpointSignal_WaitsForDtdSilenceBeforeFinishingCapture()
+    public async Task ActiveNearEndEndpointSignal_FinishesWithoutAnotherDtdSilenceWindow()
     {
         var services = TestServices.Create();
         services.Asr.CompleteStart("session-1");
@@ -1726,13 +1726,9 @@ public sealed partial class VoiceAssistantLifecycleTests
         // endpoint. It must not replay that already-observed audio into the active data plane.
         RuntimeGraphProbe.InvokeMethod(runtime, "ProcessSpeaking", ConstantSamples(0.12f, 320), 1L);
 
-        // A playback endpoint is an input to the near-end DTD silence window. It must not be
-        // replayed later as a state-machine speech end for a turn confirmed after this callback.
-        await Task.Delay(50);
-        Assert.Equal(finishCount, services.Asr.FinishCount);
-
-        EmitSilenceFrames(services, count: 8, renderRms: 0.08);
+        // The primary audio is already aligned, so VAD ends capture without another DTD frame.
         await WaitUntilAsync(() => services.Asr.FinishCount == finishCount + 1);
+        Assert.False(activeNearEnd.GetProcessingState().HasActiveCapture);
     }
 
     [Fact]

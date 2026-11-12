@@ -54,8 +54,8 @@ public sealed partial class VoiceAssistantLifecycleTests
         NearEndCaptureStateMachine capture = GetPrivateField<NearEndCaptureStateMachine>(endpoint, "_capture");
         long turnId = capture.ActiveTurnId;
         int finishCount = services.Asr.FinishCount;
-        services.Vad.EmitSpeechEnded(TimeSpan.FromMilliseconds(160));
 
+        // DTD can reach its endpoint while the primary pipeline is still catching up.
         float[] silence = new float[320];
         CaptureRange first = services.Audio.EmitDuplexOnly(silence, silence, silence, silence);
         _ = services.Audio.EmitDuplexOnly(silence, silence, silence, silence);
@@ -160,7 +160,6 @@ public sealed partial class VoiceAssistantLifecycleTests
         ObserveRecognitionAudio(coordinator, 0, [1f, 2f, 3f, 4f]);
         coordinator.ApplyConfirmedCapture(CreateConfirmationLease(4), CreateConfirmedDecision());
         await coordinator.AttachAsrSessionAsync(1, "resumed-endpoint");
-        coordinator.ObserveEndpointSpeechEnded();
         coordinator.ObserveDuplexAudio(CreateDuplexFrame(1, 4, 16), false);
         Assert.True(coordinator.Module.Capture.EndDrainPending);
         Assert.Equal(20, coordinator.Module.Capture.EndDrainTargetSample);
@@ -183,11 +182,11 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.Equal(1, coordinator.Module.Capture.ActiveTurnId);
         Assert.Equal(24, coordinator.Module.Capture.DirectFeedNextSample);
 
-        coordinator.ObserveEndpointSpeechEnded();
-        coordinator.ObserveDuplexAudio(CreateDuplexFrame(2, 24, 16), false);
-        Assert.Equal(40, coordinator.Module.Capture.EndDrainTargetSample);
         float[] trailingSilence = new float[16];
-        FeedRecognitionAudio(coordinator, 24, trailingSilence);
+        MainAudioObservation tail = ObserveRecognitionAudio(coordinator, 24, trailingSilence);
+        coordinator.ObserveEndpointSpeechEnded();
+        Assert.Equal(40, coordinator.Module.Capture.EndDrainTargetSample);
+        coordinator.FeedFromRecognitionAudio(trailingSilence, tail);
 
         Assert.Equal(1, speechEnded);
         Assert.Empty(faults);
