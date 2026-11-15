@@ -9,8 +9,7 @@ using VoiceBox.Core;
 using VoiceBox.Core.Onnx;
 using VoiceBox.Core.Services.AudioService.Models;
 using VoiceBox.DNR.DPDFNet;
-using VoiceBox.LLM.OpenAI;
-using VoiceBox.LLM.OnnxGenAI;
+using VoiceBox.LLM.LLamaSharp;
 using VoiceBox.TTS.MossNano;
 using VoiceBox.TTS.Kokoro;
 using VoiceBox.TTS.VoxCPM;
@@ -107,10 +106,11 @@ namespace VoiceAssistantDemo
                     options.ModelPath = AudioDefaults.FireRedAsr2Path;
                     options.ExecutionProvider = OnnxExecutionProvider;
                 })
-                .AddOnnxGenAILLMService(o =>
+                .AddLLamaSharpLLMService(o =>
                 {
-                    o.ModelPath = AudioDefaults.LlmOnnxModelPath;
-                    o.ExecutionProvider = OnnxExecutionProvider.ToGenAIExecutionProvider();
+                    o.ModelPath = AudioDefaults.LlmGgufModelPath;
+                    o.ContextSize = 8192;
+                    o.GpuLayerCount = 0;
                     o.MaxTokens = 512;
                     o.DoSample = true;
                     o.Temperature = 0.7f;

@@ -29,7 +29,7 @@ namespace VoiceBox.LLM.LLamaSharp.Internal
     /// 自动清空 memory 并全量 prefill，避免 recurrent state 保留较大的旧位置而导致
     /// M-RoPE <c>X &lt; Y</c> 校验失败。此降级不改变对话语义。
     ///
-    /// 与 ORT-GenAI 实现不同, llama.cpp 的采样管线独立于 KV-cache, 采样参数变化不需要作废缓存。
+    /// The llama.cpp sampling pipeline is independent of the KV-cache, so sampling changes do not invalidate it.
     /// 会话<b>非线程安全</b>: 同一实例的调用必须串行 (由调用方保证)。
     /// </summary>
     internal sealed class LLamaSharpLLMConversation : ILLMConversation

@@ -16,8 +16,8 @@ namespace VoiceBox.LLM.LLamaSharp.Internal
 
     /// <summary>
     /// 解析后的采样选项。作为 record struct 天然可比较, 便于测试与日志。
-    /// 与 ORT-GenAI 不同, llama.cpp 的采样器独立于 KV-cache — 每轮新建采样管线即可,
-    /// 参数变化不需要作废任何缓存。
+    /// The llama.cpp sampler is independent of the KV-cache. Each turn creates a new sampling pipeline,
+    /// so parameter changes do not invalidate cached tokens.
     /// </summary>
     internal readonly record struct LlamaSamplingOptions(
         bool DoSample, float Temperature, int TopK, float TopP, float RepetitionPenalty, int PenaltyWindow, int? Seed)
@@ -77,7 +77,7 @@ namespace VoiceBox.LLM.LLamaSharp.Internal
         /// <paramref name="idTracker"/> 非空时, 每个成功进入 KV 的 token 都会即时追加进去 —
         /// 无论中途取消还是异常, 它始终与 KV 实际内容一致, 会话据此实现跨轮增量 prefill。
         ///
-        /// 输出约定 (与 OnnxGenAI/OpenAI 等服务一致): 内容块立即发出 (不为拼 IsFinal 而缓冲);
+        /// Content chunks are emitted immediately, without buffering to determine IsFinal;
         /// 结束后仅在产生过可见文本时补一个空的 <see cref="LlmTextChunk.IsFinal"/> 标记块 (Kind=Text)。
         /// </summary>
         public static async Task<GenerationStats> RunAsync(

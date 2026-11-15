@@ -10,9 +10,8 @@ namespace VoiceBox.LLM.OpenAI
     /// DeepSeek、Moonshot、阿里百炼等。它们都暴露 <c>/chat/completions</c> 协议, 只是
     /// <see cref="Endpoint"/> / <see cref="Model"/> / <see cref="ApiKey"/> 不同。
     ///
-    /// 与本地 ONNX Runtime GenAI 实现 (<c>VoiceBox.LLM.OnnxGenAI</c>) 不同, 这里是远程 HTTP 服务 —— 真正的
-    /// 模型加载、KV-cache、GPU 调度都在服务端, 客户端只是 HTTP/JSON 桥。所以这里的选项以
-    /// "连接 / 采样语义" 为主, 不涉及执行提供者或显存配额。
+    /// Model loading, KV-cache management, and GPU scheduling run on the HTTP server.
+    /// These client options configure connections and sampling, without execution providers or GPU memory quotas.
     /// </summary>
     public sealed class OpenAILLMOptions
     {

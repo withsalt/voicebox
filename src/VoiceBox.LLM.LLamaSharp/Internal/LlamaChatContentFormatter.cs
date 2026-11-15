@@ -48,7 +48,7 @@ internal static class LlamaChatContentFormatter
         {
             throw new NotSupportedException(
                 "VoiceBox.LLM.LLamaSharp does not support audio/image input yet " +
-                "(llama.cpp multi-modal requires an mmproj model via mtmd). Use VoiceBox.LLM.OnnxGenAI or pass text only.");
+                "(llama.cpp multi-modal requires an mmproj model via mtmd). Pass text input instead.");
         }
 
         throw new NotSupportedException(

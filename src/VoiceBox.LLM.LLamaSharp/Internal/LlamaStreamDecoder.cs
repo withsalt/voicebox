@@ -61,8 +61,7 @@ namespace VoiceBox.LLM.LLamaSharp.Internal
     }
 
     /// <summary>
-    /// 处理来自 <c>StreamingTokenDecoder</c> 的逐 token 文本流 (设计对齐
-    /// <c>VoiceBox.LLM.OnnxGenAI</c> 的 GenAIStreamDecoder), 完成三件事:
+    /// Processes the token text stream from <c>StreamingTokenDecoder</c> with three responsibilities:
     /// <list type="number">
     ///   <item>把 thinking 块内容路由到 thinking 输出, 不进入正文;</item>
     ///   <item>剔除泄漏为文本的 special token;</item>

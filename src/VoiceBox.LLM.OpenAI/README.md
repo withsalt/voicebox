@@ -2,15 +2,14 @@
 
 基于官方 [OpenAI .NET SDK](https://github.com/openai/openai-dotnet) 的远程 LLM 服务实现，适配任意
 **OpenAI 协议兼容**端点：官方 OpenAI、Azure OpenAI，以及国内的火山方舟 (Ark)、DeepSeek、Moonshot、
-阿里百炼等。实现 `VoiceBox.Core` 的 `ILLMService` / `IStreamLLMService` 契约，与 `VoiceBox.LLM.OnnxGenAI`
-(本地 ONNX Runtime GenAI) 可无缝替换。
+阿里百炼等。实现 `VoiceBox.Core` 的 `ILLMService` / `IStreamLLMService` 契约，与本地推理组件
+`VoiceBox.LLM.LLamaSharp` 使用相同的文本生成接口。
 
 ## 设计要点
 
 - **复用底层连接**：`ChatClient` 及其 HTTP 管线在构造期一次性建好，进程内复用，避免每次请求重建连接。
 - **客户端并发反压**：用 `SemaphoreSlim` 限制并发上限，降低触发上游 429 限流的概率。
-- **流式解耦**：`StreamAsync` 用 `Channel<T>` 解耦生产/消费，`CompleteAsync` 内部消费同一条流，
-  风格与 OnnxGenAI 实现一致。
+- **流式解耦**：`StreamAsync` 用 `Channel<T>` 解耦生产/消费，`CompleteAsync` 内部消费同一条流。
 - **推理内容分流**：推理模型 (如 deepseek-reasoner / deepseek-v4) 返回的 `reasoning_content` 增量被
   路由为 `LlmChunkKind.Thinking`，不混入正常文本。对不返回该字段的普通模型是无害的空操作。
 

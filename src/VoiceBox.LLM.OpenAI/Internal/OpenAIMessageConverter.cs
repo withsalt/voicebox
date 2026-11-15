@@ -85,8 +85,7 @@ namespace VoiceBox.LLM.OpenAI.Internal
                     case AudioContent:
                         throw new NotSupportedException(
                             "标准 OpenAI /chat/completions 文本协议不支持音频输入。" +
-                            "如需语音转写, 请改用专门的 ASR 服务 (VoiceBox.ASR.*), " +
-                            "或换用本地的 VoiceBox.LLM.OnnxGenAI 多模态实现。");
+                            "如需语音转写, 请改用专门的 ASR 服务 (VoiceBox.ASR.*), 再传入转写后的文本。");
                 }
             }
 

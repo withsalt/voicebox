@@ -22,8 +22,6 @@ namespace VoiceAssistantDemo
 
         public static string AssistantName = ConvertWakeupWordToAssistantName(WakeupWord);
 
-        public static string LlmOnnxModelPath = Path.Combine(BASE_MODEL_DIR, "llm", "genai", "Qwen3-0.6B-ONNX-INT4-CPU");
-
         public static string LlmGgufModelPath = Path.Combine(BASE_MODEL_DIR, "llm", "llama", "Qwen3.5-2B-GGUF", "Qwen3.5-2B-Q4_K_M.gguf");
 
         public static string Qwen3AsrPath = Path.Combine(BASE_MODEL_DIR, "asr", "qwen3", "qwen3-asr-1.7B-onnx-fp16");

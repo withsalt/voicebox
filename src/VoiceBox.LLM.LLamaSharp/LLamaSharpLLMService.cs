@@ -22,7 +22,7 @@ namespace VoiceBox.LLM.LLamaSharp
     /// <list type="bullet">
     ///   <item>构造期完成全部重资源加载 (Weights / Context / Profile) 与可选预热; 之后调用零冷启动开销。</item>
     ///   <item>内部以 <see cref="SemaphoreSlim"/> 串行化 llama.cpp context 的使用 —— 单 context 不支持并发访问。</item>
-    ///   <item>流式路径用 <see cref="System.Threading.Channels.Channel{T}"/> 解耦生产/消费, 与 OnnxGenAI 服务风格一致。</item>
+    ///   <item>Streaming uses <see cref="System.Threading.Channels.Channel{T}"/> to decouple producers and consumers.</item>
     ///   <item><see cref="CancellationToken"/> 全程透传; 取消时已发出的块会被消费者读完, 然后通道收到 <see cref="OperationCanceledException"/>。</item>
     ///   <item>llama.cpp 推理是 CPU 密集型同步调用; CompleteAsync/StreamAsync 均通过 <c>Task.Run</c> 放到线程池, 保持调用方的真正异步。</item>
     /// </list>

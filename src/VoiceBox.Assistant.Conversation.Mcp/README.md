@@ -92,5 +92,5 @@ await using IConversationSession session = new ConversationBuilder(llm)
 支持 stdio、Streamable HTTP 与 MCP Tasks。resources、prompts、sampling、elicitation、Apps 和
 完整 OAuth 流程不在当前范围内。
 
-Provider 能力：`VoiceBox.LLM.OpenAI` 与 `VoiceBox.LLM.LLamaSharp` 实现结构化工具调用；
-`VoiceBox.LLM.OnnxGenAI` 不实现 `IToolCallingStreamLLMService`，不能构建默认工具会话。
+Provider 能力：`VoiceBox.LLM.OpenAI` 与 `VoiceBox.LLM.LLamaSharp` 均实现
+`IToolCallingStreamLLMService`，支持构建默认工具会话。

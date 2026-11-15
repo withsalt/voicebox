@@ -21,7 +21,7 @@ namespace VoiceBox.LLM.LLamaSharp
         /// <summary>
         /// 上下文窗口大小 (token 数)。<c>null</c> 表示沿用 GGUF 训练时的上下文长度
         /// (可能非常大, 会占用大量 KV-cache 内存); 生产环境建议按需显式设置。
-        /// 默认 8192, 与 OnnxGenAI 服务的 SessionMaxLength 对齐。
+        /// Defaults to 8192 tokens.
         /// </summary>
         public uint? ContextSize { get; set; } = 8192;
 

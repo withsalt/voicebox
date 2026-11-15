@@ -65,7 +65,6 @@ The names below correspond to projects under `src`. Reference the ones you need.
 | Speaker verification | `VoiceBox.Speaker.WeSpeaker` | WeSpeaker CN-Celeb ResNet34 speaker embedding extraction and verification |
 | LLM (language model) | `VoiceBox.LLM.OpenAI` | OpenAI-compatible API with streaming text and structured tool calling |
 | LLM (language model) | `VoiceBox.LLM.LLamaSharp` | Local GGUF model inference through LLamaSharp / llama.cpp, with grammar-constrained structured tool calling |
-| LLM (language model) | `VoiceBox.LLM.OnnxGenAI` | Local model inference through ONNX Runtime GenAI; tool calling is not supported |
 | TTS (speech synthesis) | `VoiceBox.TTS.Qwen3` | Qwen3-TTS CustomVoice with preset voices and streaming synthesis |
 | TTS (speech synthesis) | `VoiceBox.TTS.Kokoro` | Chinese and English synthesis with Kokoro, including text normalization and phoneme conversion |
 | TTS (speech synthesis) | `VoiceBox.TTS.MossNano` | MOSS-TTS-Nano synthesis of full utterances and streaming synthesis |
@@ -170,7 +169,7 @@ Most ONNX modules reference only `Microsoft.ML.OnnxRuntime.Managed`. **Applicati
 | NVIDIA CUDA | `Microsoft.ML.OnnxRuntime.Gpu` | Compatible NVIDIA drivers, CUDA, and cuDNN |
 | DirectML | `Microsoft.ML.OnnxRuntime.DirectML` | Windows and a compatible GPU driver |
 
-The `ExecutionProvider` configuration must match the runtime. LLamaSharp also requires a `LLamaSharp.Backend.*` package. ONNX Runtime GenAI requires the corresponding native `Microsoft.ML.OnnxRuntimeGenAI` package. The demo `.csproj` files include examples of backend references.
+The `ExecutionProvider` configuration must match the runtime. LLamaSharp also requires a `LLamaSharp.Backend.*` package. The demo `.csproj` files include examples of backend references.
 
 ## Quick Start
 
@@ -219,12 +218,12 @@ The demo also provides the following configurations. Switch between them using `
 
 | Configuration | ASR | LLM | TTS | Notes |
 | --- | --- | --- | --- | --- |
-| [Plan01: Local CPU](src/Demos/VoiceAssistantDemo/Plan01_CPU_ALL_LOCAL.cs) | FireRedASR2 | ONNX Runtime GenAI | VoxCPM | Fully local CPU inference; requires a powerful CPU |
+| [Plan01: Local CPU](src/Demos/VoiceAssistantDemo/Plan01_CPU_ALL_LOCAL.cs) | FireRedASR2 | LLamaSharp | VoxCPM | Fully local CPU inference; requires a powerful CPU |
 | [Plan02: Online services](src/Demos/VoiceAssistantDemo/Plan02_CPU_ALL_ONLINE.cs) | Doubao online | OpenAI-compatible service | Doubao online | Recommended for less powerful devices; Volcengine's generous free quotas can make personal usage nearly free |
 | [Plan03: Local GPU](src/Demos/VoiceAssistantDemo/Plan03_GPU_16GVRAM_ALL_LOCAL.cs) | Confucius4 | LLamaSharp | VoxCPM | Fully local GPU inference (CUDA); requires at least 16 GB of VRAM and provides a very good user experience |
 | [Plan04: Hybrid local and online (default)](src/Demos/VoiceAssistantDemo/Plan04_MIX_8GVRAM_ASR_GPU_TTS_CPU_LLM_ONLINE.cs) | Confucius4 / CUDA | OpenAI-compatible service | VoxCPM / CPU | GPU inference for ASR and CPU inference for TTS; requires at least 8 GB of VRAM and also provides a good user experience |
 
-When using `VoiceBox.LLM.OnnxGenAI` for local inference, do not call `UseTools(...)` when building the conversation because it does not implement `IToolCallingStreamLLMService`. `VoiceBox.LLM.LLamaSharp` supports structured tool calling through llama.cpp grammars. Both require the appropriate models and native inference packages.
+`VoiceBox.LLM.LLamaSharp` supports structured tool calling through llama.cpp grammars and requires a GGUF model and the appropriate native inference package. Plan01 uses `AudioDefaults.LlmGgufModelPath` with `GpuLayerCount = 0` for CPU inference.
 
 For local LLM inference, the recommended approach is to serve a model with ollama or llama.cpp and connect to it through `VoiceBox.LLM.OpenAI`.
 
@@ -244,7 +243,7 @@ Examples are located in [src/Demos](src/Demos). In addition to the recording and
 | Wake word detection | [FsmnKwsDemo](src/Demos/FsmnKwsDemo), [SherpaOnnxKwsDemo](src/Demos/SherpaOnnxKwsDemo), [WakeWordDemo](src/Demos/WakeWordDemo) | Real-time detection with three wake word backends |
 | Speech recognition | [Qwen3ASRDemo](src/Demos/Qwen3ASRDemo), [Confucius4AsrDemo](src/Demos/Confucius4AsrDemo), [FireRedASRDemo](src/Demos/FireRedASRDemo), [DoubaoOnlineAsrDemo](src/Demos/DoubaoOnlineAsrDemo) | Local or online speech recognition |
 | Speaker verification | [CampPlusSpeakerLiveDemo](src/Demos/CampPlusSpeakerLiveDemo), [WeSpeakerSpeakerLiveDemo](src/Demos/WeSpeakerSpeakerLiveDemo) | Speaker enrollment and real-time detection |
-| Language models | [OpenAILLMDemo](src/Demos/OpenAILLMDemo), [LLamaSharpLLMDemo](src/Demos/LLamaSharpLLMDemo), [OnnxGenAILLMDemo](src/Demos/OnnxGenAILLMDemo) | Online or local text generation and multi-turn conversations |
+| Language models | [OpenAILLMDemo](src/Demos/OpenAILLMDemo), [LLamaSharpLLMDemo](src/Demos/LLamaSharpLLMDemo) | Online or local text generation and multi-turn conversations |
 | Local speech synthesis | [Qwen3TtsDemo](src/Demos/Qwen3TtsDemo), [KokoroTtsDemo](src/Demos/KokoroTtsDemo), [MossNanoTtsDemo](src/Demos/MossNanoTtsDemo), [VoxCPMTtsDemo](src/Demos/VoxCPMTtsDemo) | Synthesis and playback with different TTS models |
 | Online speech synthesis | [DoubaoOnlineTtsDemo](src/Demos/DoubaoOnlineTtsDemo) | Doubao online speech synthesis |
 | Text-only conversation | [ConversationTextDemo](src/Demos/ConversationTextDemo) | Consumes the conversation stream without audio devices; multi-turn history and context memory |
@@ -256,7 +255,7 @@ Some linked documents are in Chinese.
 
 - [Assistant architecture and capability combinations](docs/voicebox-assistant-architecture.md)
 - [Conversation module](src/VoiceBox.Assistant.Conversation/README.md) · [MCP tool source](src/VoiceBox.Assistant.Conversation.Mcp/README.md)
-- [OpenAI-compatible LLM](src/VoiceBox.LLM.OpenAI/README.md) · [ONNX Runtime GenAI](src/VoiceBox.LLM.OnnxGenAI/README.md)
+- [OpenAI-compatible LLM](src/VoiceBox.LLM.OpenAI/README.md)
 - [Confucius4 ASR](src/VoiceBox.ASR.Confucius4/README.md) · [VoxCPM TTS](src/VoiceBox.TTS.VoxCPM/README.md) · [WeSpeaker speaker verification](src/VoiceBox.Speaker.WeSpeaker/README.md)
 - [Double-talk detection](src/VoiceBox.DTD.RenderAware/README.md) · [AEC / interruption benchmarks](src/Tests/VoiceBox.Assistant.AecChallenge.Benchmark/README.md) · [Noise reduction benchmarks](src/Tests/VoiceBox.DNR.Benchmark/README.md)
 - [WebRTC APM native build](native/webrtc-apm/README.md) · [WeTextProcessing native build](native/wetext-processor/README.md) · [Jetson ONNX Runtime build](docs/jetson-onnxruntime-1.29.0-build.md)
@@ -278,7 +277,7 @@ This project uses or draws on the following projects, models, and SDKs. Thanks t
 | Speaker verification | [CAM++ / 3D-Speaker](https://github.com/modelscope/3D-Speaker), [WeSpeaker](https://github.com/wenet-e2e/wespeaker) |
 | Speech synthesis | [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS), [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M), [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx), [MOSS-TTS-Nano](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano-100M-ONNX), [VoxCPM](https://github.com/OpenBMB/VoxCPM) |
 | Text and phoneme processing | [Misaki](https://github.com/hexgrad/misaki), [WeTextProcessing](https://github.com/wenet-e2e/WeTextProcessing), [DeepPhonemizer](https://github.com/as-ideas/DeepPhonemizer) |
-| Model inference | [ONNX Runtime](https://github.com/microsoft/onnxruntime), [ONNX Runtime GenAI](https://github.com/microsoft/onnxruntime-genai), [LLamaSharp](https://github.com/SciSharp/LLamaSharp), [llama.cpp](https://github.com/ggml-org/llama.cpp) |
+| Model inference | [ONNX Runtime](https://github.com/microsoft/onnxruntime), [LLamaSharp](https://github.com/SciSharp/LLamaSharp), [llama.cpp](https://github.com/ggml-org/llama.cpp) |
 | Online models and tool protocols | [OpenAI .NET SDK](https://github.com/openai/openai-dotnet), [MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk) |
 
 ## License

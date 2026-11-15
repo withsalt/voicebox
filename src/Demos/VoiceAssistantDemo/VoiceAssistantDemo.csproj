@@ -13,7 +13,6 @@
 		<PackageReference Include="Serilog.Sinks.File" />
 		<!--<PackageReference Include="Microsoft.ML.OnnxRuntime" />-->
 		<PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" />
-		<!--<PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Cuda" />-->
 		<PackageReference Include="LLamaSharp.Backend.Vulkan" />
 	</ItemGroup>
 
@@ -32,7 +31,6 @@
 		<ProjectReference Include="..\..\VoiceBox.DNR.RNNoise\VoiceBox.DNR.RNNoise.csproj" />
 		<ProjectReference Include="..\..\VoiceBox.HPF.Butterworth\VoiceBox.HPF.Butterworth.csproj" />
 		<ProjectReference Include="..\..\VoiceBox.LLM.LLamaSharp\VoiceBox.LLM.LLamaSharp.csproj" />
-		<ProjectReference Include="..\..\VoiceBox.LLM.OnnxGenAI\VoiceBox.LLM.OnnxGenAI.csproj" />
 		<ProjectReference Include="..\..\VoiceBox.Assistant\VoiceBox.Assistant.csproj" />
 		<ProjectReference Include="..\..\VoiceBox.Core\VoiceBox.Core.csproj" />
 		<ProjectReference Include="..\..\VoiceBox.LLM.OpenAI\VoiceBox.LLM.OpenAI.csproj" />

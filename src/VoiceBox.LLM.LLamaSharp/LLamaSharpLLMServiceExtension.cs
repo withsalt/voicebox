@@ -48,7 +48,7 @@ namespace VoiceBox.LLM.LLamaSharp
         }
 
         /// <summary>
-        /// 注册到 <see cref="AudioServiceManager"/>, 与 OnnxGenAI/Kokoro 等服务保持调用风格一致。
+        /// Registers the service with <see cref="AudioServiceManager"/>.
         /// </summary>
         public static AudioServiceManager AddLLamaSharpLLMService(this AudioServiceManager manager, Action<LLamaSharpLLMOptions> configure, string? serviceName = "")
         {

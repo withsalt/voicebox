@@ -154,17 +154,6 @@ namespace VoiceAssistantDemo
                     options.ModelPath = AudioDefaults.Confucius4AsrPath;
                     options.ExecutionProvider = OnnxExecutionProvider.Cuda;
                 })
-                //.AddOnnxGenAILLMService(o =>
-                //{
-                //    o.ModelPath = Path.Combine(BASE_MODEL_DIR, "llm", "Gemma-3-ONNX", "gpu-fp16-io-int4-rtn-block-32");
-                //    o.ExecutionProvider = GenAIExecutionProvider.Cpu;
-                //    o.MaxTokens = 512;
-                //    o.DoSample = true;
-                //    o.Temperature = 0.7f;
-                //    o.TopK = 40;
-                //    o.TopP = 0.9f;
-                //    o.RepetitionPenalty = 1.1f;
-                //})
                 .AddOpenAILLMService(o =>
                 {
                     o.ApiKey = AudioDefaults.LlmApiKey;

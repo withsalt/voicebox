@@ -22,7 +22,6 @@
   </Folder>
   <Folder Name="/Demos/LLM/">
     <Project Path="Demos/LLamaSharpLLMDemo/LLamaSharpLLMDemo.csproj" />
-    <Project Path="Demos/OnnxGenAILLMDemo/OnnxGenAILLMDemo.csproj" />
     <Project Path="Demos/OpenAILLMDemo/OpenAILLMDemo.csproj" />
   </Folder>
   <Folder Name="/Demos/Speaker/">
@@ -84,7 +83,6 @@
   <Project Path="VoiceBox.DTD.RenderAware/VoiceBox.DTD.RenderAware.csproj" />
   <Project Path="VoiceBox.HPF.Butterworth/VoiceBox.HPF.Butterworth.csproj" />
   <Project Path="VoiceBox.LLM.LLamaSharp/VoiceBox.LLM.LLamaSharp.csproj" />
-  <Project Path="VoiceBox.LLM.OnnxGenAI/VoiceBox.LLM.OnnxGenAI.csproj" Id="c8b2e5e1-31e1-468c-83c9-b1fefe3e843a" />
   <Project Path="VoiceBox.LLM.OpenAI/VoiceBox.LLM.OpenAI.csproj" />
   <Project Path="VoiceBox.Speaker.CampPlus/VoiceBox.Speaker.CampPlus.csproj" />
   <Project Path="VoiceBox.Speaker.WeSpeaker/VoiceBox.Speaker.WeSpeaker.csproj" />

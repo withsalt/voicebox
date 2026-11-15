@@ -65,7 +65,6 @@ VoiceBox 是基于 **.NET** 开发的模块化语音交互框架，**基本覆�
 | 说话人验证 | `VoiceBox.Speaker.WeSpeaker` | WeSpeaker CN-Celeb ResNet34 声纹提取与验证 |
 | LLM（语言模型） | `VoiceBox.LLM.OpenAI` | OpenAI 兼容接口，支持流式文本与结构化工具调用 |
 | LLM（语言模型） | `VoiceBox.LLM.LLamaSharp` | 基于 LLamaSharp / llama.cpp 的本地 GGUF 模型推理，支持 grammar 约束的结构化工具调用 |
-| LLM（语言模型） | `VoiceBox.LLM.OnnxGenAI` | 基于 ONNX Runtime GenAI 的本地模型推理，不支持工具调用 |
 | TTS（语音合成） | `VoiceBox.TTS.Qwen3` | Qwen3-TTS CustomVoice，支持预置音色与流式合成 |
 | TTS（语音合成） | `VoiceBox.TTS.Kokoro` | Kokoro 中英文合成，包含文本规范化与音素转换 |
 | TTS（语音合成） | `VoiceBox.TTS.MossNano` | MOSS-TTS-Nano 整段与流式合成 |
@@ -171,7 +170,7 @@ static async Task RunAssistantAsync(
 | NVIDIA CUDA | `Microsoft.ML.OnnxRuntime.Gpu` | 匹配的 NVIDIA 驱动、CUDA 与 cuDNN |
 | DirectML | `Microsoft.ML.OnnxRuntime.DirectML` | Windows 与兼容的 GPU 驱动 |
 
-`ExecutionProvider` 配置需与运行时匹配。LLamaSharp 另需选择 `LLamaSharp.Backend.*`；ONNX Runtime GenAI 另需选择对应的 `Microsoft.ML.OnnxRuntimeGenAI` 原生包。各 Demo 的 `.csproj` 已给出后端引用示例。
+`ExecutionProvider` 配置需与运行时匹配。LLamaSharp 另需选择 `LLamaSharp.Backend.*`。各 Demo 的 `.csproj` 已给出后端引用示例。
 
 ## 快速开始
 
@@ -220,12 +219,12 @@ Demo 还提供以下组合，在 `Program.cs` 中切换 `Plan*.Buid(...)`：
 
 | 方案 | ASR | LLM | TTS | 备注 |
 | --- | --- | --- | --- | --- |
-| [Plan01：CPU 本地](src/Demos/VoiceAssistantDemo/Plan01_CPU_ALL_LOCAL.cs) | FireRedASR2 | ONNX Runtime GenAI | VoxCPM | 使用CPU推理，完全本地化运行，需要较强的CPU  |
+| [Plan01：CPU 本地](src/Demos/VoiceAssistantDemo/Plan01_CPU_ALL_LOCAL.cs) | FireRedASR2 | LLamaSharp | VoxCPM | 使用CPU推理，完全本地化运行，需要较强的CPU  |
 | [Plan02：在线服务](src/Demos/VoiceAssistantDemo/Plan02_CPU_ALL_ONLINE.cs) | 豆包在线 | OpenAI 兼容服务 | 豆包在线 | 使用在线服务，低性能设备首选（火山引擎免费额度很多，个人用量几乎免费）  |
 | [Plan03：GPU 本地](src/Demos/VoiceAssistantDemo/Plan03_GPU_16GVRAM_ALL_LOCAL.cs) | Confucius4 | LLamaSharp | VoxCPM |  使用GPU推理（CUDA），完全本地化运行，至少需要16G显存，体验非常好  |
 | [Plan04：本地与在线混合（默认）](src/Demos/VoiceAssistantDemo/Plan04_MIX_8GVRAM_ASR_GPU_TTS_CPU_LLM_ONLINE.cs) | Confucius4 / CUDA | OpenAI 兼容服务 | VoxCPM / CPU |  ASR使用GPU推理，TTS使用CPU，至少需要8G显存，体验也很棒 |
 
-使用`VoiceBox.LLM.OnnxGenAI`进行本地推理时，因为它不实现 `IToolCallingStreamLLMService`，会话构造时不要调用 `UseTools(...)`；`VoiceBox.LLM.LLamaSharp` 支持基于 llama.cpp grammar 的结构化调用。两者都需配置对应的模型及原生推理包；
+`VoiceBox.LLM.LLamaSharp` 支持基于 llama.cpp grammar 的结构化调用，需配置 GGUF 模型及对应的原生推理包。Plan01 使用 `AudioDefaults.LlmGgufModelPath`，并通过 `GpuLayerCount = 0` 在 CPU 上推理。
 
 LLM本地推理建议使用ollama或llama.cpp等本地部署模型，然后通过`VoiceBox.LLM.OpenAI`接入。  
 
@@ -245,7 +244,7 @@ Plan02 需要上述三个 `OPENAI_*` 环境变量，以及 `VOLC_ASR_API_KEY` �
 | 唤醒 | [FsmnKwsDemo](src/Demos/FsmnKwsDemo)、[SherpaOnnxKwsDemo](src/Demos/SherpaOnnxKwsDemo)、[WakeWordDemo](src/Demos/WakeWordDemo) | 三种唤醒后端的实时检测 |
 | 语音识别 | [Qwen3ASRDemo](src/Demos/Qwen3ASRDemo)、[Confucius4AsrDemo](src/Demos/Confucius4AsrDemo)、[FireRedASRDemo](src/Demos/FireRedASRDemo)、[DoubaoOnlineAsrDemo](src/Demos/DoubaoOnlineAsrDemo) | 本地或在线语音识别 |
 | 说话人 | [CampPlusSpeakerLiveDemo](src/Demos/CampPlusSpeakerLiveDemo)、[WeSpeakerSpeakerLiveDemo](src/Demos/WeSpeakerSpeakerLiveDemo) | 声纹注册与实时检测 |
-| 语言模型 | [OpenAILLMDemo](src/Demos/OpenAILLMDemo)、[LLamaSharpLLMDemo](src/Demos/LLamaSharpLLMDemo)、[OnnxGenAILLMDemo](src/Demos/OnnxGenAILLMDemo) | 在线或本地文本生成、多轮对话 |
+| 语言模型 | [OpenAILLMDemo](src/Demos/OpenAILLMDemo)、[LLamaSharpLLMDemo](src/Demos/LLamaSharpLLMDemo) | 在线或本地文本生成、多轮对话 |
 | 本地语音合成 | [Qwen3TtsDemo](src/Demos/Qwen3TtsDemo)、[KokoroTtsDemo](src/Demos/KokoroTtsDemo)、[MossNanoTtsDemo](src/Demos/MossNanoTtsDemo)、[VoxCPMTtsDemo](src/Demos/VoxCPMTtsDemo) | 不同 TTS 模型的合成与播放 |
 | 在线语音合成 | [DoubaoOnlineTtsDemo](src/Demos/DoubaoOnlineTtsDemo) | 豆包在线语音合成 |
 | 独立文字会话 | [ConversationTextDemo](src/Demos/ConversationTextDemo) | 不创建音频设备, 直接消费会话输出流; 多轮历史与上下文记忆 |
@@ -255,7 +254,7 @@ Plan02 需要上述三个 `OPENAI_*` 环境变量，以及 `VOLC_ASR_API_KEY` �
 
 - [助手架构与能力组合](docs/voicebox-assistant-architecture.md)
 - [会话模块](src/VoiceBox.Assistant.Conversation/README.md) · [MCP 工具来源](src/VoiceBox.Assistant.Conversation.Mcp/README.md)
-- [OpenAI 兼容 LLM](src/VoiceBox.LLM.OpenAI/README.md) · [ONNX Runtime GenAI](src/VoiceBox.LLM.OnnxGenAI/README.md)
+- [OpenAI 兼容 LLM](src/VoiceBox.LLM.OpenAI/README.md)
 - [Confucius4 ASR](src/VoiceBox.ASR.Confucius4/README.md) · [VoxCPM TTS](src/VoiceBox.TTS.VoxCPM/README.md) · [WeSpeaker 声纹](src/VoiceBox.Speaker.WeSpeaker/README.md)
 - [双讲检测](src/VoiceBox.DTD.RenderAware/README.md) · [AEC / 打断评测](src/Tests/VoiceBox.Assistant.AecChallenge.Benchmark/README.md) · [降噪评测](src/Tests/VoiceBox.DNR.Benchmark/README.md)
 - [WebRTC APM 原生构建](native/webrtc-apm/README.md) · [WeTextProcessing 原生构建](native/wetext-processor/README.md) · [Jetson ONNX Runtime 构建](docs/jetson-onnxruntime-1.29.0-build.md)
@@ -277,7 +276,7 @@ Plan02 需要上述三个 `OPENAI_*` 环境变量，以及 `VOLC_ASR_API_KEY` �
 | 说话人验证 | [CAM++ / 3D-Speaker](https://github.com/modelscope/3D-Speaker)、[WeSpeaker](https://github.com/wenet-e2e/wespeaker) |
 | 语音合成 | [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS)、[Kokoro](https://huggingface.co/hexgrad/Kokoro-82M)、[kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx)、[MOSS-TTS-Nano](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano-100M-ONNX)、[VoxCPM](https://github.com/OpenBMB/VoxCPM) |
 | 文本与音素处理 | [Misaki](https://github.com/hexgrad/misaki)、[WeTextProcessing](https://github.com/wenet-e2e/WeTextProcessing)、[DeepPhonemizer](https://github.com/as-ideas/DeepPhonemizer) |
-| 模型推理 | [ONNX Runtime](https://github.com/microsoft/onnxruntime)、[ONNX Runtime GenAI](https://github.com/microsoft/onnxruntime-genai)、[LLamaSharp](https://github.com/SciSharp/LLamaSharp)、[llama.cpp](https://github.com/ggml-org/llama.cpp) |
+| 模型推理 | [ONNX Runtime](https://github.com/microsoft/onnxruntime)、[LLamaSharp](https://github.com/SciSharp/LLamaSharp)、[llama.cpp](https://github.com/ggml-org/llama.cpp) |
 | 在线模型与工具协议 | [OpenAI .NET SDK](https://github.com/openai/openai-dotnet)、[MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk) |
 
 ## 许可证

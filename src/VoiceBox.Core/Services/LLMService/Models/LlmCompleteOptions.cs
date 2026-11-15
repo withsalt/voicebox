@@ -1,19 +1,18 @@
 namespace VoiceBox.Core.Services.LLMService.Models
 {
     /// <summary>
-    /// 单次推理的可覆盖参数。所有字段为 null 时使用 <c>genai_config.json</c> 内 search 段的默认值。
+    /// Per-call inference options. Null sampling values use the service's configured defaults.
     /// </summary>
     public sealed class LlmCompleteOptions
     {
         /// <summary>
-        /// 本次推理最多 <b>新生成</b> 多少 token (语义同 transformers 的 <c>max_new_tokens</c>)。
-        /// 服务内部会自动把它换算为 ORT-GenAI 需要的 <c>max_length = promptTokens + MaxTokens</c>。
-        /// null 表示沿用服务配置的默认值 (如 <c>OnnxGenAILLMOptions.MaxTokens</c>)。
+        /// Maximum number of <b>new</b> tokens to generate for this call.
+        /// Null uses the service's configured default.
         /// </summary>
         public int? MaxTokens { get; set; }
 
         /// <summary>
-        /// 是否启用采样。null 表示沿用 manifest；false 表示贪心解码。
+        /// Whether to sample tokens. Null uses the service's default; false selects greedy decoding.
         /// </summary>
         public bool? DoSample { get; set; }
 
