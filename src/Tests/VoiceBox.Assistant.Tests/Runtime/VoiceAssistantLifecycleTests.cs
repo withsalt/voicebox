@@ -5664,10 +5664,10 @@ public sealed partial class VoiceAssistantLifecycleTests
             VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
                 .UseOptions(options)
                 .UseAudio(Audio)
-                .UseTurnBoundary(Vad)
-                .UseSpeechRecognition(Asr)
+                .UseVad(Vad)
+                .UseAsr(Asr)
                 .UseConversation(TestConversation.Create(Llm, enableThinking))
-                .UseSpeechSynthesis(Tts);
+                .UseTts(Tts);
             if (enableBargeIn)
                 builder.AddBargeIn(options.BargeIn, TestAcousticPathDelayEstimatorFactory.Instance);
             if (enableWakeWord)

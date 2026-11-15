@@ -243,10 +243,10 @@ public sealed partial class VoiceAssistantLifecycleTests
                 Speaker = { ProfilePath = profilePath, Confirmation = { Enable = true } },
             })
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .AddWakeup(services.Wakeup)
             .AddSpeakerVerification(services.Speaker)
             .Build();

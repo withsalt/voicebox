@@ -259,10 +259,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
             .UseOptions(options)
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .AddBargeIn(options.BargeIn, TestAcousticPathDelayEstimatorFactory.Instance);
 
         // Before the fix, AddBargeIn's defensive copy threw NotSupportedException with the JSON
@@ -298,10 +298,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
             .UseOptions(options)
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts);
+            .UseTts(services.Tts);
         if (wakeup)
             builder.AddWakeup(services.Wakeup);
         if (speaker)
@@ -352,8 +352,8 @@ public sealed partial class VoiceAssistantLifecycleTests
         string demoProfiles = ReadSource("src", "Demos", "VoiceAssistantDemo", "Program.cs");
         foreach (string entryPoint in new[]
         {
-            "VoiceAssistant.CreateBuilder()", ".UseAudio(", ".UseTurnBoundary(",
-            ".UseSpeechRecognition(", ".UseConversation(", ".UseSpeechSynthesis(",
+            "VoiceAssistant.CreateBuilder()", ".UseAudio(", ".UseVad(",
+            ".UseAsr(", ".UseConversation(", ".UseTts(",
             ".AddWakeup(", ".AddSpeakerVerification(", ".AddBargeIn(",
         })
         {

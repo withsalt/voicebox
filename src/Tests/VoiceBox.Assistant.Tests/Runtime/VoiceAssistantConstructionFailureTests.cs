@@ -85,10 +85,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var composition = VoiceAssistant.CreateBuilder()
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .BuildComposition();
         AssistantRuntimePlan original = composition.RuntimePlan;
         var failure = new InvalidOperationException("format provider failed");

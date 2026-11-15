@@ -70,10 +70,10 @@ public static class VoiceAssistantServiceCollectionExtensions
         VoiceAssistantOptions options = provider.GetRequiredService<IOptions<VoiceAssistantOptions>>().Value;
         VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
             .UseOptions(options)
-            .UseTurnBoundary(provider.GetRequiredService<IVoiceActivityDetectService>())
-            .UseSpeechRecognition(provider.GetRequiredService<IASRService>())
+            .UseVad(provider.GetRequiredService<IVoiceActivityDetectService>())
+            .UseAsr(provider.GetRequiredService<IASRService>())
             .UseConversation(provider.GetRequiredService<IConversationSession>())
-            .UseSpeechSynthesis(provider.GetRequiredService<IStreamTTSService>());
+            .UseTts(provider.GetRequiredService<IStreamTTSService>());
 
         IAudioDuplexService? duplex = provider.GetService<IAudioDuplexService>();
         if (duplex is not null)

@@ -28,10 +28,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         AssistantComposition composition = VoiceAssistant.CreateBuilder()
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .BuildComposition();
 
         Assert.Contains(composition.Snapshot.CapabilityEdges, edge => edge == "AudioFrontend:Provides:AudioCapture:0");
@@ -46,10 +46,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         var playback = new FakeDuplexService();
         AssistantComposition split = VoiceAssistant.CreateBuilder()
             .UseAudio(record, playback)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .BuildComposition();
         Assert.Contains(split.RuntimePlan.Ownership,
             value => value.ModuleId == "AudioFrontend.Adapter" && value.Ownership == ResourceOwnership.AssistantOwned);
@@ -61,10 +61,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         using VoiceAssistant assistant = VoiceAssistant.CreateBuilder()
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .Build();
 
         object runtime = typeof(VoiceAssistant).GetField("_runtime", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(assistant)!;
@@ -146,19 +146,19 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         AssistantComposition withoutBargeIn = VoiceAssistant.CreateBuilder()
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .BuildComposition();
         Assert.Null(withoutBargeIn.RuntimePlan.PlaybackBargeInDetectorFactory);
 
         AssistantComposition withBargeIn = VoiceAssistant.CreateBuilder()
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .AddBargeIn(new VoiceAssistantBargeInOptions(), TestAcousticPathDelayEstimatorFactory.Instance)
             .BuildComposition();
         Assert.NotNull(withBargeIn.RuntimePlan.PlaybackBargeInDetectorFactory);
@@ -345,10 +345,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         using VoiceAssistant assistant = VoiceAssistant.CreateBuilder()
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .Build();
 
         object runtime = typeof(VoiceAssistant).GetField("_runtime", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(assistant)!;
@@ -467,10 +467,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         }
 
         builder
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts);
+            .UseTts(services.Tts);
 
         if (wakeup)
             builder.AddWakeup(services.Wakeup);

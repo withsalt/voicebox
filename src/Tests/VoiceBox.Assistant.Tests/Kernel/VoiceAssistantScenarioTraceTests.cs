@@ -171,10 +171,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         using VoiceAssistant assistant = VoiceAssistant.CreateBuilder()
             .UseOptions(options)
             .UseAudio((IAudioRecordService)record, (IAudioPlayService)playback)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .Build();
 
         var events = new List<ScenarioEvent>();

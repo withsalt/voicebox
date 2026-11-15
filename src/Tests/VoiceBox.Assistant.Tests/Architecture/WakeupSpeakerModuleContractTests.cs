@@ -127,10 +127,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         AssistantComposition wakeupWithSpeaker = VoiceAssistant.CreateBuilder()
             .UseOptions(confirm)
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .AddWakeup(services.Wakeup)
             .AddSpeakerVerification(services.Speaker)
             .BuildComposition();
@@ -151,10 +151,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         // Confirmation off: an installed speaker provider is ignored for online verification.
         AssistantComposition speakerWithoutKws = VoiceAssistant.CreateBuilder()
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .AddSpeakerVerification(services.Speaker)
             .BuildComposition();
         Assert.Equal([AssistantLifecycleParticipant.AudioFrontend], speakerWithoutKws.Lifecycle.StartOrder);
@@ -165,10 +165,10 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         AssistantComposition absent = VoiceAssistant.CreateBuilder()
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .BuildComposition();
         Assert.Equal([AssistantLifecycleParticipant.AudioFrontend], absent.Lifecycle.StartOrder);
         Assert.DoesNotContain("WakeupGate", absent.Snapshot.Capabilities);
@@ -182,10 +182,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
             .UseOptions(new VoiceAssistantOptions { Speaker = { Confirmation = { Enable = true } } })
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .AddWakeup(services.Wakeup);
 
         AssistantCompositionException exception = Assert.Throws<AssistantCompositionException>(builder.BuildComposition);
@@ -200,10 +200,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         AssistantComposition wakeupOnly = VoiceAssistant.CreateBuilder()
             .UseOptions(confirm)
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .AddWakeup(services.Wakeup)
             .AddSpeakerVerification(services.Speaker)
             .BuildComposition();
@@ -214,10 +214,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         AssistantComposition withBargeIn = VoiceAssistant.CreateBuilder()
             .UseOptions(confirm)
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .AddWakeup(services.Wakeup)
             .AddSpeakerVerification(services.Speaker)
             .AddBargeIn(new VoiceAssistantBargeInOptions(), TestAcousticPathDelayEstimatorFactory.Instance)
@@ -236,10 +236,10 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseOptions(new VoiceAssistantOptions { Speaker = { Confirmation = { Enable = true } } })
             .UseAudio((VoiceBox.Core.Services.AudioService.IAudioRecordService)record,
                 (VoiceBox.Core.Services.AudioService.IAudioPlayService)playback)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .AddWakeup(services.Wakeup)
             .AddSpeakerVerification(services.Speaker);
 
@@ -250,10 +250,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         AssistantComposition speakerWithoutKws = VoiceAssistant.CreateBuilder()
             .UseAudio((VoiceBox.Core.Services.AudioService.IAudioRecordService)record,
                 (VoiceBox.Core.Services.AudioService.IAudioPlayService)playback)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .AddSpeakerVerification(services.Speaker)
             .BuildComposition();
         Assert.Null(speakerWithoutKws.RuntimePlan.Speaker);
@@ -266,10 +266,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         AssistantComposition composition = VoiceAssistant.CreateBuilder()
             .UseOptions(new VoiceAssistantOptions { Speaker = { Confirmation = { Enable = true } } })
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .AddWakeup(services.Wakeup)
             .AddSpeakerVerification(services.Speaker)
             .BuildComposition();

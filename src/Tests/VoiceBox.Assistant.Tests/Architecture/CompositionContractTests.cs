@@ -47,10 +47,10 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         AssistantComposition composition = VoiceAssistant.CreateBuilder()
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .BuildComposition();
 
         Assert.Equal("BasicDuplexQa", composition.Snapshot.ProfileId);
@@ -88,10 +88,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         };
         AssistantComposition composition = VoiceAssistant.CreateBuilder()
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .UseOptions(options)
             .AddWakeup(services.Wakeup)
             .AddSpeakerVerification(services.Speaker)
@@ -117,10 +117,10 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         AssertBuilderMethod(builder, "UseAudio", typeof(IAudioDuplexService));
         AssertBuilderMethod(builder, "UseAudio", typeof(IAudioRecordService), typeof(IAudioPlayService));
-        AssertBuilderMethod(builder, "UseTurnBoundary", typeof(IVoiceActivityDetectService));
-        AssertBuilderMethod(builder, "UseSpeechRecognition", typeof(IASRService));
+        AssertBuilderMethod(builder, "UseVad", typeof(IVoiceActivityDetectService));
+        AssertBuilderMethod(builder, "UseAsr", typeof(IASRService));
         AssertBuilderMethod(builder, "UseConversation", typeof(IConversationSession));
-        AssertBuilderMethod(builder, "UseSpeechSynthesis", typeof(IStreamTTSService));
+        AssertBuilderMethod(builder, "UseTts", typeof(IStreamTTSService));
 
         Assert.DoesNotContain(builder.GetMethods(BindingFlags.Public | BindingFlags.Instance),
             static method => method.GetParameters().Any(static parameter =>
@@ -133,10 +133,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts);
+            .UseTts(services.Tts);
 
         AssistantComposition composition = builder.BuildComposition();
         Assert.Equal("BasicDuplexQa", composition.Snapshot.ProfileId);
@@ -160,10 +160,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
             .UseAudio((IAudioRecordService)record, (IAudioPlayService)playback)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts);
+            .UseTts(services.Tts);
 
         AssistantComposition composition = builder.BuildComposition();
         Assert.Equal("BasicSplitAudioQa", composition.Snapshot.ProfileId);
@@ -187,10 +187,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         AssistantComposition composition = VoiceAssistant.CreateBuilder()
             .UseAudio((IAudioRecordService)services.Audio, (IAudioPlayService)services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .BuildComposition();
 
         Assert.Equal("BasicDuplexQa", composition.Snapshot.ProfileId);
@@ -216,10 +216,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         var playback = new FakeDuplexService();
         VoiceAssistantBuilder splitBargeIn = VoiceAssistant.CreateBuilder()
             .UseAudio((IAudioRecordService)record, (IAudioPlayService)playback)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .AddBargeIn(new VoiceAssistantBargeInOptions(), TestAcousticPathDelayEstimatorFactory.Instance);
         AssistantCompositionException incompatible = Assert.Throws<AssistantCompositionException>(splitBargeIn.Build);
         Assert.Equal("VBX-COMP-008", incompatible.Code);
@@ -393,29 +393,29 @@ public sealed partial class VoiceAssistantLifecycleTests
         playback.Options.SampleRate = 48000;
         VoiceAssistantBuilder incompatibleAudio = VoiceAssistant.CreateBuilder()
             .UseAudio((IAudioRecordService)record, (IAudioPlayService)playback)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts);
+            .UseTts(services.Tts);
         AssistantCompositionException format = Assert.Throws<AssistantCompositionException>(incompatibleAudio.Build);
         Assert.Equal("VBX-COMP-006", format.Code);
 
         VoiceAssistantBuilder builderIgnoringWakeupEnableFlag = VoiceAssistant.CreateBuilder()
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .UseOptions(new VoiceAssistantOptions { Wakeup = { Enable = true } });
         using VoiceAssistant assistantWithoutWakeup = builderIgnoringWakeupEnableFlag.Build();
 
         // Confirmation.Enable requires the owner-speaker provider; KWS alone does not.
         VoiceAssistantBuilder builderWithWakeupOnly = VoiceAssistant.CreateBuilder()
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .UseOptions(new VoiceAssistantOptions
             {
                 Speaker = { Confirmation = { Enable = true } },
@@ -523,8 +523,8 @@ public sealed partial class VoiceAssistantLifecycleTests
         var afterBargeIn = VoiceAssistant.CreateBuilder().AddBargeIn(bargeIn, TestAcousticPathDelayEstimatorFactory.Instance);
         AssertCompositionCode("VBX-COMP-002", () => afterBargeIn.UseOptions(new VoiceAssistantOptions()));
 
-        VoiceAssistantBuilder duplicateRecognition = VoiceAssistant.CreateBuilder().UseSpeechRecognition(services.Asr);
-        AssertCompositionCode("VBX-COMP-002", () => duplicateRecognition.UseSpeechRecognition(services.Asr));
+        VoiceAssistantBuilder duplicateRecognition = VoiceAssistant.CreateBuilder().UseAsr(services.Asr);
+        AssertCompositionCode("VBX-COMP-002", () => duplicateRecognition.UseAsr(services.Asr));
     }
 
     [Fact]
@@ -544,10 +544,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
             .UseAudio((IAudioRecordService)record, (IAudioPlayService)playback)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts);
+            .UseTts(services.Tts);
 
         AssertCompositionCode("VBX-COMP-005", () => builder.Build());
         Assert.Equal(0, record.StartCount);
@@ -586,10 +586,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         return VoiceAssistant.CreateBuilder()
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .BuildComposition();
     }
 

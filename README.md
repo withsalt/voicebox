@@ -131,10 +131,10 @@ static async Task RunAssistantAsync(
 
     using var assistant = VoiceAssistant.CreateBuilder()
         .UseAudio(audio)
-        .UseTurnBoundary(vad)
-        .UseSpeechRecognition(asr)
+        .UseVad(vad)
+        .UseAsr(asr)
+        .UseTts(tts)
         .UseConversation(conversation)
-        .UseSpeechSynthesis(tts)
         .Build();
 
     assistant.UserSpoke += (_, e) => Console.WriteLine($"用户：{e.Text}");

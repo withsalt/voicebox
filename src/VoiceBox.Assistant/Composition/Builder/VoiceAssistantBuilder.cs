@@ -72,13 +72,13 @@ public sealed class VoiceAssistantBuilder
         return this;
     }
 
-    public VoiceAssistantBuilder UseTurnBoundary(IVoiceActivityDetectService turnBoundary)
+    public VoiceAssistantBuilder UseVad(IVoiceActivityDetectService turnBoundary)
     {
         _turnBoundary = SetOnce(_turnBoundary, turnBoundary, "TurnBoundary");
         return this;
     }
 
-    public VoiceAssistantBuilder UseSpeechRecognition(IASRService recognition)
+    public VoiceAssistantBuilder UseAsr(IASRService recognition)
     {
         _recognition = SetOnce(_recognition, recognition, "SpeechRecognition");
         return this;
@@ -94,7 +94,7 @@ public sealed class VoiceAssistantBuilder
         return this;
     }
 
-    public VoiceAssistantBuilder UseSpeechSynthesis(IStreamTTSService speechSynthesis)
+    public VoiceAssistantBuilder UseTts(IStreamTTSService speechSynthesis)
     {
         _speechSynthesis = SetOnce(_speechSynthesis, speechSynthesis, "SpeechSynthesis");
         return this;

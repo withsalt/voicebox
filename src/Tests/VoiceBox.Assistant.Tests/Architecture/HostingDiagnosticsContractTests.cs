@@ -40,10 +40,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         AssistantComposition composition = VoiceAssistant.CreateBuilder()
             .UseOptions(options)
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .BuildComposition();
 
         Assert.DoesNotContain("WakeupGate", composition.Snapshot.Capabilities);
@@ -81,10 +81,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         var direct = VoiceAssistant.CreateBuilder()
             .UseOptions(options)
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .BuildWithDiagnostics();
         using (direct.Assistant)
         Assert.Equal(direct.CapabilityGraphHash, diagnostics.RuntimeLifecycle.CapabilityGraphHash);
@@ -167,10 +167,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         AssistantComposition direct = VoiceAssistant.CreateBuilder()
             .UseOptions(options)
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .AddWakeup(services.Wakeup)
             .AddSpeakerVerification(services.Speaker)
             .AddBargeIn(options.BargeIn, TestAcousticPathDelayEstimatorFactory.Instance)
@@ -248,10 +248,10 @@ public sealed partial class VoiceAssistantLifecycleTests
         using VoiceAssistant assistant = VoiceAssistant.CreateBuilder()
             .UseOptions(options)
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts)
+            .UseTts(services.Tts)
             .Build();
 
         options.MinSentenceChars = 99;

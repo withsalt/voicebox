@@ -72,32 +72,32 @@ public sealed partial class VoiceAssistantLifecycleTests
                 break;
             case 0:
                 builder = VoiceAssistant.CreateBuilder()
-                    .UseTurnBoundary(services.Vad)
-                    .UseSpeechRecognition(services.Asr)
+                    .UseVad(services.Vad)
+                    .UseAsr(services.Asr)
                     .UseConversation(TestConversation.Create(services.Llm))
-                    .UseSpeechSynthesis(services.Tts);
+                    .UseTts(services.Tts);
                 expectedCode = "VBX-COMP-001";
                 break;
             case 1:
                 builder = VoiceAssistant.CreateBuilder()
                     .UseAudio(services.Audio)
-                    .UseSpeechRecognition(services.Asr)
+                    .UseAsr(services.Asr)
                     .UseConversation(TestConversation.Create(services.Llm))
-                    .UseSpeechSynthesis(services.Tts);
+                    .UseTts(services.Tts);
                 expectedCode = "VBX-COMP-001";
                 break;
             case 2:
                 builder = VoiceAssistant.CreateBuilder()
                     .UseAudio(services.Audio)
-                    .UseTurnBoundary(services.Vad)
+                    .UseVad(services.Vad)
                     .UseConversation(TestConversation.Create(services.Llm))
-                    .UseSpeechSynthesis(services.Tts);
+                    .UseTts(services.Tts);
                 expectedCode = "VBX-COMP-001";
                 break;
             case 3:
                 builder = CreateMinimalLegalBuilder(services);
                 AssistantCompositionException duplicate = Assert.Throws<AssistantCompositionException>(
-                    () => builder.UseSpeechRecognition(services.Asr));
+                    () => builder.UseAsr(services.Asr));
                 Assert.Equal("VBX-COMP-002", duplicate.Code);
                 Assert.Equal(0, services.Audio.StartCount);
                 return;
@@ -106,10 +106,10 @@ public sealed partial class VoiceAssistantLifecycleTests
                 var playback = new FakeDuplexService();
                 builder = VoiceAssistant.CreateBuilder()
                     .UseAudio((IAudioRecordService)record, (IAudioPlayService)playback)
-                    .UseTurnBoundary(services.Vad)
-                    .UseSpeechRecognition(services.Asr)
+                    .UseVad(services.Vad)
+                    .UseAsr(services.Asr)
                     .UseConversation(TestConversation.Create(services.Llm))
-                    .UseSpeechSynthesis(services.Tts)
+                    .UseTts(services.Tts)
                     .AddBargeIn(new VoiceAssistantBargeInOptions(), TestAcousticPathDelayEstimatorFactory.Instance);
                 expectedCode = "VBX-COMP-008";
                 AssistantCompositionException split = Assert.Throws<AssistantCompositionException>(builder.Build);
@@ -129,10 +129,10 @@ public sealed partial class VoiceAssistantLifecycleTests
     private static VoiceAssistantBuilder CreateMinimalLegalBuilder(TestServices services)
         => VoiceAssistant.CreateBuilder()
             .UseAudio(services.Audio)
-            .UseTurnBoundary(services.Vad)
-            .UseSpeechRecognition(services.Asr)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
-            .UseSpeechSynthesis(services.Tts);
+            .UseTts(services.Tts);
 
     private static VoiceAssistantBuilder CreateLegalBuilder(TestServices services, Random rng)
     {
