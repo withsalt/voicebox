@@ -51,7 +51,7 @@
 - out/golden/: en/zh/clone/stream 的 ids/latents/wav/noise npy + prompt_16k.wav(**FLOAT
   subtype**, PCM_16 的量化差会被 AR 混沌放大到 37dB)+ prompt_feat.npy + golden_meta.json。
 
-### C# 侧结果(src/VoiceBox.TTS.VoxCPM)
+### C# 侧结果(src/Components/VoiceBox.TTS.VoxCPM)
 - 与 golden **逐位一致**(latents/wav/prompt_feat SNR=∞, 步数一致), tokenizer 3 案例全 MATCH。
 - 15/15 单测通过; demo 无头基准: CPU fp32 首包 139ms / int4 首包 73ms RTF≈1.2。
 

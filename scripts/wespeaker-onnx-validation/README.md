@@ -17,4 +17,4 @@ The three small speech files come from SpeechBrain's Apache-2.0 licensed test
 assets, pinned by source revision and individual SHA-256 values in the script.
 The license text is included as `SPEECHBRAIN_LICENSE.txt`.
 Generated ONNX embeddings are model-derived test fixtures. Review the model
-terms in `src/VoiceBox.Speaker.WeSpeaker/runtimes/models/speaker/wespeaker/MODEL.md`.
+terms in `src/Components/VoiceBox.Speaker.WeSpeaker/runtimes/models/speaker/wespeaker/MODEL.md`.

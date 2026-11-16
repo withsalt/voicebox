@@ -1,4 +1,4 @@
-﻿# VoiceBox
+# VoiceBox
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
@@ -35,7 +35,9 @@ To export models yourself, see the instructions in the corresponding directories
 
 ## Modules
 
-The names below correspond to projects under `src`. Reference the ones you need.
+Assistant and conversation projects are under `src/Assistant`; other components are under `src/Components`. Reference the ones you need. Each group has its own `Test` and `Demos` subdirectories. Third-party projects remain under `src/Thirdparty`.
+
+Solution entry points: [all projects](src/VoiceBox.All.slnx), [assistant](src/Assistant/VoiceBox.Assistant.slnx), and [components](src/Components/VoiceBox.Components.slnx). Run `dotnet build src/VoiceBox.All.slnx` from the repository root to build all projects.
 
 | Category | Name | Description |
 | --- | --- | --- |
@@ -84,7 +86,7 @@ There are two independent integration paths: reference only `VoiceBox.Assistant.
 
 Model configuration:
 
-All models required by the assistant demo can be downloaded from the model repository. Model paths are configured centrally in [AudioDefaults.cs](src/Demos/VoiceAssistantDemo/AudioDefaults.cs). Set `BASE_MODEL_DIR` to the directory that directly contains `kws`, `asr`, and `tts` (such as `v1` under your download directory), and verify that the models exist at the configured subpaths.
+All models required by the assistant demo can be downloaded from the model repository. Model paths are configured centrally in [AudioDefaults.cs](src/Assistant/Demos/VoiceAssistantDemo/AudioDefaults.cs). Set `BASE_MODEL_DIR` to the directory that directly contains `kws`, `asr`, and `tts` (such as `v1` under your download directory), and verify that the models exist at the configured subpaths.
 
 Basic question-and-answer pipeline:
 
@@ -146,7 +148,7 @@ static async Task RunAssistantAsync(
 }
 ```
 
-See [VoiceAssistantDemo](src/Demos/VoiceAssistantDemo) for service creation and configuration. When using .NET Host, use the `VoiceBox.Assistant.Hosting` namespace in the assistant project to register dependency injection and hosted lifecycle management. See the [assistant architecture document](docs/voicebox-assistant-architecture.md) for the detailed design.
+See [VoiceAssistantDemo](src/Assistant/Demos/VoiceAssistantDemo) for service creation and configuration. When using .NET Host, use the `VoiceBox.Assistant.Hosting` namespace in the assistant project to register dependency injection and hosted lifecycle management. See the [assistant architecture document](docs/voicebox-assistant-architecture.md) for the detailed design.
 
 ## Requirements
 
@@ -183,20 +185,20 @@ cd voicebox
 This demo requires no models or API keys and helps check your microphone and audio environment. Run it from the repository root:
 
 ```powershell
-dotnet run --project src/Demos/AudioRecordDemo -c Release -- recording.wav
+dotnet run --project src/Components/Demos/AudioRecordDemo -c Release -- recording.wav
 ```
 
 The program lists input devices and uses the default microphone. Press Enter or Ctrl+C to stop and save a **16 kHz, mono, PCM16 WAV** file. To select a device, append its input device index after the filename.
 
 ### 3. Run the voice assistant
 
-The current [Program.cs](src/Demos/VoiceAssistantDemo/Program.cs) selects **Plan04**: miniaudio + WebRTC APM + FireRed VAD + FSMN KWS + WeSpeaker, with **Confucius4 (CUDA) recognition, an online LLM, and VoxCPM (CPU) synthesis**. Owner verification, continuous conversation, voice interruption, and date/weather tools are enabled.
+The current [Program.cs](src/Assistant/Demos/VoiceAssistantDemo/Program.cs) selects **Plan04**: miniaudio + WebRTC APM + FireRed VAD + FSMN KWS + WeSpeaker, with **Confucius4 (CUDA) recognition, an online LLM, and VoxCPM (CPU) synthesis**. Owner verification, continuous conversation, voice interruption, and date/weather tools are enabled.
 
 Before running:
 
-1. Download the models listed above and update `BASE_MODEL_DIR` and the model paths in [AudioDefaults.cs](src/Demos/VoiceAssistantDemo/AudioDefaults.cs).
+1. Download the models listed above and update `BASE_MODEL_DIR` and the model paths in [AudioDefaults.cs](src/Assistant/Demos/VoiceAssistantDemo/AudioDefaults.cs).
 2. Set the environment variables `OPENAI_API_KEY`, `OPENAI_BASE_URL` (the endpoint's base URL, without `/chat/completions`), and `OPENAI_MODEL` (the model name). `AudioDefaults` reads these values by default; only Plan02/Plan04, which use an online LLM, validate that they are provided. The API key and model must match the endpoint. Local configurations do not require these variables.
-3. Prepare your CUDA/cuDNN environment. To change the ASR, TTS, or audio backend, update the service registrations in [Plan04](src/Demos/VoiceAssistantDemo/Plan04_MIX_8GVRAM_ASR_GPU_TTS_CPU_LLM_ONLINE.cs) and the project's runtime references.
+3. Prepare your CUDA/cuDNN environment. To change the ASR, TTS, or audio backend, update the service registrations in [Plan04](src/Assistant/Demos/VoiceAssistantDemo/Plan04_MIX_8GVRAM_ASR_GPU_TTS_CPU_LLM_ONLINE.cs) and the project's runtime references.
 
 Run the following PowerShell commands from the repository root. **Enter the demo directory first** so that the relative paths to the `./voices/*.wav` voice reference files resolve correctly:
 
@@ -204,7 +206,7 @@ Run the following PowerShell commands from the repository root. **Enter the demo
 $env:OPENAI_API_KEY = "your service API key"
 $env:OPENAI_BASE_URL = "https://api.deepseek.com"
 $env:OPENAI_MODEL = "deepseek-flash"
-cd src/Demos/VoiceAssistantDemo
+cd src/Assistant/Demos/VoiceAssistantDemo
 dotnet run -c Release
 ```
 
@@ -216,10 +218,10 @@ The demo also provides the following configurations. Switch between them using `
 
 | Configuration | ASR | LLM | TTS | Notes |
 | --- | --- | --- | --- | --- |
-| [Plan01: Local CPU](src/Demos/VoiceAssistantDemo/Plan01_CPU_ALL_LOCAL.cs) | FireRedASR2 | LLamaSharp | VoxCPM | Fully local CPU inference; requires a powerful CPU |
-| [Plan02: Online services](src/Demos/VoiceAssistantDemo/Plan02_CPU_ALL_ONLINE.cs) | Doubao online | OpenAI-compatible service | Doubao online | Recommended for less powerful devices; Volcengine's generous free quotas can make personal usage nearly free |
-| [Plan03: Local GPU](src/Demos/VoiceAssistantDemo/Plan03_GPU_16GVRAM_ALL_LOCAL.cs) | Confucius4 | LLamaSharp | VoxCPM | Fully local GPU inference (CUDA); requires at least 16 GB of VRAM and provides a very good user experience |
-| [Plan04: Hybrid local and online (default)](src/Demos/VoiceAssistantDemo/Plan04_MIX_8GVRAM_ASR_GPU_TTS_CPU_LLM_ONLINE.cs) | Confucius4 / CUDA | OpenAI-compatible service | VoxCPM / CPU | GPU inference for ASR and CPU inference for TTS; requires at least 8 GB of VRAM and also provides a good user experience |
+| [Plan01: Local CPU](src/Assistant/Demos/VoiceAssistantDemo/Plan01_CPU_ALL_LOCAL.cs) | FireRedASR2 | LLamaSharp | VoxCPM | Fully local CPU inference; requires a powerful CPU |
+| [Plan02: Online services](src/Assistant/Demos/VoiceAssistantDemo/Plan02_CPU_ALL_ONLINE.cs) | Doubao online | OpenAI-compatible service | Doubao online | Recommended for less powerful devices; Volcengine's generous free quotas can make personal usage nearly free |
+| [Plan03: Local GPU](src/Assistant/Demos/VoiceAssistantDemo/Plan03_GPU_16GVRAM_ALL_LOCAL.cs) | Confucius4 | LLamaSharp | VoxCPM | Fully local GPU inference (CUDA); requires at least 16 GB of VRAM and provides a very good user experience |
+| [Plan04: Hybrid local and online (default)](src/Assistant/Demos/VoiceAssistantDemo/Plan04_MIX_8GVRAM_ASR_GPU_TTS_CPU_LLM_ONLINE.cs) | Confucius4 / CUDA | OpenAI-compatible service | VoxCPM / CPU | GPU inference for ASR and CPU inference for TTS; requires at least 8 GB of VRAM and also provides a good user experience |
 
 `VoiceBox.LLM.LLamaSharp` supports structured tool calling through llama.cpp grammars and requires a GGUF model and the appropriate native inference package. Plan01 uses `AudioDefaults.LlmGgufModelPath` with `GpuLayerCount = 0` for CPU inference.
 
@@ -231,31 +233,31 @@ Plan02 requires the three `OPENAI_*` environment variables above, plus `VOLC_ASR
 
 ## Demos
 
-Examples are located in [src/Demos](src/Demos). In addition to the recording and assistant demos above, choose a module demo from the table below. Model paths, devices, and execution backends are configured in each demo's source code.
+Examples are located in [src/Assistant/Demos](src/Assistant/Demos) and [src/Components/Demos](src/Components/Demos). In addition to the recording and assistant demos above, choose a module demo from the table below. Model paths, devices, and execution backends are configured in each demo's source code.
 
 | Category | Examples | Description |
 | --- | --- | --- |
-| Audio | [AudioPlayDemo](src/Demos/AudioPlayDemo), [AudioRecordDemo](src/Demos/AudioRecordDemo) | Play WAV / PCM / Opus samples included in the repository, or record microphone audio |
-| Echo cancellation and preprocessing | [WebRtcApmLiveDemo](src/Demos/WebRtcApmLiveDemo), [DTLNAecDemo](src/Demos/DTLNAecDemo) | Real-time APM processing and DTLN echo cancellation |
-| Noise reduction | [DeepFilterNetLiveDemo](src/Demos/DeepFilterNetLiveDemo), [DPDFNetLiveDemo](src/Demos/DPDFNetLiveDemo), [HushDnrLiveDemo](src/Demos/HushDnrLiveDemo) | Real-time microphone noise reduction |
-| Wake word detection | [FsmnKwsDemo](src/Demos/FsmnKwsDemo), [SherpaOnnxKwsDemo](src/Demos/SherpaOnnxKwsDemo), [WakeWordDemo](src/Demos/WakeWordDemo) | Real-time detection with three wake word backends |
-| Speech recognition | [Qwen3ASRDemo](src/Demos/Qwen3ASRDemo), [Confucius4AsrDemo](src/Demos/Confucius4AsrDemo), [FireRedASRDemo](src/Demos/FireRedASRDemo), [DoubaoOnlineAsrDemo](src/Demos/DoubaoOnlineAsrDemo) | Local or online speech recognition |
-| Speaker verification | [CampPlusSpeakerLiveDemo](src/Demos/CampPlusSpeakerLiveDemo), [WeSpeakerSpeakerLiveDemo](src/Demos/WeSpeakerSpeakerLiveDemo) | Speaker enrollment and real-time detection |
-| Language models | [OpenAILLMDemo](src/Demos/OpenAILLMDemo), [LLamaSharpLLMDemo](src/Demos/LLamaSharpLLMDemo) | Online or local text generation and multi-turn conversations |
-| Local speech synthesis | [Qwen3TtsDemo](src/Demos/Qwen3TtsDemo), [VoxCPMTtsDemo](src/Demos/VoxCPMTtsDemo) | Synthesis and playback with different TTS models |
-| Online speech synthesis | [DoubaoOnlineTtsDemo](src/Demos/DoubaoOnlineTtsDemo) | Doubao online speech synthesis |
-| Text-only conversation | [ConversationTextDemo](src/Demos/ConversationTextDemo) | Consumes the conversation stream without audio devices; multi-turn history and context memory |
-| Complete assistant | [VoiceAssistantDemo](src/Demos/VoiceAssistantDemo) | Wake word detection, voice question-and-answer, speaker verification, interruption, and tool calling |
+| Audio | [AudioPlayDemo](src/Components/Demos/AudioPlayDemo), [AudioRecordDemo](src/Components/Demos/AudioRecordDemo) | Play WAV / PCM / Opus samples included in the repository, or record microphone audio |
+| Echo cancellation and preprocessing | [WebRtcApmLiveDemo](src/Components/Demos/WebRtcApmLiveDemo), [DTLNAecDemo](src/Components/Demos/DTLNAecDemo) | Real-time APM processing and DTLN echo cancellation |
+| Noise reduction | [DeepFilterNetLiveDemo](src/Components/Demos/DeepFilterNetLiveDemo), [DPDFNetLiveDemo](src/Components/Demos/DPDFNetLiveDemo), [HushDnrLiveDemo](src/Components/Demos/HushDnrLiveDemo) | Real-time microphone noise reduction |
+| Wake word detection | [FsmnKwsDemo](src/Components/Demos/FsmnKwsDemo), [SherpaOnnxKwsDemo](src/Components/Demos/SherpaOnnxKwsDemo), [WakeWordDemo](src/Components/Demos/WakeWordDemo) | Real-time detection with three wake word backends |
+| Speech recognition | [Qwen3ASRDemo](src/Components/Demos/Qwen3ASRDemo), [Confucius4AsrDemo](src/Components/Demos/Confucius4AsrDemo), [FireRedASRDemo](src/Components/Demos/FireRedASRDemo), [DoubaoOnlineAsrDemo](src/Components/Demos/DoubaoOnlineAsrDemo) | Local or online speech recognition |
+| Speaker verification | [CampPlusSpeakerLiveDemo](src/Components/Demos/CampPlusSpeakerLiveDemo), [WeSpeakerSpeakerLiveDemo](src/Components/Demos/WeSpeakerSpeakerLiveDemo) | Speaker enrollment and real-time detection |
+| Language models | [OpenAILLMDemo](src/Components/Demos/OpenAILLMDemo), [LLamaSharpLLMDemo](src/Components/Demos/LLamaSharpLLMDemo) | Online or local text generation and multi-turn conversations |
+| Local speech synthesis | [Qwen3TtsDemo](src/Components/Demos/Qwen3TtsDemo), [VoxCPMTtsDemo](src/Components/Demos/VoxCPMTtsDemo) | Synthesis and playback with different TTS models |
+| Online speech synthesis | [DoubaoOnlineTtsDemo](src/Components/Demos/DoubaoOnlineTtsDemo) | Doubao online speech synthesis |
+| Text-only conversation | [ConversationTextDemo](src/Assistant/Demos/ConversationTextDemo) | Consumes the conversation stream without audio devices; multi-turn history and context memory |
+| Complete assistant | [VoiceAssistantDemo](src/Assistant/Demos/VoiceAssistantDemo) | Wake word detection, voice question-and-answer, speaker verification, interruption, and tool calling |
 
 ## Related Documentation
 
 Some linked documents are in Chinese.
 
 - [Assistant architecture and capability combinations](docs/voicebox-assistant-architecture.md)
-- [Conversation module](src/VoiceBox.Assistant.Conversation/README.md) · [MCP tool source](src/VoiceBox.Assistant.Conversation.Mcp/README.md)
-- [OpenAI-compatible LLM](src/VoiceBox.LLM.OpenAI/README.md)
-- [Confucius4 ASR](src/VoiceBox.ASR.Confucius4/README.md) · [VoxCPM TTS](src/VoiceBox.TTS.VoxCPM/README.md) · [WeSpeaker speaker verification](src/VoiceBox.Speaker.WeSpeaker/README.md)
-- [Double-talk detection](src/VoiceBox.DTD.RenderAware/README.md) · [AEC / interruption benchmarks](src/Tests/VoiceBox.Assistant.AecChallenge.Benchmark/README.md) · [Noise reduction benchmarks](src/Tests/VoiceBox.DNR.Benchmark/README.md)
+- [Conversation module](src/Assistant/VoiceBox.Assistant.Conversation/README.md) · [MCP tool source](src/Assistant/VoiceBox.Assistant.Conversation.Mcp/README.md)
+- [OpenAI-compatible LLM](src/Components/VoiceBox.LLM.OpenAI/README.md)
+- [Confucius4 ASR](src/Components/VoiceBox.ASR.Confucius4/README.md) · [VoxCPM TTS](src/Components/VoiceBox.TTS.VoxCPM/README.md) · [WeSpeaker speaker verification](src/Components/VoiceBox.Speaker.WeSpeaker/README.md)
+- [Double-talk detection](src/Components/VoiceBox.DTD.RenderAware/README.md) · [AEC / interruption benchmarks](src/Assistant/Test/VoiceBox.Assistant.AecChallenge.Benchmark/README.md) · [Noise reduction benchmarks](src/Components/Test/VoiceBox.DNR.Benchmark/README.md)
 - [WebRTC APM native build](native/webrtc-apm/README.md) · [WeTextProcessing native build](native/wetext-processor/README.md) · [Jetson ONNX Runtime build](docs/jetson-onnxruntime-1.29.0-build.md)
 - [Model export and validation scripts](scripts) · [Tests and benchmarks](src/Tests)
 

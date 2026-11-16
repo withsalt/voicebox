@@ -72,7 +72,7 @@ REPOSITORY_ROOT = NATIVE_DIR.parents[1]
 LOCK_PATH = NATIVE_DIR / "webrtc.lock.json"
 MODEL_PATH = (
     REPOSITORY_ROOT
-    / "src/VoiceBox.APM.WebRtc/runtimes/models/aec/webrtc/v20260212/model.tflite"
+    / "src/Components/VoiceBox.APM.WebRtc/runtimes/models/aec/webrtc/v20260212/model.tflite"
 )
 
 
@@ -585,7 +585,7 @@ def verify_and_deploy(
         print(f"==> Skipping execution of cross-compiled {rid} probe.")
 
     destination = (
-        REPOSITORY_ROOT / "src/VoiceBox.APM.WebRtc/runtimes" / rid / "native"
+        REPOSITORY_ROOT / "src/Components/VoiceBox.APM.WebRtc/runtimes" / rid / "native"
     )
     destination.mkdir(parents=True, exist_ok=True)
     shutil.copy2(library, destination / library.name)

@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/Test/">
+    <Project Path="Test/Misaki.Tests/Misaki.Tests.csproj" />
+    <Project Path="Test/WeTextProcessing.Tests/WeTextProcessing.Tests.csproj" />
+  </Folder>
+  <Project Path="Misaki.NET/Misaki.NET.csproj" />
+  <Project Path="RNNoise.NET/RNNoise.NET.csproj" />
+  <Project Path="WeTextProcessing.NET/WeTextProcessing.NET.csproj" />
+</Solution>

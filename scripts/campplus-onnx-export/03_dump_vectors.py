@@ -26,7 +26,7 @@ import torch
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_MODEL_DIR = os.path.join(SCRIPT_DIR, "speech_campplus_sv_zh-cn_16k-common")
 DEFAULT_OUT_DIR = os.path.normpath(os.path.join(
-    SCRIPT_DIR, "..", "..", "src", "VoiceBox.Speaker.CampPlus", "runtimes", "models", "speaker", "campplus"))
+    SCRIPT_DIR, "..", "..", "src", "Components", "VoiceBox.Speaker.CampPlus", "runtimes", "models", "speaker", "campplus"))
 VECTORS_DIR = os.path.join(SCRIPT_DIR, "outputs", "vectors")
 
 EXAMPLES = ["speaker1_a_cn_16k.wav", "speaker1_b_cn_16k.wav", "speaker2_a_cn_16k.wav"]

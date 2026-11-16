@@ -24,7 +24,7 @@ import onnxruntime as ort
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(
-    HERE, "..", "..", "src", "VoiceBox.DNR.DeepFilterNet",
+    HERE, "..", "..", "src", "Components", "VoiceBox.DNR.DeepFilterNet",
     "runtimes", "models", "dnr", "deepfilternet", "dfn3_ll",
 )
 OUT_DIR = os.path.join(HERE, "outputs", "vectors")

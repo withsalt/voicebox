@@ -12,7 +12,7 @@ conda 环境 `voicebox` (torch / onnx / onnxruntime / modelscope / torchaudio / 
 ## 用法
 
 ```bash
-# 1. 导出 (默认写入 src/VoiceBox.Speaker.CampPlus/runtimes/models/speaker/campplus)
+# 1. 导出 (默认写入 src/Components/VoiceBox.Speaker.CampPlus/runtimes/models/speaker/campplus)
 python 01_export_onnx.py --model-dir speech_campplus_sv_zh-cn_16k-common --out-dir <部署目录>
 
 # 2. 真实音频对拍 (官方前处理 + 官方 pipeline 端到端 + 性能)

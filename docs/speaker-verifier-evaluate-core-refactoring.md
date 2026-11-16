@@ -12,9 +12,9 @@
 
 ## 0. 实施入口与范围
 
-- 目标项目：`src/VoiceBox.Assistant/VoiceBox.Assistant.csproj`。
+- 目标项目：`src/Assistant/VoiceBox.Assistant/VoiceBox.Assistant.csproj`。
 - 主要入口：`Modules/Speaker/Controllers/SpeechGatedSpeakerVerifier.cs` 的 `EvaluateCore` 及其私有辅助方法。
-- 测试项目：`src/Tests/VoiceBox.Assistant.Tests/VoiceBox.Assistant.Tests.csproj`，目标框架 `net10.0`。
+- 测试项目：`src/Assistant/Test/VoiceBox.Assistant.Tests/VoiceBox.Assistant.Tests.csproj`，目标框架 `net10.0`。
 - 必须先阅读：本文件、`docs/voicebox-assistant-architecture.md` 的目录职责/并发/设计模式约定，以及仓库中适用的 `AGENTS.md`。
 - 允许调整：Speaker 内部 evidence、policy、state、model、scheduler；相关 Wakeup/VAD/BargeIn 调用方；对应测试与架构文档。
 - 本次不扩展：新的公开配置项、新的模型/provider、新的通用规则框架、候选生命周期状态机或全局消息总线。
@@ -276,14 +276,14 @@ flowchart TD
 
 主要依据：
 
-- `src/VoiceBox.Assistant/Modules/Speaker/Controllers/SpeechGatedSpeakerVerifier.cs`
-- `src/VoiceBox.Assistant/Modules/Speaker/Evidence/SpeakerEvidenceWindowSelector.cs`
-- `src/VoiceBox.Assistant/Modules/Speaker/Evidence/SpeakerInferenceScheduler.cs`
-- `src/VoiceBox.Assistant/Modules/Wakeup/Models/WakeupSpeakerAuthorization.cs`
-- `src/VoiceBox.Assistant/Modules/Speaker/Controllers/VadSpeakerGateCoordinator.cs`
-- `src/VoiceBox.Assistant/Modules/BargeIn/State/NearEndCandidateStateMachine.cs`
-- `src/Tests/VoiceBox.Assistant.Tests/Speaker/SpeechGatedSpeakerVerifierTests.cs`
-- `src/Tests/VoiceBox.Assistant.Tests/Runtime/VoiceAssistantBargeInInferenceDeadlineTests.cs`
+- `src/Assistant/VoiceBox.Assistant/Modules/Speaker/Controllers/SpeechGatedSpeakerVerifier.cs`
+- `src/Assistant/VoiceBox.Assistant/Modules/Speaker/Evidence/SpeakerEvidenceWindowSelector.cs`
+- `src/Assistant/VoiceBox.Assistant/Modules/Speaker/Evidence/SpeakerInferenceScheduler.cs`
+- `src/Assistant/VoiceBox.Assistant/Modules/Wakeup/Models/WakeupSpeakerAuthorization.cs`
+- `src/Assistant/VoiceBox.Assistant/Modules/Speaker/Controllers/VadSpeakerGateCoordinator.cs`
+- `src/Assistant/VoiceBox.Assistant/Modules/BargeIn/State/NearEndCandidateStateMachine.cs`
+- `src/Assistant/Test/VoiceBox.Assistant.Tests/Speaker/SpeechGatedSpeakerVerifierTests.cs`
+- `src/Assistant/Test/VoiceBox.Assistant.Tests/Runtime/VoiceAssistantBargeInInferenceDeadlineTests.cs`
 - `docs/voicebox-assistant-architecture.md`
 
 ## 10. 验证命令
@@ -292,16 +292,16 @@ flowchart TD
 
 ```powershell
 dotnet --version
-dotnet restore src/Tests/VoiceBox.Assistant.Tests/VoiceBox.Assistant.Tests.csproj
+dotnet restore src/Assistant/Test/VoiceBox.Assistant.Tests/VoiceBox.Assistant.Tests.csproj
 
 # Verifier、模块契约及所有权测试。
-dotnet test src/Tests/VoiceBox.Assistant.Tests/VoiceBox.Assistant.Tests.csproj --no-restore --filter 'FullyQualifiedName~SpeechGatedSpeakerVerifierTests|FullyQualifiedName~WakeupSpeakerModuleContractTests|FullyQualifiedName~ArchitectureOwnershipContractTests.SpeakerVerifier' --logger 'console;verbosity=normal'
+dotnet test src/Assistant/Test/VoiceBox.Assistant.Tests/VoiceBox.Assistant.Tests.csproj --no-restore --filter 'FullyQualifiedName~SpeechGatedSpeakerVerifierTests|FullyQualifiedName~WakeupSpeakerModuleContractTests|FullyQualifiedName~ArchitectureOwnershipContractTests.SpeakerVerifier' --logger 'console;verbosity=normal'
 
 # BargeIn 期限测试：按方法名过滤，文件名并不是测试类名。
-dotnet test src/Tests/VoiceBox.Assistant.Tests/VoiceBox.Assistant.Tests.csproj --no-restore --filter 'FullyQualifiedName~ActiveNearEndTrigger_EachRequiredSpeakerWindowGetsItsOwnInferenceBudget|FullyQualifiedName~ActiveNearEndTrigger_SlidingSelectionDoesNotExtendABlockedSpeakerJob' --logger 'console;verbosity=normal'
+dotnet test src/Assistant/Test/VoiceBox.Assistant.Tests/VoiceBox.Assistant.Tests.csproj --no-restore --filter 'FullyQualifiedName~ActiveNearEndTrigger_EachRequiredSpeakerWindowGetsItsOwnInferenceBudget|FullyQualifiedName~ActiveNearEndTrigger_SlidingSelectionDoesNotExtendABlockedSpeakerJob' --logger 'console;verbosity=normal'
 
 # 实现后的最终验证，包含新增测试以及 Wakeup、VAD 等调用方回归。
-dotnet test src/Tests/VoiceBox.Assistant.Tests/VoiceBox.Assistant.Tests.csproj --no-restore --logger 'console;verbosity=normal'
+dotnet test src/Assistant/Test/VoiceBox.Assistant.Tests/VoiceBox.Assistant.Tests.csproj --no-restore --logger 'console;verbosity=normal'
 
 git diff --check
 git status --short

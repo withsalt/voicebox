@@ -25,7 +25,7 @@
 全量验证命令：
 
 ```powershell
-dotnet test src\Tests\VoiceBox.Assistant.Tests\VoiceBox.Assistant.Tests.csproj --no-restore --configuration Release -warnaserror -p:WarningLevel=9999
+dotnet test src\Assistant\Test\VoiceBox.Assistant.Tests\VoiceBox.Assistant.Tests.csproj --no-restore --configuration Release -warnaserror -p:WarningLevel=9999
 ```
 
 ## 音频统计微基准

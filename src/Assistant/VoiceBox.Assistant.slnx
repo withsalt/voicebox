@@ -1,0 +1,50 @@
+<Solution>
+  <Folder Name="/Dependencies/Components/">
+    <Project Path="../Components/VoiceBox.AEC.DTLN/VoiceBox.AEC.DTLN.csproj" />
+    <Project Path="../Components/VoiceBox.APM.WebRtc/VoiceBox.APM.WebRtc.csproj" />
+    <Project Path="../Components/VoiceBox.ASR.Confucius4/VoiceBox.ASR.Confucius4.csproj" />
+    <Project Path="../Components/VoiceBox.ASR.DoubaoOnline/VoiceBox.ASR.DoubaoOnline.csproj" />
+    <Project Path="../Components/VoiceBox.ASR.FireRedASR2/VoiceBox.ASR.FireRedASR2.csproj" Id="fce5fef5-4bfd-437d-98cc-5d2cb381b540" />
+    <Project Path="../Components/VoiceBox.ASR.Qwen3/VoiceBox.ASR.Qwen3.csproj" Id="e8b6cb2b-c0d9-40f5-af20-9693b200189a" />
+    <Project Path="../Components/VoiceBox.Audio.Common/VoiceBox.Audio.Common.csproj" />
+    <Project Path="../Components/VoiceBox.Audio.MiniAudio/VoiceBox.Audio.MiniAudio.csproj" />
+    <Project Path="../Components/VoiceBox.Audio.PortAudio/VoiceBox.Audio.PortAudio.csproj" />
+    <Project Path="../Components/VoiceBox.Core/VoiceBox.Core.csproj" />
+    <Project Path="../Components/VoiceBox.DNR.DPDFNet/VoiceBox.DNR.DPDFNet.csproj" />
+    <Project Path="../Components/VoiceBox.DNR.DeepFilterNet/VoiceBox.DNR.DeepFilterNet.csproj" />
+    <Project Path="../Components/VoiceBox.DNR.RNNoise/VoiceBox.DNR.RNNoise.csproj" Id="1ee035ef-a27b-4c40-8205-d32505a77d05" />
+    <Project Path="../Components/VoiceBox.DTD.RenderAware/VoiceBox.DTD.RenderAware.csproj" />
+    <Project Path="../Components/VoiceBox.HPF.Butterworth/VoiceBox.HPF.Butterworth.csproj" />
+    <Project Path="../Components/VoiceBox.LLM.LLamaSharp/VoiceBox.LLM.LLamaSharp.csproj" />
+    <Project Path="../Components/VoiceBox.LLM.OpenAI/VoiceBox.LLM.OpenAI.csproj" />
+    <Project Path="../Components/VoiceBox.Speaker.CampPlus/VoiceBox.Speaker.CampPlus.csproj" />
+    <Project Path="../Components/VoiceBox.Speaker.WeSpeaker/VoiceBox.Speaker.WeSpeaker.csproj" />
+    <Project Path="../Components/VoiceBox.TTS.DoubaoOnline/VoiceBox.TTS.DoubaoOnline.csproj" />
+    <Project Path="../Components/VoiceBox.TTS.Qwen3/VoiceBox.TTS.Qwen3.csproj" />
+    <Project Path="../Components/VoiceBox.TTS.VoxCPM/VoiceBox.TTS.VoxCPM.csproj" />
+    <Project Path="../Components/VoiceBox.VAD.FireRed/VoiceBox.VAD.FireRed.csproj" Id="ee07d613-69cc-4c35-8f5c-f511bfde9053" />
+    <Project Path="../Components/VoiceBox.Wakeup.FsmnKws/VoiceBox.Wakeup.FsmnKws.csproj" />
+  </Folder>
+  <Folder Name="/Dependencies/Thirdparty/">
+    <Project Path="../Thirdparty/RNNoise.NET/RNNoise.NET.csproj" />
+  </Folder>
+  <Folder Name="/Demos/">
+    <Project Path="Demos/ConversationTextDemo/ConversationTextDemo.csproj" />
+    <Project Path="Demos/VoiceAssistantDemo/VoiceAssistantDemo.csproj" />
+  </Folder>
+  <Folder Name="/Test/">
+    <Project Path="Test/VoiceBox.Assistant.AecChallenge.Benchmark/VoiceBox.Assistant.AecChallenge.Benchmark.csproj" />
+    <Project Path="Test/VoiceBox.Assistant.Conversation.Abstractions.Tests/VoiceBox.Assistant.Conversation.Abstractions.Tests.csproj" />
+    <Project Path="Test/VoiceBox.Assistant.Conversation.Mcp.Tests/VoiceBox.Assistant.Conversation.Mcp.Tests.csproj" />
+    <Project Path="Test/VoiceBox.Assistant.Conversation.Tests/VoiceBox.Assistant.Conversation.Tests.csproj" />
+    <Project Path="Test/VoiceBox.Assistant.Tests/VoiceBox.Assistant.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="../Directory.Build.props" />
+    <File Path="../Directory.Packages.props" />
+  </Folder>
+  <Project Path="VoiceBox.Assistant.Conversation.Abstractions/VoiceBox.Assistant.Conversation.Abstractions.csproj" />
+  <Project Path="VoiceBox.Assistant.Conversation.Mcp/VoiceBox.Assistant.Conversation.Mcp.csproj" />
+  <Project Path="VoiceBox.Assistant.Conversation/VoiceBox.Assistant.Conversation.csproj" />
+  <Project Path="VoiceBox.Assistant/VoiceBox.Assistant.csproj" />
+</Solution>

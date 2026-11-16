@@ -47,7 +47,7 @@ pip install -r requirements.txt
 # 1) 构建有状态流式模型（缺模型时自动从官方仓库下载离线 ONNX）
 python build_streaming_onnx.py
 #   产物：combined_streaming.onnx + config.ini
-#   安装到：../../src/VoiceBox.DNR.DeepFilterNet/runtimes/models/dnr/deepfilternet/dfn3_ll/
+#   安装到：../../src/Components/VoiceBox.DNR.DeepFilterNet/runtimes/models/dnr/deepfilternet/dfn3_ll/
 #   重建：python build_streaming_onnx.py --force
 
 # 2) 生成对拍向量（若模型缺失会自动触发上一步）

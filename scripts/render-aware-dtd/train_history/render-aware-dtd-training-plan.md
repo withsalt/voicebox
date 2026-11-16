@@ -35,7 +35,7 @@
 
 ### 2.1 基线事实
 
-- 模型：v6 candidate-01 / epoch-147，ONNX sha256 `3EB35D15…`（打包于 `src/VoiceBox.DTD.RenderAware/runtimes/models/dtd/render-aware/`）。
+- 模型：v6 candidate-01 / epoch-147，ONNX sha256 `3EB35D15…`（打包于 `src/Components/VoiceBox.DTD.RenderAware/runtimes/models/dtd/render-aware/`）。
 - 训练：`E:\Projects\render-aware-dtd\artifacts-v6\candidate-01`，v5 数据集（48,000+1,500 条 8s/16k 物化样本）；混合权重 narrow 0.4 / fullband 0.2 / 预生成物化样本 0.2 / aec_real 0.2；1,656,577 参数（80 bands、288/288、3 层 GRU）。
 - 评测结果与失败门禁见 §1.B 表；acoustic TP/FN/FP/TN = 434/27/33/855。
 
@@ -139,7 +139,7 @@ artifacts/dtd-rounds/<round-id>/
 
 ### 4.4 采纳（打包替换）是独立步骤
 
-达标后不自动替换源码树模型。采纳 = 用户确认 → 替换 `src/VoiceBox.DTD.RenderAware/runtimes/models/dtd/render-aware/render_aware_dtd.onnx(+contract)` → 更新 MODEL.md → 跑 `scripts/evaluate-assistant-baseline.ps1` 重出正式基线 → 更新记忆与基线文档。
+达标后不自动替换源码树模型。采纳 = 用户确认 → 替换 `src/Components/VoiceBox.DTD.RenderAware/runtimes/models/dtd/render-aware/render_aware_dtd.onnx(+contract)` → 更新 MODEL.md → 跑 `scripts/evaluate-assistant-baseline.ps1` 重出正式基线 → 更新记忆与基线文档。
 
 ## 5. 轮次 backlog（优先级队列，按轮次结果动态调整）
 

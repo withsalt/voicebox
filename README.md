@@ -1,4 +1,4 @@
-﻿# VoiceBox
+# VoiceBox
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
@@ -35,7 +35,9 @@ VoiceBox 是基于 **.NET** 开发的模块化语音交互框架，**基本覆�
 
 ## 模块
 
-下列名称对应 `src` 下的项目，可按需引用。
+助手与会话项目位于 `src/Assistant`，其余组件位于 `src/Components`，可按需引用。两类项目的测试和示例分别位于各自的 `Test` 和 `Demos` 子目录；第三方项目保留在 `src/Thirdparty`。
+
+解决方案入口：[全部项目](src/VoiceBox.All.slnx)、[助手](src/Assistant/VoiceBox.Assistant.slnx)、[组件](src/Components/VoiceBox.Components.slnx)。在仓库根目录运行 `dotnet build src/VoiceBox.All.slnx` 可构建全部项目。
 
 | 分类 | 名称 | 说明 |
 | --- | --- | --- |
@@ -84,7 +86,7 @@ VoiceBox 是基于 **.NET** 开发的模块化语音交互框架，**基本覆�
 
 模型配置：  
 
-助手 Demo 所需模型均可在模型仓库下载。模型路径集中在 [AudioDefaults.cs](src/Demos/VoiceAssistantDemo/AudioDefaults.cs) 中配置：将 `BASE_MODEL_DIR` 指向直接包含 `kws`、`asr`、`tts` 的目录（如下载目录下的 `v1`），并检查各子路径模型是否存在。
+助手 Demo 所需模型均可在模型仓库下载。模型路径集中在 [AudioDefaults.cs](src/Assistant/Demos/VoiceAssistantDemo/AudioDefaults.cs) 中配置：将 `BASE_MODEL_DIR` 指向直接包含 `kws`、`asr`、`tts` 的目录（如下载目录下的 `v1`），并检查各子路径模型是否存在。
 
 
 基础问答链路：
@@ -147,7 +149,7 @@ static async Task RunAssistantAsync(
 }
 ```
 
-服务的创建与配置见 [VoiceAssistantDemo](src/Demos/VoiceAssistantDemo)。使用 .NET Host 时，可通过助手项目内的 `VoiceBox.Assistant.Hosting` 命名空间注册 DI 与托管生命周期；详细设计见 [助手架构文档](docs/voicebox-assistant-architecture.md)。
+服务的创建与配置见 [VoiceAssistantDemo](src/Assistant/Demos/VoiceAssistantDemo)。使用 .NET Host 时，可通过助手项目内的 `VoiceBox.Assistant.Hosting` 命名空间注册 DI 与托管生命周期；详细设计见 [助手架构文档](docs/voicebox-assistant-architecture.md)。
 
 ## 环境要求
 
@@ -184,20 +186,20 @@ cd voicebox
 此示例无需模型或 API Key，用于检查麦克风与音频环境。在仓库根目录执行：
 
 ```powershell
-dotnet run --project src/Demos/AudioRecordDemo -c Release -- recording.wav
+dotnet run --project src/Components/Demos/AudioRecordDemo -c Release -- recording.wav
 ```
 
 程序列出输入设备并使用默认麦克风，按 Enter 或 Ctrl+C 停止，保存为 **16 kHz、单声道、PCM16 WAV**。如需指定设备，在文件名后追加输入设备编号。
 
 ### 3. 运行语音助手
 
-当前 [Program.cs](src/Demos/VoiceAssistantDemo/Program.cs) 选择 **Plan04**：miniaudio + WebRTC APM + FireRed VAD + FSMN KWS + WeSpeaker，使用 **Confucius4（CUDA）识别、在线 LLM、VoxCPM（CPU）合成**，并启用本人确认、连续对话、语音打断及日期/天气工具。
+当前 [Program.cs](src/Assistant/Demos/VoiceAssistantDemo/Program.cs) 选择 **Plan04**：miniaudio + WebRTC APM + FireRed VAD + FSMN KWS + WeSpeaker，使用 **Confucius4（CUDA）识别、在线 LLM、VoxCPM（CPU）合成**，并启用本人确认、连续对话、语音打断及日期/天气工具。
 
 运行前完成以下配置：
 
-1. 下载上文列出的模型，修改 [AudioDefaults.cs](src/Demos/VoiceAssistantDemo/AudioDefaults.cs) 的 `BASE_MODEL_DIR` 和各模型路径。
+1. 下载上文列出的模型，修改 [AudioDefaults.cs](src/Assistant/Demos/VoiceAssistantDemo/AudioDefaults.cs) 的 `BASE_MODEL_DIR` 和各模型路径。
 2. 设置环境变量 `OPENAI_API_KEY`、`OPENAI_BASE_URL`（请求端点的 base URL，不含 `/chat/completions`）和 `OPENAI_MODEL`（模型名称）。`AudioDefaults` 默认读取这三项，仅使用在线 LLM 的 Plan02/Plan04 校验必填值；API Key 和模型必须与端点对应，本地方案无需配置这三项。
-3. 准备 CUDA/cuDNN 环境。需要更换 ASR、TTS 或音频后端时，修改 [Plan04](src/Demos/VoiceAssistantDemo/Plan04_MIX_8GVRAM_ASR_GPU_TTS_CPU_LLM_ONLINE.cs) 中的服务注册及项目运行时引用。
+3. 准备 CUDA/cuDNN 环境。需要更换 ASR、TTS 或音频后端时，修改 [Plan04](src/Assistant/Demos/VoiceAssistantDemo/Plan04_MIX_8GVRAM_ASR_GPU_TTS_CPU_LLM_ONLINE.cs) 中的服务注册及项目运行时引用。
 
 以下为 PowerShell 命令，从仓库根目录执行。**先进入 Demo 目录**，使 `./voices/*.wav` 音色参考文件的相对路径可用：
 
@@ -205,7 +207,7 @@ dotnet run --project src/Demos/AudioRecordDemo -c Release -- recording.wav
 $env:OPENAI_API_KEY = "你的服务 API Key"
 $env:OPENAI_BASE_URL = "https://api.deepseek.com"
 $env:OPENAI_MODEL = "deepseek-flash"
-cd src/Demos/VoiceAssistantDemo
+cd src/Assistant/Demos/VoiceAssistantDemo
 dotnet run -c Release
 ```
 
@@ -217,10 +219,10 @@ Demo 还提供以下组合，在 `Program.cs` 中切换 `Plan*.Buid(...)`：
 
 | 方案 | ASR | LLM | TTS | 备注 |
 | --- | --- | --- | --- | --- |
-| [Plan01：CPU 本地](src/Demos/VoiceAssistantDemo/Plan01_CPU_ALL_LOCAL.cs) | FireRedASR2 | LLamaSharp | VoxCPM | 使用CPU推理，完全本地化运行，需要较强的CPU  |
-| [Plan02：在线服务](src/Demos/VoiceAssistantDemo/Plan02_CPU_ALL_ONLINE.cs) | 豆包在线 | OpenAI 兼容服务 | 豆包在线 | 使用在线服务，低性能设备首选（火山引擎免费额度很多，个人用量几乎免费）  |
-| [Plan03：GPU 本地](src/Demos/VoiceAssistantDemo/Plan03_GPU_16GVRAM_ALL_LOCAL.cs) | Confucius4 | LLamaSharp | VoxCPM |  使用GPU推理（CUDA），完全本地化运行，至少需要16G显存，体验非常好  |
-| [Plan04：本地与在线混合（默认）](src/Demos/VoiceAssistantDemo/Plan04_MIX_8GVRAM_ASR_GPU_TTS_CPU_LLM_ONLINE.cs) | Confucius4 / CUDA | OpenAI 兼容服务 | VoxCPM / CPU |  ASR使用GPU推理，TTS使用CPU，至少需要8G显存，体验也很棒 |
+| [Plan01：CPU 本地](src/Assistant/Demos/VoiceAssistantDemo/Plan01_CPU_ALL_LOCAL.cs) | FireRedASR2 | LLamaSharp | VoxCPM | 使用CPU推理，完全本地化运行，需要较强的CPU  |
+| [Plan02：在线服务](src/Assistant/Demos/VoiceAssistantDemo/Plan02_CPU_ALL_ONLINE.cs) | 豆包在线 | OpenAI 兼容服务 | 豆包在线 | 使用在线服务，低性能设备首选（火山引擎免费额度很多，个人用量几乎免费）  |
+| [Plan03：GPU 本地](src/Assistant/Demos/VoiceAssistantDemo/Plan03_GPU_16GVRAM_ALL_LOCAL.cs) | Confucius4 | LLamaSharp | VoxCPM |  使用GPU推理（CUDA），完全本地化运行，至少需要16G显存，体验非常好  |
+| [Plan04：本地与在线混合（默认）](src/Assistant/Demos/VoiceAssistantDemo/Plan04_MIX_8GVRAM_ASR_GPU_TTS_CPU_LLM_ONLINE.cs) | Confucius4 / CUDA | OpenAI 兼容服务 | VoxCPM / CPU |  ASR使用GPU推理，TTS使用CPU，至少需要8G显存，体验也很棒 |
 
 `VoiceBox.LLM.LLamaSharp` 支持基于 llama.cpp grammar 的结构化调用，需配置 GGUF 模型及对应的原生推理包。Plan01 使用 `AudioDefaults.LlmGgufModelPath`，并通过 `GpuLayerCount = 0` 在 CPU 上推理。
 
@@ -232,29 +234,29 @@ Plan02 需要上述三个 `OPENAI_*` 环境变量，以及 `VOLC_ASR_API_KEY` �
 
 ## Demo
 
-示例位于 [src/Demos](src/Demos)。除上面的录音与助手示例外，可按下表选择模块示例；模型路径、设备和执行后端在各 Demo 源码中配置。
+示例位于 [src/Assistant/Demos](src/Assistant/Demos) 和 [src/Components/Demos](src/Components/Demos)。除上面的录音与助手示例外，可按下表选择模块示例；模型路径、设备和执行后端在各 Demo 源码中配置。
 
 | 分类 | 示例 | 内容 |
 | --- | --- | --- |
-| 音频 | [AudioPlayDemo](src/Demos/AudioPlayDemo)、[AudioRecordDemo](src/Demos/AudioRecordDemo) | 播放仓库内 WAV / PCM / Opus 样本，或录制麦克风 |
-| 回声与前处理 | [WebRtcApmLiveDemo](src/Demos/WebRtcApmLiveDemo)、[DTLNAecDemo](src/Demos/DTLNAecDemo) | APM 实时处理与 DTLN 回声消除 |
-| 降噪 | [DeepFilterNetLiveDemo](src/Demos/DeepFilterNetLiveDemo)、[DPDFNetLiveDemo](src/Demos/DPDFNetLiveDemo)、[HushDnrLiveDemo](src/Demos/HushDnrLiveDemo) | 麦克风实时降噪 |
-| 唤醒 | [FsmnKwsDemo](src/Demos/FsmnKwsDemo)、[SherpaOnnxKwsDemo](src/Demos/SherpaOnnxKwsDemo)、[WakeWordDemo](src/Demos/WakeWordDemo) | 三种唤醒后端的实时检测 |
-| 语音识别 | [Qwen3ASRDemo](src/Demos/Qwen3ASRDemo)、[Confucius4AsrDemo](src/Demos/Confucius4AsrDemo)、[FireRedASRDemo](src/Demos/FireRedASRDemo)、[DoubaoOnlineAsrDemo](src/Demos/DoubaoOnlineAsrDemo) | 本地或在线语音识别 |
-| 说话人 | [CampPlusSpeakerLiveDemo](src/Demos/CampPlusSpeakerLiveDemo)、[WeSpeakerSpeakerLiveDemo](src/Demos/WeSpeakerSpeakerLiveDemo) | 声纹注册与实时检测 |
-| 语言模型 | [OpenAILLMDemo](src/Demos/OpenAILLMDemo)、[LLamaSharpLLMDemo](src/Demos/LLamaSharpLLMDemo) | 在线或本地文本生成、多轮对话 |
-| 本地语音合成 | [Qwen3TtsDemo](src/Demos/Qwen3TtsDemo)、[VoxCPMTtsDemo](src/Demos/VoxCPMTtsDemo) | 不同 TTS 模型的合成与播放 |
-| 在线语音合成 | [DoubaoOnlineTtsDemo](src/Demos/DoubaoOnlineTtsDemo) | 豆包在线语音合成 |
-| 独立文字会话 | [ConversationTextDemo](src/Demos/ConversationTextDemo) | 不创建音频设备, 直接消费会话输出流; 多轮历史与上下文记忆 |
-| 完整助手 | [VoiceAssistantDemo](src/Demos/VoiceAssistantDemo) | 唤醒、语音问答、说话人验证、打断与工具调用 |
+| 音频 | [AudioPlayDemo](src/Components/Demos/AudioPlayDemo)、[AudioRecordDemo](src/Components/Demos/AudioRecordDemo) | 播放仓库内 WAV / PCM / Opus 样本，或录制麦克风 |
+| 回声与前处理 | [WebRtcApmLiveDemo](src/Components/Demos/WebRtcApmLiveDemo)、[DTLNAecDemo](src/Components/Demos/DTLNAecDemo) | APM 实时处理与 DTLN 回声消除 |
+| 降噪 | [DeepFilterNetLiveDemo](src/Components/Demos/DeepFilterNetLiveDemo)、[DPDFNetLiveDemo](src/Components/Demos/DPDFNetLiveDemo)、[HushDnrLiveDemo](src/Components/Demos/HushDnrLiveDemo) | 麦克风实时降噪 |
+| 唤醒 | [FsmnKwsDemo](src/Components/Demos/FsmnKwsDemo)、[SherpaOnnxKwsDemo](src/Components/Demos/SherpaOnnxKwsDemo)、[WakeWordDemo](src/Components/Demos/WakeWordDemo) | 三种唤醒后端的实时检测 |
+| 语音识别 | [Qwen3ASRDemo](src/Components/Demos/Qwen3ASRDemo)、[Confucius4AsrDemo](src/Components/Demos/Confucius4AsrDemo)、[FireRedASRDemo](src/Components/Demos/FireRedASRDemo)、[DoubaoOnlineAsrDemo](src/Components/Demos/DoubaoOnlineAsrDemo) | 本地或在线语音识别 |
+| 说话人 | [CampPlusSpeakerLiveDemo](src/Components/Demos/CampPlusSpeakerLiveDemo)、[WeSpeakerSpeakerLiveDemo](src/Components/Demos/WeSpeakerSpeakerLiveDemo) | 声纹注册与实时检测 |
+| 语言模型 | [OpenAILLMDemo](src/Components/Demos/OpenAILLMDemo)、[LLamaSharpLLMDemo](src/Components/Demos/LLamaSharpLLMDemo) | 在线或本地文本生成、多轮对话 |
+| 本地语音合成 | [Qwen3TtsDemo](src/Components/Demos/Qwen3TtsDemo)、[VoxCPMTtsDemo](src/Components/Demos/VoxCPMTtsDemo) | 不同 TTS 模型的合成与播放 |
+| 在线语音合成 | [DoubaoOnlineTtsDemo](src/Components/Demos/DoubaoOnlineTtsDemo) | 豆包在线语音合成 |
+| 独立文字会话 | [ConversationTextDemo](src/Assistant/Demos/ConversationTextDemo) | 不创建音频设备, 直接消费会话输出流; 多轮历史与上下文记忆 |
+| 完整助手 | [VoiceAssistantDemo](src/Assistant/Demos/VoiceAssistantDemo) | 唤醒、语音问答、说话人验证、打断与工具调用 |
 
 ## 相关文档
 
 - [助手架构与能力组合](docs/voicebox-assistant-architecture.md)
-- [会话模块](src/VoiceBox.Assistant.Conversation/README.md) · [MCP 工具来源](src/VoiceBox.Assistant.Conversation.Mcp/README.md)
-- [OpenAI 兼容 LLM](src/VoiceBox.LLM.OpenAI/README.md)
-- [Confucius4 ASR](src/VoiceBox.ASR.Confucius4/README.md) · [VoxCPM TTS](src/VoiceBox.TTS.VoxCPM/README.md) · [WeSpeaker 声纹](src/VoiceBox.Speaker.WeSpeaker/README.md)
-- [双讲检测](src/VoiceBox.DTD.RenderAware/README.md) · [AEC / 打断评测](src/Tests/VoiceBox.Assistant.AecChallenge.Benchmark/README.md) · [降噪评测](src/Tests/VoiceBox.DNR.Benchmark/README.md)
+- [会话模块](src/Assistant/VoiceBox.Assistant.Conversation/README.md) · [MCP 工具来源](src/Assistant/VoiceBox.Assistant.Conversation.Mcp/README.md)
+- [OpenAI 兼容 LLM](src/Components/VoiceBox.LLM.OpenAI/README.md)
+- [Confucius4 ASR](src/Components/VoiceBox.ASR.Confucius4/README.md) · [VoxCPM TTS](src/Components/VoiceBox.TTS.VoxCPM/README.md) · [WeSpeaker 声纹](src/Components/VoiceBox.Speaker.WeSpeaker/README.md)
+- [双讲检测](src/Components/VoiceBox.DTD.RenderAware/README.md) · [AEC / 打断评测](src/Assistant/Test/VoiceBox.Assistant.AecChallenge.Benchmark/README.md) · [降噪评测](src/Components/Test/VoiceBox.DNR.Benchmark/README.md)
 - [WebRTC APM 原生构建](native/webrtc-apm/README.md) · [WeTextProcessing 原生构建](native/wetext-processor/README.md) · [Jetson ONNX Runtime 构建](docs/jetson-onnxruntime-1.29.0-build.md)
 - [模型导出与验证脚本](scripts) · [测试与基准项目](src/Tests)
 

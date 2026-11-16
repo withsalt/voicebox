@@ -27,7 +27,7 @@
 
 | 候选 | 权重/ONNX | 声学 | e2e | 定位 |
 |---|---|---|---|---|
-| 基线（随包 e147） | `src/VoiceBox.DTD.RenderAware/runtimes/models/dtd/render-aware/render_aware_dtd.onnx`（sha256 3EB35D15…） | .9414/.9161、33（7.903/10.568）、396/1973、early0、B3 .7032 | heard .8506/P95 1475、FA 29.60、drain 1478.5 | 冻结基线 |
+| 基线（随包 e147） | `src/Components/VoiceBox.DTD.RenderAware/runtimes/models/dtd/render-aware/render_aware_dtd.onnx`（sha256 3EB35D15…） | .9414/.9161、33（7.903/10.568）、396/1973、early0、B3 .7032 | heard .8506/P95 1475、FA 29.60、drain 1478.5 | 冻结基线 |
 | **R28 ep9** | `artifacts/dtd-rounds/r28/training/output/checkpoints/epoch-009.pt`；ONNX `artifacts/dtd-rounds/r28/onnx/9/` | .9501/.9262、**24（5.667/7.973）**、450/2172、early0、B3 .7032 | heard .8621/P95 2798、**FA 9.87**、drain 2801 | 低 FP/e2e-FA 最佳 |
 | **R23 ep12** | `artifacts/dtd-rounds/r23/training/output/checkpoints/epoch-012.pt`；ONNX `artifacts/dtd-rounds/r23/onnx/12/` | .9544/.9314、29（6.880/9.380）、416/2172、early0、B3 .7032 | heard .8851/P95 2792、FA 14.80、drain 2794 | 召回/heard 更高 |
 | R30 ep5（延迟优先） | `artifacts/dtd-rounds/r30/training/output/checkpoints/epoch-005.pt`；ONNX `r30/onnx/5/` | .9544/.9314、60（14.66）、396/2144、early0、B3 **.7438** | heard .8736/P50 431/**P95 2345**、drain 2352、FA 29.6 | e2e 延迟最佳 |

@@ -25,7 +25,7 @@ import torch.nn.functional as F
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_MODEL_DIR = os.path.join(SCRIPT_DIR, "speech_campplus_sv_zh-cn_16k-common")
 DEFAULT_OUT_DIR = os.path.normpath(os.path.join(
-    SCRIPT_DIR, "..", "..", "src", "VoiceBox.Speaker.CampPlus", "runtimes", "models", "speaker", "campplus"))
+    SCRIPT_DIR, "..", "..", "src", "Components", "VoiceBox.Speaker.CampPlus", "runtimes", "models", "speaker", "campplus"))
 
 OPSET = 17
 SEG_LEN = 100          # CAMLayer.seg_pooling 的分段长度 (模型结构常量)

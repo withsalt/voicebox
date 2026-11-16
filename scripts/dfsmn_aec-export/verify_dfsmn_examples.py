@@ -16,7 +16,7 @@ from export_dfsmn_mask_stream import StreamingDfsmnMaskVadCore, load_dfsmn_model
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_MODEL_DIR = ROOT / "dependents" / "speech_dfsmn_aec_psm_16k"
-DEFAULT_ONNX = ROOT / ".." / ".." / "src" / "VoiceBox.AEC.DFSMN" / "runtimes" / "models" / "aec" / "dfsmn" / "dfsmn_aec_mask_vad_stream.onnx"
+DEFAULT_ONNX = ROOT / ".." / ".." / "src" / "Components" / "VoiceBox.AEC.DFSMN" / "runtimes" / "models" / "aec" / "dfsmn" / "dfsmn_aec_mask_vad_stream.onnx"
 
 
 def patch_modelscope_fsmn():

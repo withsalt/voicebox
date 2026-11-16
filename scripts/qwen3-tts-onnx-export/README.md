@@ -173,4 +173,4 @@ C# 侧把 `Qwen3TTSOptions.ModelPath` 指向此目录即可。
 - **故障排查**：`No module named 'numpy'` → 装 numpy；`SoX could not be found` / `flash-attn is not installed` 警告无害（25Hz 分词器 / 注意力回退，可忽略）；fp32 包约 4GB、bf16 约 2.9GB（`text_embedding.bin` 1.24GB 是最大单文件）。
 - 不修改 `Qwen3-TTS/` 源码树；所有导出逻辑在本目录的 `export_*.py` / `_common.py` / `_engine.py`。
 
-C# 推理见 `src/VoiceBox.TTS.Qwen3`，demo 见 `src/Demos/Qwen3TtsDemo`（`--bench "<文本>"` 无头测首包/RTF）。
+C# 推理见 `src/Components/VoiceBox.TTS.Qwen3`，demo 见 `src/Components/Demos/Qwen3TtsDemo`（`--bench "<文本>"` 无头测首包/RTF）。

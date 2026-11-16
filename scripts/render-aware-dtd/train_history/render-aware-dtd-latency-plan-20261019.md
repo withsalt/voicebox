@@ -212,6 +212,6 @@ R30当前同时修改教师起点标签和onset权重0.1→0.3，又沿用当前
 - [基线](render-aware-dtd-baseline-20261012.md)、[基线声学](../../artifacts/baseline-20261012-current-model/acoustic.json)、[基线E2E](../../artifacts/baseline-20261012-current-model/e2e.json)。
 - [R23声学](../../artifacts/dtd-rounds/r23/acoustic-12/acoustic.json)、[R23 E2E](../../artifacts/dtd-rounds/r23/e2e/e2e.json)、[R28声学](../../artifacts/dtd-rounds/r28/acoustic-9/acoustic.json)、[R28 E2E](../../artifacts/dtd-rounds/r28/e2e/e2e.json)。
 - [数据项默认anchor](../../scripts/render-aware-dtd/enriched_dataset.py)、[真实sidecar覆盖](../../scripts/render-aware-dtd/materialized_v5_dataset.py)、[anchor损失与选模](../../scripts/render-aware-dtd/train_dtd.py)、[现有损失定义](../../scripts/render-aware-dtd/dtd_training_objectives.py)。
-- [证据融合](../../src/VoiceBox.Assistant/Modules/BargeIn/RenderAware/RenderAwareDtdEvidencePolicy.cs)、[证据累积](../../src/VoiceBox.Assistant/Modules/BargeIn/Policies/BargeInDecisionAccumulator.cs)、[统计口径](../../src/Tests/VoiceBox.Assistant.AecChallenge.Benchmark/EndToEndMetrics.cs)、[延迟采样定义](../../src/Tests/VoiceBox.Assistant.AecChallenge.Benchmark/EndToEndEvaluator.cs)。
+- [证据融合](../../src/Assistant/VoiceBox.Assistant/Modules/BargeIn/RenderAware/RenderAwareDtdEvidencePolicy.cs)、[证据累积](../../src/Assistant/VoiceBox.Assistant/Modules/BargeIn/Policies/BargeInDecisionAccumulator.cs)、[统计口径](../../src/Assistant/Test/VoiceBox.Assistant.AecChallenge.Benchmark/EndToEndMetrics.cs)、[延迟采样定义](../../src/Assistant/Test/VoiceBox.Assistant.AecChallenge.Benchmark/EndToEndEvaluator.cs)。
 
 本报告中的代码缺陷、数值实验与案例回退均有直接证据；“各机制分别导致多少毫秒”仍需同runtime、逐帧轨迹及上述消融实验确认。

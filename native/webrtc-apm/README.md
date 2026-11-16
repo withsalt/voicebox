@@ -66,14 +66,14 @@ python3 native/webrtc-apm/build.py --rid linux-arm64
 
 构建成功后，脚本自动部署到：
 
-- `src/VoiceBox.APM.WebRtc/runtimes/win-x64/native/`
-- `src/VoiceBox.APM.WebRtc/runtimes/linux-x64/native/`
-- `src/VoiceBox.APM.WebRtc/runtimes/linux-arm64/native/`
+- `src/Components/VoiceBox.APM.WebRtc/runtimes/win-x64/native/`
+- `src/Components/VoiceBox.APM.WebRtc/runtimes/linux-x64/native/`
+- `src/Components/VoiceBox.APM.WebRtc/runtimes/linux-arm64/native/`
 
 模型保持为独立 runtime 资源：
 
 ```text
-src/VoiceBox.APM.WebRtc/runtimes/models/aec/webrtc/v20260212/model.tflite
+src/Components/VoiceBox.APM.WebRtc/runtimes/models/aec/webrtc/v20260212/model.tflite
 ```
 
 本机目标会运行 `abi_probe`，同时验证普通 APM 和真实 Neural REE 模型创建。

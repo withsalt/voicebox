@@ -54,7 +54,7 @@ scripts/dfsmn_aec-export/export/feature.DEY.mvn.txt
 
 ```powershell
 conda run -n voicebox python scripts\dfsmn_aec-export\export_dfsmn_mask_stream.py `
-  --output src\VoiceBox.AEC.DFSMN\runtimes\models\aec\dfsmn\dfsmn_aec_mask_vad_stream.onnx
+  --output src\Components\VoiceBox.AEC.DFSMN\runtimes\models\aec\dfsmn\dfsmn_aec_mask_vad_stream.onnx
 ```
 
 ## 验证
@@ -69,7 +69,7 @@ conda run -n voicebox python scripts\dfsmn_aec-export\verify_dfsmn_mask_stream.p
 
 ```powershell
 conda run -n voicebox python scripts\dfsmn_aec-export\verify_dfsmn_mask_stream.py `
-  --onnx src\VoiceBox.AEC.DFSMN\runtimes\models\aec\dfsmn\dfsmn_aec_mask_vad_stream.onnx `
+  --onnx src\Components\VoiceBox.AEC.DFSMN\runtimes\models\aec\dfsmn\dfsmn_aec_mask_vad_stream.onnx `
   --frames 17
 ```
 

@@ -1,10 +1,10 @@
 ﻿# VoiceBox.Assistant 架构文档
 
-> 适用范围：`src/VoiceBox.Assistant`、`src/VoiceBox.Assistant.Conversation.Abstractions`、
-> `src/VoiceBox.Assistant.Conversation`、`src/VoiceBox.Assistant.Conversation.Mcp`
+> 适用范围：`src/Assistant/VoiceBox.Assistant`、`src/Assistant/VoiceBox.Assistant.Conversation.Abstractions`、
+> `src/Assistant/VoiceBox.Assistant.Conversation`、`src/Assistant/VoiceBox.Assistant.Conversation.Mcp`
 >
-> 相关测试：`src/Tests/VoiceBox.Assistant.Tests/Architecture/`、
-> `src/Tests/VoiceBox.Assistant.Conversation.Tests/`
+> 相关测试：`src/Assistant/Test/VoiceBox.Assistant.Tests/Architecture/`、
+> `src/Assistant/Test/VoiceBox.Assistant.Conversation.Tests/`
 
 ## 1. 概览
 
@@ -329,9 +329,9 @@ ValueTask<EffectExecutionResult> ExecuteAsync(
 | `Realtime / Timeline` | `Realtime/Timeline/AdaptiveRenderDelayTracker.cs`、`RenderAlignmentStage.cs`、`Timeline*Resampler.cs` | |
 | `Diagnostics` | `Diagnostics/Benchmarking/`、`Metrics/`、`Recording/` | Benchmarking 内分 `Contracts/`、`Models/`、`Adapters/`；指标快照在 `Metrics/Models/` |
 | `Hosting` | `Hosting/VoiceAssistantServiceCollectionExtensions.cs`、`Configuration/`、`Lifecycle/`、`Diagnostics/`、`Models/`、`Telemetry/` | DI、options 验证、hosted lifecycle、diagnostics、tracing/metrics；不属于 Runtime 或 Modules |
-| `Conversation / Contract` | `src/VoiceBox.Assistant.Conversation.Abstractions/` | 仅 BCL；调用方实现业务会话所需的主接口、输出 DTO 与可选能力 |
-| `Conversation / Default` | `src/VoiceBox.Assistant.Conversation/` | 默认 LLM 会话、内存历史、上下文扩展、工具运行时与本地工具 |
-| `Conversation / Mcp` | `src/VoiceBox.Assistant.Conversation.Mcp/` | 独立程序集，唯一允许引用 MCP SDK 的位置 |
+| `Conversation / Contract` | `src/Assistant/VoiceBox.Assistant.Conversation.Abstractions/` | 仅 BCL；调用方实现业务会话所需的主接口、输出 DTO 与可选能力 |
+| `Conversation / Default` | `src/Assistant/VoiceBox.Assistant.Conversation/` | 默认 LLM 会话、内存历史、上下文扩展、工具运行时与本地工具 |
+| `Conversation / Mcp` | `src/Assistant/VoiceBox.Assistant.Conversation.Mcp/` | 独立程序集，唯一允许引用 MCP SDK 的位置 |
 
 ### 7.1 程序集边界
 
@@ -837,4 +837,4 @@ IConversationToolProvider files = McpToolProvider.CreateStdio("filesystem", opti
 - [MCP 2026-07-28 Transports](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports)
 - [MCP 2026-07-28 Authorization](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization)
 - [Official MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk)
-- [VoiceBox Assistant AEC Challenge Benchmark](../src/Tests/VoiceBox.Assistant.AecChallenge.Benchmark/README.md)
+- [VoiceBox Assistant AEC Challenge Benchmark](../src/Assistant/Test/VoiceBox.Assistant.AecChallenge.Benchmark/README.md)

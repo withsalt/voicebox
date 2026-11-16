@@ -196,9 +196,9 @@ hamming 窗 / dither=0 / snip_edges=true / 预加重 0.97 / 去直流 /
 
 ## 5. C# 侧接入
 
-- 服务实现：`src/VoiceBox.Wakeup.FsmnKws/`（实现 `IWakeupService`，特征提取 / 流式推理 / 解码全部纯 C#）
+- 服务实现：`src/Components/VoiceBox.Wakeup.FsmnKws/`（实现 `IWakeupService`，特征提取 / 流式推理 / 解码全部纯 C#）
 - parity 验证依赖上面的 outputs 产物，缺失时自动跳过
-- Demo：`src/Demos/FsmnKwsDemo/`（wav 推流 + 麦克风两种模式，模型目录默认指向本目录 `outputs/onnx`，可用环境变量 `FSMN_KWS_MODEL_DIR` 覆盖）
+- Demo：`src/Components/Demos/FsmnKwsDemo/`（wav 推流 + 麦克风两种模式，模型目录默认指向本目录 `outputs/onnx`，可用环境变量 `FSMN_KWS_MODEL_DIR` 覆盖）
 
 样例音频实测（与 Python 基线一致）：
 

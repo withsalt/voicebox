@@ -30,7 +30,7 @@ import onnxruntime as ort
 HERE = os.path.dirname(os.path.abspath(__file__))
 # Point at the C# project's bundled model so vectors match what C# loads byte-for-byte.
 MODEL_DIR = os.path.join(
-    HERE, "..", "..", "src", "VoiceBox.DNR.Hush",
+    HERE, "..", "..", "src", "Components", "VoiceBox.DNR.Hush",
     "runtimes", "models", "dnr", "hush", "hush16k",
 )
 OUT_DIR = os.path.join(HERE, "outputs", "vectors")

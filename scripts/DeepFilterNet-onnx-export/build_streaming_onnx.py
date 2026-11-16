@@ -46,7 +46,7 @@ STREAMING_FILES = [
 
 def default_out_dir() -> Path:
     # scripts/DeepFilterNet-onnx-export -> repo 根 -> C# runtimes/.../dfn3_ll
-    return (HERE.parent.parent / "src" / "VoiceBox.DNR.DeepFilterNet"
+    return (HERE.parent.parent / "src" / "Components" / "VoiceBox.DNR.DeepFilterNet"
             / "runtimes" / "models" / "dnr" / "deepfilternet" / "dfn3_ll")
 
 
