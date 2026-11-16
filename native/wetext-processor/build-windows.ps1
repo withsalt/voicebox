@@ -35,7 +35,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $buildDir = Join-Path $scriptDir "build/$Rid"
-$outDir = Join-Path $scriptDir "../../src/SDKs/WeTextProcessing.NET/runtimes/$Rid/native"
+$outDir = Join-Path $scriptDir "../../src/Thirdparty/WeTextProcessing.NET/runtimes/$Rid/native"
 
 # ---- Locate Visual Studio (vswhere) -----------------------------------------
 function Get-VsPath {

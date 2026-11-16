@@ -37,7 +37,9 @@ class Processor {
 
  private:
   std::string ShortestPath(const StdVectorFst& lattice);
-  std::string Compose(const std::string& input, const StdVectorFst* fst);
+  std::string Compose(const std::string& input, const StdVectorFst* fst,
+                      bool unique_output = false);
+  std::string Verbalize(const std::string& input, bool unique_output);
 
   ParseType parse_type_;
   std::shared_ptr<StdVectorFst> tagger_ = nullptr;

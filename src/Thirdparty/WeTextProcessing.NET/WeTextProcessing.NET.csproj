@@ -10,14 +10,11 @@
 
   <PropertyGroup Label="Package">
     <PackageId>WeTextProcessing.NET</PackageId>
-    <PackageVersion>$(Version)</PackageVersion>
     <Title>WeTextProcessing.NET</Title>
-    <Version>1.2.0</Version>
-    <AssemblyVersion>1.2.0</AssemblyVersion>
-    <FileVersion>1.2.0</FileVersion>
+    <Version>1.3.0</Version>
     <Authors>Zhendong Peng; Xingchen Song; withsalt</Authors>
     <Description>.NET wrapper for WeTextProcessing, including Chinese and English text normalization (TN) and inverse text normalization (ITN) through bundled FST models and native runtime.</Description>
-    <PackageProjectUrl>https://github.com/wenet-e2e/WeTextProcessing</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/withsalt/voicebox</PackageProjectUrl>
     <RepositoryUrl>https://github.com/wenet-e2e/WeTextProcessing</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -27,6 +24,9 @@
 
 	<ItemGroup>
 		<None Include="runtimes\models\WeTextProcessing\*.fst" Pack="true" PackagePath="runtimes\models\WeTextProcessing\">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="runtimes\models\WeTextProcessing\manifest.json" Pack="true" PackagePath="runtimes\models\WeTextProcessing\">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Include="runtimes\linux-arm64\native\*.so" Pack="true" PackagePath="runtimes\linux-arm64\native\">
@@ -41,8 +41,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="build\WeTextProcessing.targets" Pack="true" PackagePath="build\WeTextProcessing.targets" />
-		<None Include="build\WeTextProcessing.targets" Pack="true" PackagePath="buildTransitive\WeTextProcessing.targets" />
+		<None Include="build\WeTextProcessing.targets" Pack="true" PackagePath="build\WeTextProcessing.NET.targets" />
+		<None Include="build\WeTextProcessing.targets" Pack="true" PackagePath="buildTransitive\WeTextProcessing.NET.targets" />
 	</ItemGroup>
 
 </Project>

@@ -1,7 +1,7 @@
 <Project>
 
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)..\runtimes\models\WeTextProcessing\*.fst">
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\models\WeTextProcessing\*.fst;$(MSBuildThisFileDirectory)..\runtimes\models\WeTextProcessing\manifest.json">
       <Link>runtimes\models\WeTextProcessing\%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Visible>false</Visible>

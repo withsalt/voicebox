@@ -15,7 +15,9 @@
 #ifndef PROCESSOR_WETEXT_TOKEN_PARSER_H_
 #define PROCESSOR_WETEXT_TOKEN_PARSER_H_
 
+#include <algorithm>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -42,6 +44,10 @@ struct Token {
   explicit Token(const std::string& name) : name(name) {}
 
   void Append(const std::string& key, const std::string& value) {
+    // [patch] Match Python 1.3.0: duplicate fields are invalid.
+    if (members.count(key) > 0) {
+      throw std::invalid_argument("Duplicate field " + key + " in token " + name);
+    }
     order.emplace_back(key);
     members[key] = value;
   }
@@ -49,21 +55,35 @@ struct Token {
   std::string String(
       const std::unordered_map<std::string, std::vector<std::string>>& orders) {
     std::string output = name + " {";
-    // [patch] Mirror Python tn/token_parser.py Token.string(): a token tagged
-    // with preserve_order: "true" keeps the member order produced by the
-    // tagger instead of the canonical order table.
+    // [patch] Mirror Python 1.3.0: preserve the tagger's order when requested,
+    // otherwise append fields absent from the canonical schema in input order.
+    auto output_order = order;
     if (orders.count(name) > 0) {
       auto it = members.find("preserve_order");
       if (it == members.end() || it->second != "true") {
-        order = orders.at(name);
+        output_order = orders.at(name);
+        for (const auto& key : order) {
+          if (std::find(output_order.begin(), output_order.end(), key) ==
+              output_order.end()) {
+            output_order.emplace_back(key);
+          }
+        }
       }
     }
 
-    for (const auto& key : order) {
+    for (const auto& key : output_order) {
       if (members.count(key) == 0) {
         continue;
       }
-      output += " " + key + ": \"" + members[key] + "\"";
+      output += " " + key + ": \"";
+      // [patch] Python stores decoded values and escapes them on serialization.
+      for (char ch : members.at(key)) {
+        if (ch == '\\' || ch == '"') {
+          output += '\\';
+        }
+        output += ch;
+      }
+      output += '"';
     }
     return output + " }";
   }
@@ -74,7 +94,8 @@ enum ParseType {
   kZH_ITN = 0x01,  // Chinese Inverse Text Normalization
   kEN_TN = 0x02,   // English Text Normalization
   kEN_ITN = 0x03,  // English Inverse Text Normalization
-  kJA_TN = 0x04    // Japanese Text Normalization
+  kJA_TN = 0x04,   // Japanese Text Normalization
+  kJA_ITN = 0x05   // Japanese Inverse Text Normalization
 };
 
 class TokenParser {
@@ -92,7 +113,7 @@ class TokenParser {
   std::string ParseValue();
   void Parse(const std::string& input);
 
-  int index_;
+  size_t index_;
   std::string ch_;
   std::vector<std::string> text_;
   std::vector<Token> tokens_;

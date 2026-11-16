@@ -28,8 +28,8 @@
     <Project Path="Components/VoiceBox.Audio.MiniAudio/VoiceBox.Audio.MiniAudio.csproj" />
     <Project Path="Components/VoiceBox.Audio.PortAudio/VoiceBox.Audio.PortAudio.csproj" />
     <Project Path="Components/VoiceBox.Core/VoiceBox.Core.csproj" />
-    <Project Path="Components/VoiceBox.DNR.DPDFNet/VoiceBox.DNR.DPDFNet.csproj" />
     <Project Path="Components/VoiceBox.DNR.DeepFilterNet/VoiceBox.DNR.DeepFilterNet.csproj" />
+    <Project Path="Components/VoiceBox.DNR.DPDFNet/VoiceBox.DNR.DPDFNet.csproj" />
     <Project Path="Components/VoiceBox.DNR.Hush/VoiceBox.DNR.Hush.csproj" />
     <Project Path="Components/VoiceBox.DNR.RNNoise/VoiceBox.DNR.RNNoise.csproj" Id="1ee035ef-a27b-4c40-8205-d32505a77d05" />
     <Project Path="Components/VoiceBox.DTD.RenderAware/VoiceBox.DTD.RenderAware.csproj" />
@@ -39,8 +39,8 @@
     <Project Path="Components/VoiceBox.Speaker.CampPlus/VoiceBox.Speaker.CampPlus.csproj" />
     <Project Path="Components/VoiceBox.Speaker.WeSpeaker/VoiceBox.Speaker.WeSpeaker.csproj" />
     <Project Path="Components/VoiceBox.TTS.DoubaoOnline/VoiceBox.TTS.DoubaoOnline.csproj" />
-    <Project Path="Components/VoiceBox.TTS.Qwen3/VoiceBox.TTS.Qwen3.csproj" />
     <Project Path="Components/VoiceBox.TTS.Hojo/VoiceBox.TTS.Hojo.csproj" />
+    <Project Path="Components/VoiceBox.TTS.Qwen3/VoiceBox.TTS.Qwen3.csproj" />
     <Project Path="Components/VoiceBox.TTS.VoxCPM/VoiceBox.TTS.VoxCPM.csproj" />
     <Project Path="Components/VoiceBox.VAD.FireRed/VoiceBox.VAD.FireRed.csproj" Id="ee07d613-69cc-4c35-8f5c-f511bfde9053" />
     <Project Path="Components/VoiceBox.VAD.Silero/VoiceBox.VAD.Silero.csproj" Id="5260b298-53b9-4977-8de5-acf23c60e9c8" />
@@ -60,9 +60,9 @@
     <Project Path="Components/Demos/AudioRecordDemo/AudioRecordDemo.csproj" />
   </Folder>
   <Folder Name="/Components/Demos/DNR_AEC/">
+    <Project Path="Components/Demos/DeepFilterNetLiveDemo/DeepFilterNetLiveDemo.csproj" />
     <Project Path="Components/Demos/DPDFNetLiveDemo/DPDFNetLiveDemo.csproj" />
     <Project Path="Components/Demos/DTLNAecDemo/DTLNAecDemo.csproj" />
-    <Project Path="Components/Demos/DeepFilterNetLiveDemo/DeepFilterNetLiveDemo.csproj" />
     <Project Path="Components/Demos/HushDnrLiveDemo/HushDnrLiveDemo.csproj" />
     <Project Path="Components/Demos/WebRtcApmLiveDemo/WebRtcApmLiveDemo.csproj" />
   </Folder>
@@ -76,8 +76,8 @@
   </Folder>
   <Folder Name="/Components/Demos/TTS/">
     <Project Path="Components/Demos/DoubaoOnlineTtsDemo/DoubaoOnlineTtsDemo.csproj" />
-    <Project Path="Components/Demos/Qwen3TtsDemo/Qwen3TtsDemo.csproj" />
     <Project Path="Components/Demos/HojoTtsDemo/HojoTtsDemo.csproj" />
+    <Project Path="Components/Demos/Qwen3TtsDemo/Qwen3TtsDemo.csproj" />
     <Project Path="Components/Demos/VoxCPMTtsDemo/VoxCPMTtsDemo.csproj" />
   </Folder>
   <Folder Name="/Components/Demos/Wakeup/">
@@ -98,5 +98,9 @@
   <Folder Name="/Solution Items/">
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/Thirdparty/Test/">
+    <Project Path="Thirdparty/Test/Misaki.Tests/Misaki.Tests.csproj" />
+    <Project Path="Thirdparty/Test/WeTextProcessing.Tests/WeTextProcessing.Tests.csproj" />
   </Folder>
 </Solution>

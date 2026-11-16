@@ -155,10 +155,17 @@ namespace WeTextProcessing.Tests
         }
 
         [TestMethod]
-        public void Verbalize_MalformedTaggedText_ThrowsWetextProcessorException()
+        [DataRow("cardinal { value: \"unterminated } ")]
+        [DataRow("cardinal { value: \"123\"")]
+        [DataRow("cardinal{ value: \"123\" }")]
+        [DataRow("cardinal { value \"123\" }")]
+        [DataRow("cardinal { 123: \"123\" }")]
+        [DataRow("cardinal { value: \"123\" value: \"456\" }")]
+        [DataRow("cardinal { value: \"trailing\\")]
+        public void Verbalize_MalformedTaggedText_ThrowsWetextProcessorException(string input)
         {
             using var processor = CreateProcessor();
-            Assert.ThrowsExactly<WetextProcessorException>(() => processor.Verbalize("cardinal { value: \"unterminated } "));
+            Assert.ThrowsExactly<WetextProcessorException>(() => processor.Verbalize(input));
         }
     }
 }

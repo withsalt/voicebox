@@ -40,15 +40,16 @@ Processor::Processor(const std::string& tagger_path,
   } else if (tagger_path.find("en_tn_") != tagger_path.npos) {
     parse_type_ = ParseType::kEN_TN;
   } else if (tagger_path.find("en_itn_") != tagger_path.npos) {
-    // [patch] English ITN support (upstream runtime only recognized zh/ja).
     parse_type_ = ParseType::kEN_ITN;
   } else if (tagger_path.find("ja_tn_") != tagger_path.npos) {
     parse_type_ = ParseType::kJA_TN;
+  } else if (tagger_path.find("ja_itn_") != tagger_path.npos) {
+    parse_type_ = ParseType::kJA_ITN;
   } else {
     // [patch] Throw instead of LOG(FATAL), which would abort the host process.
     throw std::invalid_argument(
         "Invalid fst prefix, tagger file name should contain one of "
-        "\"zh_tn_\", \"zh_itn_\", \"en_tn_\", \"en_itn_\", \"ja_tn_\": " +
+        "\"zh_tn_\", \"zh_itn_\", \"en_tn_\", \"en_itn_\", \"ja_tn_\", \"ja_itn_\": " +
         tagger_path);
   }
 }
@@ -63,12 +64,18 @@ std::string Processor::ShortestPath(const StdVectorFst& lattice) {
 }
 
 std::string Processor::Compose(const std::string& input,
-                               const StdVectorFst* fst) {
+                               const StdVectorFst* fst, bool unique_output) {
   StdVectorFst input_fst;
   compiler_->operator()(input, &input_fst);
 
   StdVectorFst lattice;
   fst::Compose(input_fst, *fst, &lattice);
+  if (unique_output) {
+    // [patch] Python 1.3.0 Normalize selects unique output paths from a
+    // projected, epsilon-free lattice. This also determines equal-cost ties.
+    fst::Project(&lattice, fst::ProjectType::OUTPUT);
+    fst::RmEpsilon(&lattice);
+  }
   return ShortestPath(lattice);
 }
 
@@ -80,19 +87,26 @@ std::string Processor::Tag(const std::string& input) {
 }
 
 std::string Processor::Verbalize(const std::string& input) {
+  return Verbalize(input, false);
+}
+
+std::string Processor::Verbalize(const std::string& input, bool unique_output) {
   if (input.empty()) {
     return "";
   }
   TokenParser parser(parse_type_);
   std::string output = parser.Reorder(input);
 
-  output = Compose(output, verbalizer_.get());
+  output = Compose(output, verbalizer_.get(), unique_output);
   output.erase(std::remove(output.begin(), output.end(), '\0'), output.end());
   return output;
 }
 
 std::string Processor::Normalize(const std::string& input) {
-  return Verbalize(Tag(input));
+  if (input.empty()) {
+    return "";
+  }
+  return Verbalize(Compose(input, tagger_.get(), true), true);
 }
 
 }  // namespace wetext

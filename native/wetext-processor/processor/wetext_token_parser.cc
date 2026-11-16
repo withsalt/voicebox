@@ -28,9 +28,8 @@ const std::set<std::string> ASCII_LETTERS = {
     "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P",
     "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "_"};
 
-// [patch] Order tables synced with WeTextProcessing 1.2.0
-// tn/token_parser.py (TN_ORDERS / ITN_ORDERS / EN_TN_ORDERS). ITN_ORDERS is
-// shared by Chinese and English ITN, exactly like the Python TokenParser.
+// Order tables match WeTextProcessing 1.3.0 TOKEN_ORDERS in the Chinese and
+// English normalizers. Chinese and English ITN share the same schema.
 const std::unordered_map<std::string, std::vector<std::string>> TN_ORDERS = {
     {"date", {"year", "month", "day"}},
     {"fraction", {"denominator", "numerator"}},
@@ -58,7 +57,8 @@ const std::unordered_map<std::string, std::vector<std::string>> JA_TN_ORDERS = {
 TokenParser::TokenParser(ParseType type) {
   if (type == ParseType::kZH_TN) {
     orders_ = TN_ORDERS;
-  } else if (type == ParseType::kZH_ITN || type == ParseType::kEN_ITN) {
+  } else if (type == ParseType::kZH_ITN || type == ParseType::kEN_ITN ||
+             type == ParseType::kJA_ITN) {
     orders_ = ITN_ORDERS;
   } else if (type == ParseType::kEN_TN) {
     orders_ = EN_TN_ORDERS;
@@ -77,10 +77,11 @@ void TokenParser::Load(const std::string& input) {
   }
   index_ = 0;
   ch_ = text_[0];
+  tokens_.clear();
 }
 
 bool TokenParser::Read() {
-  if (index_ < static_cast<int>(text_.size()) - 1) {
+  if (index_ < text_.size() - 1) {
     index_ += 1;
     ch_ = text_[index_];
     return true;
@@ -106,17 +107,20 @@ bool TokenParser::ParseChar(const std::string& exp) {
 }
 
 bool TokenParser::ParseChars(const std::string& exp) {
-  bool ok = false;
+  size_t start = index_;
   std::vector<std::string> chars;
   wetext::SplitUTF8StringToChars(exp, &chars);
   for (const auto& x : chars) {
-    ok |= ParseChar(x);
+    if (!ParseChar(x)) {
+      index_ = start;
+      ch_ = text_[start];
+      return false;
+    }
   }
-  return ok;
+  return true;
 }
 
 std::string TokenParser::ParseKey() {
-  // [patch] Throw instead of CHECK (process abort) on malformed input.
   if (ch_ == EOS) {
     throw std::runtime_error("TokenParser: unexpected end of input in key.");
   }
@@ -129,27 +133,36 @@ std::string TokenParser::ParseKey() {
     key += ch_;
     Read();
   }
+  if (key.empty()) {
+    throw std::invalid_argument("Invalid token key at position " +
+                                std::to_string(index_));
+  }
   return key;
 }
 
 std::string TokenParser::ParseValue() {
-  // [patch] Throw instead of CHECK, and guard the loop against EOS — the
-  // upstream implementation spins forever on an unterminated quoted value.
   if (ch_ == EOS) {
     throw std::runtime_error("TokenParser: unexpected end of input in value.");
   }
-  bool escape = false;
 
   std::string value = "";
   while (ch_ != "\"") {
     if (ch_ == EOS) {
       throw std::runtime_error("TokenParser: unterminated quoted value.");
     }
-    value += ch_;
-    escape = ch_ == "\\";
+    // [patch] Decode quoted values like Python 1.3.0; String() re-escapes them.
+    bool escape = ch_ == "\\";
+    if (!escape) {
+      value += ch_;
+    }
     Read();
     if (escape) {
-      escape = false;
+      if (ch_ == EOS) {
+        throw std::invalid_argument("Unterminated escape in token value");
+      }
+      if (ch_ != "\"" && ch_ != "\\") {
+        value += "\\";
+      }
       value += ch_;
       Read();
     }
@@ -161,19 +174,30 @@ void TokenParser::Parse(const std::string& input) {
   Load(input);
   while (ParseWs()) {
     std::string name = ParseKey();
-    ParseChars(" { ");
+    if (!ParseChars(" { ")) {
+      throw std::invalid_argument("Expected token opening delimiter");
+    }
 
     Token token(name);
+    bool closed = false;
     while (ParseWs()) {
       if (ch_ == "}") {
         ParseChar("}");
+        closed = true;
         break;
       }
       std::string key = ParseKey();
-      ParseChars(": \"");
+      if (!ParseChars(": \"")) {
+        throw std::invalid_argument("Expected token field delimiter");
+      }
       std::string value = ParseValue();
-      ParseChar("\"");
+      if (!ParseChar("\"")) {
+        throw std::invalid_argument("Expected closing quote");
+      }
       token.Append(key, value);
+    }
+    if (!closed) {
+      throw std::invalid_argument("Unterminated token " + name);
     }
     tokens_.emplace_back(token);
   }

@@ -28,7 +28,7 @@ RID="linux-$ARCH"
 NATIVE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG="${2:-Release}"
 BUILD_DIR="$NATIVE_DIR/build/$RID"
-OUT_DIR="$NATIVE_DIR/../../src/SDKs/WeTextProcessing.NET/runtimes/$RID/native"
+OUT_DIR="$NATIVE_DIR/../../src/Thirdparty/WeTextProcessing.NET/runtimes/$RID/native"
 
 # ---- Toolchain checks -------------------------------------------------------
 command -v cmake >/dev/null || { echo "cmake not found. apt install cmake" >&2; exit 1; }

@@ -1,0 +1,17 @@
+{
+  "wetextprocessing_version": "1.3.0",
+  "source_archive": "wetextprocessing-1.3.0.tar.gz",
+  "source_sha256": "217a939201fc1e3324c67bc9983c4f4e56dc9dc37b850845b3d2e0a1daf6fb5e",
+  "pynini_version": "2.1.7",
+  "options": "Default constructor options; cache_dir=False",
+  "sha256": {
+    "en_itn_tagger.fst": "d0fc1bf4d41f1c3f7dd4c19b46d546d7276502b8ff4dc635259fcad87b8acb48",
+    "en_itn_verbalizer.fst": "7db552967ba6f0ab5dc361ec05e55267a8a797059256fb039bbf447e2efafc7b",
+    "en_tn_tagger.fst": "6464add988a7cbdbf5d852dd53bd7463b9c8ae4683d2f9e2360b2c6bf060cd2a",
+    "en_tn_verbalizer.fst": "c1d790717aa45490e55066700778271e9dd5972f0d161e21e61b9f30fc7e55ba",
+    "zh_itn_tagger.fst": "a0054beefffa232a85903e087b02095e835809d1416e9715f8ed46da371727f4",
+    "zh_itn_verbalizer.fst": "843fb62598b6cb93025e53fbdfcb0410741bdc7ca37de1d0f63bdbe8f7017b4e",
+    "zh_tn_tagger.fst": "1bb9279325882f4200967becf461a5bc5526ebc9d163583b0197ee1c0482303a",
+    "zh_tn_verbalizer.fst": "692140e4b35c96517317374f87f8a5fcdd400d38a2312a7258a973bff8edb678"
+  }
+}
