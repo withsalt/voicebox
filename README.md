@@ -69,6 +69,7 @@ VoiceBox 是基于 **.NET** 开发的模块化语音交互框架，**基本覆�
 | LLM（语言模型） | `VoiceBox.LLM.LLamaSharp` | 基于 LLamaSharp / llama.cpp 的本地 GGUF 模型推理，支持 grammar 约束的结构化工具调用 |
 | TTS（语音合成） | `VoiceBox.TTS.Qwen3` | Qwen3-TTS CustomVoice，支持预置音色与流式合成 |
 | TTS（语音合成） | `VoiceBox.TTS.VoxCPM` | VoxCPM 流式合成，支持参考音频与文本进行音色克隆 |
+| TTS（语音合成） | [VoiceBox.TTS.Hojo](src/Components/VoiceBox.TTS.Hojo/README.md) | Hojo 80M / 40M V2 原版及 INT8，固定音色、原生 C# CPU 分块流式合成 |
 | TTS（语音合成） | `VoiceBox.TTS.DoubaoOnline` | 在线流式语音合成，使用火山引擎豆包语音服务 |
 | 助手 | `VoiceBox.Assistant` | 按需编排最小问答或多轮语音助理，支持唤醒、说话人验证与播放打断 |
 | 会话 | `VoiceBox.Assistant.Conversation.Abstractions` | 业务会话契约，仅依赖 BCL；调用方自行实现对话逻辑 |
@@ -245,7 +246,7 @@ Plan02 需要上述三个 `OPENAI_*` 环境变量，以及 `VOLC_ASR_API_KEY` �
 | 语音识别 | [Qwen3ASRDemo](src/Components/Demos/Qwen3ASRDemo)、[Confucius4AsrDemo](src/Components/Demos/Confucius4AsrDemo)、[FireRedASRDemo](src/Components/Demos/FireRedASRDemo)、[DoubaoOnlineAsrDemo](src/Components/Demos/DoubaoOnlineAsrDemo) | 本地或在线语音识别 |
 | 说话人 | [CampPlusSpeakerLiveDemo](src/Components/Demos/CampPlusSpeakerLiveDemo)、[WeSpeakerSpeakerLiveDemo](src/Components/Demos/WeSpeakerSpeakerLiveDemo) | 声纹注册与实时检测 |
 | 语言模型 | [OpenAILLMDemo](src/Components/Demos/OpenAILLMDemo)、[LLamaSharpLLMDemo](src/Components/Demos/LLamaSharpLLMDemo) | 在线或本地文本生成、多轮对话 |
-| 本地语音合成 | [Qwen3TtsDemo](src/Components/Demos/Qwen3TtsDemo)、[VoxCPMTtsDemo](src/Components/Demos/VoxCPMTtsDemo) | 不同 TTS 模型的合成与播放 |
+| 本地语音合成 | [Qwen3TtsDemo](src/Components/Demos/Qwen3TtsDemo)、[VoxCPMTtsDemo](src/Components/Demos/VoxCPMTtsDemo)、[HojoTtsDemo](src/Components/Demos/HojoTtsDemo) | 不同 TTS 模型的文本合成与播放 |
 | 在线语音合成 | [DoubaoOnlineTtsDemo](src/Components/Demos/DoubaoOnlineTtsDemo) | 豆包在线语音合成 |
 | 独立文字会话 | [ConversationTextDemo](src/Assistant/Demos/ConversationTextDemo) | 不创建音频设备, 直接消费会话输出流; 多轮历史与上下文记忆 |
 | 完整助手 | [VoiceAssistantDemo](src/Assistant/Demos/VoiceAssistantDemo) | 唤醒、语音问答、说话人验证、打断与工具调用 |

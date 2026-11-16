@@ -27,6 +27,7 @@
   <Folder Name="/Demos/TTS/">
     <Project Path="Demos/DoubaoOnlineTtsDemo/DoubaoOnlineTtsDemo.csproj" />
     <Project Path="Demos/Qwen3TtsDemo/Qwen3TtsDemo.csproj" />
+    <Project Path="Demos/HojoTtsDemo/HojoTtsDemo.csproj" />
     <Project Path="Demos/VoxCPMTtsDemo/VoxCPMTtsDemo.csproj" />
   </Folder>
   <Folder Name="/Demos/Wakeup/">
@@ -71,6 +72,7 @@
   <Project Path="VoiceBox.Speaker.WeSpeaker/VoiceBox.Speaker.WeSpeaker.csproj" />
   <Project Path="VoiceBox.TTS.DoubaoOnline/VoiceBox.TTS.DoubaoOnline.csproj" />
   <Project Path="VoiceBox.TTS.Qwen3/VoiceBox.TTS.Qwen3.csproj" />
+  <Project Path="VoiceBox.TTS.Hojo/VoiceBox.TTS.Hojo.csproj" />
   <Project Path="VoiceBox.TTS.VoxCPM/VoiceBox.TTS.VoxCPM.csproj" />
   <Project Path="VoiceBox.VAD.FireRed/VoiceBox.VAD.FireRed.csproj" Id="ee07d613-69cc-4c35-8f5c-f511bfde9053" />
   <Project Path="VoiceBox.VAD.Silero/VoiceBox.VAD.Silero.csproj" Id="5260b298-53b9-4977-8de5-acf23c60e9c8" />

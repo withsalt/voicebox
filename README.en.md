@@ -69,6 +69,7 @@ Solution entry points: [all projects](src/VoiceBox.All.slnx), [assistant](src/As
 | LLM (language model) | `VoiceBox.LLM.LLamaSharp` | Local GGUF model inference through LLamaSharp / llama.cpp, with grammar-constrained structured tool calling |
 | TTS (speech synthesis) | `VoiceBox.TTS.Qwen3` | Qwen3-TTS CustomVoice with preset voices and streaming synthesis |
 | TTS (speech synthesis) | `VoiceBox.TTS.VoxCPM` | VoxCPM streaming synthesis with voice cloning from reference audio and text |
+| TTS (speech synthesis) | [VoiceBox.TTS.Hojo](src/Components/VoiceBox.TTS.Hojo/README.md) | Hojo 80M / 40M V2 original and INT8 models, fixed voices with native C# CPU audio streaming |
 | TTS (speech synthesis) | `VoiceBox.TTS.DoubaoOnline` | Online streaming speech synthesis through Volcengine Doubao speech services |
 | Assistant | `VoiceBox.Assistant` | Composable orchestration for minimal question-and-answer or multi-turn voice assistants, with wake word detection, speaker verification, and playback interruption |
 | Conversation | `VoiceBox.Assistant.Conversation.Abstractions` | Business conversation contract; BCL-only so callers can own their dialogue logic |
@@ -244,7 +245,7 @@ Examples are located in [src/Assistant/Demos](src/Assistant/Demos) and [src/Comp
 | Speech recognition | [Qwen3ASRDemo](src/Components/Demos/Qwen3ASRDemo), [Confucius4AsrDemo](src/Components/Demos/Confucius4AsrDemo), [FireRedASRDemo](src/Components/Demos/FireRedASRDemo), [DoubaoOnlineAsrDemo](src/Components/Demos/DoubaoOnlineAsrDemo) | Local or online speech recognition |
 | Speaker verification | [CampPlusSpeakerLiveDemo](src/Components/Demos/CampPlusSpeakerLiveDemo), [WeSpeakerSpeakerLiveDemo](src/Components/Demos/WeSpeakerSpeakerLiveDemo) | Speaker enrollment and real-time detection |
 | Language models | [OpenAILLMDemo](src/Components/Demos/OpenAILLMDemo), [LLamaSharpLLMDemo](src/Components/Demos/LLamaSharpLLMDemo) | Online or local text generation and multi-turn conversations |
-| Local speech synthesis | [Qwen3TtsDemo](src/Components/Demos/Qwen3TtsDemo), [VoxCPMTtsDemo](src/Components/Demos/VoxCPMTtsDemo) | Synthesis and playback with different TTS models |
+| Local speech synthesis | [Qwen3TtsDemo](src/Components/Demos/Qwen3TtsDemo), [VoxCPMTtsDemo](src/Components/Demos/VoxCPMTtsDemo), [HojoTtsDemo](src/Components/Demos/HojoTtsDemo) | Text synthesis and playback with different TTS models |
 | Online speech synthesis | [DoubaoOnlineTtsDemo](src/Components/Demos/DoubaoOnlineTtsDemo) | Doubao online speech synthesis |
 | Text-only conversation | [ConversationTextDemo](src/Assistant/Demos/ConversationTextDemo) | Consumes the conversation stream without audio devices; multi-turn history and context memory |
 | Complete assistant | [VoiceAssistantDemo](src/Assistant/Demos/VoiceAssistantDemo) | Wake word detection, voice question-and-answer, speaker verification, interruption, and tool calling |
