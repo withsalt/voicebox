@@ -66,8 +66,6 @@ VoiceBox 是基于 **.NET** 开发的模块化语音交互框架，**基本覆�
 | LLM（语言模型） | `VoiceBox.LLM.OpenAI` | OpenAI 兼容接口，支持流式文本与结构化工具调用 |
 | LLM（语言模型） | `VoiceBox.LLM.LLamaSharp` | 基于 LLamaSharp / llama.cpp 的本地 GGUF 模型推理，支持 grammar 约束的结构化工具调用 |
 | TTS（语音合成） | `VoiceBox.TTS.Qwen3` | Qwen3-TTS CustomVoice，支持预置音色与流式合成 |
-| TTS（语音合成） | `VoiceBox.TTS.Kokoro` | Kokoro 中英文合成，包含文本规范化与音素转换 |
-| TTS（语音合成） | `VoiceBox.TTS.MossNano` | MOSS-TTS-Nano 整段与流式合成 |
 | TTS（语音合成） | `VoiceBox.TTS.VoxCPM` | VoxCPM 流式合成，支持参考音频与文本进行音色克隆 |
 | TTS（语音合成） | `VoiceBox.TTS.DoubaoOnline` | 在线流式语音合成，使用火山引擎豆包语音服务 |
 | 助手 | `VoiceBox.Assistant` | 按需编排最小问答或多轮语音助理，支持唤醒、说话人验证与播放打断 |
@@ -245,7 +243,7 @@ Plan02 需要上述三个 `OPENAI_*` 环境变量，以及 `VOLC_ASR_API_KEY` �
 | 语音识别 | [Qwen3ASRDemo](src/Demos/Qwen3ASRDemo)、[Confucius4AsrDemo](src/Demos/Confucius4AsrDemo)、[FireRedASRDemo](src/Demos/FireRedASRDemo)、[DoubaoOnlineAsrDemo](src/Demos/DoubaoOnlineAsrDemo) | 本地或在线语音识别 |
 | 说话人 | [CampPlusSpeakerLiveDemo](src/Demos/CampPlusSpeakerLiveDemo)、[WeSpeakerSpeakerLiveDemo](src/Demos/WeSpeakerSpeakerLiveDemo) | 声纹注册与实时检测 |
 | 语言模型 | [OpenAILLMDemo](src/Demos/OpenAILLMDemo)、[LLamaSharpLLMDemo](src/Demos/LLamaSharpLLMDemo) | 在线或本地文本生成、多轮对话 |
-| 本地语音合成 | [Qwen3TtsDemo](src/Demos/Qwen3TtsDemo)、[KokoroTtsDemo](src/Demos/KokoroTtsDemo)、[MossNanoTtsDemo](src/Demos/MossNanoTtsDemo)、[VoxCPMTtsDemo](src/Demos/VoxCPMTtsDemo) | 不同 TTS 模型的合成与播放 |
+| 本地语音合成 | [Qwen3TtsDemo](src/Demos/Qwen3TtsDemo)、[VoxCPMTtsDemo](src/Demos/VoxCPMTtsDemo) | 不同 TTS 模型的合成与播放 |
 | 在线语音合成 | [DoubaoOnlineTtsDemo](src/Demos/DoubaoOnlineTtsDemo) | 豆包在线语音合成 |
 | 独立文字会话 | [ConversationTextDemo](src/Demos/ConversationTextDemo) | 不创建音频设备, 直接消费会话输出流; 多轮历史与上下文记忆 |
 | 完整助手 | [VoiceAssistantDemo](src/Demos/VoiceAssistantDemo) | 唤醒、语音问答、说话人验证、打断与工具调用 |
@@ -274,7 +272,7 @@ Plan02 需要上述三个 `OPENAI_*` 环境变量，以及 `VOLC_ASR_API_KEY` �
 | 唤醒 | [FunASR](https://github.com/modelscope/FunASR)、[sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx)、[openWakeWord](https://github.com/dscripka/openWakeWord) |
 | 语音识别 | [Qwen3-ASR](https://github.com/QwenLM/Qwen3-ASR)、[Confucius4-R2T2](https://github.com/netease-youdao/Confucius4-R2T2)、[FireRedASR2](https://github.com/FireRedTeam/FireRedASR2S)、[manyeyes](https://github.com/manyeyes) 的 ONNX ASR 实现 |
 | 说话人验证 | [CAM++ / 3D-Speaker](https://github.com/modelscope/3D-Speaker)、[WeSpeaker](https://github.com/wenet-e2e/wespeaker) |
-| 语音合成 | [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS)、[Kokoro](https://huggingface.co/hexgrad/Kokoro-82M)、[kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx)、[MOSS-TTS-Nano](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano-100M-ONNX)、[VoxCPM](https://github.com/OpenBMB/VoxCPM) |
+| 语音合成 | [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS)、[VoxCPM](https://github.com/OpenBMB/VoxCPM) |
 | 文本与音素处理 | [Misaki](https://github.com/hexgrad/misaki)、[WeTextProcessing](https://github.com/wenet-e2e/WeTextProcessing)、[DeepPhonemizer](https://github.com/as-ideas/DeepPhonemizer) |
 | 模型推理 | [ONNX Runtime](https://github.com/microsoft/onnxruntime)、[LLamaSharp](https://github.com/SciSharp/LLamaSharp)、[llama.cpp](https://github.com/ggml-org/llama.cpp) |
 | 在线模型与工具协议 | [OpenAI .NET SDK](https://github.com/openai/openai-dotnet)、[MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk) |

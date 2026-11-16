@@ -162,12 +162,6 @@ namespace VoiceAssistantDemo
                     o.MaxTokens = 4096;
                     o.Thinking = AudioDefaults.IsEnableThinking ? ThinkingMode.Enabled : ThinkingMode.Disabled;
                 })
-                //.AddMossNanoTTSService(o =>
-                //{
-                //    o.ModelPath = Path.Combine(BASE_MODEL_DIR, "tts", "open-moss", "MOSS-TTS-Nano-100M-ONNX");
-                //    o.ExecutionProvider = onnxProvider;
-                //    o.DefaultVoice = TtsVoiceName;
-                //})
                 .AddVoxCPMTTSService(o =>
                 {
                     o.ModelPath = AudioDefaults.VoxCPMTtsPath;

@@ -10,8 +10,6 @@ using VoiceBox.Core.Onnx;
 using VoiceBox.Core.Services.AudioService.Models;
 using VoiceBox.DNR.DPDFNet;
 using VoiceBox.LLM.LLamaSharp;
-using VoiceBox.TTS.MossNano;
-using VoiceBox.TTS.Kokoro;
 using VoiceBox.TTS.VoxCPM;
 using VoiceBox.VAD.FireRed;
 using VoiceBox.Wakeup.FsmnKws;
@@ -128,22 +126,6 @@ namespace VoiceAssistantDemo
                     o.CloneVoices.Add(new VoxCpmCloneVoice { Name = "xiaoxiao_female", PromptWavPath = "./voices/xiaoxiao_female.wav", PromptText = "你好，很高兴认识你。今天天气不错，我准备去公园散步，看看花草树木，也听听孩子们的笑声。" });
                     o.CloneVoices.Add(new VoxCpmCloneVoice { Name = "yuanfang_male", PromptWavPath = "./voices/yuanfang_male.wav", PromptText = "你好，很高兴认识你。今天天气不错，我准备去公园散步，看看花草树木，也听听孩子们的笑声。" });
                 })
-                //.AddMossNanoTTSService(o =>
-                //{
-                //    o.ModelPath = AudioDefaults.MossNanoTtsPath;
-                //    o.ExecutionProvider = OnnxExecutionProvider;
-                //    o.DefaultVoice = AudioDefaults.TtsVoiceNameMap["MossNanoTTSService"];
-                //    o.ThreadsNum = 4;
-                //})
-                //.AddKokoroTTSService(o =>
-                //{
-                //    o.ModelPath = Path.Combine(AudioDefaults.KokoroTtsPath, "kokoro-v1.1-zh.onnx");
-                //    o.VoicesPath = Path.Combine(AudioDefaults.KokoroTtsPath, "voices-v1.1-zh.bin");
-                //    o.VocabConfigPath = Path.Combine(AudioDefaults.KokoroTtsPath, "config.json");
-                //    o.ExecutionProvider = OnnxExecutionProvider;
-                //    o.DefaultVoice = AudioDefaults.TtsVoiceNameMap["KokoroTTSService"];
-                //    o.ThreadsNum = 4;
-                //})
                 .Build();
 
             return AssistantRequiredServices.FromManager(manager);

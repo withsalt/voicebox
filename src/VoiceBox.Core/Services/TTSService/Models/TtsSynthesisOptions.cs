@@ -36,7 +36,7 @@ namespace VoiceBox.Core.Services.TTSService.Models
 
         /// <summary>
         /// 风格指令文本 (例如: "用平和的语气朗读")。仅在模型支持时生效，
-        /// 否则将被忽略。Qwen3-TTS 1.7B 模型支持，MossNano 不支持。
+        /// 否则将被忽略。Qwen3-TTS 1.7B 模型支持。
         /// </summary>
         public string? Instruct { get; set; }
 

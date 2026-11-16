@@ -4,7 +4,7 @@ namespace Misaki.NET.Lang.English.Neural;
 
 /// <summary>
 /// Maps raw IPA emitted by the DeepPhonemizer en_us_cmudict_ipa model to the
-/// Misaki IPA inventory used by Kokoro voices, and injects a default stress mark.
+/// Misaki IPA inventory, and injects a default stress mark.
 ///
 /// Differences the mapping handles:
 ///   1. Affricates: t͡ʃ → ʧ, d͡ʒ → ʤ (also tolerates the missing tie bar).

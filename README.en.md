@@ -66,8 +66,6 @@ The names below correspond to projects under `src`. Reference the ones you need.
 | LLM (language model) | `VoiceBox.LLM.OpenAI` | OpenAI-compatible API with streaming text and structured tool calling |
 | LLM (language model) | `VoiceBox.LLM.LLamaSharp` | Local GGUF model inference through LLamaSharp / llama.cpp, with grammar-constrained structured tool calling |
 | TTS (speech synthesis) | `VoiceBox.TTS.Qwen3` | Qwen3-TTS CustomVoice with preset voices and streaming synthesis |
-| TTS (speech synthesis) | `VoiceBox.TTS.Kokoro` | Chinese and English synthesis with Kokoro, including text normalization and phoneme conversion |
-| TTS (speech synthesis) | `VoiceBox.TTS.MossNano` | MOSS-TTS-Nano synthesis of full utterances and streaming synthesis |
 | TTS (speech synthesis) | `VoiceBox.TTS.VoxCPM` | VoxCPM streaming synthesis with voice cloning from reference audio and text |
 | TTS (speech synthesis) | `VoiceBox.TTS.DoubaoOnline` | Online streaming speech synthesis through Volcengine Doubao speech services |
 | Assistant | `VoiceBox.Assistant` | Composable orchestration for minimal question-and-answer or multi-turn voice assistants, with wake word detection, speaker verification, and playback interruption |
@@ -244,7 +242,7 @@ Examples are located in [src/Demos](src/Demos). In addition to the recording and
 | Speech recognition | [Qwen3ASRDemo](src/Demos/Qwen3ASRDemo), [Confucius4AsrDemo](src/Demos/Confucius4AsrDemo), [FireRedASRDemo](src/Demos/FireRedASRDemo), [DoubaoOnlineAsrDemo](src/Demos/DoubaoOnlineAsrDemo) | Local or online speech recognition |
 | Speaker verification | [CampPlusSpeakerLiveDemo](src/Demos/CampPlusSpeakerLiveDemo), [WeSpeakerSpeakerLiveDemo](src/Demos/WeSpeakerSpeakerLiveDemo) | Speaker enrollment and real-time detection |
 | Language models | [OpenAILLMDemo](src/Demos/OpenAILLMDemo), [LLamaSharpLLMDemo](src/Demos/LLamaSharpLLMDemo) | Online or local text generation and multi-turn conversations |
-| Local speech synthesis | [Qwen3TtsDemo](src/Demos/Qwen3TtsDemo), [KokoroTtsDemo](src/Demos/KokoroTtsDemo), [MossNanoTtsDemo](src/Demos/MossNanoTtsDemo), [VoxCPMTtsDemo](src/Demos/VoxCPMTtsDemo) | Synthesis and playback with different TTS models |
+| Local speech synthesis | [Qwen3TtsDemo](src/Demos/Qwen3TtsDemo), [VoxCPMTtsDemo](src/Demos/VoxCPMTtsDemo) | Synthesis and playback with different TTS models |
 | Online speech synthesis | [DoubaoOnlineTtsDemo](src/Demos/DoubaoOnlineTtsDemo) | Doubao online speech synthesis |
 | Text-only conversation | [ConversationTextDemo](src/Demos/ConversationTextDemo) | Consumes the conversation stream without audio devices; multi-turn history and context memory |
 | Complete assistant | [VoiceAssistantDemo](src/Demos/VoiceAssistantDemo) | Wake word detection, voice question-and-answer, speaker verification, interruption, and tool calling |
@@ -275,7 +273,7 @@ This project uses or draws on the following projects, models, and SDKs. Thanks t
 | Wake word detection | [FunASR](https://github.com/modelscope/FunASR), [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), [openWakeWord](https://github.com/dscripka/openWakeWord) |
 | Speech recognition | [Qwen3-ASR](https://github.com/QwenLM/Qwen3-ASR), [Confucius4-R2T2](https://github.com/netease-youdao/Confucius4-R2T2), [FireRedASR2](https://github.com/FireRedTeam/FireRedASR2S), ONNX ASR implementations by [manyeyes](https://github.com/manyeyes) |
 | Speaker verification | [CAM++ / 3D-Speaker](https://github.com/modelscope/3D-Speaker), [WeSpeaker](https://github.com/wenet-e2e/wespeaker) |
-| Speech synthesis | [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS), [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M), [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx), [MOSS-TTS-Nano](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano-100M-ONNX), [VoxCPM](https://github.com/OpenBMB/VoxCPM) |
+| Speech synthesis | [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS), [VoxCPM](https://github.com/OpenBMB/VoxCPM) |
 | Text and phoneme processing | [Misaki](https://github.com/hexgrad/misaki), [WeTextProcessing](https://github.com/wenet-e2e/WeTextProcessing), [DeepPhonemizer](https://github.com/as-ideas/DeepPhonemizer) |
 | Model inference | [ONNX Runtime](https://github.com/microsoft/onnxruntime), [LLamaSharp](https://github.com/SciSharp/LLamaSharp), [llama.cpp](https://github.com/ggml-org/llama.cpp) |
 | Online models and tool protocols | [OpenAI .NET SDK](https://github.com/openai/openai-dotnet), [MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk) |
