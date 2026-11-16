@@ -18,6 +18,7 @@
     <RepositoryUrl>https://github.com/wenet-e2e/WeTextProcessing</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageTags>wetextprocessing;text-normalization;inverse-text-normalization;tn;itn;fst;openfst</PackageTags>
   </PropertyGroup>
@@ -41,6 +42,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="/" />
 		<None Include="build\WeTextProcessing.targets" Pack="true" PackagePath="build\WeTextProcessing.NET.targets" />
 		<None Include="build\WeTextProcessing.targets" Pack="true" PackagePath="buildTransitive\WeTextProcessing.NET.targets" />
 	</ItemGroup>
