@@ -10,7 +10,7 @@ using VoiceBox.Core.Onnx;
 using VoiceBox.Core.Services.AudioService.Models;
 using VoiceBox.DNR.DPDFNet;
 using VoiceBox.LLM.LLamaSharp;
-using VoiceBox.TTS.VoxCPM;
+using VoiceBox.TTS.Hojo;
 using VoiceBox.VAD.FireRed;
 using VoiceBox.Wakeup.FsmnKws;
 using VoiceBox.Speaker.CampPlus;
@@ -18,7 +18,7 @@ using VoiceBox.DNR.DPDFNet.Models;
 
 namespace VoiceAssistantDemo
 {
-    internal class Plan01_CPU_ALL_LOCAL
+    internal class Plan01_CPU_8GRAM_ALL_LOCAL
     {
         public static OnnxExecutionProvider OnnxExecutionProvider = OnnxExecutionProvider.Cpu;
 
@@ -26,20 +26,6 @@ namespace VoiceAssistantDemo
         {
             IAudioServiceManager manager = new AudioServiceManager()
                 .AddLogger(loggerFactory ?? NullLoggerFactory.Instance)
-                //.AddPortAudioDuplexService(o =>
-                //{
-                //    o.SampleRate = AudioDefaults.SampleRate;
-                //    o.ChannelCount = AudioDefaults.ChannelCount;
-                //    o.SampleFormat = SampleFormat.Float32;
-                //    o.SuggestedLatency = 0.020;
-                //    o.MaxFrameSize = 256;
-                //    o.RecordBufferCapacity = 10;
-                //    o.PlayMaxQueueSize = 60;
-                //    o.EnableWasapiExclusiveMode = false;
-                //    o.EnableAec = true;             // 回声消除由 WebRTC APM 处理
-                //    o.EnableDnr = AudioDefaults.UsesIndependentDnr;
-                //    o.EnableHpf = false;            // 高通滤波已由 WebRTC APM 处理
-                //})
                 .AddMiniAudioDuplexService(o =>
                 {
                     o.SampleRate = AudioDefaults.SampleRate;
@@ -63,7 +49,7 @@ namespace VoiceAssistantDemo
                     o.EnableHighPassFilter = true;
                     o.EnableEchoCanceller = true;
                     o.EnableNoiseSuppression = true;
-                    o.EnableAgc2 = false;
+                    o.EnableAgc2 = true;
                     // 调低会更容易保留用户插话，也可能多留一些回声；WebRTC 默认值为 0.25。
                     //o.DominantNearendEnrThreshold = 0.35f;
                 })
@@ -104,6 +90,14 @@ namespace VoiceAssistantDemo
                     options.ModelPath = AudioDefaults.FireRedAsr2Path;
                     options.ExecutionProvider = OnnxExecutionProvider;
                 })
+                .AddHojoTTSService(options =>
+                {
+                    options.ModelPath = AudioDefaults.HojoTtsPath;
+                    options.DefaultVoice = AudioDefaults.TtsVoiceNameMap["HojoTTSService"];
+                    options.ThreadsNum = 2;
+                    options.ChunkFrames = 40;
+                    options.ExecutionProvider = OnnxExecutionProvider;
+                })
                 .AddLLamaSharpLLMService(o =>
                 {
                     o.ModelPath = AudioDefaults.LlmGgufModelPath;
@@ -115,16 +109,6 @@ namespace VoiceAssistantDemo
                     o.TopK = 40;
                     o.TopP = 0.9f;
                     o.RepetitionPenalty = 1.1f;
-                })
-                .AddVoxCPMTTSService(o =>
-                {
-                    o.ModelPath = AudioDefaults.VoxCPMTtsPath;
-                    o.ExecutionProvider = OnnxExecutionProvider;
-                    o.DefaultVoice = AudioDefaults.TtsVoiceNameMap["VoxCPMTTSService"];
-                    o.CloneVoices.Add(new VoxCpmCloneVoice { Name = "sichuan_female", PromptWavPath = "./voices/sichuan_female.wav", PromptText = "你晓不晓得，今天天气巴适得很，我准备出去逛一哈，买点菜，晚上回来整火锅。" });
-                    o.CloneVoices.Add(new VoxCpmCloneVoice { Name = "sichuan_male", PromptWavPath = "./voices/sichuan_male.wav", PromptText = "你晓不晓得，今天天气巴适得很，我准备出去逛一哈，买点菜，晚上回来整火锅。" });
-                    o.CloneVoices.Add(new VoxCpmCloneVoice { Name = "xiaoxiao_female", PromptWavPath = "./voices/xiaoxiao_female.wav", PromptText = "你好，很高兴认识你。今天天气不错，我准备去公园散步，看看花草树木，也听听孩子们的笑声。" });
-                    o.CloneVoices.Add(new VoxCpmCloneVoice { Name = "yuanfang_male", PromptWavPath = "./voices/yuanfang_male.wav", PromptText = "你好，很高兴认识你。今天天气不错，我准备去公园散步，看看花草树木，也听听孩子们的笑声。" });
                 })
                 .Build();
 

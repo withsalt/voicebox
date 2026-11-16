@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using System.Text;
 using VoiceBox.Audio.PortAudio;
 using VoiceBox.Core;
+using VoiceBox.Core.Onnx;
 using VoiceBox.Core.Services.AudioService;
 using VoiceBox.Core.Services.AudioService.Models;
 using VoiceBox.Core.Services.TTSService;
@@ -11,8 +13,10 @@ namespace HojoTtsDemo;
 internal static class Program
 {
     // 改为任意一个 Hojo 80M / 40M V2 的 .NET 部署目录，原版和 INT8 均可。
-    private const string ModelPath = @"E:\Temp\tts\Hojo-TTS-Light-40M-V2-int8-dotnet";
-    private const string Voice = "hojo_zh_f_01";
+    private const string BASE_MODEL_DIR = @"D:\ML\Audio\voicebox_models\v1";
+    private static readonly string ModelPath = Path.Combine(BASE_MODEL_DIR, "tts", "hojo", "Hojo-TTS-Light-40M-V2-dotnet");
+    private static readonly OnnxExecutionProvider Provider = OnnxExecutionProvider.Cpu;
+    private const string DdefaultVoice = "hojo_zh_f_01";
 
     private static async Task<int> Main()
     {
@@ -30,13 +34,13 @@ internal static class Program
                 .AddHojoTTSService(options =>
                 {
                     options.ModelPath = ModelPath;
-                    options.DefaultVoice = Voice;
+                    options.DefaultVoice = DdefaultVoice;
                     options.ThreadsNum = 2;
                     options.ChunkFrames = 40;
+                    options.ExecutionProvider = Provider;
                 })
                 .AddPortAudioPlayService(options =>
                 {
-                    // Hojo 各模型均输出 24kHz、单声道 Float32 PCM。
                     options.SampleRate = 24000;
                     options.ChannelCount = 1;
                     options.SampleFormat = SampleFormat.Float32;
@@ -55,7 +59,7 @@ internal static class Program
             };
 
             Console.WriteLine("可用音色：" + string.Join(", ", tts.ListVoices().Select(v => v.Name)));
-            Console.WriteLine($"当前音色：{Voice}。输入文本回车播放，:q 退出，Ctrl+C 取消并退出。");
+            Console.WriteLine($"当前音色：{DdefaultVoice}。输入文本回车播放，:q 退出，Ctrl+C 取消并退出。");
             try
             {
                 await player.StartPlayingAsync(cancellationToken: stop.Token);
@@ -96,21 +100,35 @@ internal static class Program
     private static async Task SynthesizeAndPlayAsync(IStreamTTSService tts, IAudioPlayService player,
         string text, CancellationToken ct)
     {
+        var stopwatch = Stopwatch.StartNew();
+        double firstMs = double.NaN;
+        long totalSamples = 0;
+        int chunks = 0;
         double longestChunkSeconds = 0;
         await foreach (var chunk in tts.GetStreamAudioAsync(text, ct: ct))
         {
             if (chunk.Samples.Length == 0) continue;
+            if (chunks == 0) firstMs = stopwatch.Elapsed.TotalMilliseconds;
+            chunks++;
+            totalSamples += chunk.Samples.Length;
 
             // 播放器积压时等待，避免长文本合成过快导致队列丢音频。
             while (player.CurrentQueueSize >= 4) await Task.Delay(10, ct);
             if (!player.TryEnqueue(chunk.Samples, out int dropped) || dropped != 0)
                 throw new IOException("播放队列已满。");
-            longestChunkSeconds = Math.Max(longestChunkSeconds, (double)chunk.Samples.Length / tts.OutputSampleRate);
+            longestChunkSeconds = Math.Max(longestChunkSeconds,
+                (double)chunk.Samples.Length / tts.OutputSampleRate / tts.OutputChannels);
         }
+
+        // 墙钟包含流式消费中的队列等待，不包含下方的尾部播放等待。
+        stopwatch.Stop();
+        double durSec = (double)totalSamples / tts.OutputSampleRate / tts.OutputChannels;
+        double wallSec = stopwatch.Elapsed.TotalSeconds;
+        double rtf = durSec > 0 ? wallSec / durSec : double.NaN;
 
         while (player.CurrentQueueSize > 0) await Task.Delay(10, ct);
         // 队列长度不包含正在播放的块，等它播完再接收下一句。
         await Task.Delay(TimeSpan.FromSeconds(longestChunkSeconds + 0.15), ct);
-        Console.WriteLine("播放完成。");
+        Console.WriteLine($"首包={firstMs,6:F0}ms  时长={durSec,5:F2}s  墙钟={wallSec,5:F2}s  RTF={rtf:F3}  块={chunks}");
     }
 }

@@ -1,4 +1,5 @@
 <Solution>
+  <Folder Name="/Dependencies/" />
   <Folder Name="/Dependencies/Components/">
     <Project Path="../Components/VoiceBox.AEC.DTLN/VoiceBox.AEC.DTLN.csproj" />
     <Project Path="../Components/VoiceBox.APM.WebRtc/VoiceBox.APM.WebRtc.csproj" />
@@ -20,6 +21,7 @@
     <Project Path="../Components/VoiceBox.Speaker.CampPlus/VoiceBox.Speaker.CampPlus.csproj" />
     <Project Path="../Components/VoiceBox.Speaker.WeSpeaker/VoiceBox.Speaker.WeSpeaker.csproj" />
     <Project Path="../Components/VoiceBox.TTS.DoubaoOnline/VoiceBox.TTS.DoubaoOnline.csproj" />
+    <Project Path="../Components/VoiceBox.TTS.Hojo/VoiceBox.TTS.Hojo.csproj" />
     <Project Path="../Components/VoiceBox.TTS.Qwen3/VoiceBox.TTS.Qwen3.csproj" />
     <Project Path="../Components/VoiceBox.TTS.VoxCPM/VoiceBox.TTS.VoxCPM.csproj" />
     <Project Path="../Components/VoiceBox.VAD.FireRed/VoiceBox.VAD.FireRed.csproj" Id="ee07d613-69cc-4c35-8f5c-f511bfde9053" />
@@ -27,6 +29,7 @@
   </Folder>
   <Folder Name="/Dependencies/Thirdparty/">
     <Project Path="../Thirdparty/RNNoise.NET/RNNoise.NET.csproj" />
+    <Project Path="../Thirdparty/WeTextProcessing.NET/WeTextProcessing.NET.csproj" />
   </Folder>
   <Folder Name="/Demos/">
     <Project Path="Demos/ConversationTextDemo/ConversationTextDemo.csproj" />

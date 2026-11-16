@@ -154,14 +154,6 @@ namespace VoiceAssistantDemo
                     options.ModelPath = AudioDefaults.Confucius4AsrPath;
                     options.ExecutionProvider = OnnxExecutionProvider.Cuda;
                 })
-                .AddOpenAILLMService(o =>
-                {
-                    o.ApiKey = AudioDefaults.LlmApiKey;
-                    o.Endpoint = llmEndpoint;
-                    o.Model = AudioDefaults.LlmModelName;
-                    o.MaxTokens = 4096;
-                    o.Thinking = AudioDefaults.IsEnableThinking ? ThinkingMode.Enabled : ThinkingMode.Disabled;
-                })
                 .AddVoxCPMTTSService(o =>
                 {
                     o.ModelPath = AudioDefaults.VoxCPMTtsPath;
@@ -171,6 +163,14 @@ namespace VoiceAssistantDemo
                     o.CloneVoices.Add(new VoxCpmCloneVoice { Name = "sichuan_male", PromptWavPath = "./voices/sichuan_male.wav", PromptText = "你晓不晓得，今天天气巴适得很，我准备出去逛一哈，买点菜，晚上回来整火锅。" });
                     o.CloneVoices.Add(new VoxCpmCloneVoice { Name = "xiaoxiao_female", PromptWavPath = "./voices/xiaoxiao_female.wav", PromptText = "你好，很高兴认识你。今天天气不错，我准备去公园散步，看看花草树木，也听听孩子们的笑声。" });
                     o.CloneVoices.Add(new VoxCpmCloneVoice { Name = "yuanfang_male", PromptWavPath = "./voices/yuanfang_male.wav", PromptText = "你好，很高兴认识你。今天天气不错，我准备去公园散步，看看花草树木，也听听孩子们的笑声。" });
+                })
+                .AddOpenAILLMService(o =>
+                {
+                    o.ApiKey = AudioDefaults.LlmApiKey;
+                    o.Endpoint = llmEndpoint;
+                    o.Model = AudioDefaults.LlmModelName;
+                    o.MaxTokens = 4096;
+                    o.Thinking = AudioDefaults.IsEnableThinking ? ThinkingMode.Enabled : ThinkingMode.Disabled;
                 })
                 .Build();
 

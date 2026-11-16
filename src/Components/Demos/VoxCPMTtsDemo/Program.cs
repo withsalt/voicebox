@@ -209,31 +209,7 @@ namespace VoxCPMTtsDemo
             Console.WriteLine($"[bench] 音频={dur:F2}s 墙钟={sw.Elapsed.TotalSeconds:F2}s RTF={rtf:F3} 音色={result.Voice}");
         }
 
-        // ---------------------------------------------------------------------
-        // helpers
-        // ---------------------------------------------------------------------
-        private static string? ExtractBenchText(string[] args)
-        {
-            if (args.Length == 0) return null;
-            if (string.Equals(args[0], "--bench", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(args[0], "bench", StringComparison.OrdinalIgnoreCase))
-                return args.Length > 1 ? string.Join(' ', args[1..]) : "这是一个用于测试首包延迟的句子。";
-            return string.Join(' ', args);
-        }
-
         private static int? TryGetEnvInt(string name)
             => int.TryParse(Environment.GetEnvironmentVariable(name), NumberStyles.Integer, CultureInfo.InvariantCulture, out int n) ? n : null;
-
-        private static string FindRepoRoot()
-        {
-            var dir = new DirectoryInfo(AppContext.BaseDirectory);
-            while (dir is not null)
-            {
-                if (File.Exists(Path.Combine(dir.FullName, "src", "VoiceBox.All.slnx")))
-                    return dir.FullName;
-                dir = dir.Parent!;
-            }
-            return AppContext.BaseDirectory;
-        }
     }
 }

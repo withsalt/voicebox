@@ -34,6 +34,8 @@ namespace VoiceAssistantDemo
 
         public static string VoxCPMTtsPath = Path.Combine(BASE_MODEL_DIR, "tts", "voxcpm", "voxcpm-0.5b-onnx-int8");
 
+        public static string HojoTtsPath = Path.Combine(BASE_MODEL_DIR, "tts", "hojo", "Hojo-TTS-Light-40M-V2-dotnet");
+
         /// <summary>
         /// Qwen3-TTS (speakerId): serena / vivian / uncle_fu / ryan / aiden / ono_anna / sohee / eric(四川话) / dylan(北京话)。当前启用 Qwen3-TTS。
         /// </summary>
@@ -42,6 +44,7 @@ namespace VoiceAssistantDemo
             { "Qwen3TTSService", "serena" },
             { "VoxCPMTTSService", "xiaoxiao_female" },
             { "DoubaoOnlineTTSService", "zh_female_vv_uranus_bigtts" },
+            { "HojoTTSService", "hojo_zh_f_01" },
         };
 
         public static float TtsSpeed = 1.0f;

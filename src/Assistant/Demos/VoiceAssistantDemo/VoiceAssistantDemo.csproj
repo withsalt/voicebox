@@ -17,6 +17,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\..\Components\VoiceBox.TTS.Hojo\VoiceBox.TTS.Hojo.csproj" />
 		<ProjectReference Include="..\..\VoiceBox.Assistant\VoiceBox.Assistant.csproj" />
 		<ProjectReference Include="..\..\VoiceBox.Assistant.Conversation\VoiceBox.Assistant.Conversation.csproj" />
 		<ProjectReference Include="..\..\..\Components\VoiceBox.APM.WebRtc\VoiceBox.APM.WebRtc.csproj" />

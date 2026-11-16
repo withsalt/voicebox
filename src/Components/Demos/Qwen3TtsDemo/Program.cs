@@ -17,8 +17,6 @@ namespace Qwen3TtsDemo
         // Qwen3-TTS 包目录。默认 fp32 (本机 RTX 5070 Ti 实测最快且与 PyTorch 贪心逐 token 字节一致)。
         private const string BASE_MODEL_DIR = @"D:\ML\Audio\voicebox_models\v1";
         private static readonly string ModelPath = Path.Combine(BASE_MODEL_DIR, "tts", "qwen3", "qwen3-tts-0.6b-onnx-fp32");
-
-        // 执行提供者。默认 Cuda (实时性最佳); 设 QWEN3_PROVIDER=cpu 切 CPU。
         private static readonly OnnxExecutionProvider Provider = OnnxExecutionProvider.Cpu;
 
 

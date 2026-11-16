@@ -12,6 +12,8 @@ dotnet run --project src/Components/Demos/HojoTtsDemo -c Release
 
 输入文本后按回车播放；`:q` 退出，Ctrl+C 取消并退出。空行跳过。程序启动时显示可用音色。
 
+每句播放结束后输出 `首包=...ms  时长=...s  墙钟=...s  RTF=...  块=...`。首包为从调用到收到首个非空 PCM 块的耗时；时长为全部 PCM 的音频时长；墙钟从调用计至流式枚举结束，包含播放队列积压时的等待，不包含尾部播放等待；RTF = 墙钟 / 音频时长。块数只统计非空 PCM 块。若没有音频，首包和 RTF 显示 `NaN`。
+
 代码只有两个方法：`Main` 使用 `AddHojoTTSService`、`AddPortAudioPlayService` 注册服务并调用 `Build()`，通过 `GetStreamTTSServiceInstance()`、`GetAudioPlayInstance()` 获取服务后读取文本；`SynthesizeAndPlayAsync` 接收 `IStreamTTSService` 和 `IAudioPlayService`，调用 TTS、将 PCM 放入播放队列，并等待尾部播放完毕。
 
 服务由 `AudioServiceManager` 统一释放。队列积压时等待，避免丢音频。播放器按 Hojo 的固定输出格式配置为 24kHz、单声道 Float32，需要可用的默认音频输出设备。

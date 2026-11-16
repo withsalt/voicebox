@@ -34,7 +34,7 @@ namespace VoiceAssistantDemo
 
             display.WriteLines(string.Empty, "  正在唤醒语音助手, 首次启动需要加载模型, 请稍候...", string.Empty);
 
-            //using var services = Plan01_CPU_ALL_LOCAL.Buid(loggerFactory);
+            //using var services = Plan01_CPU_8GRAM_ALL_LOCAL.Buid(loggerFactory);
             using var services = Plan04_MIX_8GVRAM_ASR_GPU_TTS_CPU_LLM_ONLINE.Buid(loggerFactory);
 
             //tts
