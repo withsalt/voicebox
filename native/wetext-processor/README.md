@@ -84,6 +84,20 @@ cd native/wetext-processor
 - `src/Thirdparty/WeTextProcessing.NET/runtimes/linux-x64/native/libwetext_processor_c.so`
 - `src/Thirdparty/WeTextProcessing.NET/runtimes/linux-arm64/native/libwetext_processor_c.so`
 
+Linux 的链接脚本 `processor/wetext_processor_c.map` 仅导出 6 个 C ABI 函数，
+将静态链接的 OpenFst、libstdc++ 和 libgcc 符号保留在库内部。不要移除该隔离：
+宿主已加载另一份 libstdc++ 时，locale facet ID 与内部 locale 状态可能混用，
+导致错误日志中的整数格式化崩溃；Linux ARM64 / .NET 11 的损坏 FST 用例曾复现此问题。
+修改导出列表会自动触发重新链接。
+
+回归测试覆盖 .NET 8/9/10/11，包含损坏 FST、异常处理和 925 条中英文 TN/ITN 语料：
+
+```bash
+dotnet test src/Thirdparty/Test/WeTextProcessing.Tests/WeTextProcessing.Tests.csproj -c Release
+```
+
+请在仓库根目录运行，并在 Windows x64、Linux x64 和 Linux ARM64 上验证。
+
 ## 升级上游
 
 1. 以新版 pip 包 `runtime/` 目录为基线，重新套用上表补丁（搜 `[patch]`）；

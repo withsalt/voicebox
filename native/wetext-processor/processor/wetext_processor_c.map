@@ -1,0 +1,11 @@
+{
+  global:
+    wetext_create_processor;
+    wetext_destroy_processor;
+    wetext_tag;
+    wetext_verbalize;
+    wetext_normalize;
+    wetext_free_string;
+  local:
+    *;
+};
