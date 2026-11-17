@@ -30,20 +30,6 @@ namespace VoiceAssistantDemo
         {
             IAudioServiceManager manager = new AudioServiceManager()
                 .AddLogger(loggerFactory ?? NullLoggerFactory.Instance)
-                //.AddPortAudioDuplexService(o =>
-                //{
-                //    o.SampleRate = AudioDefaults.SampleRate;
-                //    o.ChannelCount = AudioDefaults.ChannelCount;
-                //    o.SampleFormat = SampleFormat.Float32;
-                //    o.SuggestedLatency = 0.020;
-                //    o.MaxFrameSize = 256;
-                //    o.RecordBufferCapacity = 10;
-                //    o.PlayMaxQueueSize = 60;
-                //    o.EnableWasapiExclusiveMode = false;
-                //    o.EnableAec = true;             // 回声消除由 WebRTC APM 处理
-                //    o.EnableDnr = false;
-                //    o.EnableHpf = false;            // 高通滤波已由 WebRTC APM 处理
-                //})
                 .AddMiniAudioDuplexService(o =>
                 {
                     o.SampleRate = AudioDefaults.SampleRate;
@@ -68,7 +54,7 @@ namespace VoiceAssistantDemo
                     o.EnableEchoCanceller = true;
                     o.EnableNoiseSuppression = true;
                     o.EnableNeuralResidualEchoEstimator = true;
-                    o.EnableAgc2 = true;
+                    o.EnableAgc2 = false;
                     // 调低会更容易保留用户插话，也可能多留一些回声；WebRTC 默认值为 0.25。
                     //o.DominantNearendEnrThreshold = 0.35f;
                 })
@@ -117,7 +103,7 @@ namespace VoiceAssistantDemo
                     o.ChannelCount = AudioDefaults.ChannelCount;
                     o.SampleFormat = SampleFormat.Float32;
                     o.ThreadsNum = 1;
-                    o.SpeechThreshold = 0.9f;
+                    o.SpeechThreshold = 0.6f;
                 })
                 .AddFsmnKwsService(o =>
                 {

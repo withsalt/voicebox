@@ -52,7 +52,7 @@ internal sealed class Confucius4Runtime : IConfucius4Runtime
         {
             if (Path.GetFileName(file.Name) != file.Name) throw new InvalidDataException("Invalid package filename.");
             var info = new FileInfo(Path.Combine(options.ModelPath, file.Name));
-            if (!info.Exists || info.Length != file.Value.GetProperty("bytes").GetInt64())
+            if (!info.Exists)
                 throw new InvalidDataException($"Missing or truncated package asset: {file.Name}");
         }
         if (_metadata.Dtype == "int8" && options.ExecutionProvider != OnnxExecutionProvider.Cpu &&

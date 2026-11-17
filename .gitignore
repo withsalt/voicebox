@@ -45,7 +45,8 @@ project.fragment.lock.json
 artifacts/
 
 # Local demo launch profiles may contain provider keys. Do not track them.
-src/Assistant/Demos/VoiceAssistantDemo/Properties/launchSettings.json
+/src/Assistant/Demos/VoiceAssistantDemo/Properties/launchSettings.json
+/src/Assistant/Demos/ConversationTextDemo/Properties/launchSettings.json
 
 # Agent IDE
 .claude

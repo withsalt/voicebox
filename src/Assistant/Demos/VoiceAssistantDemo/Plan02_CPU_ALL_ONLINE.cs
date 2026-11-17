@@ -68,7 +68,7 @@ namespace VoiceAssistantDemo
                     o.EnableHighPassFilter = true;
                     o.EnableEchoCanceller = true;
                     o.EnableNoiseSuppression = true;
-                    o.EnableAgc2 = true;
+                    o.EnableAgc2 = false;
                     // 调低会更容易保留用户插话，也可能多留一些回声；WebRTC 默认值为 0.25。
                     //o.DominantNearendEnrThreshold = 0.35f;
                 })
@@ -85,7 +85,7 @@ namespace VoiceAssistantDemo
                     o.SampleRate = AudioDefaults.SampleRate;
                     o.ChannelCount = AudioDefaults.ChannelCount;
                     o.SampleFormat = SampleFormat.Float32;
-                    o.SpeechThreshold = 0.9f;
+                    o.SpeechThreshold = 0.6f;
                 })
                 .AddFsmnKwsService(o =>
                 {

@@ -51,6 +51,7 @@ internal static class Program
 
             var request = new ConversationRequest(Guid.NewGuid(), line.Trim());
             string visible = string.Empty;
+            bool thinkingOpen = false;
             try
             {
                 await foreach (ConversationEvent conversationEvent in conversation.StreamAsync(request))
@@ -58,11 +59,16 @@ internal static class Program
                     switch (conversationEvent)
                     {
                         case ConversationThinkingDelta thinking:
-                            Console.ForegroundColor = ConsoleColor.DarkGray;
+                            if (!thinkingOpen)
+                            {
+                                thinkingOpen = true;
+                                Console.ForegroundColor = ConsoleColor.DarkGray;
+                                Console.Write("[思考] ");
+                            }
                             Console.Write(thinking.Text);
-                            Console.ResetColor();
                             break;
                         case ConversationTextDelta text:
+                            CloseThinking(ref thinkingOpen);
                             Console.Write(text.Text);
                             break;
                         case ConversationCompleted completed:
@@ -73,14 +79,38 @@ internal static class Program
             }
             catch (OperationCanceledException)
             {
+                CloseThinking(ref thinkingOpen);
                 Console.WriteLine("[已取消]");
                 continue;
+            }
+            finally
+            {
+                // 思考中途取消/异常时也要恢复颜色, 否则后续输出会一直保持暗灰。
+                if (thinkingOpen)
+                {
+                    thinkingOpen = false;
+                    Console.ResetColor();
+                }
             }
 
             Console.WriteLine();
             if (visible.Length == 0)
                 Console.WriteLine("[空回复]");
         }
+    }
+
+    /// <summary>
+    /// 结束"思考"分段: 恢复默认前景色并换行, 让随后的回答从新的一行开始。
+    /// 没有思考输出时是空操作, 不会多插入空行。
+    /// </summary>
+    private static void CloseThinking(ref bool thinkingOpen)
+    {
+        if (!thinkingOpen)
+            return;
+
+        thinkingOpen = false;
+        Console.ResetColor();
+        Console.WriteLine();
     }
 
     private static IStreamLLMService CreateLlm(ILoggerFactory loggerFactory)

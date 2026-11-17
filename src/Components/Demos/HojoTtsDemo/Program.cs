@@ -13,8 +13,8 @@ namespace HojoTtsDemo;
 internal static class Program
 {
     // 改为任意一个 Hojo 80M / 40M V2 的 .NET 部署目录，原版和 INT8 均可。
-    private const string BASE_MODEL_DIR = @"D:\ML\Audio\voicebox_models\v1";
-    private static readonly string ModelPath = Path.Combine(BASE_MODEL_DIR, "tts", "hojo", "Hojo-TTS-Light-40M-V2-dotnet");
+    private const string BASE_MODEL_DIR = @"E:\ML\Audio\voicebox_models\v1";
+    private static readonly string ModelPath = Path.Combine(BASE_MODEL_DIR, "tts", "hojo", "Hojo-TTS-Light-40M-V2-int8-dotnet");
     private static readonly OnnxExecutionProvider Provider = OnnxExecutionProvider.Cpu;
     private const string DdefaultVoice = "hojo_zh_f_01";
 

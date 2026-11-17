@@ -8,7 +8,7 @@ namespace VoiceAssistantDemo
 
         public const int ChannelCount = 1;
 
-        public const string BASE_MODEL_DIR = "D:\\ML\\Audio\\voicebox_models\\v1";
+        public const string BASE_MODEL_DIR = "E:\\ML\\Audio\\voicebox_models\\v1";
 
         public static string WakeupKwsPath = Path.Combine(AppContext.BaseDirectory, "runtimes", "models", "kws", "kws-xiaomu-onnx");
 
