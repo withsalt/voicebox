@@ -16,6 +16,7 @@ internal sealed class HojoLmGeneration : IDisposable
     private int _position;
     private readonly float[] _stepEmbedding = new float[512];
     private readonly long[] _stepPosition = new long[1];
+    private readonly OrtValue _stepValues = null!, _stepPositions = null!;
     public ReadOnlySpan<float> Logits => _outputs![0].GetTensorDataAsSpan<float>()[^_model.VocabularySize..];
     public ReadOnlySpan<float> Hidden => _outputs![1].GetTensorDataAsSpan<float>()[^512..];
 
@@ -26,6 +27,9 @@ internal sealed class HojoLmGeneration : IDisposable
         _empty = new OrtValue[model.Layers * 2];
         try
         {
+            // These two buffers have fixed shapes and are owned by this utterance.
+            _stepValues = OrtValue.CreateTensorValueFromMemory(_stepEmbedding, [1, 1, 512]);
+            _stepPositions = OrtValue.CreateTensorValueFromMemory(_stepPosition, [1, 1]);
             for (int i = 0; i < _empty.Length; i++) _empty[i] = OrtValue.CreateTensorValueFromMemory(Array.Empty<float>(), [1, 1, 0, 128]);
         }
         catch { Dispose(); throw; }
@@ -43,20 +47,20 @@ internal sealed class HojoLmGeneration : IDisposable
         // Prompt ends with 16 speaker slots, spk_end, target_speech_start.
         if (_model.UsesSpeakerSlots)
             _model.Speaker(voice).CopyTo(embedding.AsSpan((tokens.Length - 18) * 512, 16 * 512));
-        Run(embedding, positions, tokens.Length);
+        using var values = OrtValue.CreateTensorValueFromMemory(embedding, [1, tokens.Length, 512]);
+        using var position = OrtValue.CreateTensorValueFromMemory(positions, [1, tokens.Length]);
+        Run(values, position, tokens.Length);
     }
 
     public void Step(int token)
     {
         _model.TokenEmbedding(token).CopyTo(_stepEmbedding);
         _stepPosition[0] = _position;
-        Run(_stepEmbedding, _stepPosition, 1);
+        Run(_stepValues, _stepPositions, 1);
     }
 
-    private void Run(float[] embedding, long[] positions, int length)
+    private void Run(OrtValue values, OrtValue position, int length)
     {
-        using var values = OrtValue.CreateTensorValueFromMemory(embedding, [1, length, 512]);
-        using var position = OrtValue.CreateTensorValueFromMemory(positions, [1, length]);
         _inputs[0] = values; _inputs[1] = position;
         for (int i = 0; i < _empty.Length; i++) _inputs[i + 2] = _outputs is null ? _empty[i] : _outputs[i + 2];
         var next = _session.Run(_run, _inputNames, _inputs, _outputNames);
@@ -69,5 +73,7 @@ internal sealed class HojoLmGeneration : IDisposable
     {
         _outputs?.Dispose(); _outputs = null;
         foreach (var value in _empty) value?.Dispose();
+        _stepPositions?.Dispose();
+        _stepValues?.Dispose();
     }
 }

@@ -96,8 +96,6 @@ namespace VoiceAssistantDemo
                 Wakeup = new VoiceAssistantWakeupOptions
                 {
                     Enable = true,
-                    PreRollMs = 2500,
-                    ReplayLeadInMs = 400,
                 },
                 Speaker = speakerOptions,
                 // Qwen3-TTS 输出 24kHz, 在此降采样到 16kHz 播放; 其流式块调度 [2,4,8,16,16,16]

@@ -9,19 +9,39 @@ internal sealed class HojoIstft
     public const int Hop = 480;
     private const int Bins = Size / 2 + 1;
     private const int Pad = (Size - Hop) / 2;
-    private readonly Complex[] _roots = new Complex[Size];
     private readonly Complex[] _spectrum = new Complex[Size];
     private readonly Complex[] _time = new Complex[Size];
     private readonly float[] _window = new float[Size];
+    private readonly float[] _windowSquared = new float[Size];
+    private readonly int[] _inputOrder = new int[Size];
+    private readonly FftStage[] _stages;
+    // The pipeline serializes Decode calls. Scratch never escapes; returned PCM remains caller-owned.
+    private double[] _sum = [], _envelope = [];
 
     public HojoIstft()
     {
+        var roots = new Complex[Size];
         for (int i = 0; i < Size; i++)
         {
             double angle = 2 * Math.PI * i / Size;
-            _roots[i] = new(Math.Cos(angle), Math.Sin(angle));
+            roots[i] = new(Math.Cos(angle), Math.Sin(angle));
             _window[i] = (float)(0.5 - 0.5 * Math.Cos(angle));
+            _windowSquared[i] = _window[i] * _window[i];
         }
+        PlanInput(0, 0, 1, Size);
+        var stages = new List<FftStage>();
+        for (int size = Size; size > 1;)
+        {
+            int radix = Radix(size);
+            var twiddles = new Complex[(radix - 1) * size];
+            for (int j = 1; j < radix; j++)
+                for (int i = 0; i < size; i++)
+                    twiddles[(j - 1) * size + i] = roots[j * i * (Size / size) % Size];
+            stages.Add(new(size, radix, twiddles));
+            size /= radix;
+        }
+        stages.Reverse();
+        _stages = stages.ToArray();
     }
 
     public float[] Decode(ReadOnlySpan<float> magnitude, ReadOnlySpan<float> phase, int frames, int startSample, int count, CancellationToken ct)
@@ -29,8 +49,16 @@ internal sealed class HojoIstft
         if (frames < 1 || magnitude.Length != frames * Bins || phase.Length != magnitude.Length
             || startSample < 0 || count < 0 || startSample + count > frames * Hop)
             throw new InvalidDataException("Invalid codec spectrum or ISTFT slice.");
-        var sum = new double[count];
-        var envelope = new double[count];
+        if (_sum.Length < count)
+        {
+            var sumBuffer = new double[count];
+            var envelopeBuffer = new double[count];
+            _sum = sumBuffer;
+            _envelope = envelopeBuffer;
+        }
+        Span<double> sum = _sum.AsSpan(0, count), envelope = _envelope.AsSpan(0, count);
+        sum.Clear();
+        envelope.Clear();
         for (int frame = 0; frame < frames; frame++)
         {
             ct.ThrowIfCancellationRequested();
@@ -49,11 +77,11 @@ internal sealed class HojoIstft
             _spectrum[0] = new(_spectrum[0].Real, 0);
             _spectrum[Size / 2] = new(_spectrum[Size / 2].Real, 0);
             for (int bin = 1; bin < Size / 2; bin++) _spectrum[Size - bin] = Complex.Conjugate(_spectrum[bin]);
-            Transform(_time, 0, 1, Size);
+            Transform();
             for (int i = begin; i < end; i++)
             {
                 sum[offset + i] += _time[i].Real / Size * _window[i];
-                envelope[offset + i] += (float)(_window[i] * _window[i]);
+                envelope[offset + i] += _windowSquared[i];
             }
         }
         var result = new float[count];
@@ -66,24 +94,49 @@ internal sealed class HojoIstft
         return result;
     }
 
-    private void Transform(Span<Complex> output, int inputStart, int stride, int size)
+    private static int Radix(int size) => size % 2 == 0 ? 2 : size % 3 == 0 ? 3 : 5;
+
+    private void PlanInput(int outputStart, int inputStart, int stride, int size)
     {
-        if (size == 1) { output[0] = _spectrum[inputStart]; return; }
-        int radix = size % 2 == 0 ? 2 : size % 3 == 0 ? 3 : 5;
+        if (size == 1) { _inputOrder[outputStart] = inputStart; return; }
+        int radix = Radix(size);
         int part = size / radix;
-        for (int i = 0; i < radix; i++) Transform(output.Slice(i * part, part), inputStart + i * stride, stride * radix, part);
+        for (int i = 0; i < radix; i++)
+            PlanInput(outputStart + i * part, inputStart + i * stride, stride * radix, part);
+    }
+
+    private void Transform()
+    {
+        for (int i = 0; i < Size; i++) _time[i] = _spectrum[_inputOrder[i]];
         Span<Complex> values = stackalloc Complex[5];
-        int rootStep = Size / size;
-        for (int k = 0; k < part; k++)
+        foreach (var stage in _stages)
         {
-            for (int j = 0; j < radix; j++) values[j] = output[j * part + k];
-            for (int q = 0; q < radix; q++)
+            int size = stage.Size, radix = stage.Radix, part = size / radix;
+            for (int start = 0; start < Size; start += size)
             {
-                Complex sum = values[0];
-                int index = k + q * part;
-                for (int j = 1; j < radix; j++) sum += values[j] * _roots[j * index * rootStep % Size];
-                output[index] = sum;
+                Span<Complex> output = _time.AsSpan(start, size);
+                for (int k = 0; k < part; k++)
+                {
+                    if (radix == 2)
+                    {
+                        Complex a = output[k], b = output[k + part];
+                        // Retain both original complex products, including the roots' rounding.
+                        output[k] = a + b * stage.Twiddles[k];
+                        output[k + part] = a + b * stage.Twiddles[k + part];
+                        continue;
+                    }
+                    for (int j = 0; j < radix; j++) values[j] = output[j * part + k];
+                    for (int q = 0; q < radix; q++)
+                    {
+                        Complex sum = values[0];
+                        int index = k + q * part;
+                        for (int j = 1; j < radix; j++) sum += values[j] * stage.Twiddles[(j - 1) * size + index];
+                        output[index] = sum;
+                    }
+                }
             }
         }
     }
+
+    private sealed record FftStage(int Size, int Radix, Complex[] Twiddles);
 }
