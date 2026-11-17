@@ -66,7 +66,7 @@ pnpm test:e2e
 
 ```text
 src/App.vue                 页面、下载与录音状态、结果记录
-src/models.json             固定版本模型清单、大小和 SHA-256
+src/models.json             master 分支模型下载地址、大小和 SHA-256
 src/lib/cache.ts            校验、进度、取消、本地缓存与配额回退
 src/lib/microphone.ts       麦克风权限、AudioContext 与资源释放
 src/dsp/resampler.ts        保留跨块状态的低通 sinc 重采样
@@ -81,7 +81,7 @@ tests/                     算法与浏览器测试
 
 ## 行为与限制
 
-- 首页默认选中并加载“小木小木”，首次使用下载 ONNX 和 `kws_meta.json`，再次使用优先读取本地缓存；点击“开始体验”后才请求麦克风。四组模型版本固定为 `8a8cb13c7f299344409dbc32b4dd0e327c534133`。更新时同步修改清单中的 URL、大小、SHA-256 和配置校验。
+- 首页默认选中并加载“小木小木”，首次使用下载 ONNX 和 `kws_meta.json`，再次使用优先读取本地缓存；点击“开始体验”后才请求麦克风。四组模型统一使用 `resolve/master/.../文件名?view=false` 形式的分支地址，并保留文件大小和 SHA-256 校验。只要 `master` 分支及文件路径保持不变，仓库重建或改写历史后无需更换提交地址。模型内容变更时，仍需重新核验四组模型的全部文件、同步更新 `src/models.json` 中的大小和 SHA-256、确认配置与引擎兼容，再构建并部署完整 `dist/`；缓存文件加载时也会重新校验，不匹配则重新下载。
 - 使用单线程 WASM，无需 WebGPU、COOP/COEP 或推理服务器。特征提取与推理均在独立 Web Worker 运行。
 - 不假定设备提供 16 kHz；读取 AudioContext 的实际采样率，在 Worker 中低通重采样到 16 kHz。
 - 默认请求回声消除，关闭浏览器降噪和自动增益；设备是否采纳由浏览器决定。
