@@ -6,6 +6,5 @@ namespace VoiceBox.APM.WebRtc;
 public sealed class WebRtcAec3DelayEstimatorFactory : IAcousticPathDelayEstimatorFactory
 {
     /// <inheritdoc />
-    public IAcousticPathDelayEstimator Create(int sampleRate, int channelCount)
-        => new WebRtcAec3DelayEstimator(sampleRate, channelCount);
+    public IAcousticPathDelayEstimator Create(int sampleRate, int channelCount) => new WebRtcAec3DelayEstimator(sampleRate, channelCount);
 }

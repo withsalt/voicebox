@@ -57,8 +57,7 @@ namespace VoiceBox.APM.WebRtc
         {
             if (sampleRate != SupportedSampleRate || channels != SupportedChannels)
             {
-                throw new ArgumentException(
-                    $"WebRtcAec3DelayEstimator supports {SupportedSampleRate} Hz mono only, got {sampleRate} Hz / {channels} ch.");
+                throw new ArgumentException($"WebRtcAec3DelayEstimator supports {SupportedSampleRate} Hz mono only, got {sampleRate} Hz / {channels} ch.");
             }
 
             int rc = ApmInterop.DelayCreate(sampleRate, channels, out _handle);

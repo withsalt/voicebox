@@ -190,7 +190,7 @@ internal sealed class EndToEndEvaluator : IDisposable
             .UseAsr(_asr)
             .UseConversation(conversation)
             .UseTts(_tts)
-            .AddAcousticDiagnostics(_clockedMainAec)
+            .AddAcousticMetricsSource(_clockedMainAec)
             .AddBargeIn(assistantOptions.BargeIn, new WebRtcAec3DelayEstimatorFactory());
         using var assistant = builder.BuildForBenchmark(_timeProvider, probe, playbackBargeInDetectorFactory: null);
 

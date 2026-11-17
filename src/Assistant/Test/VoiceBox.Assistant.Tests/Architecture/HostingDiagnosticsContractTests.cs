@@ -85,7 +85,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
             .UseTts(services.Tts)
-            .BuildWithDiagnostics();
+            .BuildWithCompositionInfo();
         using (direct.Assistant)
         Assert.Equal(direct.CapabilityGraphHash, diagnostics.RuntimeLifecycle.CapabilityGraphHash);
         Assert.Equal("BasicDuplexQa", diagnostics.RuntimeLifecycle.ProfileId);

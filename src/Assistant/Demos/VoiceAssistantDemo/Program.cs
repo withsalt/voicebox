@@ -137,6 +137,7 @@ namespace VoiceAssistantDemo
                 .Build();
 
             VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
+                .UseLoggerFactory(loggerFactory)
                 .UseOptions(options)
                 .UseAudio(services.Audio)
                 .UseVad(services.Vad)
@@ -146,8 +147,8 @@ namespace VoiceAssistantDemo
                 .AddWakeup(services.Wakeup)
                 .AddSpeakerVerification(services.Speaker)
                 .AddBargeIn(options.BargeIn, new WebRtcAec3DelayEstimatorFactory())
-                .AddAcousticDiagnostics(services.AcousticDiagnostics);
-            using var assistant = builder.BuildWithDiagnostics(loggerFactory.CreateLogger<VoiceAssistant>()).Assistant;
+                .AddAcousticMetricsSource(services.AcousticDiagnostics);
+            using var assistant = builder.Build();
 
             using var presenter = new AssistantConsolePresenter(assistant, display, AudioDefaults.WakeupWord);
             try

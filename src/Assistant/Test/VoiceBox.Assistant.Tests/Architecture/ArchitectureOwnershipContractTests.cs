@@ -112,7 +112,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         MethodInfo method = Assert.Single(metricsSource.GetMethods());
         Assert.Equal(nameof(IAcousticProcessingMetricsSource.TryGetLatestMetrics), method.Name);
 
-        MethodInfo registration = typeof(VoiceAssistantBuilder).GetMethod(nameof(VoiceAssistantBuilder.AddAcousticDiagnostics))!;
+        MethodInfo registration = typeof(VoiceAssistantBuilder).GetMethod(nameof(VoiceAssistantBuilder.AddAcousticMetricsSource))!;
         ParameterInfo parameter = Assert.Single(registration.GetParameters());
         Assert.Equal(metricsSource, parameter.ParameterType);
     }

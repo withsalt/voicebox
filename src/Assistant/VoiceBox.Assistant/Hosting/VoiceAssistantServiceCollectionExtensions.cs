@@ -56,7 +56,7 @@ public static class VoiceAssistantServiceCollectionExtensions
     private static VoiceAssistantHostInstance CreateHostInstance(IServiceProvider provider)
     {
         VoiceAssistantBuilder builder = CreateBuilder(provider);
-        var result = builder.BuildWithDiagnostics(provider.GetService<ILogger<VoiceAssistant>>());
+        var result = builder.BuildWithCompositionInfo();
         var diagnostics = new VoiceAssistantDiagnostics(
             result.Assistant,
             result.ProfileId,
@@ -74,6 +74,10 @@ public static class VoiceAssistantServiceCollectionExtensions
             .UseAsr(provider.GetRequiredService<IASRService>())
             .UseConversation(provider.GetRequiredService<IConversationSession>())
             .UseTts(provider.GetRequiredService<IStreamTTSService>());
+
+        ILoggerFactory? loggerFactory = provider.GetService<ILoggerFactory>();
+        if (loggerFactory is not null)
+            builder.UseLoggerFactory(loggerFactory);
 
         IAudioDuplexService? duplex = provider.GetService<IAudioDuplexService>();
         if (duplex is not null)
@@ -93,9 +97,9 @@ public static class VoiceAssistantServiceCollectionExtensions
         if (speaker is not null)
             builder.AddSpeakerVerification(speaker);
 
-        IAcousticProcessingMetricsSource? acousticDiagnostics = provider.GetService<IAcousticProcessingMetricsSource>();
-        if (acousticDiagnostics is not null)
-            builder.AddAcousticDiagnostics(acousticDiagnostics);
+        IAcousticProcessingMetricsSource? acousticMetricsSource = provider.GetService<IAcousticProcessingMetricsSource>();
+        if (acousticMetricsSource is not null)
+            builder.AddAcousticMetricsSource(acousticMetricsSource);
 
         if (provider.GetService<VoiceAssistantBargeInModuleRegistration>() is not null)
         {

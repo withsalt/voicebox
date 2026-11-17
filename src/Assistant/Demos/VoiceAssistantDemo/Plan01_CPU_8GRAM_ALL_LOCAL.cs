@@ -60,6 +60,7 @@ namespace VoiceAssistantDemo
                     o.Model = DPDFNetModel.DpDfNet2;
                     o.AttenuationLimitDb = 12f;
                     o.AttenuationMode = DPDFNetAttenuationMode.MagnitudeFloor;
+                    o.ExecutionProvider = OnnxExecutionProvider;
                 })
                 .AddFireRedVoiceActivityDetectService(o =>
                 {
@@ -85,18 +86,18 @@ namespace VoiceAssistantDemo
                     o.HopMs = 100;
                     o.ScoreSmoothing = 1.0f;
                 })
-                .AddFireRed2ASRService(options =>
+                .AddFireRed2ASRService(o =>
                 {
-                    options.ModelPath = AudioDefaults.FireRedAsr2Path;
-                    options.ExecutionProvider = OnnxExecutionProvider;
+                    o.ModelPath = AudioDefaults.FireRedAsr2Path;
+                    o.ExecutionProvider = OnnxExecutionProvider;
                 })
-                .AddHojoTTSService(options =>
+                .AddHojoTTSService(o =>
                 {
-                    options.ModelPath = AudioDefaults.HojoTtsPath;
-                    options.DefaultVoice = AudioDefaults.TtsVoiceNameMap["HojoTTSService"];
-                    options.ThreadsNum = 2;
-                    options.ChunkFrames = 40;
-                    options.ExecutionProvider = OnnxExecutionProvider;
+                    o.ModelPath = AudioDefaults.HojoTtsPath;
+                    o.DefaultVoice = AudioDefaults.TtsVoiceNameMap["HojoTTSService"];
+                    o.ThreadsNum = 2;
+                    o.ChunkFrames = 40;
+                    o.ExecutionProvider = OnnxExecutionProvider;
                 })
                 .AddLLamaSharpLLMService(o =>
                 {

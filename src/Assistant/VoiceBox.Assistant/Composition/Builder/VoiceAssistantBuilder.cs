@@ -18,6 +18,7 @@ using VoiceBox.Assistant.Composition.Exceptions;
 using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Assistant.Composition.Configuration;
 using VoiceBox.Assistant.Modules.BargeIn.RenderAware.Contracts;
+using VoiceBox.Assistant.Modules.BargeIn.RenderAware.Controllers;
 
 namespace VoiceBox.Assistant.Composition.Builder;
 
@@ -35,15 +36,26 @@ public sealed class VoiceAssistantBuilder
     private IStreamTTSService? _speechSynthesis;
     private IWakeupService? _wakeup;
     private ISpeakerService? _speaker;
-    private IAcousticProcessingMetricsSource? _acousticDiagnostics;
+    private IAcousticProcessingMetricsSource? _acousticMetricsSource;
     private IAcousticPathDelayEstimatorFactory? _acousticPathDelayEstimatorFactory;
+    private ILoggerFactory? _loggerFactory;
     private VoiceAssistantOptions _options = new();
     private bool _optionsSpecified;
     private bool _bargeInSpecified;
-    private bool _acousticDiagnosticsSpecified;
+    private bool _acousticMetricsSourceSpecified;
 
     internal VoiceAssistantBuilder()
     {
+    }
+
+    /// <summary>
+    /// 指定助手运行期及内部打断检测器使用的日志工厂。未配置时不输出日志。
+    /// 工厂由调用方管理生命周期, 不会随助手释放; 外部注册的服务与会话需自行配置日志。
+    /// </summary>
+    public VoiceAssistantBuilder UseLoggerFactory(ILoggerFactory loggerFactory)
+    {
+        _loggerFactory = SetOnce(_loggerFactory, loggerFactory, "LoggerFactory");
+        return this;
     }
 
     public VoiceAssistantBuilder UseAudio(IAudioDuplexService audio)
@@ -118,14 +130,14 @@ public sealed class VoiceAssistantBuilder
     }
 
     /// <summary>
-    /// Installs the optional acoustic-processing diagnostics source. The audio frontend remains
-    /// responsible for running the processor; this registration only exposes its typed metrics
-    /// port to the assistant runtime.
+    /// Registers an optional acoustic-processing metrics source. Runtime reads its metrics,
+    /// including delay hints used for playback barge-in alignment. The audio frontend remains
+    /// responsible for running the processor; the caller retains ownership of the source.
     /// </summary>
-    public VoiceAssistantBuilder AddAcousticDiagnostics(IAcousticProcessingMetricsSource diagnostics)
+    public VoiceAssistantBuilder AddAcousticMetricsSource(IAcousticProcessingMetricsSource metricsSource)
     {
-        _acousticDiagnostics = SetOnce(_acousticDiagnostics, diagnostics, "AcousticProcessingDiagnostics");
-        _acousticDiagnosticsSpecified = true;
+        _acousticMetricsSource = SetOnce(_acousticMetricsSource, metricsSource, "AcousticMetricsSource");
+        _acousticMetricsSourceSpecified = true;
         return this;
     }
 
@@ -152,7 +164,7 @@ public sealed class VoiceAssistantBuilder
     public VoiceAssistantBuilder UseOptions(VoiceAssistantOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        if (_optionsSpecified || _wakeup is not null || _speaker is not null || _bargeInSpecified || _acousticDiagnosticsSpecified)
+        if (_optionsSpecified || _wakeup is not null || _speaker is not null || _bargeInSpecified || _acousticMetricsSourceSpecified)
         {
             throw new AssistantCompositionException("VBX-COMP-002", "VoiceAssistantOptions has already been registered for this builder.");
         }
@@ -162,18 +174,15 @@ public sealed class VoiceAssistantBuilder
         return this;
     }
 
-    public VoiceAssistant Build()
-        => BuildWithDiagnostics().Assistant;
+    public VoiceAssistant Build() => BuildWithCompositionInfo().Assistant;
 
     /// <summary>
-    /// Builds an assistant together with its sanitized composition identity for hosting diagnostics.
+    /// Builds an assistant together with its profile, capability graph hash and installed capabilities.
+    /// Logging is configured separately through <see cref="UseLoggerFactory"/>.
     /// </summary>
-    public (
-        VoiceAssistant Assistant,
-        string ProfileId,
-        string CapabilityGraphHash,
-        IReadOnlyList<string> Capabilities) BuildWithDiagnostics(ILogger<VoiceAssistant>? logger = null)
+    public (VoiceAssistant Assistant, string ProfileId, string CapabilityGraphHash, IReadOnlyList<string> Capabilities) BuildWithCompositionInfo()
     {
+        ILogger<VoiceAssistant>? logger = _loggerFactory?.CreateLogger<VoiceAssistant>();
         AssistantComposition composition = BuildComposition(out VoiceAssistantOptions options);
         var assistant = new VoiceAssistant(composition, Options.Create(options), logger);
         return (assistant, composition.Snapshot.ProfileId, composition.Snapshot.CapabilityGraphHash, composition.Snapshot.Capabilities);
@@ -193,6 +202,7 @@ public sealed class VoiceAssistantBuilder
     {
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(benchmarkProbe);
+        logger ??= _loggerFactory?.CreateLogger<VoiceAssistant>();
         AssistantComposition composition = BuildComposition(out VoiceAssistantOptions options);
         return new VoiceAssistant(
             composition,
@@ -250,8 +260,9 @@ public sealed class VoiceAssistantBuilder
             synthesis,
             _wakeup,
             _speaker,
-            _acousticDiagnostics,
+            _acousticMetricsSource,
             options,
+            detectorLogger: _bargeInSpecified ? _loggerFactory?.CreateLogger<RenderAwarePlaybackBargeInDetector>() : null,
             acousticPathDelayEstimatorFactory: _acousticPathDelayEstimatorFactory);
         return graph.ValidateAndCreateComposition();
     }
@@ -259,7 +270,7 @@ public sealed class VoiceAssistantBuilder
     private IAssistantAudioFrontend CreateAudioFrontend()
     {
         if (_duplexAudio is not null)
-            return new DuplexAssistantAudioFrontend(_duplexAudio, _acousticDiagnostics);
+            return new DuplexAssistantAudioFrontend(_duplexAudio, _acousticMetricsSource);
         if (_splitAudio is { } split)
             return new SplitAssistantAudioFrontend(split.Record, split.Playback);
 
