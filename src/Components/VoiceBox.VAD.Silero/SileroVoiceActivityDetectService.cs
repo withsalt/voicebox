@@ -28,13 +28,17 @@ namespace VoiceBox.VAD.Silero
         private long _frameCount;
         private readonly List<float> _speechBuffer;
 
-        private SileroVadOnnxRunner? _vadOnnxRunner;
+        private ISileroVadRunner? _vadOnnxRunner;
         private bool _disposed = false;
 
         private readonly object _lock = new object();
         private readonly Stopwatch _stopwatch = new Stopwatch();
 
-        public SileroVoiceActivityDetectService(IOptions<SileroVadOptions> options)
+        public SileroVoiceActivityDetectService(IOptions<SileroVadOptions> options) : this(options, null)
+        {
+        }
+
+        internal SileroVoiceActivityDetectService(IOptions<SileroVadOptions> options, ISileroVadRunner? runner)
         {
             _vadOptions = options?.Value ?? throw new ArgumentNullException(nameof(options));
 
@@ -65,7 +69,7 @@ namespace VoiceBox.VAD.Silero
                 throw new ArgumentNullException(nameof(_vadOptions.VADModelPath), "VADModelPath cannot be null or empty.");
             if (!File.Exists(_vadOptions.VADModelPath))
                 throw new FileNotFoundException($"VAD Model file not found: {_vadOptions.VADModelPath}");
-            _vadOnnxRunner = new SileroVadOnnxRunner(_vadOptions.VADModelPath, _vadOptions);
+            _vadOnnxRunner = runner ?? new SileroVadOnnxRunner(_vadOptions.VADModelPath, _vadOptions);
         }
 
         public void Predict(ReadOnlySpan<float> audioData)
@@ -162,8 +166,9 @@ namespace VoiceBox.VAD.Silero
                 if (_isSpeaking)
                 {
                     _silenceFrameCount++;
-                    // 将尾部静音也暂时录进去
+                    // 结束门槛前的静音仍属于当前语音段，须同步输出，避免 ASR 丢失短暂停顿或较弱的字音。
                     _speechBuffer.AddRange(audioChunk);
+                    SafeInvoke(OnSpeaking, new VADEventArgs(audioChunk, VADEventDataType.Chunk));
 
                     if (_silenceFrameCount >= _minSilenceFrames)
                     {

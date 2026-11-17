@@ -9,7 +9,7 @@ namespace VoiceBox.VAD.FireRed
     /// 输入：feat (1, T, 80) float32, caches_in (8, 1, 128, 19) float32。
     /// 输出：probs (1, T) 或 (T,) float32, caches_out (8, 1, 128, 19) float32。
     /// </summary>
-    internal sealed class FireRedVadOnnxRunner : IDisposable
+    internal sealed class FireRedVadOnnxRunner : IFireRedVadRunner
     {
         public const int NumBlocks = 8;
         public const int P = 128;

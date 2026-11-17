@@ -18,7 +18,7 @@ namespace VoiceBox.VAD.FireRed
         private readonly KaldiFbankExtractor _fbank;
         private readonly float[] _cmvnMeans;
         private readonly float[] _cmvnInvStd;
-        private FireRedVadOnnxRunner? _onnx;
+        private IFireRedVadRunner? _onnx;
 
         private readonly object _lock = new();
         private readonly Stopwatch _stopwatch = new();
@@ -48,10 +48,9 @@ namespace VoiceBox.VAD.FireRed
         private readonly int _frameAudioRingCapacity; // 帧数 (固定容量, 保持 int)
         private long _frameAudioRingWriteFrame = 1;
 
-        // 检测到说话之前的原始音频环形缓冲（[-1,1] 量级）
+        // 随已处理的 10ms 帧推进的前置音频缓冲（[-1,1] 量级），不包含尚未处理的后续输入。
         private readonly RingBufferQueue<float>? _preSpeechBuffer;
-        // Predict 累计输入的样本总数（用于将 _preSpeechBuffer 与帧序号对齐）
-        private long _audioInputSampleCount;
+        private long _processedAudioSampleCount;
 
         // fbank 跨调用样本缓冲（int16 量级 float）
         private float[] _fbankRemainder = Array.Empty<float>();
@@ -81,7 +80,11 @@ namespace VoiceBox.VAD.FireRed
             bool IsSpeech,
             long FrameIndex);
 
-        public FireRedVoiceActivityDetectService(IOptions<FireRedVadOptions> options)
+        public FireRedVoiceActivityDetectService(IOptions<FireRedVadOptions> options) : this(options, null)
+        {
+        }
+
+        internal FireRedVoiceActivityDetectService(IOptions<FireRedVadOptions> options, IFireRedVadRunner? runner)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
 
@@ -107,7 +110,7 @@ namespace VoiceBox.VAD.FireRed
             if (_cmvnMeans.Length != KaldiFbankExtractor.NumBins)
                 throw new InvalidDataException($"CMVN dim {_cmvnMeans.Length} does not match fbank dim {KaldiFbankExtractor.NumBins}.");
 
-            _onnx = new FireRedVadOnnxRunner(_options.VADModelPath, _options);
+            _onnx = runner ?? new FireRedVadOnnxRunner(_options.VADModelPath, _options);
 
             // 环形缓冲容量需覆盖最大可能回溯跨度：MaxSpeechFrame（强制结束时回放整段）
             // 加上 PadStartFrame（语音起点回溯）以及一些余量。
@@ -140,14 +143,6 @@ namespace VoiceBox.VAD.FireRed
                 bool hasProbabilitySubscribers = OnProbability != null;
                 if (!hasSpeechSubscribers && !hasProbabilitySubscribers)
                     return;
-
-                if (hasSpeechSubscribers)
-                {
-                    // 0) 在进入 fbank 之前，先把原始 [-1,1] 音频写入前置语音环形缓冲，
-                    //    并累计输入样本计数（与帧序号对齐用）。
-                    _preSpeechBuffer?.EnqueueRange(audioData);
-                    _audioInputSampleCount += audioData.Length;
-                }
 
                 // 1) 拼接 fbank 剩余样本，并将 [-1,1] 缩放到 int16 量级
                 int totalLen = _fbankRemainder.Length + audioData.Length;
@@ -221,6 +216,10 @@ namespace VoiceBox.VAD.FireRed
                             _frameAudioRing[destOffset + s] = combined[srcOffset + s] / 32768f;
                         }
                         _frameAudioRingWriteFrame = globalFrameIdx + 1;
+
+                        // 大块唤醒回放也只推进到当前帧，防止后面的音频提前覆盖语音起点之前的 padding。
+                        _preSpeechBuffer?.EnqueueRange(_frameAudioRing.AsSpan(destOffset, KaldiFbankExtractor.FrameShift));
+                        _processedAudioSampleCount += KaldiFbankExtractor.FrameShift;
 
                         var evt = ProcessFrame(probs[i], out VadProbabilityObservation observation);
                         RaiseProbability(observation);
@@ -433,7 +432,7 @@ namespace VoiceBox.VAD.FireRed
                     float[] preSpeechAudio = Array.Empty<float>();
                     if (_preSpeechBuffer != null && _preSpeechBuffer.Count > 0)
                     {
-                        long bufferStartSampleIdx = _audioInputSampleCount - _preSpeechBuffer.Count;
+                        long bufferStartSampleIdx = _processedAudioSampleCount - _preSpeechBuffer.Count;
                         long frameStartSampleIdx = (long)(startF - 1) * KaldiFbankExtractor.FrameShift;
                         long preSpeechCount = frameStartSampleIdx - bufferStartSampleIdx;
                         if (preSpeechCount > 0)
@@ -492,6 +491,8 @@ namespace VoiceBox.VAD.FireRed
                     _isEmittingSpeech = false;
                     _speechBuffer.Clear();
                     _lastEmittedFrame = 0;
+                    // 本段已完整发射，下一段的前置音频只能来自本段结束之后。
+                    _preSpeechBuffer?.Clear();
                     break;
                 }
             }
@@ -572,7 +573,7 @@ namespace VoiceBox.VAD.FireRed
 
                 // 前置语音缓冲与样本计数
                 _preSpeechBuffer?.Clear();
-                _audioInputSampleCount = 0;
+                _processedAudioSampleCount = 0;
 
                 // fbank 跨调用样本剩余
                 _fbankRemainder = Array.Empty<float>();

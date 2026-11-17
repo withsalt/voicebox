@@ -4,7 +4,7 @@ using VoiceBox.Core.Onnx;
 
 namespace VoiceBox.VAD.Silero
 {
-    internal class SileroVadOnnxRunner : IDisposable
+    internal class SileroVadOnnxRunner : ISileroVadRunner
     {
         private readonly InferenceSession session;
         private readonly SessionOptions sessionOptions;

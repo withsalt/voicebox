@@ -57,6 +57,7 @@ namespace VoiceBox.VAD.FireRed.Models
 
         /// <summary>
         /// 检测到语音前要保留的音频时长 (毫秒)。语音开始事件触发时，会一并返回这部分前置音频。
+        /// 从触发语音开始的已处理帧末尾回溯，与 PadStartFrame 覆盖的音频合并去重，不跨越上一段语音的结束点。
         /// 设为 0 可关闭。默认值: 300。
         /// </summary>
         public int PreSpeechPaddingMs { get; set; } = 300;
