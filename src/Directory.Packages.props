@@ -11,15 +11,15 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.14" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.14" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.14" />
-  </ItemGroup>
+		<PackageVersion Include="System.Numerics.Tensors" Version="10.0.14" />
+	</ItemGroup>
   <ItemGroup Label="Inference">
     <PackageVersion Include="LLamaSharp" Version="0.30.0" />
     <PackageVersion Include="LLamaSharp.Backend.Vulkan" Version="0.30.0" />
-    <PackageVersion Include="Microsoft.ML.OnnxRuntime" Version="1.31.1" />
-    <PackageVersion Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.31.1" />
-    <PackageVersion Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.31.1" />
-    <PackageVersion Include="Microsoft.ML.Tokenizers" Version="2.0.1" />
-    <PackageVersion Include="System.Numerics.Tensors" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.ML.OnnxRuntime" Version="1.32.0" />
+    <PackageVersion Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.32.0" />
+    <PackageVersion Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.32.0" />
+    <PackageVersion Include="Microsoft.ML.Tokenizers" Version="3.0.0" />
   </ItemGroup>
   <ItemGroup Label="Audio">
     <PackageVersion Include="Concentus" Version="2.2.2" />
@@ -30,7 +30,7 @@
     <PackageVersion Include="org.k2fsa.portaudio.runtime.win-x64" Version="1.0.6" />
   </ItemGroup>
   <ItemGroup Label="Integrations">
-    <PackageVersion Include="JsonSchema.Net" Version="9.6.0" />
+    <PackageVersion Include="JsonSchema.Net" Version="9.7.0" />
     <PackageVersion Include="ModelContextProtocol" Version="2.4.0" />
     <PackageVersion Include="ModelContextProtocol.Core" Version="2.4.0" />
     <PackageVersion Include="ModelContextProtocol.Extensions.Tasks" Version="2.4.0" />
@@ -43,8 +43,8 @@
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
   </ItemGroup>
   <ItemGroup Label="Testing">
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
-    <PackageVersion Include="MSTest" Version="4.5.2" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
+    <PackageVersion Include="MSTest" Version="4.5.3" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
   </ItemGroup>
