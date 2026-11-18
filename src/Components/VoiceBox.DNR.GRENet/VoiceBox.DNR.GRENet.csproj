@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VoiceBox.Core\VoiceBox.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="LICENSE" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="runtimes\models\dnr\grenet\stream.onnx" />
+    <None Remove="runtimes\models\dnr\grenet\*.json" />
+    <None Include="runtimes\models\dnr\grenet\stream.onnx" Pack="true" PackagePath="runtimes\models\dnr\grenet\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="runtimes\models\dnr\grenet\*.json" Pack="true" PackagePath="runtimes\models\dnr\grenet\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="build\VoiceBox.DNR.GRENet.targets" Pack="true" PackagePath="build\VoiceBox.DNR.GRENet.targets" />
+    <None Include="build\VoiceBox.DNR.GRENet.targets" Pack="true" PackagePath="buildTransitive\VoiceBox.DNR.GRENet.targets" />
+  </ItemGroup>
+
+</Project>

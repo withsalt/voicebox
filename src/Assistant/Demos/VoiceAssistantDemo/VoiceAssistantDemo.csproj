@@ -30,6 +30,7 @@
 		<ProjectReference Include="..\..\..\Components\VoiceBox.Audio.PortAudio\VoiceBox.Audio.PortAudio.csproj" />
 		<ProjectReference Include="..\..\..\Components\VoiceBox.DNR.DeepFilterNet\VoiceBox.DNR.DeepFilterNet.csproj" />
 		<ProjectReference Include="..\..\..\Components\VoiceBox.DNR.DPDFNet\VoiceBox.DNR.DPDFNet.csproj" />
+		<ProjectReference Include="..\..\..\Components\VoiceBox.DNR.GRENet\VoiceBox.DNR.GRENet.csproj" />
 		<ProjectReference Include="..\..\..\Components\VoiceBox.DNR.RNNoise\VoiceBox.DNR.RNNoise.csproj" />
 		<ProjectReference Include="..\..\..\Components\VoiceBox.HPF.Butterworth\VoiceBox.HPF.Butterworth.csproj" />
 		<ProjectReference Include="..\..\..\Components\VoiceBox.LLM.LLamaSharp\VoiceBox.LLM.LLamaSharp.csproj" />

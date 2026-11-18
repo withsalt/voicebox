@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <DefineConstants Condition="'$(GRENetTestCuda)' == 'true'">$(DefineConstants);GRENET_CUDA_TESTS</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Condition="'$(GRENetTestCuda)' != 'true'" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Condition="'$(GRENetTestCuda)' == 'true'" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="TestData\wrap-reference.f32" CopyToOutputDirectory="PreserveNewest" />
+    <ProjectReference Include="..\..\VoiceBox.DNR.GRENet\VoiceBox.DNR.GRENet.csproj" />
+  </ItemGroup>
+
+</Project>

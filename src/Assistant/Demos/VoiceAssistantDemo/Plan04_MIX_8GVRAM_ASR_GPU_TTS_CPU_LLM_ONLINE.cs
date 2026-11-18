@@ -15,7 +15,7 @@ using VoiceBox.Speaker.CampPlus;
 using VoiceBox.Speaker.WeSpeaker;
 using VoiceBox.DNR.DPDFNet;
 using VoiceBox.DNR.DPDFNet.Models;
-using VoiceBox.DNR.RNNoise;
+using VoiceBox.DNR.GRENet;
 using VoiceBox.HPF.Butterworth;
 using VoiceBox.ASR.Confucius4;
 using VoiceBox.TTS.VoxCPM;
@@ -45,7 +45,7 @@ namespace VoiceAssistantDemo
                     o.PlayMaxQueueSize = 60;
                     o.EnableWasapiExclusiveMode = false;
                     o.EnableAec = true;             // 回声消除由 WebRTC APM 处理
-                    o.EnableDnr = false;
+                    o.EnableDnr = true;
                     o.EnableHpf = false;            // 高通滤波已由 WebRTC APM 处理
                 })
                 // APM 负责高通、回声消除和可选的噪声抑制。
@@ -62,14 +62,13 @@ namespace VoiceAssistantDemo
                     // 调低会更容易保留用户插话，也可能多留一些回声；WebRTC 默认值为 0.25。
                     //o.DominantNearendEnrThreshold = 0.35f;
                 })
-                //.AddDPDFNetDNRService(o =>
-                //{
-                //    o.SampleRate = AudioDefaults.SampleRate;
-                //    o.ChannelCount = AudioDefaults.ChannelCount;
-                //    o.Model = DPDFNetModel.DpDfNet2;
-                //    o.AttenuationLimitDb = 12f;
-                //    o.AttenuationMode = DPDFNetAttenuationMode.MagnitudeFloor;
-                //})
+                .AddGRENetDNRService(o =>
+                {
+                    o.SampleRate = AudioDefaults.SampleRate;
+                    o.ChannelCount = AudioDefaults.ChannelCount;
+                    o.SampleFormat = SampleFormat.Float32;
+                    o.ExecutionProvider = OnnxExecutionProvider.Cpu;
+                })
                 // ── 切回原方案：注释掉上面的 AddWebRtcApmService、取消下面三段注释即可 ───────────
                 //.AddDfsmnAecService(o =>
                 //{
@@ -95,12 +94,6 @@ namespace VoiceAssistantDemo
                 //    o.CutoffFrequency = 100;  // 截止频率 100Hz，滤除直流偏置与低频隆隆声
                 //    o.Order = 2;              // 二阶 Butterworth
                 //})
-                .AddRNNoiseDNRService(options =>
-                {
-                    options.SampleRate = 16000;
-                    options.ChannelCount = 1;
-                    options.SampleFormat = SampleFormat.Float32;
-                })
                 .AddFireRedVoiceActivityDetectService(o =>
                 {
                     o.SampleRate = AudioDefaults.SampleRate;

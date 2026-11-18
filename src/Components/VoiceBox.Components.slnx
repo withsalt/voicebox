@@ -38,6 +38,7 @@
   <Folder Name="/Test/">
     <Project Path="Test/VoiceBox.ASR.Qwen3.Benchmark/VoiceBox.ASR.Qwen3.Benchmark.csproj" />
     <Project Path="Test/VoiceBox.DNR.Benchmark/VoiceBox.DNR.Benchmark.csproj" />
+    <Project Path="Test/VoiceBox.DNR.GRENet.Tests/VoiceBox.DNR.GRENet.Tests.csproj" />
     <Project Path="Test/VoiceBox.Wakeup.FsmnKws.Tests/VoiceBox.Wakeup.FsmnKws.Tests.csproj" />
   </Folder>
   <Folder Name="/Thirdparty/">
@@ -62,6 +63,7 @@
   <Project Path="VoiceBox.Core/VoiceBox.Core.csproj" />
   <Project Path="VoiceBox.DNR.DPDFNet/VoiceBox.DNR.DPDFNet.csproj" />
   <Project Path="VoiceBox.DNR.DeepFilterNet/VoiceBox.DNR.DeepFilterNet.csproj" />
+  <Project Path="VoiceBox.DNR.GRENet/VoiceBox.DNR.GRENet.csproj" />
   <Project Path="VoiceBox.DNR.Hush/VoiceBox.DNR.Hush.csproj" />
   <Project Path="VoiceBox.DNR.RNNoise/VoiceBox.DNR.RNNoise.csproj" Id="1ee035ef-a27b-4c40-8205-d32505a77d05" />
   <Project Path="VoiceBox.DTD.RenderAware/VoiceBox.DTD.RenderAware.csproj" />
