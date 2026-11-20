@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Composition.Graph;
 using VoiceBox.Assistant.Composition.Plans;
@@ -20,11 +19,12 @@ namespace VoiceBox.Assistant.Composition.Wiring;
 /// Runtime shell. Module construction happens here so the shell never `new`s Speaker/Wakeup
 /// adapters or the render-aware detector.
 /// </summary>
+/// <remarks>The builder supplies the settings snapshot owned by this assistant.</remarks>
 internal static class AssistantRuntimeFactory
 {
     public static AssistantRuntime Create(
         AssistantComposition composition,
-        IOptions<VoiceAssistantOptions> options,
+        VoiceAssistantOptions options,
         ILogger? logger = null,
         object? eventSender = null,
         TimeProvider? timeProvider = null,
@@ -35,8 +35,6 @@ internal static class AssistantRuntimeFactory
         ArgumentNullException.ThrowIfNull(composition);
         ArgumentNullException.ThrowIfNull(options);
 
-        VoiceAssistantOptions supplied = options.Value ?? throw new ArgumentException("Options value is null.", nameof(options));
-        VoiceAssistantOptions snapshot = supplied.Clone();
         ILogger resolvedLogger = logger ?? NullLogger<AssistantRuntime>.Instance;
         TimeProvider resolvedTime = timeProvider ?? TimeProvider.System;
         AssistantRuntimePlan plan = composition.RuntimePlan;
@@ -56,7 +54,7 @@ internal static class AssistantRuntimeFactory
                 detector = detectorFactory.Create()
                     ?? throw new InvalidOperationException("The playback barge-in detector factory returned null.");
             }
-            else if (snapshot.BargeIn.Enable)
+            else if (options.BargeIn.Enable)
             {
                 throw new InvalidOperationException("Barge-in is enabled but the composition provided no detector factory.");
             }

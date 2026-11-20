@@ -108,7 +108,7 @@ public sealed class ModelFacingJsonTests
         var tool = new ScriptedTool("weather") { OnExecute = (_, _) => Task.FromResult(ConversationToolResult.Success(text)) };
         var llm = new RecordingLlmService { ToolTurnScript = CallThenAnswer("local__weather") };
         await using IConversationSession session = await StartAsync(new ConversationBuilder(llm)
-            .UseTools(tools => tools.AddTool(tool).UseOptions(new ConversationToolOptions { MaxPersistedToolResultBytes = 512 })));
+            .UseTools(tools => tools.AddTool(tool).UseOptions(options => options.MaxPersistedToolResultBytes = 512)));
 
         await RunTurnAsync(session, "天气");
         await RunTurnAsync(session, "继续");

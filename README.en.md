@@ -103,7 +103,7 @@ Register optional capabilities through the builder:
 | --- | --- | --- |
 | Wake word detection and continuous conversation | `AddWakeup(wakeup)` | Starts a conversation after wake-up; supports multiple consecutive turns and returns to waiting for a wake word after an idle timeout or an end phrase |
 | Speaker verification | `AddSpeakerVerification(speaker)` | Set `Speaker.Confirmation.Enable = true` to enable owner verification; speaker enrollment is required on first use |
-| Interruption during playback | `AddBargeIn(options, delayEstimatorFactory)` | Can stop the current response when the user starts speaking; requires simultaneous capture and playback, a playback reference, and a processed capture timeline |
+| Interruption during playback | `AddBargeIn(delayEstimatorFactory)` | Can stop the current response when the user starts speaking; requires simultaneous capture and playback, a playback reference, and a processed capture timeline |
 | Business conversation | `UseConversation(session)` | The assistant consumes one uniform output stream; the session may be fully custom or the default LLM conversation extended with context, local tools, or MCP |
 
 Assemble a minimal question-and-answer assistant using existing service instances:
@@ -126,7 +126,7 @@ static async Task RunAssistantAsync(
     IStreamTTSService tts)
 {
     await using IConversationSession conversation = new ConversationBuilder(llm)
-        .UseOptions(new LlmConversationOptions { SystemPrompt = "Answer concisely in English." })
+        .UseOptions(options => options.SystemPrompt = "Answer concisely in English.")
         .Build();
 
     using var assistant = VoiceAssistant.CreateBuilder()

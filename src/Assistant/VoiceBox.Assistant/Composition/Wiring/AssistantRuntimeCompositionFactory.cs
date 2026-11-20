@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Api.Events;
 using VoiceBox.Assistant.Composition.Plans;
@@ -59,7 +58,7 @@ internal static class AssistantRuntimeCompositionFactory
         AssistantRuntimePlan runtimePlan,
         ModuleLifecyclePlan lifecycle,
         AssistantInstalledModules installed,
-        IOptions<VoiceAssistantOptions> options,
+        VoiceAssistantOptions options,
         ILogger logger,
         TimeProvider timeProvider,
         VoiceAssistantBenchmarkProbe? benchmarkProbe)
@@ -72,11 +71,9 @@ internal static class AssistantRuntimeCompositionFactory
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(timeProvider);
 
-        VoiceAssistantOptions supplied = options.Value ?? throw new ArgumentException("Options value is null.", nameof(options));
-        VoiceAssistantOptions snapshot = supplied.Clone();
-        VoiceAssistantOptionsValidator.Validate(snapshot, nameof(options));
-        VoiceAssistantBargeInOptions bargeInOptions = snapshot.BargeIn;
-        VoiceAssistantListeningOptions listeningOptions = snapshot.Listening;
+        VoiceAssistantOptionsValidator.Validate(options, nameof(options));
+        VoiceAssistantBargeInOptions bargeInOptions = options.BargeIn;
+        VoiceAssistantListeningOptions listeningOptions = options.Listening;
 
         IAssistantAudioFrontend audioFrontend = runtimePlan.Audio;
         IAssistantAudioOutput audioOutput = audioFrontend.Output;
@@ -177,13 +174,13 @@ internal static class AssistantRuntimeCompositionFactory
             runtimePlan.SpeechSynthesis,
             audioOutput,
             logger,
-            snapshot,
+            options,
             resamplers,
             playbackStartedIngress,
             echoGuard);
         PlaybackInterruptionController playbackInterruption = new(audioOutput, startupGuard, playbackSessions, logger);
         ResponseModule responses = new(
-            snapshot,
+            options,
             bargeInInstalled,
             conversation,
             playbackSessions,
@@ -219,7 +216,7 @@ internal static class AssistantRuntimeCompositionFactory
             runScope,
             inputGate,
             wakeup,
-            snapshot,
+            options,
             identityRequired,
             logger,
             benchmarkProbe);
@@ -251,7 +248,7 @@ internal static class AssistantRuntimeCompositionFactory
         ProcessedSpeechTimelineLocator? standaloneSpeechTimeline = detector is null && singleTalkEffective
             ? new ProcessedSpeechTimelineLocator(
                 audioFormat.SamplesFromMillisecondsToInt32(
-                    snapshot.Speaker.AudioRetentionMs,
+                    options.Speaker.AudioRetentionMs,
                     audioFormat.AudioSampleRate,
                     audioFormat.AudioChannels))
             : null;
@@ -313,7 +310,7 @@ internal static class AssistantRuntimeCompositionFactory
             startupGuard,
             controlSignals,
             wakeup,
-            snapshot.Conversation,
+            options.Conversation,
             turnContexts,
             logger);
 
@@ -349,7 +346,7 @@ internal static class AssistantRuntimeCompositionFactory
                     responseResources,
                     tasks,
                     logger,
-                    snapshot.Conversation.ContinuousConversationEnabled,
+                    options.Conversation.ContinuousConversationEnabled,
                     wakeup,
                     benchmarkProbe),
                 new PlaybackEffectHandler(playbackInterruption, benchmarkProbe),

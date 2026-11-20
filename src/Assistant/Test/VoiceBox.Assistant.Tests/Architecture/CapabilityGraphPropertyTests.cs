@@ -1,5 +1,4 @@
-﻿using VoiceBox.Assistant.Api.Configuration;
-using VoiceBox.Assistant.Composition.Builder;
+﻿using VoiceBox.Assistant.Composition.Builder;
 using VoiceBox.Assistant.Composition.Exceptions;
 using VoiceBox.Assistant.Composition.Graph;
 using VoiceBox.Assistant.Composition.Plans;
@@ -66,7 +65,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             case 5:
                 // Confirmation.Enable without a speaker provider is never legal.
                 builder = CreateMinimalLegalBuilder(services)
-                    .UseOptions(new VoiceAssistantOptions { Speaker = { Confirmation = { Enable = true } } })
+                    .UseOptions(options => options.Speaker.Confirmation.Enable = true)
                     .AddWakeup(services.Wakeup);
                 expectedCode = "VBX-COMP-004";
                 break;
@@ -110,7 +109,7 @@ public sealed partial class VoiceAssistantLifecycleTests
                     .UseAsr(services.Asr)
                     .UseConversation(TestConversation.Create(services.Llm))
                     .UseTts(services.Tts)
-                    .AddBargeIn(new VoiceAssistantBargeInOptions(), TestAcousticPathDelayEstimatorFactory.Instance);
+                    .AddBargeIn(TestAcousticPathDelayEstimatorFactory.Instance);
                 expectedCode = "VBX-COMP-008";
                 AssistantCompositionException split = Assert.Throws<AssistantCompositionException>(builder.Build);
                 Assert.Equal(expectedCode, split.Code);
@@ -145,7 +144,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         if (wakeup || rng.Next(2) == 1)
             builder.AddSpeakerVerification(services.Speaker);
         if (rng.Next(2) == 1)
-            builder.AddBargeIn(new VoiceAssistantBargeInOptions(), TestAcousticPathDelayEstimatorFactory.Instance);
+            builder.AddBargeIn(TestAcousticPathDelayEstimatorFactory.Instance);
         return builder;
     }
 }

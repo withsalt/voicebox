@@ -257,13 +257,13 @@ public sealed partial class VoiceAssistantLifecycleTests
         options.BargeIn.Dtd.Model.GpuDeviceId = 2;
 
         VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
-            .UseOptions(options)
+            .UseOptions(options.CopyTo)
             .UseAudio(services.Audio)
             .UseVad(services.Vad)
             .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
             .UseTts(services.Tts)
-            .AddBargeIn(options.BargeIn, TestAcousticPathDelayEstimatorFactory.Instance);
+            .AddBargeIn(TestAcousticPathDelayEstimatorFactory.Instance, static _ => { });
 
         // Before the fix, AddBargeIn's defensive copy threw NotSupportedException with the JSON
         // serializer in the stack, so the public composition path was unusable with a custom
@@ -294,9 +294,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     public void OptionalModuleMatrixUsesOnlyTypedRegistrations(bool wakeup, bool speaker, bool bargeIn)
     {
         var services = TestServices.Create();
-        var options = new VoiceAssistantOptions();
         VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
-            .UseOptions(options)
             .UseAudio(services.Audio)
             .UseVad(services.Vad)
             .UseAsr(services.Asr)
@@ -307,7 +305,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         if (speaker)
             builder.AddSpeakerVerification(services.Speaker);
         if (bargeIn)
-            builder.AddBargeIn(options.BargeIn, TestAcousticPathDelayEstimatorFactory.Instance);
+            builder.AddBargeIn(TestAcousticPathDelayEstimatorFactory.Instance);
 
         // Online identity is off unless Confirmation.Enable is set; this matrix leaves it at the
         // default (false), so a keyword-only composition is legal and a registered provider

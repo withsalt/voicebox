@@ -39,23 +39,22 @@ public sealed class ToolAnnouncementTests
     [Fact]
     public async Task AnnouncementsCanBeWrittenInAnotherLanguage()
     {
-        var options = new ConversationToolOptions
-        {
-            Announcements = new ConversationToolAnnouncements
-            {
-                BackgroundStarted = "Working on {0}. I'll get back to you.",
-                NameSeparator = " and ",
-                BackgroundSucceeded = "{0} is done. ",
-            },
-        };
+        ConversationToolOptions? callbackOptions = null;
         var llm = new RecordingLlmService { ToolTurnScript = CallBothThenFail() };
-        await using IConversationSession session = await StartAsync(new ConversationBuilder(llm).UseTools(tools => tools
+        ConversationBuilder builder = new ConversationBuilder(llm).UseTools(tools => tools
             .AddTool(BackgroundTool("weather", "Weather"))
             .AddTool(BackgroundTool("calendar", "Calendar"))
-            .UseOptions(options)));
-        // The session keeps its own copy: a later change to the caller's object has no effect.
-        options.Announcements.BackgroundStarted = "changed after registration";
+            .UseOptions(options =>
+            {
+                options.Announcements.BackgroundStarted = "Working on {0}. I'll get back to you.";
+                options.Announcements.NameSeparator = " and ";
+                options.Announcements.BackgroundSucceeded = "{0} is done. ";
+                callbackOptions = options;
+            }));
+        Assert.NotNull(callbackOptions);
+        callbackOptions.Announcements.BackgroundStarted = "changed after registration";
 
+        await using IConversationSession session = await StartAsync(builder);
         List<ConversationEvent> events = await RunTurnAsync(session, "weather and calendar");
 
         Assert.Equal("Working on Weather and Calendar. I'll get back to you.", Completed(events));
@@ -123,17 +122,16 @@ public sealed class ToolAnnouncementTests
         Reject<ArgumentNullException>(options => options.Announcements = null!);
 
         // A template may leave the tool name out, and may contain literal braces.
-        var accepted = new ConversationToolOptions();
-        accepted.Announcements.BackgroundStarted = "Working on it.";
-        accepted.Announcements.BackgroundSucceeded = "{{done}} {0}";
-        new ConversationToolsBuilder().UseOptions(accepted);
+        new ConversationToolsBuilder().UseOptions(options =>
+        {
+            options.Announcements.BackgroundStarted = "Working on it.";
+            options.Announcements.BackgroundSucceeded = "{{done}} {0}";
+        });
 
         static void Reject<TException>(Action<ConversationToolOptions> change)
             where TException : Exception
         {
-            var options = new ConversationToolOptions();
-            change(options);
-            Assert.Throws<TException>(() => new ConversationToolsBuilder().UseOptions(options));
+            Assert.Throws<TException>(() => new ConversationToolsBuilder().UseOptions(change));
         }
     }
 }

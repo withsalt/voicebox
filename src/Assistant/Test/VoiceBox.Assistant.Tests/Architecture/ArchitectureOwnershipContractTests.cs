@@ -1,6 +1,5 @@
 ﻿using System.Reflection;
 using System.Text.Json;
-using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Composition.Builder;
 using VoiceBox.Assistant.Composition.Exceptions;
 using VoiceBox.Assistant.Composition.Graph;
@@ -159,7 +158,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
             .UseTts(services.Tts)
-            .AddBargeIn(new VoiceAssistantBargeInOptions(), TestAcousticPathDelayEstimatorFactory.Instance)
+            .AddBargeIn(TestAcousticPathDelayEstimatorFactory.Instance)
             .BuildComposition();
         Assert.NotNull(withBargeIn.RuntimePlan.PlaybackBargeInDetectorFactory);
         Assert.Contains(
@@ -480,7 +479,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             builder.AddSpeakerVerification(services.Speaker);
         if (bargeIn)
         {
-            builder.AddBargeIn(new VoiceAssistantBargeInOptions(), TestAcousticPathDelayEstimatorFactory.Instance);
+            builder.AddBargeIn(TestAcousticPathDelayEstimatorFactory.Instance);
         }
 
         if (expectedErrorCode is not null)

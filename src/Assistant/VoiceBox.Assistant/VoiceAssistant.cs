@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Api.Events;
 using VoiceBox.Assistant.Api.Playback;
@@ -22,10 +21,7 @@ namespace VoiceBox.Assistant
     {
         private readonly AssistantRuntime _runtime;
 
-        internal VoiceAssistant(
-            AssistantComposition composition,
-            IOptions<VoiceAssistantOptions> options,
-            ILogger<VoiceAssistant>? logger = null)
+        internal VoiceAssistant(AssistantComposition composition, VoiceAssistantOptions options, ILogger<VoiceAssistant>? logger = null)
         {
             ArgumentNullException.ThrowIfNull(composition);
             _runtime = AssistantRuntimeFactory.Create(composition, options, logger, eventSender: this);
@@ -33,7 +29,7 @@ namespace VoiceBox.Assistant
 
         internal VoiceAssistant(
             AssistantComposition composition,
-            IOptions<VoiceAssistantOptions> options,
+            VoiceAssistantOptions options,
             TimeProvider timeProvider,
             VoiceAssistantBenchmarkProbe benchmarkProbe,
             ILogger<VoiceAssistant>? logger = null,

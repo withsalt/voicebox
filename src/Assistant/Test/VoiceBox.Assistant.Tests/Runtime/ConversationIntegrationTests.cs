@@ -356,14 +356,14 @@ public sealed partial class VoiceAssistantLifecycleTests
             BargeIn = { Enable = enableBargeIn, MinDurationMs = 120, PlaybackStartupGuardMs = 0, ActiveNearEndEndSilenceMs = 60 },
         };
         VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
-            .UseOptions(options)
+            .UseOptions(options.CopyTo)
             .UseAudio(services.Audio)
             .UseVad(services.Vad)
             .UseAsr(services.Asr)
             .UseConversation(session)
             .UseTts(services.Tts);
         if (enableBargeIn)
-            builder.AddBargeIn(options.BargeIn, TestAcousticPathDelayEstimatorFactory.Instance);
+            builder.AddBargeIn(TestAcousticPathDelayEstimatorFactory.Instance);
         return builder.BuildForBenchmark(TimeProvider.System, new VoiceAssistantBenchmarkProbe(), logger,
             playbackBargeInDetectorFactory: new FakePlaybackBargeInDetectorFactory(services.PlaybackDetector));
     }

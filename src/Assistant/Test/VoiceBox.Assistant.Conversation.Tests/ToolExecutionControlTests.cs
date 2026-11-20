@@ -29,7 +29,7 @@ public sealed class ToolExecutionControlTests
         };
         var llm = new RecordingLlmService { ToolTurnScript = CallThenAnswer("local__slow") };
         await using IConversationSession session = await StartAsync(new ConversationBuilder(llm)
-            .UseTools(tools => tools.AddTool(tool).UseOptions(new ConversationToolOptions { MaxToolRetryAttempts = 0 })));
+            .UseTools(tools => tools.AddTool(tool).UseOptions(options => options.MaxToolRetryAttempts = 0)));
         try
         {
             List<ConversationEvent> events = await RunTurnAsync(session, "查一下");
@@ -144,7 +144,7 @@ public sealed class ToolExecutionControlTests
         await using IConversationSession session = await StartAsync(new ConversationBuilder(llm).UseTools(tools => tools
             .AddTool(tool)
             .UseApprovalPolicy(new AllowAllApprovalPolicy())
-            .UseOptions(new ConversationToolOptions { MaxToolRetryBudgetMs = 50 })));
+            .UseOptions(options => options.MaxToolRetryBudgetMs = 50)));
 
         await RunTurnAsync(session, "执行");
 
@@ -229,7 +229,11 @@ public sealed class ToolExecutionControlTests
         {
             OnExecute = (_, _) => Task.FromResult(ConversationToolResult.Error(errorCode, "下游失败", isTransient)),
         };
-        await RunOneCallAsync(tool, new ConversationToolOptions { MaxToolRetryAttempts = 1, ToolRetryBaseDelayMs = 1 });
+        await RunOneCallAsync(tool, options =>
+        {
+            options.MaxToolRetryAttempts = 1;
+            options.ToolRetryBaseDelayMs = 1;
+        });
 
         Assert.Equal(expectedExecutions, tool.ExecuteCount);
     }
@@ -245,9 +249,11 @@ public sealed class ToolExecutionControlTests
         {
             OnExecute = (_, _) => throw (Exception)Activator.CreateInstance(exceptionType)!,
         };
-        RecordingLlmService llm = await RunOneCallAsync(
-            tool,
-            new ConversationToolOptions { MaxToolRetryAttempts = 1, ToolRetryBaseDelayMs = 1 });
+        RecordingLlmService llm = await RunOneCallAsync(tool, options =>
+        {
+            options.MaxToolRetryAttempts = 1;
+            options.ToolRetryBaseDelayMs = 1;
+        });
 
         Assert.Equal(expectedExecutions, tool.ExecuteCount);
         ToolResultContent result = ToolResultOf(llm.Prompts[1]);
@@ -262,7 +268,11 @@ public sealed class ToolExecutionControlTests
         {
             OnExecute = (_, _) => Task.FromResult(ConversationToolResult.Error("busy", "稍后再试", isTransient: true)),
         };
-        await RunOneCallAsync(tool, new ConversationToolOptions { MaxToolRetryAttempts = 2, ToolRetryBaseDelayMs = 1 });
+        await RunOneCallAsync(tool, options =>
+        {
+            options.MaxToolRetryAttempts = 2;
+            options.ToolRetryBaseDelayMs = 1;
+        });
 
         Assert.Equal(1, tool.ExecuteCount);
     }
@@ -296,11 +306,11 @@ public sealed class ToolExecutionControlTests
         Assert.Contains("retry_blocked_after_unknown_outcome", ToolResultsOf(llm.Prompts[2])[^1].ResultJson, StringComparison.Ordinal);
     }
 
-    private static async Task<RecordingLlmService> RunOneCallAsync(ScriptedTool tool, ConversationToolOptions options)
+    private static async Task<RecordingLlmService> RunOneCallAsync(ScriptedTool tool, Action<ConversationToolOptions> configure)
     {
         var llm = new RecordingLlmService { ToolTurnScript = CallThenAnswer($"local__{tool.Descriptor.Name}") };
         await using IConversationSession session = await StartAsync(new ConversationBuilder(llm)
-            .UseTools(tools => tools.AddTool(tool).UseApprovalPolicy(new AllowAllApprovalPolicy()).UseOptions(options)));
+            .UseTools(tools => tools.AddTool(tool).UseApprovalPolicy(new AllowAllApprovalPolicy()).UseOptions(configure)));
         await RunTurnAsync(session, "执行");
         return llm;
     }

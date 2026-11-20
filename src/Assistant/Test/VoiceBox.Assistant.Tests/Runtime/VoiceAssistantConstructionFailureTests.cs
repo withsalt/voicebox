@@ -1,6 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Composition.Plans;
 using VoiceBox.Assistant.Composition.Wiring;
@@ -102,9 +101,14 @@ public sealed partial class VoiceAssistantLifecycleTests
         var weakSender = new WeakReference(eventSender);
         Assert.Same(failure, Assert.Throws<InvalidOperationException>(() =>
             AssistantRuntimeCompositionFactory.Create(
-                eventSender, plan, composition.Lifecycle, installed,
-                Options.Create(new VoiceAssistantOptions()), NullLogger.Instance,
-                TimeProvider.System, null)));
+                eventSender,
+                plan,
+                composition.Lifecycle,
+                installed,
+                new VoiceAssistantOptions(),
+                NullLogger.Instance,
+                TimeProvider.System,
+                null)));
         return weakSender;
     }
 

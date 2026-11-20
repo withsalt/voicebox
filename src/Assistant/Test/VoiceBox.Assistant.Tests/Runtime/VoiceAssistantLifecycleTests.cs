@@ -5662,14 +5662,14 @@ public sealed partial class VoiceAssistantLifecycleTests
             configure?.Invoke(options);
 
             VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
-                .UseOptions(options)
+                .UseOptions(options.CopyTo)
                 .UseAudio(Audio)
                 .UseVad(Vad)
                 .UseAsr(Asr)
                 .UseConversation(TestConversation.Create(Llm, enableThinking))
                 .UseTts(Tts);
             if (enableBargeIn)
-                builder.AddBargeIn(options.BargeIn, TestAcousticPathDelayEstimatorFactory.Instance);
+                builder.AddBargeIn(TestAcousticPathDelayEstimatorFactory.Instance);
             if (enableWakeWord)
             {
                 builder.AddWakeup(Wakeup);

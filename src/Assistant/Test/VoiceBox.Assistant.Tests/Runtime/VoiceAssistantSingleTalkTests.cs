@@ -233,14 +233,17 @@ public sealed partial class VoiceAssistantLifecycleTests
         // Build() without the lifecycle-test DTD seam so SingleTalk retains its standalone
         // processed-speech locator instead of the barge-in reservoir.
         using var assistant = VoiceAssistant.CreateBuilder()
-            .UseOptions(new VoiceAssistantOptions
+            .UseOptions(options =>
             {
-                MinSentenceChars = 1,
-                PlaybackPrerollMs = 0,
-                PlaybackTailBufferMs = 0,
-                Listening = { MinDurationMs = 0, MinRms = 0 },
-                Wakeup = { Enable = true, PreRollMs = 2500 },
-                Speaker = { ProfilePath = profilePath, Confirmation = { Enable = true } },
+                options.MinSentenceChars = 1;
+                options.PlaybackPrerollMs = 0;
+                options.PlaybackTailBufferMs = 0;
+                options.Listening.MinDurationMs = 0;
+                options.Listening.MinRms = 0;
+                options.Wakeup.Enable = true;
+                options.Wakeup.PreRollMs = 2500;
+                options.Speaker.ProfilePath = profilePath;
+                options.Speaker.Confirmation.Enable = true;
             })
             .UseAudio(services.Audio)
             .UseVad(services.Vad)

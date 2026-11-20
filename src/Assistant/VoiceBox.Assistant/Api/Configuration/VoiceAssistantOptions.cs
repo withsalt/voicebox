@@ -61,6 +61,21 @@ namespace VoiceBox.Assistant.Api.Configuration
         /// </summary>
         public VoiceAssistantBargeInOptions BargeIn { get; set; } = new();
 
+        /// <summary>Transfers bound configuration to the builder's input before it takes a snapshot.</summary>
+        internal void CopyTo(VoiceAssistantOptions target)
+        {
+            target.MinSentenceChars = MinSentenceChars;
+            target.TtsVoice = TtsVoice;
+            target.TtsSpeed = TtsSpeed;
+            target.PlaybackTailBufferMs = PlaybackTailBufferMs;
+            target.PlaybackPrerollMs = PlaybackPrerollMs;
+            target.Conversation = Conversation;
+            target.Wakeup = Wakeup;
+            target.Speaker = Speaker;
+            target.Listening = Listening;
+            target.BargeIn = BargeIn;
+        }
+
         internal VoiceAssistantOptions Clone()
         {
             // The DTD model settings carry a SessionOptionsFactory delegate that System.Text.Json

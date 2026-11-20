@@ -8,8 +8,8 @@ namespace VoiceBox.Assistant.Tests;
 
 /// <summary>
 /// Guards the complete Runtime/Modules/Composition closure against rebuilding the retired host
-/// callback service network. The allowlist is member-specific and contains only provider events,
-/// closed algorithm/work factories, and the public speaker-enrollment interaction callback.
+/// callback service network. The allowlist is member-specific and covers provider events,
+/// closed algorithm/work factories, speaker-enrollment interaction, and one-shot builder configuration.
 /// </summary>
 public sealed class BroadCallbackDependencyClosureTests
 {
@@ -30,6 +30,8 @@ public sealed class BroadCallbackDependencyClosureTests
 
     private static readonly HashSet<string> AllowedDelegateMembers =
     [
+        "VoiceBox.Assistant.Composition.Builder.VoiceAssistantBuilder.AddBargeIn",
+        "VoiceBox.Assistant.Composition.Builder.VoiceAssistantBuilder.UseOptions",
         "VoiceBox.Assistant.Runtime.Lifecycle.Controllers.AssistantRuntimeSubscriptionOwner..ctor",
         "VoiceBox.Assistant.Runtime.Effects.Contracts.IEffectBackgroundScheduler.Schedule",
         "VoiceBox.Assistant.Runtime.Lifecycle.Controllers.AssistantTaskSupervisor.VoiceBox.Assistant.Runtime.Effects.Contracts.IEffectBackgroundScheduler.Schedule",

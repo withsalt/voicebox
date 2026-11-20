@@ -100,17 +100,16 @@ internal sealed class BargeInCorpusEvaluator : IDisposable
         {
             var probe = new VoiceAssistantBenchmarkProbe();
             probe.AttachCapturePosition(_audio);
-            VoiceAssistantOptions assistantOptions = CreateAssistantOptions();
             await using IConversationSession conversation = new ConversationBuilder(_llm).Build();
             VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
-                .UseOptions(assistantOptions)
+                .UseOptions(ConfigureAssistantOptions)
                 .UseAudio(_audio)
                 .UseVad(_vad)
                 .UseAsr(_asr)
                 .UseConversation(conversation)
                 .UseTts(_tts)
                 .AddAcousticMetricsSource(_clockedMainAec)
-                .AddBargeIn(assistantOptions.BargeIn, new WebRtcAec3DelayEstimatorFactory());
+                .AddBargeIn(new WebRtcAec3DelayEstimatorFactory());
             using var assistant = builder.BuildForBenchmark(_timeProvider, probe);
 
             bool detected = false;
@@ -338,26 +337,18 @@ internal sealed class BargeInCorpusEvaluator : IDisposable
         }
     }
 
-    private VoiceAssistantOptions CreateAssistantOptions()
-        => new()
-        {
-            MinSentenceChars = 1,
-            PlaybackTailBufferMs = 0,
-            PlaybackPrerollMs = 0,
-            BargeIn =
-            {
-                Enable = true,
-                PlaybackStartupGuardMs = _options.PlaybackStartupGuardMs,
-                ActiveNearEndWindowMs = _options.ActiveNearEndWindowMs,
-                MinDurationMs = _options.MinDurationMs,
-                MinRms = _options.MinRms,
-            },
-            Listening =
-            {
-                MinDurationMs = 0,
-                MinRms = 0,
-            },
-        };
+    private void ConfigureAssistantOptions(VoiceAssistantOptions options)
+    {
+        options.MinSentenceChars = 1;
+        options.PlaybackTailBufferMs = 0;
+        options.PlaybackPrerollMs = 0;
+        options.BargeIn.PlaybackStartupGuardMs = _options.PlaybackStartupGuardMs;
+        options.BargeIn.ActiveNearEndWindowMs = _options.ActiveNearEndWindowMs;
+        options.BargeIn.MinDurationMs = _options.MinDurationMs;
+        options.BargeIn.MinRms = _options.MinRms;
+        options.Listening.MinDurationMs = 0;
+        options.Listening.MinRms = 0;
+    }
 
     private static async Task WaitUntilAsync(Func<bool> condition, CancellationToken cancellationToken)
     {

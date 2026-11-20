@@ -92,7 +92,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
             .UseTts(services.Tts)
-            .UseOptions(options)
+            .UseOptions(options.CopyTo)
             .AddWakeup(services.Wakeup)
             .AddSpeakerVerification(services.Speaker)
             .BuildComposition();
@@ -220,7 +220,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
             .UseTts(services.Tts)
-            .AddBargeIn(new VoiceAssistantBargeInOptions(), TestAcousticPathDelayEstimatorFactory.Instance);
+            .AddBargeIn(TestAcousticPathDelayEstimatorFactory.Instance);
         AssistantCompositionException incompatible = Assert.Throws<AssistantCompositionException>(splitBargeIn.Build);
         Assert.Equal("VBX-COMP-008", incompatible.Code);
         Assert.Equal(0, record.StartCount);
@@ -406,7 +406,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
             .UseTts(services.Tts)
-            .UseOptions(new VoiceAssistantOptions { Wakeup = { Enable = true } });
+            .UseOptions(options => options.Wakeup.Enable = true);
         using VoiceAssistant assistantWithoutWakeup = builderIgnoringWakeupEnableFlag.Build();
 
         // Confirmation.Enable requires the owner-speaker provider; KWS alone does not.
@@ -416,10 +416,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseAsr(services.Asr)
             .UseConversation(TestConversation.Create(services.Llm))
             .UseTts(services.Tts)
-            .UseOptions(new VoiceAssistantOptions
-            {
-                Speaker = { Confirmation = { Enable = true } },
-            })
+            .UseOptions(options => options.Speaker.Confirmation.Enable = true)
             .AddWakeup(services.Wakeup);
         AssistantCompositionException keywordOnly = Assert.Throws<AssistantCompositionException>(builderWithWakeupOnly.Build);
         Assert.Equal("VBX-COMP-004", keywordOnly.Code);
@@ -509,19 +506,57 @@ public sealed partial class VoiceAssistantLifecycleTests
     }
 
     [Fact]
+    public void BuilderCallbacksSnapshotSettingsAndApplyBargeInOverrides()
+    {
+        var services = TestServices.Create();
+        VoiceAssistantOptions? configuredAssistant = null;
+        VoiceAssistantBargeInOptions? configuredBargeIn = null;
+        VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
+            .UseOptions(options =>
+            {
+                options.BargeIn.MinDurationMs = -1;
+                options.BargeIn.PlaybackStartupGuardMs = 250;
+                configuredAssistant = options;
+            })
+            .UseAudio(services.Audio)
+            .UseVad(services.Vad)
+            .UseAsr(services.Asr)
+            .UseConversation(TestConversation.Create(services.Llm))
+            .UseTts(services.Tts);
+
+        Assert.NotNull(configuredAssistant);
+        configuredAssistant.MinSentenceChars = 0;
+        configuredAssistant.BargeIn.PlaybackStartupGuardMs = -1;
+
+        builder.AddBargeIn(TestAcousticPathDelayEstimatorFactory.Instance, options =>
+        {
+            Assert.Equal(-1, options.MinDurationMs);
+            Assert.Equal(250, options.PlaybackStartupGuardMs);
+            options.MinDurationMs = 220;
+            configuredBargeIn = options;
+        });
+        Assert.NotNull(configuredBargeIn);
+        configuredBargeIn.MinDurationMs = -1;
+
+        Assert.Contains("BargeIn", builder.BuildComposition().Snapshot.Capabilities);
+    }
+
+    [Fact]
     public void BuilderRegistrationInvariants_RejectDuplicateAndLateOptionsRegistrations()
     {
         var services = TestServices.Create();
-        VoiceAssistantBargeInOptions bargeIn = new();
-        var duplicateBargeIn = VoiceAssistant.CreateBuilder().AddBargeIn(bargeIn, TestAcousticPathDelayEstimatorFactory.Instance);
-        AssertCompositionCode("VBX-COMP-002", () => duplicateBargeIn.AddBargeIn(bargeIn, TestAcousticPathDelayEstimatorFactory.Instance));
+        var duplicateBargeIn = VoiceAssistant.CreateBuilder().AddBargeIn(TestAcousticPathDelayEstimatorFactory.Instance);
+        AssertCompositionCode("VBX-COMP-002", () => duplicateBargeIn.AddBargeIn(TestAcousticPathDelayEstimatorFactory.Instance));
+        AssertCompositionCode(
+            "VBX-COMP-002",
+            () => duplicateBargeIn.AddBargeIn(TestAcousticPathDelayEstimatorFactory.Instance, _ => throw new NotSupportedException()));
 
         var afterWakeup = VoiceAssistant.CreateBuilder().AddWakeup(services.Wakeup);
-        AssertCompositionCode("VBX-COMP-002", () => afterWakeup.UseOptions(new VoiceAssistantOptions()));
+        AssertCompositionCode("VBX-COMP-002", () => afterWakeup.UseOptions(_ => throw new NotSupportedException()));
         var afterSpeaker = VoiceAssistant.CreateBuilder().AddSpeakerVerification(services.Speaker);
-        AssertCompositionCode("VBX-COMP-002", () => afterSpeaker.UseOptions(new VoiceAssistantOptions()));
-        var afterBargeIn = VoiceAssistant.CreateBuilder().AddBargeIn(bargeIn, TestAcousticPathDelayEstimatorFactory.Instance);
-        AssertCompositionCode("VBX-COMP-002", () => afterBargeIn.UseOptions(new VoiceAssistantOptions()));
+        AssertCompositionCode("VBX-COMP-002", () => afterSpeaker.UseOptions(static _ => { }));
+        var afterBargeIn = VoiceAssistant.CreateBuilder().AddBargeIn(TestAcousticPathDelayEstimatorFactory.Instance);
+        AssertCompositionCode("VBX-COMP-002", () => afterBargeIn.UseOptions(static _ => { }));
 
         VoiceAssistantBuilder duplicateRecognition = VoiceAssistant.CreateBuilder().UseAsr(services.Asr);
         AssertCompositionCode("VBX-COMP-002", () => duplicateRecognition.UseAsr(services.Asr));

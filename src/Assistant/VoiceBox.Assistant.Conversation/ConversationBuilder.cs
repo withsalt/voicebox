@@ -37,11 +37,20 @@ public sealed class ConversationBuilder
         return this;
     }
 
-    public ConversationBuilder UseOptions(LlmConversationOptions options)
+    /// <summary>
+    /// Configures the default conversation options and stores a validated snapshot when the callback returns.
+    /// </summary>
+    public ConversationBuilder UseOptions(Action<LlmConversationOptions> configure)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(configure);
         if (_optionsSpecified)
             throw new InvalidOperationException("Conversation options are already registered.");
+
+        var options = new LlmConversationOptions();
+        configure(options);
+        if (_optionsSpecified)
+            throw new InvalidOperationException("Conversation options are already registered.");
+
         _options = options.Clone();
         _optionsSpecified = true;
         return this;

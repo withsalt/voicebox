@@ -52,8 +52,7 @@ public sealed class ToolPolicyTests
         };
 
         await using IConversationSession session = new ConversationBuilder(llm)
-            .UseOptions(new LlmConversationOptions())
-            .UseTools(tools => tools.UseOptions(new ConversationToolOptions { MaxParallelToolCalls = 2 }).AddTool(first).AddTool(second))
+            .UseTools(tools => tools.UseOptions(options => options.MaxParallelToolCalls = 2).AddTool(first).AddTool(second))
             .Build();
         await ((IConversationLifecycle)session).StartAsync();
         try
@@ -100,7 +99,7 @@ public sealed class ToolPolicyTests
         await using IConversationSession session = new ConversationBuilder(llm)
             .UseTools(tools => tools
                 .UseApprovalPolicy(new AllowAllPolicy())
-                .UseOptions(new ConversationToolOptions { MaxParallelToolCalls = 4 })
+                .UseOptions(options => options.MaxParallelToolCalls = 4)
                 .AddTool(tool))
             .Build();
         await ((IConversationLifecycle)session).StartAsync();
@@ -133,11 +132,11 @@ public sealed class ToolPolicyTests
 
         await using IConversationSession session = new ConversationBuilder(llm)
             .UseTools(tools => tools
-                .UseOptions(new ConversationToolOptions
+                .UseOptions(options =>
                 {
-                    MaxToolRetryAttempts = 1,
-                    ToolRetryBaseDelayMs = 1,
-                    MaxToolRetryBudgetMs = 5_000,
+                    options.MaxToolRetryAttempts = 1;
+                    options.ToolRetryBaseDelayMs = 1;
+                    options.MaxToolRetryBudgetMs = 5_000;
                 })
                 .AddTool(tool))
             .Build();
@@ -254,12 +253,14 @@ public sealed class ToolPolicyTests
     [Fact]
     public void ToolOptionsRejectOutOfRangeValues()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new ConversationToolOptions { ToolTranscriptRetentionTurns = -1 }.Clone());
-        Assert.Throws<ArgumentOutOfRangeException>(() => new ConversationToolOptions { MaxPersistedToolResultBytes = 0 }.Clone());
-        Assert.Throws<ArgumentOutOfRangeException>(() => new ConversationToolOptions { MaxParallelToolCalls = 0 }.Clone());
-        Assert.Throws<ArgumentOutOfRangeException>(() => new ConversationToolOptions { MaxToolRetryAttempts = -1 }.Clone());
-        Assert.Throws<ArgumentOutOfRangeException>(() => new ConversationToolOptions { ToolRetryBaseDelayMs = -1 }.Clone());
-        Assert.Throws<ArgumentOutOfRangeException>(() => new ConversationToolOptions { MaxToolRetryBudgetMs = -1 }.Clone());
+        var builder = new ConversationToolsBuilder();
+        Assert.Throws<ArgumentOutOfRangeException>(() => builder.UseOptions(options => options.ToolTranscriptRetentionTurns = -1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => builder.UseOptions(options => options.MaxPersistedToolResultBytes = 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => builder.UseOptions(options => options.MaxParallelToolCalls = 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => builder.UseOptions(options => options.MaxToolRetryAttempts = -1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => builder.UseOptions(options => options.ToolRetryBaseDelayMs = -1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => builder.UseOptions(options => options.MaxToolRetryBudgetMs = -1));
+        builder.UseOptions(options => options.MaxParallelToolCalls = 2);
     }
 
     [Fact]

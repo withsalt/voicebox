@@ -69,7 +69,7 @@ public sealed class ToolConversationSessionTests
             _ => throw new InvalidOperationException("unexpected round"),
         };
         await using IConversationSession session = new ConversationBuilder(llm)
-            .UseOptions(new LlmConversationOptions { EnableThinking = true })
+            .UseOptions(options => options.EnableThinking = true)
             .UseTools(tools => tools.AddTool(new EchoTool()))
             .Build();
         await ((IConversationLifecycle)session).StartAsync();
@@ -182,7 +182,7 @@ public sealed class ToolConversationSessionTests
             .UseTools(tools => tools
                 .AddTool(tool)
                 .UseApprovalPolicy(policy)
-                .UseOptions(new ConversationToolOptions { ValidateToolArguments = validateSchema }))
+                .UseOptions(options => options.ValidateToolArguments = validateSchema))
             .Build();
         await ((IConversationLifecycle)session).StartAsync();
 
@@ -270,10 +270,7 @@ public sealed class ToolConversationSessionTests
         };
 
         IConversationSession session = new ConversationBuilder(llm)
-            .UseTools(tools => tools.AddTool(tool).UseOptions(new ConversationToolOptions
-            {
-                ToolTranscriptRetentionTurns = retentionTurns,
-            }))
+            .UseTools(tools => tools.AddTool(tool).UseOptions(options => options.ToolTranscriptRetentionTurns = retentionTurns))
             .Build();
         var background = (IConversationBackgroundOutput)session;
         await background.StartAsync();

@@ -41,7 +41,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             if (validationFailure)
             {
                 var services = TestServices.Create();
-                builder.UseOptions(new() { MinSentenceChars = 0 })
+                builder.UseOptions(options => options.MinSentenceChars = 0)
                     .UseVad(services.Vad)
                     .UseAsr(services.Asr)
                     .UseConversation(TestConversation.Create(services.Llm))

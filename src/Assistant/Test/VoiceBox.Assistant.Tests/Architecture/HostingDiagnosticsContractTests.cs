@@ -38,7 +38,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         };
 
         AssistantComposition composition = VoiceAssistant.CreateBuilder()
-            .UseOptions(options)
+            .UseOptions(options.CopyTo)
             .UseAudio(services.Audio)
             .UseVad(services.Vad)
             .UseAsr(services.Asr)
@@ -79,7 +79,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         VoiceAssistantDiagnostics diagnostics = provider.GetRequiredService<VoiceAssistantDiagnostics>();
         var direct = VoiceAssistant.CreateBuilder()
-            .UseOptions(options)
+            .UseOptions(options.CopyTo)
             .UseAudio(services.Audio)
             .UseVad(services.Vad)
             .UseAsr(services.Asr)
@@ -165,7 +165,7 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         AssistantComposition hosting = CreateHostingBuilder(provider).BuildComposition();
         AssistantComposition direct = VoiceAssistant.CreateBuilder()
-            .UseOptions(options)
+            .UseOptions(options.CopyTo)
             .UseAudio(services.Audio)
             .UseVad(services.Vad)
             .UseAsr(services.Asr)
@@ -173,7 +173,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseTts(services.Tts)
             .AddWakeup(services.Wakeup)
             .AddSpeakerVerification(services.Speaker)
-            .AddBargeIn(options.BargeIn, TestAcousticPathDelayEstimatorFactory.Instance)
+            .AddBargeIn(TestAcousticPathDelayEstimatorFactory.Instance)
             .BuildComposition();
         Assert.Equal(direct.Snapshot.CapabilityGraphHash, hosting.Snapshot.CapabilityGraphHash);
     }
@@ -246,7 +246,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         var services = TestServices.Create();
         var options = new VoiceAssistantOptions { MinSentenceChars = 9 };
         using VoiceAssistant assistant = VoiceAssistant.CreateBuilder()
-            .UseOptions(options)
+            .UseOptions(options.CopyTo)
             .UseAudio(services.Audio)
             .UseVad(services.Vad)
             .UseAsr(services.Asr)

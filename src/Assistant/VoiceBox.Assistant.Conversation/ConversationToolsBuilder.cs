@@ -42,11 +42,20 @@ public sealed class ConversationToolsBuilder
         return this;
     }
 
-    public ConversationToolsBuilder UseOptions(ConversationToolOptions options)
+    /// <summary>
+    /// Configures the default tool options and stores a validated snapshot when the callback returns.
+    /// </summary>
+    public ConversationToolsBuilder UseOptions(Action<ConversationToolOptions> configure)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(configure);
         if (_optionsSpecified)
             throw new InvalidOperationException("Tool options are already registered.");
+
+        var options = new ConversationToolOptions();
+        configure(options);
+        if (_optionsSpecified)
+            throw new InvalidOperationException("Tool options are already registered.");
+
         _options = options.Clone();
         _optionsSpecified = true;
         return this;
@@ -81,8 +90,7 @@ public sealed class ConversationToolsBuilder
             }
         }
 
-        ConversationToolOptions options = _options.Clone();
-        return new ToolConfiguration(_tools.ToArray(), _providers.ToArray(), _approvalPolicy, options);
+        return new ToolConfiguration(_tools.ToArray(), _providers.ToArray(), _approvalPolicy, _options);
     }
 }
 

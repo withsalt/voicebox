@@ -75,37 +75,6 @@ namespace VoiceAssistantDemo
                 await enrollmentInteraction.EnsureRegisteredAsync(enrollment, calibrationStimulus);
             }
 
-            var options = new VoiceAssistantOptions
-            {
-                TtsVoice = ttsVoiceName,
-                TtsSpeed = AudioDefaults.TtsSpeed,
-                Conversation = new VoiceAssistantConversationOptions
-                {
-                    ContinuousConversationEnabled = AudioDefaults.IsContinuousConversationEnabled,
-                    ContinuousConversationIdleTimeout = TimeSpan.FromMinutes(1),
-                },
-                BargeIn = new VoiceAssistantBargeInOptions
-                {
-                    Enable = true,
-                },
-                Listening = new VoiceAssistantListeningOptions
-                {
-                    MinDurationMs = 200,
-                    MinRms = 0.02f,
-                },
-                Wakeup = new VoiceAssistantWakeupOptions
-                {
-                    Enable = true,
-                },
-                Speaker = speakerOptions,
-                // Qwen3-TTS 输出 24kHz, 在此降采样到 16kHz 播放; 其流式块调度 [2,4,8,16,16,16]
-                // 后段是大块, 生成耗时可能超过仅 250ms (默认) 的预缓冲领先量, 导致播放队列被抽干、
-                // 回调插静音 → 听感上的"破音/咔哒"。实测 250/400ms 会欠载, 500ms 起稳定 (留约 200ms
-                // 余量), 与独立 Qwen3TtsDemo 使用的 0.5s 预缓冲一致。播放仍有并发 ASR/LLM/barge-in
-                // 抢 GPU, 故取 300ms 留足余量; 若仍偶发可再调大到 500。
-                PlaybackPrerollMs = 300,
-            };
-
             // 保存真正送入 ASR 的 pre-roll + 后续音频，便于回听双讲短句误识别。
             // 每个会话最多保留 60 秒；VOICEBOX_ASR_AUDIO_DIR=off 可关闭。
             string? asrAudioDirectory = Environment.GetEnvironmentVariable("VOICEBOX_ASR_AUDIO_DIR");
@@ -121,11 +90,11 @@ namespace VoiceAssistantDemo
             // 语音助手自己的会话配置: 朗读/ASR 纠错等语音策略属于 Demo 的业务提示词, 不注入通用会话。
             await using IConversationSession conversation = new ConversationBuilder(services.Llm)
                 .UseLoggerFactory(loggerFactory)
-                .UseOptions(new LlmConversationOptions
+                .UseOptions(o =>
                 {
-                    SystemPrompt = AudioDefaults.DefaultAssistantPrompt,
-                    MaxHistoryTurns = 20,
-                    EnableThinking = AudioDefaults.IsEnableThinking,
+                    o.SystemPrompt = AudioDefaults.DefaultAssistantPrompt;
+                    o.MaxHistoryTurns = 20;
+                    o.EnableThinking = AudioDefaults.IsEnableThinking;
                 })
                 .UseTools(tools =>
                 {
@@ -136,7 +105,22 @@ namespace VoiceAssistantDemo
 
             VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
                 .UseLoggerFactory(loggerFactory)
-                .UseOptions(options)
+                .UseOptions(o =>
+                {
+                    o.TtsVoice = ttsVoiceName;
+                    o.TtsSpeed = AudioDefaults.TtsSpeed;
+                    o.Conversation.ContinuousConversationEnabled = AudioDefaults.IsContinuousConversationEnabled;
+                    o.Conversation.ContinuousConversationIdleTimeout = TimeSpan.FromMinutes(1);
+                    o.Listening.MinDurationMs = 200;
+                    o.Listening.MinRms = 0.02f;
+                    o.Speaker = speakerOptions;
+                    // Qwen3-TTS 输出 24kHz, 在此降采样到 16kHz 播放; 其流式块调度 [2,4,8,16,16,16]
+                    // 后段是大块, 生成耗时可能超过仅 250ms (默认) 的预缓冲领先量, 导致播放队列被抽干、
+                    // 回调插静音 → 听感上的"破音/咔哒"。实测 250/400ms 会欠载, 500ms 起稳定 (留约 200ms
+                    // 余量), 与独立 Qwen3TtsDemo 使用的 0.5s 预缓冲一致。播放仍有并发 ASR/LLM/barge-in
+                    // 抢 GPU, 故取 300ms 留足余量; 若仍偶发可再调大到 500。
+                    o.PlaybackPrerollMs = 300;
+                })
                 .UseAudio(services.Audio)
                 .UseVad(services.Vad)
                 .UseAsr(asrRecording ?? services.Asr)
@@ -144,7 +128,7 @@ namespace VoiceAssistantDemo
                 .UseConversation(conversation)
                 .AddWakeup(services.Wakeup)
                 .AddSpeakerVerification(services.Speaker)
-                .AddBargeIn(options.BargeIn, new WebRtcAec3DelayEstimatorFactory())
+                .AddBargeIn(new WebRtcAec3DelayEstimatorFactory())
                 .AddAcousticMetricsSource(services.AcousticDiagnostics);
             using var assistant = builder.Build();
 

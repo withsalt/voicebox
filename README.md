@@ -104,7 +104,7 @@ VoiceBox 是基于 **.NET** 开发的模块化语音交互框架，**基本覆�
 | --- | --- | --- |
 | 唤醒与连续对话 | `AddWakeup(wakeup)` | 唤醒后开始对话；可连续多轮交流，通过空闲超时或结束词回到待唤醒状态 |
 | 说话人验证 | `AddSpeakerVerification(speaker)` | 配合 `Speaker.Confirmation.Enable = true` 启用本人确认；首次使用需注册声纹 |
-| 播放期间打断 | `AddBargeIn(options, delayEstimatorFactory)` | 用户开口时可停止当前回复；要求同时采播、播放参考与处理后采集时间线 |
+| 播放期间打断 | `AddBargeIn(delayEstimatorFactory)` | 用户开口时可停止当前回复；要求同时采播、播放参考与处理后采集时间线 |
 | 业务会话 | `UseConversation(session)` | Assistant 只消费统一输出流；会话可以完全自定义，也可以使用默认 LLM 会话并逐步加入上下文、本地工具或 MCP |
 
 使用已创建的服务实例装配最小问答助手：
@@ -127,7 +127,7 @@ static async Task RunAssistantAsync(
     IStreamTTSService tts)
 {
     await using IConversationSession conversation = new ConversationBuilder(llm)
-        .UseOptions(new LlmConversationOptions { SystemPrompt = "请用简洁的中文回答。" })
+        .UseOptions(options => options.SystemPrompt = "请用简洁的中文回答。")
         .Build();
 
     using var assistant = VoiceAssistant.CreateBuilder()

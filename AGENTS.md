@@ -46,11 +46,11 @@ _runtime = AssistantRuntimeFactory.Create(composition, options, logger, eventSen
 允许保持换行（初始化器块）：
 
 ```csharp
-.UseOptions(new LlmConversationOptions
+var toolOptions = new ConversationToolOptions
 {
-    SystemPrompt = "你是一个简洁的中文聊天伙伴。",
-    MaxHistoryTurns = 20,
-})
+    MaxParallelToolCalls = 2,
+    ToolTranscriptRetentionTurns = 3,
+};
 
 KeyValuePair<string, string>[] parameters =
 [

@@ -32,7 +32,7 @@ public sealed class ConversationSessionContractTests
     {
         var llm = new RecordingLlmService { ResponseText = "第一答" };
         await using IConversationSession session = new ConversationBuilder(llm)
-            .UseOptions(new LlmConversationOptions { SystemPrompt = "系统" })
+            .UseOptions(options => options.SystemPrompt = "系统")
             .Build();
 
         List<ConversationEvent> first = await ConversationEvents.CollectAsync(session.StreamAsync(Request("第一问")));
@@ -61,7 +61,7 @@ public sealed class ConversationSessionContractTests
             ResponseText = "最终回答",
         };
         await using IConversationSession session = new ConversationBuilder(llm)
-            .UseOptions(new LlmConversationOptions { EnableThinking = true })
+            .UseOptions(options => options.EnableThinking = true)
             .Build();
 
         List<ConversationEvent> updates = await ConversationEvents.CollectAsync(session.StreamAsync(Request("问题")));
@@ -245,14 +245,16 @@ public sealed class ConversationSessionContractTests
     public async Task OptionsAreSnapshotAtConfigurationTime()
     {
         var llm = new RecordingLlmService();
-        var options = new LlmConversationOptions
+        LlmConversationOptions? callbackOptions = null;
+        ConversationBuilder builder = new ConversationBuilder(llm).UseOptions(options =>
         {
-            SystemPrompt = "原始提示",
-            MaxResponseTokens = 32,
-        };
-        ConversationBuilder builder = new ConversationBuilder(llm).UseOptions(options);
-        options.SystemPrompt = "被修改的提示";
-        options.MaxResponseTokens = 99;
+            options.SystemPrompt = "原始提示";
+            options.MaxResponseTokens = 32;
+            callbackOptions = options;
+        });
+        Assert.NotNull(callbackOptions);
+        callbackOptions.SystemPrompt = "被修改的提示";
+        callbackOptions.MaxResponseTokens = 99;
 
         await using IConversationSession session = builder.Build();
         await ConversationEvents.CollectAsync(session.StreamAsync(Request("问题")));
@@ -267,7 +269,7 @@ public sealed class ConversationSessionContractTests
         var llm = new RecordingLlmService();
         var provider = new CountingContextProvider();
         await using IConversationSession session = new ConversationBuilder(llm)
-            .UseOptions(new LlmConversationOptions { SystemPrompt = "基础" })
+            .UseOptions(options => options.SystemPrompt = "基础")
             .AddContextProvider(provider)
             .Build();
 

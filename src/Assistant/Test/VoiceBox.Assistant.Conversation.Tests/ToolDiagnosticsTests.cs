@@ -70,7 +70,7 @@ public sealed class ToolDiagnosticsTests
         var llm = new RecordingLlmService { ToolTurnScript = CallThenAnswer("local__slow") };
         await using IConversationSession session = await StartAsync(new ConversationBuilder(llm)
             .UseLoggerFactory(logs)
-            .UseTools(tools => tools.AddTool(tool).UseOptions(new ConversationToolOptions { MaxToolRetryAttempts = 0 })));
+            .UseTools(tools => tools.AddTool(tool).UseOptions(options => options.MaxToolRetryAttempts = 0)));
         bool Reported() => logs.Entries.Any(item =>
             item.Message.Contains("local/slow", StringComparison.Ordinal) && item.Message.Contains("discarded", StringComparison.Ordinal));
         try

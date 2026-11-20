@@ -584,7 +584,7 @@ var assistant = VoiceAssistant.CreateBuilder()
     .UseConversation(conversation)
     .AddWakeup(wakeup)
     .AddSpeakerVerification(speaker)
-    .AddBargeIn(bargeInOptions, acousticPathDelayEstimatorFactory)
+    .AddBargeIn(acousticPathDelayEstimatorFactory)
     .AddAcousticMetricsSource(acousticMetricsSource) // 可选；提供声学统计与打断对齐使用的延迟提示
     .Build();
 ```
@@ -594,6 +594,7 @@ var assistant = VoiceAssistant.CreateBuilder()
 - `UseAudio`、`UseVad`、`UseAsr`、`UseTts`、`UseConversation` 表示恰好一个必需角色，重复设置报错，不是 last-write-wins；
 - `UseLoggerFactory` 是公开 Builder API 的日志配置入口，可选且只能注册一次。Builder 为助手运行期创建 `VoiceAssistant` 分类的日志，为内部打断检测器创建 `RenderAwarePlaybackBargeInDetector` 分类的日志。Hosting 自动接入 DI 中的 `ILoggerFactory`；工厂仍由调用方管理生命周期，外部服务与会话需分别配置日志；
 - `AddAcousticMetricsSource` 接入可选的 `IAcousticProcessingMetricsSource`，供运行期读取声学统计，其中延迟指标会作为播放期打断对齐的提示。它独立于日志配置，不负责启动或释放声学处理器；
+- `UseOptions(o => { ... })` 在注册可选模块前配置助手。`AddBargeIn(factory)` 使用已配置的打断参数，也可以通过 `AddBargeIn(factory, o => { ... })` 覆盖参数。
 - `Build()` 返回助手实例；`BuildWithCompositionInfo()` 额外返回 `ProfileId`、`CapabilityGraphHash` 和 `Capabilities` 等静态装配信息，供 Hosting 构建诊断视图。两者均使用 `UseLoggerFactory` 配置的日志工厂，构建方法不接收 logger 参数；
 - `AddXxx` 安装一个可选能力模块；`Wakeup.Enable` 与 `BargeIn.Enable` 由 Builder 依注册事实推导。在线本人确认由 `Speaker.Confirmation.Enable` 统一开关：开启时必须已安装 Speaker，不能因 Speaker 缺席而推导成无需认证；关闭时唤醒可以不装 Speaker；
 - 身份确认关闭时忽略在线身份认证：即使安装了 Speaker provider，也不生成在线 verifier、身份 feed/gate 或在线 profile 依赖；独立注册功能仍可显式使用 provider。身份确认开启且 Barge-in 启用时，BargeInCommand 身份 purpose/bank 也为必需；单讲 purpose 随 Enable 一并打开；

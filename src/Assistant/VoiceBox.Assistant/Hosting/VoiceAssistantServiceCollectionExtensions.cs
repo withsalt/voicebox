@@ -69,7 +69,7 @@ public static class VoiceAssistantServiceCollectionExtensions
     {
         VoiceAssistantOptions options = provider.GetRequiredService<IOptions<VoiceAssistantOptions>>().Value;
         VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
-            .UseOptions(options)
+            .UseOptions(options.CopyTo)
             .UseVad(provider.GetRequiredService<IVoiceActivityDetectService>())
             .UseAsr(provider.GetRequiredService<IASRService>())
             .UseConversation(provider.GetRequiredService<IConversationSession>())
@@ -103,7 +103,7 @@ public static class VoiceAssistantServiceCollectionExtensions
 
         if (provider.GetService<VoiceAssistantBargeInModuleRegistration>() is not null)
         {
-            builder.AddBargeIn(options.BargeIn, provider.GetRequiredService<IAcousticPathDelayEstimatorFactory>());
+            builder.AddBargeIn(provider.GetRequiredService<IAcousticPathDelayEstimatorFactory>());
         }
 
         return builder;

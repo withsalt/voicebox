@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Threading.Channels;
-using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Composition.Builder;
 using VoiceBox.Assistant.Composition.Exceptions;
 using VoiceBox.Assistant.Composition.Graph;
@@ -123,9 +122,8 @@ public sealed partial class VoiceAssistantLifecycleTests
     {
         var services = TestServices.Create();
 
-        var confirm = new VoiceAssistantOptions { Speaker = { Confirmation = { Enable = true } } };
         AssistantComposition wakeupWithSpeaker = VoiceAssistant.CreateBuilder()
-            .UseOptions(confirm)
+            .UseOptions(options => options.Speaker.Confirmation.Enable = true)
             .UseAudio(services.Audio)
             .UseVad(services.Vad)
             .UseAsr(services.Asr)
@@ -180,7 +178,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     {
         var services = TestServices.Create();
         VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
-            .UseOptions(new VoiceAssistantOptions { Speaker = { Confirmation = { Enable = true } } })
+            .UseOptions(options => options.Speaker.Confirmation.Enable = true)
             .UseAudio(services.Audio)
             .UseVad(services.Vad)
             .UseAsr(services.Asr)
@@ -196,9 +194,8 @@ public sealed partial class VoiceAssistantLifecycleTests
     public void KwsEnabled_DerivesWakeupAndBargeInPurposesFromSharedConfirmation()
     {
         var services = TestServices.Create();
-        var confirm = new VoiceAssistantOptions { Speaker = { Confirmation = { Enable = true } } };
         AssistantComposition wakeupOnly = VoiceAssistant.CreateBuilder()
-            .UseOptions(confirm)
+            .UseOptions(options => options.Speaker.Confirmation.Enable = true)
             .UseAudio(services.Audio)
             .UseVad(services.Vad)
             .UseAsr(services.Asr)
@@ -212,7 +209,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         Assert.NotNull(wakeupOnly.RuntimePlan.Speaker);
 
         AssistantComposition withBargeIn = VoiceAssistant.CreateBuilder()
-            .UseOptions(confirm)
+            .UseOptions(options => options.Speaker.Confirmation.Enable = true)
             .UseAudio(services.Audio)
             .UseVad(services.Vad)
             .UseAsr(services.Asr)
@@ -220,7 +217,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             .UseTts(services.Tts)
             .AddWakeup(services.Wakeup)
             .AddSpeakerVerification(services.Speaker)
-            .AddBargeIn(new VoiceAssistantBargeInOptions(), TestAcousticPathDelayEstimatorFactory.Instance)
+            .AddBargeIn(TestAcousticPathDelayEstimatorFactory.Instance)
             .BuildComposition();
         Assert.Contains("SpeakerEvidence", withBargeIn.Snapshot.Capabilities);
         Assert.Contains("BargeIn", withBargeIn.Snapshot.Capabilities);
@@ -233,7 +230,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         var record = new VoiceAssistantLifecycleTests.FakeDuplexService();
         var playback = new VoiceAssistantLifecycleTests.FakeDuplexService();
         VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
-            .UseOptions(new VoiceAssistantOptions { Speaker = { Confirmation = { Enable = true } } })
+            .UseOptions(options => options.Speaker.Confirmation.Enable = true)
             .UseAudio((VoiceBox.Core.Services.AudioService.IAudioRecordService)record,
                 (VoiceBox.Core.Services.AudioService.IAudioPlayService)playback)
             .UseVad(services.Vad)
@@ -264,7 +261,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     {
         var services = TestServices.Create();
         AssistantComposition composition = VoiceAssistant.CreateBuilder()
-            .UseOptions(new VoiceAssistantOptions { Speaker = { Confirmation = { Enable = true } } })
+            .UseOptions(options => options.Speaker.Confirmation.Enable = true)
             .UseAudio(services.Audio)
             .UseVad(services.Vad)
             .UseAsr(services.Asr)

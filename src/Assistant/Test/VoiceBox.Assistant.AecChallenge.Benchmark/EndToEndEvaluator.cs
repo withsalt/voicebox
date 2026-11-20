@@ -184,14 +184,14 @@ internal sealed class EndToEndEvaluator : IDisposable
         VoiceAssistantOptions assistantOptions = CreateAssistantOptions();
         await using IConversationSession conversation = new ConversationBuilder(_llm).Build();
         VoiceAssistantBuilder builder = VoiceAssistant.CreateBuilder()
-            .UseOptions(assistantOptions)
+            .UseOptions(assistantOptions.CopyTo)
             .UseAudio(_audio)
             .UseVad(_vad)
             .UseAsr(_asr)
             .UseConversation(conversation)
             .UseTts(_tts)
             .AddAcousticMetricsSource(_clockedMainAec)
-            .AddBargeIn(assistantOptions.BargeIn, new WebRtcAec3DelayEstimatorFactory());
+            .AddBargeIn(new WebRtcAec3DelayEstimatorFactory());
         using var assistant = builder.BuildForBenchmark(_timeProvider, probe, playbackBargeInDetectorFactory: null);
 
         var terminal = new TaskCompletionSource<BargeInValidationEventArgs>(TaskCreationOptions.RunContinuationsAsynchronously);

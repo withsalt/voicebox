@@ -30,10 +30,10 @@ internal static class Program
 
         await using IConversationSession conversation = new ConversationBuilder(llm)
             .UseConversationId("text-demo")
-            .UseOptions(new LlmConversationOptions
+            .UseOptions(options =>
             {
-                SystemPrompt = "你是一个简洁的中文聊天伙伴。",
-                MaxHistoryTurns = 20,
+                options.SystemPrompt = "你是一个简洁的中文聊天伙伴。";
+                options.MaxHistoryTurns = 20;
             })
             .AddContextProvider(memory)
             .Build();

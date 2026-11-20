@@ -12,9 +12,13 @@ internal static class TestConversation
         bool enableThinking = false,
         Action<LlmConversationOptions>? configure = null)
     {
-        var options = new LlmConversationOptions { EnableThinking = enableThinking };
-        configure?.Invoke(options);
-        return new ConversationBuilder(llm).UseOptions(options).Build();
+        return new ConversationBuilder(llm)
+            .UseOptions(options =>
+            {
+                options.EnableThinking = enableThinking;
+                configure?.Invoke(options);
+            })
+            .Build();
     }
 
     public static IConversationSession CreateWithTools(
@@ -23,10 +27,12 @@ internal static class TestConversation
         Action<ConversationToolsBuilder> configure,
         Action<LlmConversationOptions>? configureOptions = null)
     {
-        var options = new LlmConversationOptions { EnableThinking = enableThinking };
-        configureOptions?.Invoke(options);
         return new ConversationBuilder(llm)
-            .UseOptions(options)
+            .UseOptions(options =>
+            {
+                options.EnableThinking = enableThinking;
+                configureOptions?.Invoke(options);
+            })
             .UseTools(configure)
             .Build();
     }

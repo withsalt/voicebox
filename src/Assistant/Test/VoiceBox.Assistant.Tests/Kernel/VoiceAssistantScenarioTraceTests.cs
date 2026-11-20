@@ -169,7 +169,7 @@ public sealed partial class VoiceAssistantLifecycleTests
             Listening = { MinDurationMs = 0, MinRms = 0 },
         };
         using VoiceAssistant assistant = VoiceAssistant.CreateBuilder()
-            .UseOptions(options)
+            .UseOptions(options.CopyTo)
             .UseAudio((IAudioRecordService)record, (IAudioPlayService)playback)
             .UseVad(services.Vad)
             .UseAsr(services.Asr)

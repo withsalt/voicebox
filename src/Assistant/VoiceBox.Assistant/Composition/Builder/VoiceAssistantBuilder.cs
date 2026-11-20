@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System.Text.Json;
 using VoiceBox.Assistant.Api.Configuration;
 using VoiceBox.Assistant.Composition.Graph;
@@ -142,33 +141,43 @@ public sealed class VoiceAssistantBuilder
     }
 
     /// <summary>
-    /// 安装播放期打断能力及其流级声学路径延迟估计器工厂。
+    /// Installs playback barge-in with the builder's current settings and applies any overrides before taking a snapshot.
     /// </summary>
-    public VoiceAssistantBuilder AddBargeIn(VoiceAssistantBargeInOptions options, IAcousticPathDelayEstimatorFactory delayEstimatorFactory)
+    public VoiceAssistantBuilder AddBargeIn(
+        IAcousticPathDelayEstimatorFactory delayEstimatorFactory,
+        Action<VoiceAssistantBargeInOptions>? configure = null)
     {
-        ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(delayEstimatorFactory);
-        if (_bargeInSpecified)
+        EnsureBargeInUnset();
+
+        VoiceAssistantBargeInOptions options = _options.BargeIn;
+        ArgumentNullException.ThrowIfNull(options);
+        if (configure is not null)
         {
-            throw new AssistantCompositionException("VBX-COMP-002", "BargeIn has already been registered for this builder.");
+            options = CloneBargeInOptions(options);
+            configure(options);
+            EnsureBargeInUnset();
+            options = CloneBargeInOptions(options);
         }
 
-        _options = CloneOptions(_options);
-        _options.BargeIn = CloneBargeInOptions(options);
-        _options.BargeIn.Enable = true;
+        options.Enable = true;
+        _options.BargeIn = options;
         _acousticPathDelayEstimatorFactory = delayEstimatorFactory;
         _bargeInSpecified = true;
         return this;
     }
 
-    public VoiceAssistantBuilder UseOptions(VoiceAssistantOptions options)
+    /// <summary>
+    /// Configures the assistant defaults before registering optional modules and takes a snapshot when the callback returns.
+    /// </summary>
+    public VoiceAssistantBuilder UseOptions(Action<VoiceAssistantOptions> configure)
     {
-        ArgumentNullException.ThrowIfNull(options);
-        if (_optionsSpecified || _wakeup is not null || _speaker is not null || _bargeInSpecified || _acousticMetricsSourceSpecified)
-        {
-            throw new AssistantCompositionException("VBX-COMP-002", "VoiceAssistantOptions has already been registered for this builder.");
-        }
+        ArgumentNullException.ThrowIfNull(configure);
+        EnsureOptionsUnset();
 
+        var options = new VoiceAssistantOptions();
+        configure(options);
+        EnsureOptionsUnset();
         _options = CloneOptions(options);
         _optionsSpecified = true;
         return this;
@@ -184,7 +193,7 @@ public sealed class VoiceAssistantBuilder
     {
         ILogger<VoiceAssistant>? logger = _loggerFactory?.CreateLogger<VoiceAssistant>();
         AssistantComposition composition = BuildComposition(out VoiceAssistantOptions options);
-        var assistant = new VoiceAssistant(composition, Options.Create(options), logger);
+        var assistant = new VoiceAssistant(composition, options, logger);
         return (assistant, composition.Snapshot.ProfileId, composition.Snapshot.CapabilityGraphHash, composition.Snapshot.Capabilities);
     }
 
@@ -206,7 +215,7 @@ public sealed class VoiceAssistantBuilder
         AssistantComposition composition = BuildComposition(out VoiceAssistantOptions options);
         return new VoiceAssistant(
             composition,
-            Options.Create(options),
+            options,
             timeProvider,
             benchmarkProbe,
             logger,
@@ -284,6 +293,22 @@ public sealed class VoiceAssistantBuilder
         if (_duplexAudio is not null || _splitAudio is not null)
         {
             throw new AssistantCompositionException("VBX-COMP-002", "Audio endpoint has already been registered for this builder.");
+        }
+    }
+
+    private void EnsureOptionsUnset()
+    {
+        if (_optionsSpecified || _wakeup is not null || _speaker is not null || _bargeInSpecified || _acousticMetricsSourceSpecified)
+        {
+            throw new AssistantCompositionException("VBX-COMP-002", "VoiceAssistantOptions has already been registered for this builder.");
+        }
+    }
+
+    private void EnsureBargeInUnset()
+    {
+        if (_bargeInSpecified)
+        {
+            throw new AssistantCompositionException("VBX-COMP-002", "BargeIn has already been registered for this builder.");
         }
     }
 

@@ -7,12 +7,12 @@
 ```csharp
 await using IConversationSession conversation = new ConversationBuilder(llm)
     .UseConversationId("chat-1")
-    .UseOptions(new LlmConversationOptions
+    .UseOptions(options =>
     {
-        SystemPrompt = "请用简洁的中文回答。",
-        MaxHistoryTurns = 20,
-        MaxResponseTokens = 512,
-        EnableThinking = false,
+        options.SystemPrompt = "请用简洁的中文回答。";
+        options.MaxHistoryTurns = 20;
+        options.MaxResponseTokens = 512;
+        options.EnableThinking = false;
     })
     .Build();
 
@@ -23,7 +23,7 @@ await foreach (ConversationEvent conversationEvent in conversation.StreamAsync(
 }
 ```
 
-- `LlmConversationOptions` 在 `UseOptions` 时复制并验证；之后修改调用方对象不会影响运行中的会话。
+- `UseOptions` 将默认配置传入回调，回调返回后复制并验证配置。会话使用这份配置快照。
 - 历史由会话拥有。完整生成后先提交历史，再输出 `ConversationCompleted`；取消、异常或提前释放会清理本轮暂存消息。
 - 同一会话的请求串行执行；不同会话互不影响。
 - 借用调用方的 `IStreamLLMService`；会话创建并拥有 provider 的 `ILLMConversation`，释放会话不会释放 LLM 服务。
@@ -58,7 +58,7 @@ IConversationToolProvider files = McpToolProvider.CreateStdio("filesystem", opti
 });
 
 IConversationSession conversation = new ConversationBuilder(toolCallingLlm)
-    .UseOptions(conversationOptions)
+    .UseOptions(options => options.SystemPrompt = "请用简洁的中文回答。")
     .UseLoggerFactory(loggerFactory) // 可选；未配置时不输出日志
     .UseTools(tools =>
     {
@@ -118,15 +118,12 @@ finally
 它们集中在 `ConversationToolOptions.Announcements`，默认中文，`{0}` 替换为工具的 `DisplayName`：
 
 ```csharp
-tools.UseOptions(new ConversationToolOptions
+tools.UseOptions(o =>
 {
-    Announcements = new ConversationToolAnnouncements
-    {
-        BackgroundStarted = "Working on {0}. I'll get back to you.",
-        NameSeparator = " and ",
-        BackgroundSucceeded = "{0} is done. ",
-        // BackgroundDenied / BackgroundCancelled / BackgroundUnknownOutcome / BackgroundFailed
-    },
+    o.Announcements.BackgroundStarted = "Working on {0}. I'll get back to you.";
+    o.Announcements.NameSeparator = " and ";
+    o.Announcements.BackgroundSucceeded = "{0} is done. ";
+    // BackgroundDenied / BackgroundCancelled / BackgroundUnknownOutcome / BackgroundFailed
 });
 ```
 
