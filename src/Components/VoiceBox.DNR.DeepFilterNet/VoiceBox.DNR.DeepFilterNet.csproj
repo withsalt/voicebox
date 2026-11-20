@@ -31,4 +31,8 @@
     <None Include="build\VoiceBox.DNR.DeepFilterNet.targets" Pack="true" PackagePath="buildTransitive\VoiceBox.DNR.DeepFilterNet.targets" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
 </Project>

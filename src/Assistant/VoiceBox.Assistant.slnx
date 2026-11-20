@@ -11,9 +11,10 @@
     <Project Path="../Components/VoiceBox.Audio.MiniAudio/VoiceBox.Audio.MiniAudio.csproj" />
     <Project Path="../Components/VoiceBox.Audio.PortAudio/VoiceBox.Audio.PortAudio.csproj" />
     <Project Path="../Components/VoiceBox.Core/VoiceBox.Core.csproj" />
-    <Project Path="../Components/VoiceBox.DNR.DPDFNet/VoiceBox.DNR.DPDFNet.csproj" />
     <Project Path="../Components/VoiceBox.DNR.DeepFilterNet/VoiceBox.DNR.DeepFilterNet.csproj" />
+    <Project Path="../Components/VoiceBox.DNR.DPDFNet/VoiceBox.DNR.DPDFNet.csproj" />
     <Project Path="../Components/VoiceBox.DNR.GRENet/VoiceBox.DNR.GRENet.csproj" />
+    <Project Path="../Components/VoiceBox.DNR.Hush/VoiceBox.DNR.Hush.csproj" />
     <Project Path="../Components/VoiceBox.DNR.RNNoise/VoiceBox.DNR.RNNoise.csproj" Id="1ee035ef-a27b-4c40-8205-d32505a77d05" />
     <Project Path="../Components/VoiceBox.DTD.RenderAware/VoiceBox.DTD.RenderAware.csproj" />
     <Project Path="../Components/VoiceBox.HPF.Butterworth/VoiceBox.HPF.Butterworth.csproj" />

@@ -49,10 +49,11 @@ Solution entry points: [all projects](src/VoiceBox.All.slnx), [assistant](src/As
 | APM (audio preprocessing) | `VoiceBox.APM.WebRtc` | WebRTC-based HPF, AEC3 (with neural network support), noise suppression, AGC2, and acoustic delay estimation |
 | AEC (echo cancellation) | `VoiceBox.AEC.DFSMN` | Linear echo cancellation and DFSMN neural residual echo suppression |
 | AEC (echo cancellation) | `VoiceBox.AEC.DTLN` | DTLN-aec two-stage streaming echo cancellation |
-| DNR (noise reduction) | `VoiceBox.DNR.RNNoise` | RNNoise real-time noise reduction with built-in sample rate conversion |
-| DNR (noise reduction) | `VoiceBox.DNR.DeepFilterNet` | DeepFilterNet3 low-latency streaming noise reduction |
-| DNR (noise reduction) | `VoiceBox.DNR.DPDFNet` | DPDFNet streaming noise reduction with multiple model sizes |
-| DNR (noise reduction) | `VoiceBox.DNR.Hush` | Hush / DeepFilterNet3-SE streaming noise reduction at 16 kHz |
+| DNR (noise reduction) | [VoiceBox.DNR.RNNoise](src/Components/VoiceBox.DNR.RNNoise/README.md) | RNNoise real-time noise reduction with built-in sample rate conversion |
+| DNR (noise reduction) | [VoiceBox.DNR.DeepFilterNet](src/Components/VoiceBox.DNR.DeepFilterNet/README.md) | DeepFilterNet3 low-latency streaming noise reduction |
+| DNR (noise reduction) | [VoiceBox.DNR.DPDFNet](src/Components/VoiceBox.DNR.DPDFNet/README.md) | DPDFNet streaming noise reduction with multiple model sizes |
+| DNR (noise reduction) | [VoiceBox.DNR.Hush](src/Components/VoiceBox.DNR.Hush/README.md) | Hush / DeepFilterNet3-SE streaming noise reduction at 16 kHz |
+| DNR (dereverberation) | [VoiceBox.DNR.GRENet](src/Components/VoiceBox.DNR.GRENet/README.md) | GRE-Net streaming room reverberation suppression |
 | DTD (double-talk detection) | `VoiceBox.DTD.RenderAware` | Detects user speech during playback using microphone and playback reference signals; trained specifically for VoiceBox.Assistant |
 | VAD (voice activity detection) | `VoiceBox.VAD.FireRed` | FireRed VAD with speech start/end events and speech probabilities |
 | VAD (voice activity detection) | `VoiceBox.VAD.Silero` | Silero VAD for detecting speech segments and silence boundaries |

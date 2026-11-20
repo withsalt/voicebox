@@ -49,10 +49,11 @@ VoiceBox 是基于 **.NET** 开发的模块化语音交互框架，**基本覆�
 | APM（音频前处理） | `VoiceBox.APM.WebRtc` | 基于WebRTC的HPF、AEC3（支持神经网络）、噪声抑制、AGC2 与声学延迟估计 |
 | AEC（回声消除） | `VoiceBox.AEC.DFSMN` | 线性回声消除与 DFSMN 神经网络残余回声抑制 |
 | AEC（回声消除） | `VoiceBox.AEC.DTLN` | DTLN-aec 双阶段流式回声消除 |
-| DNR（降噪） | `VoiceBox.DNR.RNNoise` | RNNoise 实时降噪，内置采样率转换 |
-| DNR（降噪） | `VoiceBox.DNR.DeepFilterNet` | DeepFilterNet3 低延迟流式降噪 |
-| DNR（降噪） | `VoiceBox.DNR.DPDFNet` | DPDFNet 流式降噪，提供多种模型规模 |
-| DNR（降噪） | `VoiceBox.DNR.Hush` | Hush / DeepFilterNet3-SE 16 kHz 流式降噪 |
+| DNR（降噪） | [VoiceBox.DNR.RNNoise](src/Components/VoiceBox.DNR.RNNoise/README.md) | RNNoise 实时降噪，内置采样率转换 |
+| DNR（降噪） | [VoiceBox.DNR.DeepFilterNet](src/Components/VoiceBox.DNR.DeepFilterNet/README.md) | DeepFilterNet3 低延迟流式降噪 |
+| DNR（降噪） | [VoiceBox.DNR.DPDFNet](src/Components/VoiceBox.DNR.DPDFNet/README.md) | DPDFNet 流式降噪，提供多种模型规模 |
+| DNR（降噪） | [VoiceBox.DNR.Hush](src/Components/VoiceBox.DNR.Hush/README.md) | Hush / DeepFilterNet3-SE 16 kHz 流式降噪 |
+| DNR（去混响） | [VoiceBox.DNR.GRENet](src/Components/VoiceBox.DNR.GRENet/README.md) | GRE-Net 流式房间混响抑制 |
 | DTD（双讲检测） | `VoiceBox.DTD.RenderAware` | 结合麦克风与播放参考信号，检测播放期间的用户语音，专为VoiceBox.Assistant训练 |
 | VAD（语音活动检测） | `VoiceBox.VAD.FireRed` | FireRed VAD，输出语音起止事件与语音概率 |
 | VAD（语音活动检测） | `VoiceBox.VAD.Silero` | Silero VAD，检测语音片段与静音边界 |

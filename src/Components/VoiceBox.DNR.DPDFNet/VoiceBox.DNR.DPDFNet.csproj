@@ -26,4 +26,8 @@
     <None Include="build\VoiceBox.DNR.DPDFNet.targets" Pack="true" PackagePath="buildTransitive\VoiceBox.DNR.DPDFNet.targets" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
 </Project>
