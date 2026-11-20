@@ -21,4 +21,7 @@ internal interface INearEndConfirmationStore
     bool TryCommit(in NearEndConfirmationLease lease, in SpeakingDecision confirmed);
 
     void Abort(in NearEndConfirmationLease lease);
+
+    /// <summary>Stops a capture whose interruption the Kernel rejected after the data-plane commit.</summary>
+    void AbortCapture(long turnId);
 }

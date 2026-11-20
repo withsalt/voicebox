@@ -480,15 +480,29 @@ internal sealed class AssistantControlLoopRouter : IAssistantControlLoopHandler
             plan = plan.Kind switch
             {
                 BargeInSemanticPlanKind.InterruptionRequested =>
-                    _bargeInTurns.CommitInterruptionRequested(plan, kernel),
+                    CommitInterruptionRequestedAndReleaseCapture(plan, kernel),
                 BargeInSemanticPlanKind.AuthorizationResolved =>
-                    _bargeInTurns.CommitAuthorizationResolved(plan, kernel),
+                    CommitAuthorizationResolvedAndReleaseCapture(plan, kernel),
                 BargeInSemanticPlanKind.ValidationAccepted or
                 BargeInSemanticPlanKind.ValidationRejected =>
                     CommitValidationPlanAndFinish(plan, kernel),
                 _ => default,
             };
         }
+    }
+
+    private BargeInSemanticPlan CommitInterruptionRequestedAndReleaseCapture(BargeInSemanticPlan plan, KernelCommitResult kernel)
+    {
+        BargeInSemanticPlan next = _bargeInTurns.CommitInterruptionRequested(plan, kernel);
+        _nearEnd.CompleteBargeInPlan(plan, kernel.Accepted);
+        return next;
+    }
+
+    private BargeInSemanticPlan CommitAuthorizationResolvedAndReleaseCapture(BargeInSemanticPlan plan, KernelCommitResult kernel)
+    {
+        BargeInSemanticPlan next = _bargeInTurns.CommitAuthorizationResolved(plan, kernel);
+        _nearEnd.CompleteBargeInPlan(plan, kernel.Accepted);
+        return next;
     }
 
     private BargeInSemanticPlan CommitValidationPlanAndFinish(BargeInSemanticPlan plan, KernelCommitResult kernel)

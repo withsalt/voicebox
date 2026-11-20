@@ -24,4 +24,6 @@ internal sealed class NearEndConfirmationAdapter : INearEndConfirmationStore
 
     public void Abort(in NearEndConfirmationLease lease)
         => _dataPlane.Abort(in lease);
+
+    public void AbortCapture(long turnId) => _dataPlane.AbortCapture(turnId);
 }

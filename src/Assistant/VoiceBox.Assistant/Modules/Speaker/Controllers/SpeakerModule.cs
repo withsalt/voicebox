@@ -68,6 +68,8 @@ internal sealed class SpeakerModule : ISpeakerModule
 
     public SpeakerCaptureDescriptor Descriptor => _descriptor;
 
+    public Task EvidenceChanged => _verifier.EvidenceChanged;
+
     public SpeakerVerificationPolicy Policy => _verifier.Policy;
 
     internal SpeakerVerificationDiagnostics Diagnostics => _verifier.Diagnostics;

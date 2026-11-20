@@ -10,6 +10,9 @@ namespace VoiceBox.Assistant.Modules.Speaker.Contracts;
 /// </summary>
 internal interface ISpeakerEvidenceProvider
 {
+    // Providers with asynchronous evidence complete this signal on the next cache update.
+    Task? EvidenceChanged => null;
+
     SpeakerCandidateId NewCandidateId();
 
     SpeakerVerificationResult Evaluate(in SpeakerEvidenceQuery query);

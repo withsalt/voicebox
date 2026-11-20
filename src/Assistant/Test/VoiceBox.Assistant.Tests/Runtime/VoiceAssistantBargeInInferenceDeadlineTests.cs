@@ -108,8 +108,10 @@ public sealed partial class VoiceAssistantLifecycleTests
             {
                 long start = 8000 + hop * 3200;
                 verifier.OnSpeakerCapture(SpeakerTestProfiles.Frame(1, start, ScriptedSpeakerService.OwnerScoreAudio(0.6f, 3200)));
+                DuplexAudioFrame frame = CreateDuplexFrame(hop + 2, start, 3200);
+                harness.ObserveDuplexAudio(frame, false);
                 clock.Advance(TimeSpan.FromMilliseconds(40));
-                harness.ObserveDuplexAudio(CreateDuplexFrame(hop + 2, start, 3200), false);
+                harness.ObserveDuplexAudio(frame, false);
                 // Even after the first window leaves the recent selection, it still owns the
                 // worker. Reporting the next requested window would incorrectly renew its wait.
                 Assert.Equal(0, evidence.Last.PendingWindowStartSample);
@@ -126,6 +128,56 @@ public sealed partial class VoiceAssistantLifecycleTests
         finally
         {
             provider.ExtractBlock.TrySetResult();
+        }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task PlaybackBargeIn_TwoInferenceWindowsCanFinishAfterTheFinalDuplexFrame(bool extendWhileFirstWindowRuns)
+    {
+        var clock = new ManualTimerTimeProvider();
+        var provider = new ScriptedSpeakerService(windowSamples: 8000, hopSamples: 3200);
+        using var verifier = CreateDeadlineVerifier(provider, requiredMatches: 2);
+        var harness = CreateInferenceDeadlineHarness(new DeadlineSpeakerEvidence(verifier), clock);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        var firstJob = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        provider.ExtractBlock = firstJob;
+        provider.ExtractEntered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        void Push(int start, int size)
+        {
+            var audio = ScriptedSpeakerService.OwnerScoreAudio(0.6f, size);
+            verifier.OnSpeakerCapture(SpeakerTestProfiles.Frame(1, start, audio));
+            harness.ObserveDuplexAudio(CreateDuplexFrame(start + 1, start, size), false);
+        }
+
+        try
+        {
+            Push(0, extendWhileFirstWindowRuns ? 8000 : 11200);
+            await clock.WaitForTimerCountAsync(1, timeout.Token);
+            if (extendWhileFirstWindowRuns)
+                Push(8000, 3200);
+            clock.Advance(TimeSpan.FromMilliseconds(98));
+            await provider.ExtractEntered.Task.WaitAsync(timeout.Token);
+            var secondJobStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            provider.ExtractEntered = secondJobStarted;
+            provider.ExtractBlock = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            firstJob.TrySetResult();
+            await secondJobStarted.Task.WaitAsync(timeout.Token);
+            clock.Advance(TimeSpan.FromMilliseconds(98));
+            provider.ExtractBlock.TrySetResult();
+            await WaitUntilAsync(() => harness.CommandAuthorizedCount == 1 || harness.CommandDeniedCount != 0);
+            Assert.Equal(0, harness.CommandDeniedCount);
+            await WaitUntilAsync(() => harness.GetDiagnosticSnapshot().ConfirmationPending);
+            Assert.True(harness.TryAcquire(1, out var lease));
+            Assert.Equal(2, lease.SpeakerResult.MatchedWindows);
+        }
+        finally
+        {
+            firstJob.TrySetResult();
+            provider.ExtractBlock?.TrySetResult();
+            harness.Reset();
         }
     }
 
@@ -165,6 +217,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     {
         public SpeakerVerificationResult Last { get; private set; }
         public SpeakerEvidenceQuery Query { get; private set; }
+        public Task EvidenceChanged => verifier.EvidenceChanged;
         public SpeakerCandidateId NewCandidateId() => verifier.NewCandidateId();
         public SpeakerVerificationResult Evaluate(in SpeakerEvidenceQuery query)
         {

@@ -12,6 +12,15 @@ internal sealed class NearEndConfirmationJournal
     private NearEndConfirmationLease? _pending;
     private NearEndConfirmationLease? _taken;
 
+    // Endpoint VAD can locate a queued plan's first chunk before its end event retires the VAD candidate.
+    public (long Generation, long StartSample)? LocatedVadStart { get; private set; }
+
+    public void RecordVadStart(long generation, long sample)
+    {
+        if (LocatedVadStart is not { } prior || prior.Generation != generation || sample < prior.StartSample)
+            LocatedVadStart = (generation, sample);
+    }
+
     public bool HasPending => _pending.HasValue;
 
     public bool HasTaken => _taken.HasValue;
@@ -24,6 +33,7 @@ internal sealed class NearEndConfirmationJournal
         if (_pending.HasValue || _taken.HasValue)
             return false;
 
+        LocatedVadStart = null;
         _pending = lease;
         return true;
     }

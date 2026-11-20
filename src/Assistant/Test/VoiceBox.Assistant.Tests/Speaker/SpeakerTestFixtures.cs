@@ -80,8 +80,9 @@ internal sealed class ScriptedSpeakerService : ISpeakerService
         Interlocked.Increment(ref _extractCount);
         lock (ExtractedLengths)
             ExtractedLengths.Add(samples.Length);
+        Task? block = ExtractBlock?.Task;
         ExtractEntered?.TrySetResult();
-        ExtractBlock?.Task.GetAwaiter().GetResult();
+        block?.GetAwaiter().GetResult();
         if (ExtractDelayMs > 0)
             Thread.Sleep(ExtractDelayMs);
         if (ExtractException is { } exception)

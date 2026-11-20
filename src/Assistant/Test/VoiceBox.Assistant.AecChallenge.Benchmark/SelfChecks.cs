@@ -289,6 +289,10 @@ internal static partial class SelfChecks
         var afterClear = new float[2];
         ingress.ReadPlayback(afterClear);
         Assert(afterClear.All(sample => sample == 0), "ClearQueue must silence all future render samples");
+        long stop = ingress.PlaybackClearCapturePosition;
+        ingress.PushFrame(afterClear, afterClear);
+        ingress.ClearQueue();
+        Assert(stop == 0 && ingress.PlaybackClearCapturePosition == stop, "later clears must preserve the first stop timestamp");
     }
 
     private static void PartitionedFirMatchesOfflineConvolution()

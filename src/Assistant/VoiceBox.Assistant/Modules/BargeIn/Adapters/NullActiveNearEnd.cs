@@ -60,7 +60,7 @@ internal sealed class NullActiveNearEnd :
 
     public void Reset() { }
 
-    public void ClearAudioReservoirs() { }
+    public void ClearAudioReservoirs(long playbackTurnId = 0) { }
 
     public bool TryAcquire(long operationId, out NearEndConfirmationLease lease)
     {
@@ -71,5 +71,7 @@ internal sealed class NullActiveNearEnd :
     public bool TryCommit(in NearEndConfirmationLease lease, in SpeakingDecision confirmed) => false;
 
     public void Abort(in NearEndConfirmationLease lease) { }
+
+    public void AbortCapture(long turnId) { }
 
 }

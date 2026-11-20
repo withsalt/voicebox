@@ -18,6 +18,20 @@ internal sealed record EndToEndOptions
     public int AsrTimeoutSeconds { get; init; } = 120;
     public bool Verbose { get; init; }
     public bool EnforceGates { get; init; }
+
+    /// <summary>
+    /// Stress model: the benchmark clears the duplex stream on a playback stop, including an AEC
+    /// reset and capture-timeline break. The shipping PortAudio/MiniAudio services deliberately
+    /// keep the microphone running across ClearQueue, so this is off by default and opt-in only.
+    /// </summary>
+    public bool StreamRestartOnClear { get; init; }
+
+    /// <summary>CAM++ model directory. Empty leaves the benchmark on the identity-disabled path.</summary>
+    public string? SpeakerModelDir { get; init; }
+
+    /// <summary>Owner profile used when <see cref="SpeakerModelDir"/> enables identity verification.</summary>
+    public string? SpeakerProfilePath { get; init; }
+
 }
 
 internal sealed record EndToEndCaseResult

@@ -108,6 +108,18 @@ internal sealed class ActiveNearEndControlHandler
         }
     }
 
+    /// <summary>
+    /// Releases a capture registered before the Kernel decision when that decision was rejected.
+    /// Accepted plans keep the capture alive until the new turn's utterance endpoint.
+    /// </summary>
+    public void CompleteBargeInPlan(BargeInSemanticPlan plan, bool kernelAccepted)
+    {
+        if (kernelAccepted || plan.TurnId <= 0)
+            return;
+
+        _confirmations.AbortCapture(plan.TurnId);
+    }
+
     public SpeechBoundaryObservation ProcessSpeechDrainCompleted(long turnId, TimeSpan duration)
     {
         // The interruption is accepted at authorization time while the data-plane drain may still

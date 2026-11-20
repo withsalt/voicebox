@@ -71,6 +71,21 @@ internal sealed class AlwaysOwnerSpeakerModule : ISpeakerModule
     {
         lock (Queries)
             Queries.Add(query);
+
+        // The real verifier never scores a barge-in window shorter than the purpose's minimum
+        // speech time. Preserve that availability rule so a one-sample DTD artifact cannot be
+        // authorized as the owner and preempt an in-session wakeup.
+        SpeakerPurposePolicy policy = Policy.Get(query.Purpose);
+        if (query.Purpose == SpeakerVerificationPurpose.BargeInCommand &&
+            query.CandidateEndSampleExclusive - query.CandidateStartSample < policy.MinimumSpeechSamples)
+        {
+            return SpeakerVerificationResult.Pending(
+                policy.Threshold,
+                in query,
+                SpeakerVerificationReason.CollectingCandidate,
+                requiredMatches: policy.RequiredMatches);
+        }
+
         return new SpeakerVerificationResult(
             SpeakerVerificationStatus.Match,
             1f,

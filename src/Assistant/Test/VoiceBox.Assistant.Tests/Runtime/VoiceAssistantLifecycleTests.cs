@@ -909,7 +909,9 @@ public sealed partial class VoiceAssistantLifecycleTests
 
         await WaitUntilAsync(() => services.Audio.ClearQueueCount >= 1);
         Assert.True(services.Audio.ClearQueueCount >= 1);
-        Assert.Equal(AssistantState.Idle, assistant.State);
+        // The keyword may already have opened the fresh Listening turn while the barge-in
+        // validation is unwound; both Idle and Listening are valid at this boundary.
+        Assert.True(assistant.State is AssistantState.Idle or AssistantState.Listening);
         await WaitUntilAsync(() => services.Vad.PredictedAudio.Any(chunk => chunk.SequenceEqual([0.7f, 0.8f])));
         Assert.Contains(services.Vad.PredictedAudio, chunk => chunk.SequenceEqual([0.7f, 0.8f]));
 
@@ -2388,7 +2390,7 @@ public sealed partial class VoiceAssistantLifecycleTests
     }
 
     [Fact]
-    public void ActiveNearEndTrigger_SpeakerAuthorizationSurvivesMainChainCatchUp()
+    public void ActiveNearEndTrigger_SpeakerAuthorizationSubmitsBeforeMainChainCatchUp()
     {
         var services = TestServices.Create();
         var options = new VoiceAssistantBargeInOptions
@@ -2469,16 +2471,18 @@ public sealed partial class VoiceAssistantLifecycleTests
             CreateDuplexFrame(sequence: 2, startSample: 1600, sampleCount: 640),
             playbackStartupGuardActive: false);
         ActiveNearEndDiagnosticSnapshot authorized = coordinator.GetDiagnosticSnapshot();
-        Assert.True(authorized.CandidateActive);
-        Assert.True(authorized.CandidateAuthorized);
+        // The speaker Match submits the confirmation immediately; the main chain is still one
+        // frame behind and never has to reach the DTD decision end for the stop to be requested.
+        Assert.False(authorized.CandidateActive);
+        Assert.Equal(1, coordinator.CommandAuthorizedCount);
         Assert.Equal(1, speakerEvidence.EvaluateCount);
         Assert.Equal(0, confirmedCount);
+        Assert.True(coordinator.TryAcquire(confirmationOperationId, out NearEndConfirmationLease request));
 
         coordinator.ObserveDuplexAudio(
             CreateDuplexFrame(sequence: 3, startSample: 2240, sampleCount: 320),
             playbackStartupGuardActive: false);
         Assert.Equal(1, speakerEvidence.EvaluateCount);
-        Assert.True(coordinator.GetDiagnosticSnapshot().CandidateAuthorized);
 
         var catchUpRange = new CaptureRange(
             StreamEpoch: 1,
@@ -2495,7 +2499,6 @@ public sealed partial class VoiceAssistantLifecycleTests
             DelaySamples: 0,
             HasDiscontinuity: false));
 
-        Assert.True(coordinator.TryAcquire(confirmationOperationId, out NearEndConfirmationLease request));
         Assert.True(request.IdentityRequired);
         Assert.True(request.IdentityAuthorized);
         Assert.Equal(new SpeakerCandidateId(1), request.CandidateId);

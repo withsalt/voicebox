@@ -13,5 +13,5 @@ internal sealed class NearEndResetAdapter : INearEndResetPort
 
     public void Reset() => _dataPlane.Reset();
 
-    public void ClearAudioReservoirs() => _dataPlane.ClearAudioReservoirs();
+    public void ClearAudioReservoirs(long playbackTurnId = 0) => _dataPlane.ClearAudioReservoirs(playbackTurnId);
 }

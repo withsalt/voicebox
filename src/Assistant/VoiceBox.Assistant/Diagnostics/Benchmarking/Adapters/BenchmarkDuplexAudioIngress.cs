@@ -102,10 +102,10 @@ namespace VoiceBox.Assistant.Diagnostics.Benchmarking.Adapters
         public int StreamRestartSilenceSamples { get; set; }
 
         /// <summary>
-        /// When set, a queue clear also restarts the duplex stream, which breaks the capture
-        /// timeline and resets the echo canceller. This is the capture-side cost of a barge-in stop
-        /// on the real service and it lands on the frames carrying the barge-in utterance, so it is
-        /// modelled independently of the output-side restart duration.
+        /// Opt-in stress model: a queue clear also restarts the duplex stream, breaking the capture
+        /// timeline and resetting the echo canceller. The shipping PortAudio and MiniAudio services
+        /// deliberately keep the microphone running across ClearQueue, so this is not the default
+        /// behaviour; it is useful only for explicitly measuring stream-restart tolerance.
         /// </summary>
         public bool ModelStreamRestartOnClear { get; set; }
 
@@ -270,6 +270,10 @@ namespace VoiceBox.Assistant.Diagnostics.Benchmarking.Adapters
             lock (_playbackCaptureSync)
             {
                 wasPlaying = HasAudioInFlight();
+                if (wasPlaying && PlaybackClearCapturePosition < 0)
+                {
+                    PlaybackClearCapturePosition = _capturePosition;
+                }
                 _playbackQueue.Clear();
                 _playbackQueueOffset = 0;
 
@@ -294,10 +298,14 @@ namespace VoiceBox.Assistant.Diagnostics.Benchmarking.Adapters
                 }
 
                 if (ModelStreamRestartOnClear)
+                {
                     Volatile.Write(ref _pendingCaptureDiscontinuity, 1);
+                    // A real stream restart starts a new capture epoch; the near-end rebase paths
+                    // must see it, not only a same-epoch discontinuity.
+                    _streamEpoch = checked(_streamEpoch + 1);
+                }
             }
 
-            PlaybackClearCapturePosition = _capturePosition;
             if (wasPlaying && !_playbackHeld)
                 OnPlaybackCompleted?.Invoke(this, EventArgs.Empty);
         }

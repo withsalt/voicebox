@@ -174,5 +174,7 @@ public sealed partial class VoiceAssistantLifecycleTests
         }
 
         public void Abort(in NearEndConfirmationLease acquired) => Aborted = true;
+
+        public void AbortCapture(long turnId) { }
     }
 }

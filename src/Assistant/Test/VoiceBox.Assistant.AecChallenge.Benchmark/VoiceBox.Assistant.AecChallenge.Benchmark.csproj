@@ -19,6 +19,7 @@
     <ProjectReference Include="..\..\VoiceBox.Assistant.Conversation\VoiceBox.Assistant.Conversation.csproj" />
     <ProjectReference Include="..\..\..\Components\VoiceBox.Audio.Common\VoiceBox.Audio.Common.csproj" />
     <ProjectReference Include="..\..\..\Components\VoiceBox.Core\VoiceBox.Core.csproj" />
+    <ProjectReference Include="..\..\..\Components\VoiceBox.Speaker.CampPlus\VoiceBox.Speaker.CampPlus.csproj" />
     <ProjectReference Include="..\..\..\Components\VoiceBox.TTS.VoxCPM\VoiceBox.TTS.VoxCPM.csproj" />
     <ProjectReference Include="..\..\..\Components\VoiceBox.VAD.FireRed\VoiceBox.VAD.FireRed.csproj" />
   </ItemGroup>

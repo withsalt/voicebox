@@ -81,6 +81,8 @@ internal sealed class SpeechGatedSpeakerVerifier : ISpeakerEvidenceProvider, IDi
             hangoverSamples: policy.HopSamples * 2);
     }
 
+    public Task EvidenceChanged => _cache.UpdateSignal;
+
     public SpeakerVerificationPolicy Policy => _policy;
 
     public SpeakerAudioTimelineBuffer Timeline => _timeline;

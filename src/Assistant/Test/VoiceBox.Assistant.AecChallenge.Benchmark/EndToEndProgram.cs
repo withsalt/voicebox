@@ -119,6 +119,9 @@ internal static class EndToEndProgram
         int timeout = 120;
         bool verbose = false;
         bool enforceGates = false;
+        bool streamRestartOnClear = false;
+        string? speakerModelDir = null;
+        string? speakerProfilePath = null;
         OnnxExecutionProvider provider = OnnxExecutionProvider.Cuda;
 
         for (int i = 0; i < args.Length; i++)
@@ -177,6 +180,15 @@ internal static class EndToEndProgram
                 case "--enforce-gates":
                     enforceGates = true;
                     break;
+                case "--stream-restart":
+                    streamRestartOnClear = true;
+                    break;
+                case "--speaker-model-dir":
+                    speakerModelDir = Required(args, ref i, argument);
+                    break;
+                case "--speaker-profile":
+                    speakerProfilePath = Required(args, ref i, argument);
+                    break;
                 case "-h":
                 case "--help":
                     PrintHelp();
@@ -191,6 +203,8 @@ internal static class EndToEndProgram
             throw new ArgumentException("--asr-model or VOICEBOX_QWEN3_ASR_MODEL is required.");
         if (string.IsNullOrWhiteSpace(tts))
             throw new ArgumentException("--tts-model, VOICEBOX_VOXCPM_TTS_MODEL, or VOXCPM_MODEL is required.");
+        if (string.IsNullOrWhiteSpace(speakerModelDir) != string.IsNullOrWhiteSpace(speakerProfilePath))
+            throw new ArgumentException("--speaker-model-dir and --speaker-profile must be supplied together.");
         return new EndToEndOptions
         {
             DatasetRoot = dataset,
@@ -206,6 +220,9 @@ internal static class EndToEndProgram
             AsrTimeoutSeconds = timeout,
             Verbose = verbose,
             EnforceGates = enforceGates,
+            StreamRestartOnClear = streamRestartOnClear,
+            SpeakerModelDir = speakerModelDir,
+            SpeakerProfilePath = speakerProfilePath,
         };
     }
 
@@ -313,6 +330,9 @@ internal static class EndToEndProgram
               --case-id <id>              Run one manifest case.
               --suite <name|all>          Manifest suite. Default: release-e2e.
               --vad-model-dir <path>      FireRed VAD model directory.
+              --speaker-model-dir <path>  CAM++ model directory; enables identity verification.
+              --speaker-profile <path>    Owner profile for identity verification.
+              --stream-restart            Stress mode: model an AEC/capture reset on stop.
               --asr-timeout-seconds <N>   Harness wait timeout. Default: 120.
               --output <path>             JSON output; sibling .cases.csv is written.
               --verbose                   Print every case.

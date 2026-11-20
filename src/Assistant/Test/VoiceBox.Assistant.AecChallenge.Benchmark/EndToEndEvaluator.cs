@@ -13,15 +13,20 @@ using VoiceBox.Assistant.Conversation.Abstractions;
 using VoiceBox.Assistant.Diagnostics.Benchmarking;
 using VoiceBox.Assistant.Diagnostics.Benchmarking.Adapters;
 using VoiceBox.Assistant.Diagnostics.Benchmarking.Models;
+using VoiceBox.Assistant.Modules.Speaker.Controllers;
+using VoiceBox.Assistant.Modules.Speaker.Models;
 using VoiceBox.Core;
 using VoiceBox.Core.Services.AECService;
 using VoiceBox.Core.Services.ASRService;
 using VoiceBox.Core.Services.AudioService;
 using VoiceBox.Core.Services.AudioService.Models;
 using VoiceBox.Core.Services.LLMService;
+using VoiceBox.Core.Services.SpeakerService;
 using VoiceBox.Core.Services.TTSService;
 using VoiceBox.Core.Services.TTSService.Models;
 using VoiceBox.Core.Services.VadService;
+using VoiceBox.Speaker.CampPlus;
+using VoiceBox.Speaker.CampPlus.Models;
 using VoiceBox.TTS.VoxCPM;
 using VoiceBox.VAD.FireRed;
 using VoiceBox.VAD.FireRed.Models;
@@ -49,6 +54,7 @@ internal sealed class EndToEndEvaluator : IDisposable
     private readonly BootstrapThenRealAsrService _asr;
     private readonly PreparedTtsService _tts;
     private readonly EndToEndLlmService _llm;
+    private readonly ISpeakerService? _speaker;
     private bool _disposed;
 
     public EndToEndEvaluator(EndToEndOptions options)
@@ -92,12 +98,11 @@ internal sealed class EndToEndEvaluator : IDisposable
             // the device had already accepted.
             DeviceOutputLatencySamples =
                 EvaluationOptions.TargetSampleRate * DeviceOutputLatencyMs / 1000,
-            // The real ClearQueue stops and restarts the duplex stream, so the barge-in utterance is
-            // recorded across an AEC reset and a capture-timeline break.
-            // Measured to be near-inert today (CER 65.43% with it on vs 65.31% off, identical empty
-            // recognition) because the hard stop lands after the user has finished speaking. It
-            // becomes material as soon as the stop moves earlier, so the model stays enabled.
-            ModelStreamRestartOnClear = true,
+            // Opt-in stress model. The shipping PortAudio/MiniAudio ClearQueue implementations
+            // deliberately keep the microphone running so the barge-in utterance survives the
+            // stop; this model instead records an AEC/capture-timeline break. It is off by default
+            // and must be requested explicitly with --stream-restart.
+            ModelStreamRestartOnClear = _options.StreamRestartOnClear,
         };
         _llm = new EndToEndLlmService();
         var vadOptions = new FireRedVadOptions
@@ -126,7 +131,7 @@ internal sealed class EndToEndEvaluator : IDisposable
             }));
         _asr = new BootstrapThenRealAsrService(realAsr);
         _clockedMainAec = new BenchmarkClockedAecService(_mainAec, _mainAec, _timeProvider);
-        _services = (AudioServiceManager)new AudioServiceManager()
+        AudioServiceManager serviceManager = new AudioServiceManager()
             .AddService<IAudioDuplexService>(services =>
             {
                 services.AddSingleton<IAudioDuplexService>(_audio);
@@ -137,8 +142,23 @@ internal sealed class EndToEndEvaluator : IDisposable
                 services.AddSingleton<IASRService>(_asr);
                 services.AddSingleton<IStreamLLMService>(_llm);
                 services.AddSingleton<IStreamTTSService>(_tts);
-            })
-            .Build();
+            });
+        if (!string.IsNullOrWhiteSpace(options.SpeakerModelDir))
+        {
+            serviceManager.AddCampPlusSpeakerService(speaker =>
+            {
+                speaker.ModelDir = options.SpeakerModelDir;
+                speaker.SampleRate = EvaluationOptions.TargetSampleRate;
+                speaker.ChannelCount = 1;
+                speaker.WindowMs = 500;
+                speaker.HopMs = 100;
+                speaker.SampleFormat = SampleFormat.Float32;
+                speaker.ExecutionProvider = options.ExecutionProvider;
+            });
+        }
+
+        _services = (AudioServiceManager)serviceManager.Build();
+        _speaker = string.IsNullOrWhiteSpace(options.SpeakerModelDir) ? null : _services.GetSpeakerServiceInstance();
     }
 
     public async Task<EndToEndCaseResult> EvaluateAsync(PreparedEndToEndCase testCase, CancellationToken cancellationToken)
@@ -192,7 +212,12 @@ internal sealed class EndToEndEvaluator : IDisposable
             .UseTts(_tts)
             .AddAcousticMetricsSource(_clockedMainAec)
             .AddBargeIn(new WebRtcAec3DelayEstimatorFactory());
-        using var assistant = builder.BuildForBenchmark(_timeProvider, probe, playbackBargeInDetectorFactory: null);
+        if (_speaker is not null)
+            builder.AddSpeakerVerification(_speaker);
+        // The bootstrap VAD/ASR turn is synthetic. Only the interruption is a measured speaker trial.
+        var purposes = new SpeakerPurposeSet(Wakeup: false, BargeInCommand: true, SingleTalk: false);
+        SpeakerModuleFactory? speakerFactory = _speaker is null ? null : new SpeakerModuleFactory(_speaker, assistantOptions.Speaker, purposes);
+        using var assistant = builder.BuildForBenchmark(_timeProvider, probe, speakerModuleFactory: speakerFactory);
 
         var terminal = new TaskCompletionSource<BargeInValidationEventArgs>(TaskCreationOptions.RunContinuationsAsynchronously);
         BargeInValidationEventArgs? heard = null;
@@ -236,6 +261,7 @@ internal sealed class EndToEndEvaluator : IDisposable
             for (int offset = 0; offset < scene.TotalSamples; offset += callbackSamples)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+                long frameStarted = Stopwatch.GetTimestamp();
                 int length = Math.Min(callbackSamples, scene.TotalSamples - offset);
                 var renderFrame = new float[callbackSamples];
                 var microphoneFrame = new float[callbackSamples];
@@ -271,7 +297,15 @@ internal sealed class EndToEndEvaluator : IDisposable
                 {
                     break;
                 }
-                if ((offset / callbackSamples) % 16 == 0)
+                // The real speaker worker runs on wall time. Advancing a virtual second of PCM
+                // in a few milliseconds would exhaust its per-window inference budget in the harness.
+                if (_speaker is not null)
+                {
+                    TimeSpan remaining = callbackPeriod - Stopwatch.GetElapsedTime(frameStarted);
+                    if (remaining > TimeSpan.Zero)
+                        await Task.Delay(remaining, cancellationToken).ConfigureAwait(false);
+                }
+                else if ((offset / callbackSamples) % 16 == 0)
                     await Task.Yield();
             }
 
@@ -635,6 +669,12 @@ internal sealed class EndToEndEvaluator : IDisposable
             TtsVoice = _options.TtsVoice,
         };
         options.BargeIn.Enable = true;
+        if (_speaker is not null)
+        {
+            options.Speaker.ProfilePath = _options.SpeakerProfilePath ?? options.Speaker.ProfilePath;
+            options.Speaker.Confirmation.Enable = true;
+        }
+
         return options;
     }
 

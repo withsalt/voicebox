@@ -39,7 +39,7 @@ internal sealed class PlaybackStartedControlHandler
 
         _bargeIn.ResetDecisionState();
         _turnBoundary.Reset();
-        _nearEnd.ClearAudioReservoirs();
+        _nearEnd.ClearAudioReservoirs(turnId);
         if (_startupGuardMs > 0)
             _startupGuard.Start(_startupGuardMs);
     }

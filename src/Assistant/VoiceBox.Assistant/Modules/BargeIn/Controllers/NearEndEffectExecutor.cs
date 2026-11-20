@@ -48,6 +48,8 @@ internal sealed class NearEndEffectExecutor
     public SpeakerVerificationResult EvaluateSpeaker(in SpeakerEvidenceQuery query)
         => _speakerEvidence?.Evaluate(in query) ?? SpeakerVerificationResult.Unavailable(0, in query, SpeakerVerificationReason.NotReady);
 
+    public Task? SpeakerEvidenceChanged => _speakerEvidence?.EvidenceChanged;
+
     public TimeSpan GetInferenceTimeout(SpeakerVerificationPurpose purpose)
         => _speakerEvidence?.GetInferenceTimeout(purpose) ?? TimeSpan.Zero;
 

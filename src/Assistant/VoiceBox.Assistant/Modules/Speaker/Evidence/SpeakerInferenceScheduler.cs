@@ -136,7 +136,7 @@ internal sealed class SpeakerInferenceScheduler : IDisposable
                         _queue.Add(existing with { Job = job });
                     }
                     if (!job.CandidateId.IsNone && _cache.IsInFlight(key.Item1, key.Item2, key.Item3))
-                        _candidateWindows[job.CandidateId] = key;
+                        TrackCandidateWindow(job.CandidateId, key);
                 }
                 return SpeakerScheduleResult.AlreadyKnown;
             }
@@ -157,13 +157,23 @@ internal sealed class SpeakerInferenceScheduler : IDisposable
 
             _queue.Add(new QueuedJob(job, ++_sequence, Stopwatch.GetTimestamp()));
             if (job.IsPrefetch) _queuedPrefetchCount++;
-            else if (!job.CandidateId.IsNone) _candidateWindows[job.CandidateId] = key;
+            else if (!job.CandidateId.IsNone) TrackCandidateWindow(job.CandidateId, key);
             _diagnostics?.ObserveQueueDepth(_queue.Count);
             _diagnostics?.RecordInferenceScheduled(job.IsPrefetch);
         }
         // Coalesced wakeup: promotion, eviction and cancellation cannot leak semaphore permits.
         try { _available.Release(); } catch (SemaphoreFullException) { }
         return SpeakerScheduleResult.Queued;
+    }
+
+    private void TrackCandidateWindow(SpeakerCandidateId candidateId, (long Epoch, long Start, long End) window)
+    {
+        if (_candidateWindows.TryGetValue(candidateId, out var previous) && previous == window)
+            return;
+
+        _candidateWindows[candidateId] = window;
+        // Wake an evidence waiter whose last evaluation had no in-flight deadline.
+        _cache.Pulse();
     }
 
     /// <summary>
@@ -311,16 +321,6 @@ internal sealed class SpeakerInferenceScheduler : IDisposable
             long dequeuedAt = Stopwatch.GetTimestamp();
             double queueWaitMs = Stopwatch.GetElapsedTime(queued.EnqueuedAt, dequeuedAt).TotalMilliseconds;
             _diagnostics?.RecordQueueWait(dequeuedAt - queued.EnqueuedAt);
-            //_logger.LogDebug(
-            //    "Speaker inference started: job={JobId}, candidate={CandidateId}, epoch={Epoch}, " +
-            //    "range=[{Start},{End}), prefetch={Prefetch}, prefix={Prefix}, priority={Priority}, " +
-            //    "windowMs={WindowMs:F1}, queueDepth={QueueDepth}, queueWaitMs={QueueWaitMs:F1}.",
-            //    queued.Sequence, queued.Job.CandidateId.Value, queued.Job.StreamEpoch,
-            //    queued.Job.StartSample, queued.Job.EndSampleExclusive, queued.Job.IsPrefetch,
-            //    queued.Job.IsPrefix, queued.Job.Priority,
-            //    (queued.Job.EndSampleExclusive - queued.Job.StartSample) * 1000d / _speaker.SampleRate,
-            //    queueDepth, queueWaitMs);
-
             long started = Stopwatch.GetTimestamp();
             long completedAt;
             long embeddingTicks;
@@ -343,15 +343,23 @@ internal sealed class SpeakerInferenceScheduler : IDisposable
                 _cache.Pulse();
             }
 
-            //_logger.LogDebug(
-            //    "Speaker inference completed: job={JobId}, candidate={CandidateId}, epoch={Epoch}, " +
-            //    "range=[{Start},{End}), prefetch={Prefetch}, prefix={Prefix}, kind={Kind}, reason={Reason}, " +
-            //    "queueWaitMs={QueueWaitMs:F1}, embeddingMs={EmbeddingMs:F1}, jobMs={JobMs:F1}, totalMs={TotalMs:F1}.",
-            //    queued.Sequence, queued.Job.CandidateId.Value, queued.Job.StreamEpoch,
-            //    queued.Job.StartSample, queued.Job.EndSampleExclusive, queued.Job.IsPrefetch, queued.Job.IsPrefix,
-            //    evidence.Kind, evidence.Reason, queueWaitMs, embeddingTicks * 1000d / Stopwatch.Frequency,
-            //    Stopwatch.GetElapsedTime(started, completedAt).TotalMilliseconds,
-            //    Stopwatch.GetElapsedTime(queued.EnqueuedAt, completedAt).TotalMilliseconds);
+            if (!queued.Job.IsPrefetch && _logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug(
+                    "Speaker inference completed: candidate={CandidateId}, epoch={Epoch}, range=[{Start},{End}), kind={Kind}, " +
+                    "queueDepth={QueueDepth}, queueWaitMs={QueueWaitMs:F1}, embeddingMs={EmbeddingMs:F1}, " +
+                    "jobMs={JobMs:F1}, totalMs={TotalMs:F1}.",
+                    queued.Job.CandidateId.Value,
+                    queued.Job.StreamEpoch,
+                    queued.Job.StartSample,
+                    queued.Job.EndSampleExclusive,
+                    evidence.Kind,
+                    queueDepth,
+                    queueWaitMs,
+                    embeddingTicks * 1000d / Stopwatch.Frequency,
+                    Stopwatch.GetElapsedTime(started, completedAt).TotalMilliseconds,
+                    Stopwatch.GetElapsedTime(queued.EnqueuedAt, completedAt).TotalMilliseconds);
+            }
         }
     }
 

@@ -13,6 +13,7 @@ internal sealed class NearEndCaptureStateMachine
     public enum Status
     {
         Idle,
+        Pending,
         DirectFeed,
         Draining,
     }
@@ -54,7 +55,9 @@ internal sealed class NearEndCaptureStateMachine
 
     public long ActiveTurnId => _activeTurnId;
 
-    public bool DirectFeed => State != Status.Idle;
+    public bool DirectFeed => State is Status.DirectFeed or Status.Draining;
+
+    public bool Pending => State == Status.Pending;
 
     public bool EndDrainPending => State == Status.Draining;
 
@@ -102,6 +105,40 @@ internal sealed class NearEndCaptureStateMachine
         _preRollSamples = preRollSamples;
     }
 
+    /// <summary>
+    /// Registers capture ownership for an authorized interruption before its pre-roll is available.
+    /// The turn owns the capture, but no audio is accepted until <see cref="ActivatePending"/>.
+    /// </summary>
+    public void BeginPending(long turnId, long startSample, double speechDurationMs, string preRollSource, int preRollSamples)
+    {
+        _activeTurnId = turnId;
+        ResetDrainFields();
+        State = Status.Pending;
+        _nextSample = startSample;
+        _directFeedSamples = 0;
+        _speechDurationMs = speechDurationMs;
+        _silenceMs = 0;
+        _preRollSource = preRollSource;
+        _preRollSamples = preRollSamples;
+    }
+
+    /// <summary>
+    /// Promotes a pending capture once its first feed position is available. The caller drains the
+    /// main timeline from this watermark immediately after the transition.
+    /// </summary>
+    public bool ActivatePending(long firstFeedSample, double speechDurationMs)
+    {
+        if (State != Status.Pending)
+            return false;
+
+        State = Status.DirectFeed;
+        ResetDrainFields();
+        _nextSample = firstFeedSample;
+        _speechDurationMs = speechDurationMs;
+        _silenceMs = 0;
+        return true;
+    }
+
     public void Stop()
     {
         _activeTurnId = 0;
@@ -125,7 +162,7 @@ internal sealed class NearEndCaptureStateMachine
 
     public void AddSamples(long turnId, int samples)
     {
-        if (samples > 0 && _activeTurnId == turnId && State != Status.Idle)
+        if (samples > 0 && _activeTurnId == turnId && State is Status.DirectFeed or Status.Draining)
             _directFeedSamples += samples;
     }
 
@@ -136,7 +173,7 @@ internal sealed class NearEndCaptureStateMachine
     public FeedDecision ReserveFeed(in MainAudioObservation observation, long currentGeneration, long currentStreamEpoch)
     {
         if (_activeTurnId == 0 ||
-            State == Status.Idle ||
+            State is Status.Idle or Status.Pending ||
             observation.Generation != currentGeneration ||
             observation.StreamEpoch != currentStreamEpoch)
         {
@@ -225,7 +262,7 @@ internal sealed class NearEndCaptureStateMachine
         int endSilenceMs,
         long timeoutSamples)
     {
-        if (_activeTurnId != turnId || State == Status.Idle)
+        if (_activeTurnId != turnId || State is Status.Idle or Status.Pending)
             return Finalization.None;
 
         if (State == Status.Draining)
@@ -337,7 +374,10 @@ internal sealed class NearEndCaptureStateMachine
     public void ClearEndDrain()
     {
         ResetDrainFields();
-        State = _activeTurnId != 0 ? Status.DirectFeed : Status.Idle;
+        if (_activeTurnId == 0)
+            State = Status.Idle;
+        else if (State != Status.Pending)
+            State = Status.DirectFeed;
     }
 
     // Stryker disable equality: right==0 never overflows; left==(Max-right) yields MaxValue for both > and >=.

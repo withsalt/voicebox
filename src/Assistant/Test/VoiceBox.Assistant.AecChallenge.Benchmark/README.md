@@ -245,14 +245,22 @@ dotnet run --project src/Assistant/Test/VoiceBox.Assistant.AecChallenge.Benchmar
   --enforce-gates
 ```
 
+默认不模拟流重启：PortAudio/MiniAudio 的 `ClearQueue()` 只清播放队列，采集继续。
+`--stream-restart` 开启 AEC/采集时间线重启压力模型，应作为单独的鲁棒性报告，不能
+与生产行为混用。默认也是关闭本人验证的路径；传入 `--speaker-model-dir <campplus>`
+和 `--speaker-profile <owner-profile-v2>` 后，benchmark 会加载 CAM++ 服务并以
+`Speaker.Confirmation.Enable=true` 构建 Assistant，用于开启声纹的验收。
+声纹回放使用 CAM++ 的 500 ms 窗、100 ms 步长，注册文件须与当前模型、窗长、步长和采集前端匹配。评测的合成开场只负责启动 TTS，真人插话通过生产 `BargeInCommand` 验证器。开启声纹时按音频回调周期推进回放，保证后台推理获得相应的实际运行时间。报告记录首次有音频在播时的清队列位置。
+
 可用 suite 为 `smoke`（9）、`pr-e2e`（31）、`release-e2e`（82）和
 `nightly-e2e`（164）。每个 case 使用 CPU 上的真实 VoxCPM TTS；每个虚拟声卡 callback 从
 Assistant 的播放 FIFO 读取当时仍在播放的 render，应用当前 duck gain、render gap、
 时钟漂移、轻度扬声器非线性和流式 BUT RIR，再叠加近端中文语音及环境噪声生成
 microphone。`ClearQueue()` 会让未来 render 归零，但 RIR 尾音继续传播。
 
-E2E 使用与 Demo 一致的 FireRed VAD 和 `VoiceAssistantOptions` 生产默认值，只将
-`BargeIn.Enable` 打开。报告分别给出 `Heard`、duck、ASR Accepted、控制层
+E2E 使用与 Demo 一致的 FireRed VAD 和 `VoiceAssistantOptions` 生产默认值，默认只将
+`BargeIn.Enable` 打开；传入 speaker 参数时额外启用 `Speaker.Confirmation.Enable` 并加载
+CAM++/owner profile。报告分别给出 `Heard`、duck、ASR Accepted、控制层
 `ClearQueue`、实际可听停止及恢复结果。控制停止延迟从近端语音起点计到
 `ClearQueue`，可听停止延迟继续计到 RIR 回声连续 60 ms 低于门槛；另行报告的
 可听尾音延迟只计算从 `ClearQueue` 到该静音点的声学尾部。

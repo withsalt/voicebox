@@ -18,4 +18,6 @@ internal readonly record struct NearEndConfirmationLease(
     bool EndpointVadCandidate,
     bool IdentityRequired,
     bool IdentityAuthorized,
-    SpeakerVerificationResult SpeakerResult);
+    SpeakerVerificationResult SpeakerResult,
+    NearEndCapturePlan? CapturePlan = null,
+    long CandidateGeneration = 0);

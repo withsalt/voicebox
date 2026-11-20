@@ -27,6 +27,11 @@ internal sealed class NearEndCandidateStateMachine
     public SpeakerCandidateId CandidateId { get; private set; }
     public long OwnerTurnId { get; private set; }
     public BargeInDecision Decision { get; private set; }
+    /// <summary>
+    /// The decision window frozen by <see cref="Authorize"/>. The capture plan and lease read this
+    /// value, never the continuously advancing <see cref="Decision"/>.
+    /// </summary>
+    public BargeInDecision AuthorizedDecision { get; private set; }
     public long StreamEpoch { get; private set; }
     public long MainStartSample { get; private set; } = -1;
     public long EndSample { get; private set; }
@@ -53,6 +58,7 @@ internal sealed class NearEndCandidateStateMachine
         CandidateId = candidateId;
         OwnerTurnId = ownerTurnId;
         Decision = decision;
+        AuthorizedDecision = default;
         StreamEpoch = decision.StreamEpoch;
         MainStartSample = anchorSample;
         EndSample = endSampleExclusive;
@@ -78,6 +84,7 @@ internal sealed class NearEndCandidateStateMachine
         CandidateId = default;
         OwnerTurnId = ownerTurnId;
         Decision = decision;
+        AuthorizedDecision = decision;
         StreamEpoch = decision.StreamEpoch;
         MainStartSample = -1;
         EndSample = decision.EndSampleExclusive;
@@ -98,6 +105,7 @@ internal sealed class NearEndCandidateStateMachine
         CandidateId = default;
         OwnerTurnId = 0;
         Decision = default;
+        AuthorizedDecision = default;
         StreamEpoch = 0;
         MainStartSample = -1;
         EndSample = 0;
@@ -112,8 +120,11 @@ internal sealed class NearEndCandidateStateMachine
 
     public void Authorize()
     {
-        if (State == Status.AwaitingSpeaker)
-            State = Status.Authorized;
+        if (State != Status.AwaitingSpeaker)
+            return;
+
+        State = Status.Authorized;
+        AuthorizedDecision = Decision;
     }
 
     /// <summary>

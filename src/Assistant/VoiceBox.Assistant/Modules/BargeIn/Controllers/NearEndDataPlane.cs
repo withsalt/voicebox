@@ -39,12 +39,29 @@ internal sealed class NearEndDataPlane
     private readonly NearEndConfirmationJournal _journal;
     private readonly NearEndReplayBuffer _replay;
     private readonly PlaybackDuckingPolicy _ducking;
+    private readonly object _speakerEvaluationGate = new();
     private readonly object _lock = new();
+    private readonly object _feedGate = new();
     private long _cooldownUntilTicks;
     private string _lastCandidateOutcome = "none";
     private long _commandAuthorizedCount;
     private long _commandDeniedCount;
     private int _dataPlaneFaultReported;
+    private PendingCapture? _pendingCapture;
+    private ITimer? _pendingCaptureTimer;
+    private long _captureSpeechEpoch;
+    private long _earliestEndpointSample;
+    private CancellationTokenSource? _speakerWaitCancellation;
+    private long _speakerWaitGeneration;
+
+    private sealed record PendingCapture(long TurnId, NearEndCapturePlan Plan, NearEndConfirmationLease Lease);
+
+    private readonly record struct PendingCaptureActivation(
+        long TurnId,
+        long StreamEpoch,
+        long StartSample,
+        long EndSampleExclusive,
+        bool Rebased);
 
     public NearEndDataPlane(
         BargeInRuntimeOptions options,
@@ -158,15 +175,23 @@ internal sealed class NearEndDataPlane
             if (!_endpoint.CandidateActive)
                 _endpoint.BeginCandidate();
 
-            if (_endpoint.CandidateGeneration != _timeline.Generation ||
-                !_endpoint.TryLocate(audio, out long streamEpoch, out long startSample, out long endSample) ||
-                (_endpoint.CandidateStreamEpoch != 0 && _endpoint.CandidateStreamEpoch != streamEpoch))
+            if (_endpoint.CandidateGeneration == _timeline.Generation &&
+                _endpoint.TryLocate(audio, out long streamEpoch, out long startSample, out long endSample) &&
+                (_endpoint.CandidateStreamEpoch == 0 || _endpoint.CandidateStreamEpoch == streamEpoch))
             {
-                return;
+                _endpoint.ExtendCandidate(streamEpoch, startSample, endSample);
+                if (_journal.TryGetReplayRequest(out var lease) && lease.CapturePlan is { PreferEndpointVadStart: true } &&
+                    TryGetEndpointVadCandidateStartLocked(lease.Decision, out _, out long onset, out _))
+                {
+                    _journal.RecordVadStart(_timeline.Generation, onset);
+                }
             }
-
-            _endpoint.ExtendCandidate(streamEpoch, startSample, endSample);
+            if (_pendingCapture is null)
+                return;
         }
+
+        lock (_feedGate)
+            TryActivatePendingCaptureOrdered();
     }
 
     public void ObserveUnownedEndpointSpeechEnded()
@@ -203,6 +228,15 @@ internal sealed class NearEndDataPlane
                 return;
             }
 
+            long endpointSample = captureCommittedAfterEndpoint ? _endpoint.UnownedEndSample : _timeline.EndSample;
+            if (_capture.ActiveTurnId != 0 && EndpointPredatesSpeech(_timeline.StreamEpoch, endpointSample))
+            {
+                _endpoint.ClearUnowned();
+                _endpoint.ClearCandidate();
+                _endpoint.ClearCaptureObservation();
+                return;
+            }
+
             _endpoint.ClearCandidate();
             if (_capture.DirectFeed)
             {
@@ -214,6 +248,16 @@ internal sealed class NearEndDataPlane
                 finalize = _capture.TryClaimEndFinalization(out speechDuration, out drainOutcome);
 
                 _endpoint.ClearUnowned();
+            }
+            else if (_capture.Pending)
+            {
+                // The committed capture is still waiting for its first main-timeline frame. Keep
+                // the VAD endpoint as the utterance tail for activation instead of dropping it;
+                // otherwise ObserveCaptureStarted(endpointVad: true) would keep the capture
+                // speech-active forever and no drain could ever start.
+                if (!_endpoint.UnownedObserved)
+                    _endpoint.RecordUnowned(_timeline.Generation, _timeline.StreamEpoch, _timeline.EndSample);
+                _endpoint.MarkUnownedProcessed();
             }
             else if (_endpoint.UnownedObserved)
             {
@@ -270,6 +314,7 @@ internal sealed class NearEndDataPlane
             return default;
 
         bool retryAuthorizedCandidate = false;
+        bool tryActivatePendingCapture = false;
         bool discontinuity;
         MainAudioObservation observation;
         PlaybackDuckingPolicy.Command restore = PlaybackDuckingPolicy.Command.None;
@@ -280,11 +325,29 @@ internal sealed class NearEndDataPlane
             if (discontinuity)
             {
                 restore = _ducking.Restore();
+                _captureSpeechEpoch = 0;
                 _candidate.Clear();
+                CancelSpeakerWaitLocked();
                 _endpoint.ClearCandidate();
                 _capture.ForceEndDrain("capture-discontinuity");
                 if (_capture.ActiveTurnId == 0)
                     _capture.SetFeedWatermark(frame.SourceRange.EndSampleExclusive);
+                if (_pendingCapture is { } pendingCapture &&
+                    (pendingCapture.Plan.StreamEpoch != _timeline.StreamEpoch || pendingCapture.Plan.StartSample > _timeline.EndSample))
+                {
+                    // Old epoch coordinates never splice into the new stream. Keep the capture
+                    // ownership and restart it at the new timeline end when it activates.
+                    _pendingCapture = pendingCapture with
+                    {
+                        Plan = pendingCapture.Plan with
+                        {
+                            StreamEpoch = _timeline.StreamEpoch,
+                            StartSample = _timeline.EndSample,
+                        },
+                    };
+                    if (_endpoint.UnownedObserved && _endpoint.UnownedStreamEpoch != _timeline.StreamEpoch)
+                        _endpoint.ClearUnowned();
+                }
             }
 
             observation = new MainAudioObservation(
@@ -294,12 +357,16 @@ internal sealed class NearEndDataPlane
                 frame.SourceRange.EndSampleExclusive,
                 discontinuity);
             if (!discontinuity && _capture.ActiveTurnId == 0 && _candidate.Active && _candidate.Authorized)
-            {
                 retryAuthorizedCandidate = true;
-            }
+            tryActivatePendingCapture = _pendingCapture is not null;
         }
 
         ExecutePlayback(in restore);
+        if (tryActivatePendingCapture)
+        {
+            lock (_feedGate)
+                TryActivatePendingCaptureOrdered();
+        }
         if (retryAuthorizedCandidate)
             TryStartAuthorizedCandidate();
 
@@ -308,11 +375,29 @@ internal sealed class NearEndDataPlane
 
     public void FeedFromRecognitionAudio(ReadOnlySpan<float> audio, MainAudioObservation observation)
     {
+        // Every feed, whichever callback observes the frame first, drains the still-unfed main
+        // timeline range first and holds the gate across the provider call. Two producers (the
+        // recognition callback and the control-plane confirmation commit) can therefore never
+        // enqueue an older range after a newer one, which would permanently skip the gap.
+        lock (_feedGate)
+        {
+            if (audio.IsEmpty)
+                return;
+
+            // The common direct-feed case has watermark == observation start and timeline end ==
+            // observation end: feed the caller's span without a second reservoir snapshot/copy.
+            if (NeedsBacklogDrain(in observation))
+                DrainUnfedMainAudioBeforeFeed();
+            if (!_replay.DrainActive)
+                DrainConfirmationTail();
+            FeedFromRecognitionAudioCore(audio, observation);
+        }
+    }
+
+    private void FeedFromRecognitionAudioCore(ReadOnlySpan<float> audio, MainAudioObservation observation)
+    {
         if (audio.IsEmpty)
             return;
-
-        if (!_replay.DrainActive)
-            DrainConfirmationTail();
 
         NearEndCaptureStateMachine.FeedDecision feed;
         lock (_lock)
@@ -392,6 +477,15 @@ internal sealed class NearEndDataPlane
 
     public bool TryCommit(in NearEndConfirmationLease lease, in SpeakingDecision confirmed)
     {
+        // The capture start and its catch-up drain are one ordered unit with every recognition
+        // feed. Otherwise a feed that observed the frame while the capture was still idle could
+        // reserve only its own frame after the start, permanently skipping the backlog before it.
+        lock (_feedGate)
+            return TryCommitFeedOrdered(in lease, in confirmed);
+    }
+
+    private bool TryCommitFeedOrdered(in NearEndConfirmationLease lease, in SpeakingDecision confirmed)
+    {
         // The control consumer owns the conversation snapshot; read it outside the data-plane
         // lock and require the decision to interrupt the same reply that admitted the candidate.
         if (lease.OwnerTurnId <= 0 || lease.OwnerTurnId != _conversation.CurrentTurnId || lease.OwnerTurnId != confirmed.InterruptedTurnId)
@@ -399,56 +493,115 @@ internal sealed class NearEndDataPlane
             return false;
         }
 
-        bool rebasedAfterStreamEpochChange;
-        long firstFeedSample;
-        long committedStreamEpoch;
+        NearEndCapturePlan? capturePlan = lease.CapturePlan;
+        bool deferred = capturePlan is { Ready: false };
+        bool rebasedAfterStreamEpochChange = false;
+        long firstFeedSample = 0;
+        long committedStreamEpoch = 0;
         lock (_lock)
         {
-            if (_capture.ActiveTurnId != 0)
+            if (_capture.ActiveTurnId != 0 || _pendingCapture is not null)
                 return false;
             if (!_journal.TryCommit(in lease))
                 return false;
 
             _capture.ClearEndDrain();
             Volatile.Write(ref _dataPlaneFaultReported, 0);
-            double speechMs = Math.Max(0, _audioFormat.SamplesToMilliseconds(confirmed.ConfirmedCandidateSamples));
-            // Start at the immutable confirmation boundary so callbacks that arrived while the
-            // control-plane confirmation was queued can be replayed exactly once. If the capture
-            // stream restarted while the confirmation was pending, the selection coordinates
-            // belong to the retired epoch; rebase to the current timeline end instead of pinning
-            // the feed watermark to pre-restart samples.
+            double speechMs = capturePlan is not null
+                ? Math.Max(0, lease.Decision.AcceptedDurationMs)
+                : Math.Max(0, _audioFormat.SamplesToMilliseconds(confirmed.ConfirmedCandidateSamples));
             committedStreamEpoch = _timeline.StreamEpoch;
-            rebasedAfterStreamEpochChange = lease.Selection.StreamEpoch != committedStreamEpoch;
-            firstFeedSample = rebasedAfterStreamEpochChange ? _timeline.EndSample : lease.Selection.SelectedEndSample;
-            _capture.Start(confirmed.TurnId, firstFeedSample, speechMs, lease.Selection.Source, lease.Selection.Samples);
-            // A restarted stream may never publish the old VAD endpoint, and an already-ended
-            // utterance cannot publish it again. Both cases must fall back to current DTD frames.
-            bool hasCurrentEndpoint = _endpoint.UnownedObserved &&
-                _endpoint.UnownedGeneration == _timeline.Generation &&
-                _endpoint.UnownedStreamEpoch == committedStreamEpoch;
-            _endpoint.ObserveCaptureStarted(lease.EndpointVadCandidate && !rebasedAfterStreamEpochChange && !hasCurrentEndpoint);
-            bool endpointPredatesCaptureCommit =
-                _endpoint.UnownedObserved &&
-                _endpoint.UnownedProcessed &&
-                _endpoint.UnownedGeneration == _timeline.Generation &&
-                _endpoint.UnownedStreamEpoch == _timeline.StreamEpoch &&
-                _endpoint.UnownedEndSample >= firstFeedSample &&
-                _endpoint.UnownedEndSample <= Math.Max(_timeline.EndSample, firstFeedSample);
-            if (endpointPredatesCaptureCommit)
+            _captureSpeechEpoch = lease.Decision.StreamEpoch;
+            _earliestEndpointSample = lease.Decision.LatestFrameAccepted
+                ? lease.Decision.EndSampleExclusive
+                : lease.Decision.FirstAcceptedStartSample + 1;
+            if (deferred)
             {
-                _endpoint.MarkCaptureSpeechEnded();
-                // The control plane consumed an endpoint at or after the immutable confirmation
-                // boundary, so both it and any already-observed DTD tail are fixed facts. An
-                // endpoint before that boundary is stale: later DTD evidence already extended
-                // the candidate past it and must remain eligible for ASR.
-                _capture.BeginDrain(_timeline.StreamEpoch, _timeline.EndSample, hasDiscontinuity: false, _options.DrainTimeoutSamples);
+                // Register capture ownership now; the stop that follows this commit no longer
+                // depends on the pre-roll snapshot or on the main recognition chain advancing.
+                NearEndCapturePlan pendingPlan = capturePlan!.Value;
+                if (pendingPlan.PreferEndpointVadStart &&
+                    _journal.LocatedVadStart is { } located &&
+                    located.Generation == _timeline.Generation)
+                {
+                    pendingPlan = pendingPlan with
+                    {
+                        StartSample = Math.Min(pendingPlan.StartSample, Math.Max(0, located.StartSample - _options.PreRollSamples)),
+                        EndpointVadCandidate = !_endpoint.UnownedObserved,
+                        PreferEndpointVadStart = false,
+                    };
+                }
+                _capture.BeginPending(confirmed.TurnId, pendingPlan.StartSample, speechMs, lease.Selection.Source, lease.Selection.Samples);
+                _pendingCapture = new PendingCapture(confirmed.TurnId, pendingPlan, lease);
+                long operationId = lease.OperationId;
+                TimeSpan budget = TimeSpan.FromMilliseconds(_audioFormat.SamplesToMilliseconds(_options.DrainTimeoutSamples));
+                _pendingCaptureTimer = _timeProvider.CreateTimer(
+                    _ => ExpirePendingCapture(operationId),
+                    null,
+                    budget,
+                    Timeout.InfiniteTimeSpan);
+                _replay.Clear();
             }
+            else
+            {
+                // Start at the immutable confirmation boundary so callbacks that arrived while
+                // the control-plane confirmation was queued can be replayed exactly once. If the
+                // capture stream restarted while the confirmation was pending, the selection
+                // coordinates belong to the retired epoch; rebase to the current timeline end
+                // instead of pinning the feed watermark to pre-restart samples.
+                rebasedAfterStreamEpochChange = lease.Selection.StreamEpoch != committedStreamEpoch;
+                firstFeedSample = rebasedAfterStreamEpochChange ? _timeline.EndSample : lease.Selection.SelectedEndSample;
+                _capture.Start(confirmed.TurnId, firstFeedSample, speechMs, lease.Selection.Source, lease.Selection.Samples);
+                // A restarted stream may never publish the old VAD endpoint, and an already-ended
+                // utterance cannot publish it again. Both cases must fall back to current DTD frames.
+                bool hasCurrentEndpoint = _endpoint.UnownedObserved &&
+                    _endpoint.UnownedGeneration == _timeline.Generation &&
+                    _endpoint.UnownedStreamEpoch == committedStreamEpoch;
+                _endpoint.ObserveCaptureStarted(lease.EndpointVadCandidate && !rebasedAfterStreamEpochChange && !hasCurrentEndpoint);
+                if (hasCurrentEndpoint && EndpointPredatesSpeech(committedStreamEpoch, _endpoint.UnownedEndSample))
+                {
+                    _endpoint.ClearUnowned();
+                    hasCurrentEndpoint = false;
+                }
+                bool endpointPredatesCaptureCommit =
+                    _endpoint.UnownedObserved &&
+                    _endpoint.UnownedProcessed &&
+                    _endpoint.UnownedGeneration == _timeline.Generation &&
+                    _endpoint.UnownedStreamEpoch == _timeline.StreamEpoch &&
+                    _endpoint.UnownedEndSample >= firstFeedSample &&
+                    _endpoint.UnownedEndSample <= Math.Max(_timeline.EndSample, firstFeedSample);
+                if (endpointPredatesCaptureCommit)
+                {
+                    _endpoint.MarkCaptureSpeechEnded();
+                    // The control plane consumed an endpoint at or after the immutable confirmation
+                    // boundary, so both it and any already-observed DTD tail are fixed facts. An
+                    // endpoint before that boundary is stale: later DTD evidence already extended
+                    // the candidate past it and must remain eligible for ASR.
+                    _capture.BeginDrain(_timeline.StreamEpoch, _timeline.EndSample, hasDiscontinuity: false, _options.DrainTimeoutSamples);
+                }
 
-            // Keep a pending acknowledgement only when its endpoint reaches this capture's
-            // boundary. Older endpoints must not terminate a later capture when replayed.
-            if (!hasCurrentEndpoint || _endpoint.UnownedProcessed || _endpoint.UnownedEndSample < firstFeedSample)
-                _endpoint.ClearUnowned();
-            _endpoint.ClearCandidate();
+                // Keep a pending acknowledgement only when its endpoint reaches this capture's
+                // boundary. Older endpoints must not terminate a later capture when replayed.
+                if (!hasCurrentEndpoint || _endpoint.UnownedProcessed || _endpoint.UnownedEndSample < firstFeedSample)
+                    _endpoint.ClearUnowned();
+                _endpoint.ClearCandidate();
+            }
+        }
+
+        if (deferred)
+        {
+            ExecutePlayback(RestoreDucking());
+            _logger.LogDebug(
+                "主动近端 barge-in 登记待采集: turnId={TurnId}, planSource={PlanSource}, planStart={PlanStart}, " +
+                "mainEnd={MainEnd}, epoch={StreamEpoch}, feedsInFlight={FeedsInFlight}.",
+                confirmed.TurnId,
+                capturePlan!.Value.Source,
+                capturePlan.Value.StartSample,
+                _timeline.EndSample,
+                _timeline.StreamEpoch,
+                _capture.DirectFeedsInFlight);
+            TryActivatePendingCaptureOrdered();
+            return true;
         }
 
         if (rebasedAfterStreamEpochChange)
@@ -463,8 +616,11 @@ internal sealed class NearEndDataPlane
         }
 
         LogCaptureStarted(confirmed.TurnId, lease.Selection);
-        DrainConfirmationTail();
-        DrainUnfedMainAudioAfterConfirmation();
+        lock (_feedGate)
+        {
+            DrainUnfedMainAudioBeforeFeed();
+            DrainConfirmationTail();
+        }
         bool finalize;
         TimeSpan speechDuration;
         ActiveEndDrainOutcome drainOutcome;
@@ -479,6 +635,171 @@ internal sealed class NearEndDataPlane
             EndCapture(confirmed.TurnId, speechDuration, drainOutcome);
 
         return true;
+    }
+
+    /// <summary>
+    /// Promotes the committed pending capture as soon as the main timeline has reached its start.
+    /// The pre-roll snapshot and the audio buffered while the control plane stopped playback are
+    /// fed as one half-open range; later recognition frames continue at its exclusive end.
+    /// </summary>
+    private bool TryActivatePendingCaptureOrdered(bool allowVadFallback = false)
+    {
+        PendingCaptureActivation activation;
+        lock (_lock)
+        {
+            if (_pendingCapture is not { } pending)
+                return false;
+            if (_capture.State != NearEndCaptureStateMachine.Status.Pending || _capture.ActiveTurnId != pending.TurnId)
+            {
+                ClearPendingCaptureLocked();
+                return false;
+            }
+            if (_capture.DirectFeedsInFlight != 0)
+                return false;
+            if (!_timeline.TryGetBounds(out long streamEpoch, out long retainedStartSample, out long endSample))
+                return false;
+
+            bool rebased = streamEpoch != pending.Plan.StreamEpoch;
+            bool locatedVad = false;
+            long startSample;
+            if (rebased)
+            {
+                startSample = endSample;
+            }
+            else
+            {
+                long desiredStart = pending.Plan.StartSample;
+                if (pending.Plan.PreferEndpointVadStart)
+                {
+                    locatedVad = TryGetEndpointVadCandidateStartLocked(pending.Lease.Decision, out _, out long vadStart, out bool waiting);
+                    if (locatedVad)
+                        desiredStart = Math.Min(desiredStart, Math.Max(0, vadStart - _options.PreRollSamples));
+                    else if (waiting && !allowVadFallback)
+                        return false;
+                }
+
+                startSample = Math.Max(desiredStart, retainedStartSample);
+                if (startSample >= endSample)
+                    return false;
+            }
+
+            // Use the frozen decision's accepted speech duration, not the pre-roll-to-activation
+            // span; the latter depends on how late the scheduler activated the capture.
+            double speechMs = rebased ? 0 : Math.Max(0, pending.Lease.Decision.AcceptedDurationMs);
+            if (!_capture.ActivatePending(startSample, speechMs))
+            {
+                ClearPendingCaptureLocked();
+                return false;
+            }
+
+            bool hasCurrentEndpoint = _endpoint.UnownedObserved &&
+                _endpoint.UnownedGeneration == _timeline.Generation &&
+                _endpoint.UnownedStreamEpoch == streamEpoch;
+            _endpoint.ObserveCaptureStarted((locatedVad || pending.Plan.EndpointVadCandidate) && !rebased && !hasCurrentEndpoint);
+            if (hasCurrentEndpoint && EndpointPredatesSpeech(streamEpoch, _endpoint.UnownedEndSample))
+            {
+                _endpoint.ClearUnowned();
+                hasCurrentEndpoint = false;
+            }
+            bool endpointInsideCapture = hasCurrentEndpoint &&
+                _endpoint.UnownedEndSample >= startSample &&
+                _endpoint.UnownedEndSample <= endSample;
+            if (endpointInsideCapture)
+            {
+                _endpoint.MarkCaptureSpeechEnded();
+                _capture.BeginDrain(streamEpoch, _endpoint.UnownedEndSample, hasDiscontinuity: false, _options.DrainTimeoutSamples);
+            }
+
+            if (!hasCurrentEndpoint || _endpoint.UnownedProcessed || _endpoint.UnownedEndSample < startSample)
+                _endpoint.ClearUnowned();
+            _endpoint.ClearCandidate();
+            ClearPendingCaptureLocked();
+            activation = new PendingCaptureActivation(pending.TurnId, streamEpoch, startSample, endSample, rebased);
+        }
+
+        if (activation.Rebased)
+        {
+            _logger.LogDebug(
+                "近端待采集在 stream epoch 变化后重定位: turnId={TurnId}, feedStart={FeedStart}, epoch={StreamEpoch}.",
+                activation.TurnId,
+                activation.StartSample,
+                activation.StreamEpoch);
+        }
+        else
+        {
+            _logger.LogDebug(
+                "主动近端 barge-in 开始捕获: turnId={TurnId}, feed=[{FeedStart},{FeedEnd}), epoch={StreamEpoch}, rebased={Rebased}.",
+                activation.TurnId,
+                activation.StartSample,
+                activation.EndSampleExclusive,
+                activation.StreamEpoch,
+                activation.Rebased);
+        }
+
+        DrainUnfedMainAudioBeforeFeed();
+        return true;
+    }
+
+    private bool EndpointPredatesSpeech(long streamEpoch, long endpointSample)
+        => streamEpoch > 0 && streamEpoch == _captureSpeechEpoch && endpointSample < _earliestEndpointSample;
+
+    /// <summary>
+    /// A pending capture whose main timeline never reaches its start must still settle its
+    /// validation turn. After the configured drain budget, start an empty capture and finish it so
+    /// the turn can complete without audio instead of waiting forever for a missing callback.
+    /// </summary>
+    private void ExpirePendingCapture(long operationId)
+    {
+        lock (_feedGate)
+            ExpirePendingCaptureOrdered(operationId);
+    }
+
+    private void ExpirePendingCaptureOrdered(long operationId)
+    {
+        PendingCapture expired;
+        lock (_lock)
+        {
+            if (_pendingCapture is not { } pending || pending.Lease.OperationId != operationId)
+                return;
+            expired = pending;
+        }
+
+        // At the deadline a missing VAD location may fall back to the stored start. Deliver any
+        // retained PCM before closing, including when the device never sends us another callback.
+        if (TryActivatePendingCaptureOrdered())
+            return;
+        if (expired.Plan.PreferEndpointVadStart)
+            TryActivatePendingCaptureOrdered(allowVadFallback: true);
+        TimeSpan speechDuration;
+        ActiveEndDrainOutcome outcome;
+        bool finalized;
+        long turnId = expired.TurnId;
+        lock (_lock)
+        {
+            if (_capture.ActiveTurnId != turnId)
+                return;
+
+            long streamEpoch = _timeline.StreamEpoch;
+            long endSample = _timeline.EndSample;
+            if (_capture.Pending)
+            {
+                _capture.ActivatePending(endSample, speechDurationMs: 0);
+                ClearPendingCaptureLocked();
+            }
+            _endpoint.ClearCandidate();
+            _endpoint.ClearUnowned();
+            _capture.BeginDrain(streamEpoch, endSample, hasDiscontinuity: false, _options.DrainTimeoutSamples);
+            finalized = _capture.TryClaimEndFinalization(out speechDuration, out outcome);
+        }
+
+        _logger.LogDebug(
+            "近端待采集超时收尾: turnId={TurnId}, planStart={PlanStart}, mainEnd={MainEnd}, finalized={Finalized}.",
+            turnId,
+            expired.Plan.StartSample,
+            _timeline.EndSample,
+            finalized);
+        if (finalized)
+            EndCapture(turnId, speechDuration, outcome);
     }
 
     public void Abort(in NearEndConfirmationLease lease)
@@ -509,6 +830,7 @@ internal sealed class NearEndDataPlane
                 return false;
 
             _capture.Stop();
+            ClearPendingCaptureLocked();
             _endpoint.ClearCaptureObservation();
             _journal.Clear();
             _replay.Clear();
@@ -516,6 +838,7 @@ internal sealed class NearEndDataPlane
             _endpoint.ClearUnowned();
             cancelled = _candidate.CandidateId;
             _candidate.Clear();
+            CancelSpeakerWaitLocked();
             if (startCooldown && _options.ActiveNearEndCooldownMs > 0)
             {
                 Volatile.Write(ref _cooldownUntilTicks, Environment.TickCount64 + _options.ActiveNearEndCooldownMs);
@@ -536,6 +859,7 @@ internal sealed class NearEndDataPlane
             Volatile.Write(ref _dataPlaneFaultReported, 0);
             turnId = _capture.ActiveTurnId;
             _capture.Stop();
+            ClearPendingCaptureLocked();
             _endpoint.ClearCaptureObservation();
             _journal.Clear();
             _replay.Clear();
@@ -544,6 +868,7 @@ internal sealed class NearEndDataPlane
             _cooldownUntilTicks = 0;
             cancelled = _candidate.CandidateId;
             _candidate.Clear();
+            CancelSpeakerWaitLocked();
         }
 
         ExecuteCancelCandidate(cancelled);
@@ -552,14 +877,28 @@ internal sealed class NearEndDataPlane
         ClearAudioReservoirs();
     }
 
-    public void ClearAudioReservoirs()
+    public void ClearAudioReservoirs(long playbackTurnId = 0)
     {
         SpeakerCandidateId cancelled;
         PlaybackDuckingPolicy.Command restore;
         lock (_lock)
         {
+            // A pending or active barge-in capture owns the current timeline and its pre-roll.
+            // A later playback boundary must not erase the utterance it is still assembling.
+            if (_pendingCapture is not null || _capture.ActiveTurnId != 0)
+                return;
+
+            if (playbackTurnId > 0)
+            {
+                bool sameOwner = (_candidate.Active && _candidate.OwnerTurnId == playbackTurnId) ||
+                    (_journal.TryGetReplayRequest(out NearEndConfirmationLease queued) && queued.OwnerTurnId == playbackTurnId);
+                if (sameOwner)
+                    return;
+            }
+
             cancelled = _candidate.CandidateId;
             _candidate.Clear();
+            CancelSpeakerWaitLocked();
             restore = _ducking.Restore();
             _timeline.Clear();
             _capture.ResetFeedWatermark();
@@ -572,6 +911,20 @@ internal sealed class NearEndDataPlane
         }
         ExecuteCancelCandidate(cancelled);
         ExecutePlayback(in restore);
+    }
+
+    /// <summary>
+    /// Aborts the capture registered for a Kernel-rejected authorization. The physical stop has not
+    /// been issued on this path, so the interrupted reply continues and no captured utterance is
+    /// allowed to outlive its turn.
+    /// </summary>
+    public void AbortCapture(long turnId)
+    {
+        if (!StopCapture(turnId, startCooldown: true))
+            return;
+
+        ExecutePlayback(RestoreDucking());
+        _effects.Execute(new NearEndEffect.ResetRecognition(turnId));
     }
 
     // ---------------------------------------------------------------------------------------
@@ -592,7 +945,10 @@ internal sealed class NearEndDataPlane
             // VAD 已接管 (directFeed=false) 时窗口决策不会被使用, 不必逐帧计算;
             // ProcessActiveAudio 内部仍持锁复核 turn/directFeed, 此处只是快速跳过。
             if (!IsDirectFeedActive(activeTurnId))
+            {
+                ExecutePlayback(RestoreDucking());
                 return;
+            }
 
             ProcessActiveAudio(activeTurnId, in frame, ComputeFrameDurationMs(in frame), GetRecentDecision());
             return;
@@ -617,6 +973,12 @@ internal sealed class NearEndDataPlane
             ClearSpeakerCandidate();
             return;
         }
+
+        bool confirmationQueued;
+        lock (_lock)
+            confirmationQueued = _journal.HasQueued;
+        if (confirmationQueued)
+            return;
 
         BargeInDecision decision = GetRecentDecision();
         if (!_authorization.RequiresSpeaker)
@@ -661,23 +1023,31 @@ internal sealed class NearEndDataPlane
 
         if (!candidateAuthorized)
         {
-            BargeInSpeakerGateStatus speakerStatus = GetSpeakerGateStatus(in frame, generation, out SpeakerVerificationResult verdict);
-            if (speakerStatus == BargeInSpeakerGateStatus.Pending)
+            bool invalidFrame;
+            lock (_lock)
             {
-                // Pending: the interrupted reply keeps playing at its normal gain. A DTD
-                // Interrupt that already arrived is only recorded on the candidate.
-                return;
+                if (!_candidate.IsCurrent(generation))
+                    return;
+                invalidFrame = frame.HasDiscontinuity || _candidate.StreamEpoch != frame.StreamEpoch;
+                if (!invalidFrame && !_candidate.EndpointObserved)
+                    _candidate.ExtendEndSample(frame.EndSampleExclusive);
             }
-            if (speakerStatus == BargeInSpeakerGateStatus.Rejected)
+            if (invalidFrame)
             {
-                DenyCandidate(generation, in verdict, in decision);
+                SpeakerEvidenceQuery empty = default;
+                var invalid = SpeakerVerificationResult.Unavailable(0, in empty, SpeakerVerificationReason.TimelineGap);
+                DenyCandidate(generation, in invalid);
                 return;
             }
 
-            if (!TryAuthorizeSpeakerCandidate(generation))
+            Task? update = _effects.SpeakerEvidenceChanged;
+            if (!TryEvaluateCurrentSpeaker(generation, frame.TimestampTicks, out var result, out TimeSpan remaining))
                 return;
-            Interlocked.Increment(ref _commandAuthorizedCount);
-            LogCommandAuthorized(generation, in verdict, in decision);
+            if (result.IsFinal)
+                ApplySpeakerVerdict(generation, in result);
+            else if (update is not null)
+                EnsureSpeakerWait(generation, update, remaining);
+            return;
         }
 
         TryStartAuthorizedCandidate();
@@ -737,7 +1107,7 @@ internal sealed class NearEndDataPlane
         }
     }
 
-    private void DenyCandidate(long generation, in SpeakerVerificationResult verdict, in BargeInDecision decision)
+    private void DenyCandidate(long generation, in SpeakerVerificationResult verdict)
     {
         string outcome = verdict.Status switch
         {
@@ -747,12 +1117,18 @@ internal sealed class NearEndDataPlane
         };
         long ownerTurnId;
         long candidateId;
+        BargeInDecision decision;
         lock (_lock)
         {
-            if (_candidate.Active)
-                _lastCandidateOutcome = outcome;
+            if (!_candidate.IsCurrent(generation) || _candidate.Authorized)
+                return;
+
+            _lastCandidateOutcome = outcome;
             ownerTurnId = _candidate.OwnerTurnId;
             candidateId = _candidate.CandidateId.Value;
+            decision = _candidate.Decision;
+            _candidate.Clear();
+            CancelSpeakerWaitLocked();
         }
 
         Interlocked.Increment(ref _commandDeniedCount);
@@ -776,8 +1152,7 @@ internal sealed class NearEndDataPlane
             decision.EndSampleExclusive,
             decision.StreamEpoch);
 
-        if (!TryClearSpeakerCandidate(generation))
-            return;
+        ExecuteCancelCandidate(new SpeakerCandidateId(candidateId));
         // A later window of the same utterance may still authorize. Its onset and primary-AEC
         // audio belong to the timeline, not to the rejected identity candidate.
         if (_options.ActiveNearEndCooldownMs > 0)
@@ -802,24 +1177,9 @@ internal sealed class NearEndDataPlane
         {
             cancelled = _candidate.CandidateId;
             _candidate.Clear();
+            CancelSpeakerWaitLocked();
         }
         ExecuteCancelCandidate(cancelled);
-    }
-
-    private bool TryClearSpeakerCandidate(long generation)
-    {
-        SpeakerCandidateId cancelled;
-        lock (_lock)
-        {
-            if (!_candidate.IsCurrent(generation))
-                return false;
-
-            cancelled = _candidate.CandidateId;
-            _candidate.Clear();
-        }
-
-        ExecuteCancelCandidate(cancelled);
-        return true;
     }
 
     private void ExecuteCancelCandidate(SpeakerCandidateId candidateId)
@@ -828,17 +1188,180 @@ internal sealed class NearEndDataPlane
             _effects.Execute(new NearEndEffect.CancelSpeakerCandidate(candidateId));
     }
 
-    private bool TryAuthorizeSpeakerCandidate(long generation)
+    /// <summary>
+    /// Starts one non-blocking wait per candidate. It is the active wake-up path for a verdict
+    /// that becomes final while no further duplex frame arrives; the per-frame poll below stays as
+    /// the zero-latency cache-hit path.
+    /// </summary>
+    private void EnsureSpeakerWait(long generation, Task update, TimeSpan remaining)
     {
+        if (!_authorization.RequiresSpeaker)
+            return;
+
+        CancellationTokenSource cancellation;
         lock (_lock)
         {
-            if (!_candidate.IsCurrent(generation))
-                return false;
+            if (!_candidate.IsCurrent(generation) || _candidate.Authorized)
+                return;
+            if (_speakerWaitCancellation is not null && _speakerWaitGeneration == generation)
+                return;
 
+            CancelSpeakerWaitLocked();
+            cancellation = new CancellationTokenSource();
+            _speakerWaitCancellation = cancellation;
+            _speakerWaitGeneration = generation;
+        }
+
+        _ = Task.Run(() => WaitForSpeakerDecisionAsync(generation, update, remaining, cancellation));
+    }
+
+    private void CancelSpeakerWaitLocked()
+    {
+        CancellationTokenSource? cancellation = _speakerWaitCancellation;
+        _speakerWaitCancellation = null;
+        _speakerWaitGeneration = 0;
+        if (cancellation is null)
+            return;
+
+        try
+        {
+            cancellation.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+    }
+
+    private async Task WaitForSpeakerDecisionAsync(long generation, Task update, TimeSpan remaining, CancellationTokenSource cancellation)
+    {
+        try
+        {
+            while (!cancellation.IsCancellationRequested)
+            {
+                try
+                {
+                    await update.WaitAsync(remaining, _timeProvider, cancellation.Token).ConfigureAwait(false);
+                }
+                catch (TimeoutException)
+                {
+                    // Recheck the actual job: completion or a new window may have raced the timer.
+                }
+
+                update = _effects.SpeakerEvidenceChanged!;
+                if (!TryEvaluateCurrentSpeaker(generation, _timeProvider.GetTimestamp(), out var result, out remaining))
+                    return;
+                if (result.IsFinal)
+                {
+                    ApplySpeakerVerdict(generation, in result);
+                    return;
+                }
+            }
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "主动近端声纹等待失败: generation={Generation}.", generation);
+        }
+        finally
+        {
+            lock (_lock)
+            {
+                if (ReferenceEquals(_speakerWaitCancellation, cancellation))
+                {
+                    _speakerWaitCancellation = null;
+                    _speakerWaitGeneration = 0;
+                }
+            }
+            cancellation.Dispose();
+        }
+    }
+
+    private bool TryBuildSpeakerQueryLocked(long generation, long timestamp, out SpeakerEvidenceQuery query)
+    {
+        query = default;
+        if (!_candidate.Active || _candidate.Authorized || !_candidate.IsCurrent(generation) || _candidate.MainStartSample < 0)
+            return false;
+
+        long candidateEnd = Math.Min(_candidate.EndSample, _candidate.DeadlineSample);
+        if (candidateEnd <= _candidate.MainStartSample)
+            return false;
+
+        bool inputComplete = _candidate.EndSample >= _candidate.DeadlineSample || _candidate.EndpointObserved;
+        query = new SpeakerEvidenceQuery(
+            SpeakerVerificationPurpose.BargeInCommand,
+            _candidate.StreamEpoch,
+            _candidate.MainStartSample,
+            candidateEnd,
+            timestamp,
+            InputComplete: inputComplete,
+            StrongUpstreamEvidence: _candidate.StrongUpstreamEvidence,
+            CandidateId: _candidate.CandidateId,
+            OwnerTurnId: _candidate.OwnerTurnId);
+        return true;
+    }
+
+    private bool TryEvaluateCurrentSpeaker(long generation, long timestamp, out SpeakerVerificationResult result, out TimeSpan remaining)
+    {
+        result = default;
+        remaining = Timeout.InfiniteTimeSpan;
+        // Serialize cache reads and deadline updates, so an older poll cannot reinstall a completed job.
+        lock (_speakerEvaluationGate)
+        {
+            SpeakerEvidenceQuery query;
+            lock (_lock)
+            {
+                if (!TryBuildSpeakerQueryLocked(generation, timestamp, out query))
+                    return false;
+                if (_candidate.SpeakerResult.IsFinal)
+                {
+                    result = _candidate.SpeakerResult;
+                    return true;
+                }
+            }
+
+            result = _effects.EvaluateSpeaker(in query);
+            TimeSpan budget = _effects.GetInferenceTimeout(SpeakerVerificationPurpose.BargeInCommand);
+            lock (_lock)
+            {
+                if (!_candidate.IsCurrent(generation) || _candidate.Authorized)
+                    return false;
+                long now = _timeProvider.GetTimestamp();
+                _candidate.ObserveInferenceWait(in result, now);
+                if (_candidate.InferenceReadyTimestamp >= 0)
+                {
+                    remaining = budget - _timeProvider.GetElapsedTime(_candidate.InferenceReadyTimestamp, now);
+                    if (remaining <= TimeSpan.Zero)
+                        result = result.WithInferenceTimeout();
+                }
+                _candidate.SetSpeakerResult(in result);
+            }
+        }
+        return true;
+    }
+
+    private void ApplySpeakerVerdict(long generation, in SpeakerVerificationResult result)
+    {
+        if (result.Status != SpeakerVerificationStatus.Match)
+        {
+            DenyCandidate(generation, in result);
+            return;
+        }
+
+        BargeInDecision decision;
+        lock (_lock)
+        {
+            if (!_candidate.IsCurrent(generation) || _candidate.Authorized)
+                return;
             _candidate.Authorize();
             _lastCandidateOutcome = "command-authorized";
-            return true;
+            decision = _candidate.AuthorizedDecision;
         }
+
+        Interlocked.Increment(ref _commandAuthorizedCount);
+        LogCommandAuthorized(generation, in result, in decision);
+        TryStartAuthorizedCandidate();
     }
 
     private bool BeginSpeakerCandidate(in BargeInDecision decision, in DuplexAudioFrame frame, out long generation)
@@ -939,97 +1462,6 @@ internal sealed class NearEndDataPlane
         return dtdEvidence || vadEvidence;
     }
 
-    private BargeInSpeakerGateStatus GetSpeakerGateStatus(in DuplexAudioFrame frame, long generation, out SpeakerVerificationResult result)
-    {
-        result = default;
-        if (!_authorization.RequiresSpeaker)
-            return BargeInSpeakerGateStatus.Match;
-
-        SpeakerEvidenceQuery query = default;
-        lock (_lock)
-        {
-            if (!_candidate.IsCurrent(generation) || frame.StreamEpoch != _candidate.StreamEpoch || frame.HasDiscontinuity)
-            {
-                result = SpeakerVerificationResult.Unavailable(
-                    0,
-                    in query,
-                    frame.HasDiscontinuity
-                        ? SpeakerVerificationReason.TimelineGap
-                        : SpeakerVerificationReason.StreamEpochMismatch);
-                return BargeInSpeakerGateStatus.Rejected;
-            }
-            if (!_candidate.EndpointObserved)
-                _candidate.ExtendEndSample(frame.EndSampleExclusive);
-            if (_candidate.MainStartSample < 0)
-                return BargeInSpeakerGateStatus.Pending;
-
-            long candidateEnd = Math.Min(_candidate.EndSample, _candidate.DeadlineSample);
-            bool inputComplete = _candidate.EndSample >= _candidate.DeadlineSample || _candidate.EndpointObserved;
-            query = new SpeakerEvidenceQuery(
-                SpeakerVerificationPurpose.BargeInCommand,
-                _candidate.StreamEpoch,
-                _candidate.MainStartSample,
-                candidateEnd,
-                frame.TimestampTicks,
-                InputComplete: inputComplete,
-                StrongUpstreamEvidence: _candidate.StrongUpstreamEvidence,
-                CandidateId: _candidate.CandidateId,
-                OwnerTurnId: _candidate.OwnerTurnId);
-        }
-
-        result = _effects.EvaluateSpeaker(in query);
-
-        bool waitingForInference = result.Status == SpeakerVerificationStatus.Pending &&
-            result.Reason == SpeakerVerificationReason.WaitingForInference;
-        long now = _timeProvider.GetTimestamp();
-        // Provider policy is queried outside the data-plane lock: no foreign owner may be
-        // entered under _lock. The candidate's source-sample deadline still bounds its input.
-        TimeSpan inferenceTimeout = waitingForInference
-            ? _effects.GetInferenceTimeout(SpeakerVerificationPurpose.BargeInCommand)
-            : TimeSpan.Zero;
-        TimeSpan inferenceElapsed = TimeSpan.Zero;
-        lock (_lock)
-        {
-            if (!_candidate.IsCurrent(generation))
-            {
-                result = SpeakerVerificationResult.Cancelled(result.Threshold, in query, SpeakerVerificationReason.CancelledByNewTurn);
-                return BargeInSpeakerGateStatus.Rejected;
-            }
-
-            _candidate.ObserveInferenceWait(in result, now);
-            if (waitingForInference)
-                inferenceElapsed = _timeProvider.GetElapsedTime(_candidate.InferenceReadyTimestamp, now);
-        }
-        if (waitingForInference && inferenceElapsed >= inferenceTimeout)
-        {
-            _logger.LogDebug(
-                "Speaker inference timeout: purpose={Purpose}, candidate={CandidateId}, owner={OwnerTurnId}, epoch={Epoch}, " +
-                "range=[{Start},{End}), timeoutMs={TimeoutMs:F1}, inferenceElapsedMs={InferenceElapsedMs:F1}, " +
-                "lastPendingReason={LastPendingReason}, observed={Observed}, matched={Matched}/{Required}, " +
-                "score={Score:F4}, pendingWindow=[{PendingStart},{PendingEnd}), requiredEnd={RequiredEnd}.",
-                query.Purpose, query.CandidateId.Value, query.OwnerTurnId, query.StreamEpoch,
-                query.CandidateStartSample, query.CandidateEndSampleExclusive,
-                inferenceTimeout.TotalMilliseconds, inferenceElapsed.TotalMilliseconds,
-                result.Reason, result.ObservedWindows, result.MatchedWindows, result.RequiredMatches,
-                result.Score, result.PendingWindowStartSample, result.PendingWindowEndSampleExclusive,
-                result.RequiredEvidenceEndSampleExclusive);
-            result = result.WithInferenceTimeout();
-        }
-
-        lock (_lock)
-        {
-            if (_candidate.IsCurrent(generation))
-                _candidate.SetSpeakerResult(in result);
-        }
-
-        return result.Status switch
-        {
-            SpeakerVerificationStatus.Match => BargeInSpeakerGateStatus.Match,
-            SpeakerVerificationStatus.Pending => BargeInSpeakerGateStatus.Pending,
-            _ => BargeInSpeakerGateStatus.Rejected,
-        };
-    }
-
     private void BeginTimelineCandidate(in BargeInDecision decision)
     {
         bool created = false;
@@ -1062,8 +1494,13 @@ internal sealed class NearEndDataPlane
 
     private void TryStartAuthorizedCandidate()
     {
-        BargeInDecision decision;
+        BargeInDecision decision = default;
+        NearEndCapturePlan plan = default;
+        ActiveNearEndPreRollSelection selection = default;
+        IReadOnlyList<float[]> initialAudio = [];
         long generation;
+        bool ready;
+        bool hasPlan;
         lock (_lock)
         {
             if (!_candidate.Active || !_candidate.Authorized || _capture.ActiveTurnId != 0)
@@ -1071,36 +1508,34 @@ internal sealed class NearEndDataPlane
                 _lastCandidateOutcome = "skipped:candidate-state-mismatch";
                 return;
             }
-            decision = _candidate.Decision;
+
+            decision = _candidate.AuthorizedDecision;
             generation = _candidate.Generation;
+            hasPlan = TryBuildCapturePlanLocked(in decision, out plan);
+            if (hasPlan && !plan.PreferEndpointVadStart && _capture.DirectFeedsInFlight == 0 &&
+                TrySnapshotCapturePlanLocked(in plan, in decision, out selection, out initialAudio))
+            {
+                ready = true;
+            }
+            else
+            {
+                ready = false;
+                initialAudio = [];
+                if (hasPlan)
+                    selection = CreatePendingSelection(in plan, in decision);
+            }
         }
 
-        if (!TryStartCapture(
-            decision,
-            out IReadOnlyList<float[]> initialAudio,
-            out ActiveNearEndPreRollSelection preRoll,
-            out bool endpointVadCandidate,
-            out bool retryable,
-            out bool waitingForEndpointVadLocation))
+        if (!hasPlan)
         {
-            string outcome = $"failed:{preRoll.Source}:{(retryable ? "retryable" : "terminal")}";
+            string outcome = "failed:missing-decision-timeline:terminal";
             bool outcomeChanged;
             lock (_lock)
             {
                 outcomeChanged = !string.Equals(_lastCandidateOutcome, outcome, StringComparison.Ordinal);
                 _lastCandidateOutcome = outcome;
             }
-            if (waitingForEndpointVadLocation)
-            {
-                _logger.LogDebug(
-                    "近端窗口已确认，等待主 VAD 首段音频定位: decision=[{DecisionStart},{DecisionEnd}), " +
-                    "mainEnd={MainEnd}, epoch={StreamEpoch}.",
-                    decision.StartSample,
-                    decision.EndSampleExclusive,
-                    _timeline.EndSample,
-                    decision.StreamEpoch);
-            }
-            else if (outcomeChanged)
+            if (outcomeChanged)
             {
                 _logger.LogDebug(
                     "主动近端 barge-in 候选无法启动: outcome={Outcome}, decisionReason={DecisionReason}, " +
@@ -1114,15 +1549,13 @@ internal sealed class NearEndDataPlane
                     decision.StreamEpoch);
             }
 
-            if (!retryable)
-            {
-                ClearSpeakerCandidate();
-                ExecutePlayback(RestoreDucking());
-            }
+            ClearSpeakerCandidate();
+            ExecutePlayback(RestoreDucking());
             return;
         }
 
         long operationId = _effects.NextOperationId();
+        long queuedCandidateId = 0;
         bool queued = false;
         lock (_lock)
         {
@@ -1131,22 +1564,29 @@ internal sealed class NearEndDataPlane
             if (!_candidate.IsCurrent(generation))
                 return;
 
+            NearEndCapturePlan committedPlan = plan with
+            {
+                Ready = ready,
+            };
             var lease = new NearEndConfirmationLease(
                 operationId,
                 _candidate.CandidateId,
                 _candidate.OwnerTurnId,
                 _candidate.StreamEpoch,
-                preRoll,
+                selection,
                 initialAudio,
                 decision,
-                endpointVadCandidate,
+                committedPlan.EndpointVadCandidate,
                 _candidate.IdentityRequired,
                 _candidate.IdentityRequired && _candidate.Authorized,
-                _candidate.SpeakerResult);
+                _candidate.SpeakerResult,
+                committedPlan,
+                _candidate.Generation);
             if (_journal.TryQueue(in lease))
             {
-                _replay.ResetNextSample(preRoll.SelectedEndSample);
-                _lastCandidateOutcome = "queued:confirmation";
+                _replay.ResetNextSample(ready ? selection.SelectedEndSample : plan.StartSample);
+                _lastCandidateOutcome = ready ? "queued:confirmation" : "queued:confirmation-pending-capture";
+                queuedCandidateId = _candidate.CandidateId.Value;
                 queued = true;
             }
         }
@@ -1161,153 +1601,139 @@ internal sealed class NearEndDataPlane
                 {
                     restore = _ducking.Restore();
                     if (_journal.TryDiscardPending(operationId))
+                    {
                         _lastCandidateOutcome = "failed:confirmation-overflow";
+                    }
                 }
                 ExecutePlayback(in restore);
             }
         }
 
+        if (queued)
+        {
+            _logger.LogDebug(
+                "主动近端 barge-in 已提交确认: candidate={CandidateId}, ready={Ready}, planSource={PlanSource}, " +
+                "planStart={PlanStart}, mainEnd={MainEnd}, epoch={StreamEpoch}.",
+                queuedCandidateId,
+                ready,
+                plan.Source,
+                plan.StartSample,
+                _timeline.EndSample,
+                plan.StreamEpoch);
+        }
+
         // The candidate has been handed to the control plane (or failed terminally); its
         // module-private state is released either way. Cached embeddings stay reusable.
         lock (_lock)
-            _candidate.Clear();
-    }
-
-    private bool TryStartCapture(
-        in BargeInDecision decision,
-        out IReadOnlyList<float[]> initialAudio,
-        out ActiveNearEndPreRollSelection selection,
-        out bool endpointVadCandidate,
-        out bool retryable,
-        out bool waitingForEndpointVadLocation)
-    {
-        retryable = false;
-        endpointVadCandidate = false;
-        waitingForEndpointVadLocation = false;
-        int preRollSamples = _options.PreRollSamples;
-        int candidateAudioLimitSamples = _options.TimelineAlignedAudioLimitSamples;
-        lock (_lock)
         {
-            // 上一回合若被外部路径停止，最后一次同步 FeedAudio 可能仍在锁外执行。
-            // 等它退出后再创建新回合，避免旧回合尾帧被状态机路由到新 ASR 会话。
-            if (_capture.DirectFeedsInFlight != 0)
-            {
-                initialAudio = [];
-                selection = ActiveNearEndPreRollSelection.Empty("in-flight-feed");
-                retryable = true;
-                return false;
-            }
-
-            IReadOnlyList<float[]> preRoll;
-            string source;
-            long selectedStreamEpoch;
-            long selectedStartSample;
-            long selectedEndSample;
-            bool hasEndpointVadAudio = TryGetEndpointVadCandidateStartLocked(
-                decision,
-                out long endpointVadStreamEpoch,
-                out long endpointVadStartSample,
-                out bool waitForEndpointVadLocation);
-            endpointVadCandidate = hasEndpointVadAudio && !_endpoint.UnownedObserved;
-            if (waitForEndpointVadLocation)
-            {
-                waitingForEndpointVadLocation = true;
-                initialAudio = [];
-                selection = ActiveNearEndPreRollSelection.Empty("main-vad-pending");
-                retryable = true;
-                return false;
-            }
-
-            if (hasEndpointVadAudio)
-            {
-                // VAD can recognize the onset after the first syllables. Its exact location
-                // still needs the configured lead-in from the same recognition timeline.
-                long vadPreRollStart = Math.Max(0, endpointVadStartSample - preRollSamples);
-                if (!TrySnapshotTimelineAligned(
-                    endpointVadStreamEpoch,
-                    vadPreRollStart,
-                    Math.Max(decision.EndSampleExclusive, _timeline.EndSample),
-                    candidateAudioLimitSamples,
-                    out preRoll,
-                    out selectedStartSample,
-                    out selectedEndSample,
-                    out retryable))
-                {
-                    initialAudio = [];
-                    selection = ActiveNearEndPreRollSelection.Empty("main-vad-timeline");
-                    return false;
-                }
-                source = "main-vad-timeline";
-                selectedStreamEpoch = endpointVadStreamEpoch;
-            }
-            else if (_candidate.MainStartSample >= 0)
-            {
-                long speakerPreRollStart = Math.Max(0, _candidate.MainStartSample - preRollSamples);
-                if (!TrySnapshotTimelineAligned(
-                    _candidate.StreamEpoch,
-                    speakerPreRollStart,
-                    Math.Max(decision.EndSampleExclusive, _timeline.EndSample),
-                    candidateAudioLimitSamples,
-                    out preRoll,
-                    out selectedStartSample,
-                    out selectedEndSample,
-                    out retryable))
-                {
-                    initialAudio = [];
-                    selection = ActiveNearEndPreRollSelection.Empty("main-candidate");
-                    return false;
-                }
-                source = "main-candidate";
-                selectedStreamEpoch = _candidate.StreamEpoch;
-            }
-            else if (NearEndDecisionRules.HasUsableTimeline(in decision))
-            {
-                // VAD 没有提供可靠句首时，使用裁决窗口覆盖的完整候选区间及其额外
-                // pre-roll。检测与最终识别音频来自两条独立消费线程，必须以共享
-                // capture timeline 为锚；main 领先时不能把 tail 右移，main 落后时
-                // 则固定首次决定等待追上。
-                long decisionPreRollStart = ComputeDecisionHistoryStart(decision, preRollSamples);
-                if (!TrySnapshotTimelineAligned(
-                    decision.StreamEpoch,
-                    decisionPreRollStart,
-                    decision.EndSampleExclusive,
-                    candidateAudioLimitSamples,
-                    out preRoll,
-                    out selectedStartSample,
-                    out selectedEndSample,
-                    out retryable))
-                {
-                    initialAudio = [];
-                    selection = ActiveNearEndPreRollSelection.Empty("main-timeline");
-                    return false;
-                }
-
-                source = "main-timeline";
-                selectedStreamEpoch = decision.StreamEpoch;
-            }
-            else
-            {
-                // 原子裁决要求概率、声学特征和识别音频共享 capture timeline。
-                // 时间轴缺失时不猜测句首，也不启动打断。
-                initialAudio = [];
-                selection = ActiveNearEndPreRollSelection.Empty("missing-decision-timeline");
-                retryable = false;
-                return false;
-            }
-
-            int samples = CountSamples(preRoll);
-            initialAudio = preRoll;
-            selection = new ActiveNearEndPreRollSelection(
-                source,
-                samples,
-                selectedStreamEpoch,
-                decision.StartSample,
-                decision.EndSampleExclusive,
-                selectedStartSample,
-                selectedEndSample);
-            return true;
+            if (!_candidate.IsCurrent(generation))
+                return;
+            _candidate.Clear();
+            CancelSpeakerWaitLocked();
         }
     }
+
+    /// <summary>
+    /// Resolves the capture start from the frozen decision and the current endpoint/candidate
+    /// evidence without requiring the main timeline to have reached any particular end. The plan
+    /// remains valid while the recognition chain is paused; only the pre-roll snapshot waits.
+    /// </summary>
+    private bool TryBuildCapturePlanLocked(in BargeInDecision decision, out NearEndCapturePlan plan)
+    {
+        plan = default;
+        int preRollSamples = _options.PreRollSamples;
+        bool hasEndpointVadAudio = TryGetEndpointVadCandidateStartLocked(
+            decision,
+            out long endpointVadStreamEpoch,
+            out long endpointVadStartSample,
+            out bool waitForEndpointVadLocation);
+        if (hasEndpointVadAudio)
+        {
+            plan = new NearEndCapturePlan(
+                endpointVadStreamEpoch,
+                Math.Max(0, endpointVadStartSample - preRollSamples),
+                "main-vad-timeline",
+                !_endpoint.UnownedObserved,
+                PreferEndpointVadStart: false,
+                Ready: false);
+            return true;
+        }
+
+        bool preferEndpointVadStart = waitForEndpointVadLocation;
+        if (_candidate.MainStartSample >= 0)
+        {
+            plan = new NearEndCapturePlan(
+                _candidate.StreamEpoch,
+                Math.Max(0, _candidate.MainStartSample - preRollSamples),
+                "main-candidate",
+                EndpointVadCandidate: false,
+                preferEndpointVadStart,
+                Ready: false);
+            return true;
+        }
+
+        if (!NearEndDecisionRules.HasUsableTimeline(in decision))
+            return false;
+
+        plan = new NearEndCapturePlan(
+            decision.StreamEpoch,
+            ComputeDecisionHistoryStart(in decision, preRollSamples),
+            "main-timeline",
+            EndpointVadCandidate: false,
+            PreferEndpointVadStart: waitForEndpointVadLocation,
+            Ready: false);
+        return true;
+    }
+
+    private bool TrySnapshotCapturePlanLocked(
+        in NearEndCapturePlan plan,
+        in BargeInDecision decision,
+        out ActiveNearEndPreRollSelection selection,
+        out IReadOnlyList<float[]> audio)
+    {
+        audio = [];
+        selection = default;
+        if (!_timeline.TryGetBounds(out long streamEpoch, out long retainedStart, out long endSample))
+            return false;
+        if (streamEpoch != plan.StreamEpoch)
+            return false;
+        if (endSample <= Math.Max(plan.StartSample, retainedStart))
+            return false;
+        if (!TrySnapshotTimelineAligned(
+            plan.StreamEpoch,
+            plan.StartSample,
+            endSample,
+            _options.TimelineAlignedAudioLimitSamples,
+            out audio,
+            out long selectedStartSample,
+            out long selectedEndSample,
+            out _))
+        {
+            audio = [];
+            return false;
+        }
+
+        int samples = CountSamples(audio);
+        selection = new ActiveNearEndPreRollSelection(
+            plan.Source,
+            samples,
+            plan.StreamEpoch,
+            decision.StartSample,
+            decision.EndSampleExclusive,
+            selectedStartSample,
+            selectedEndSample);
+        return samples > 0;
+    }
+
+    private static ActiveNearEndPreRollSelection CreatePendingSelection(in NearEndCapturePlan plan, in BargeInDecision decision)
+        => new(
+            plan.Source,
+            Samples: 0,
+            StreamEpoch: plan.StreamEpoch,
+            DecisionStartSample: decision.StartSample,
+            DecisionEndSample: decision.EndSampleExclusive,
+            SelectedStartSample: plan.StartSample,
+            SelectedEndSample: plan.StartSample);
 
     private bool TryGetEndpointVadCandidateStartLocked(
         in BargeInDecision decision,
@@ -1443,6 +1869,13 @@ internal sealed class NearEndDataPlane
                 return;
             }
 
+            // A plan-based capture owns the processed main timeline end to end. Replaying the DTD
+            // tail would let detection-chain coordinates overtake pre-roll frames that the main
+            // chain has not delivered yet, permanently skipping those earlier samples. The
+            // committed capture feeds the authoritative main timeline instead.
+            if (lease.CapturePlan is not null)
+                return;
+
             // The confirmation can be formed only after several DTD frames have already
             // advanced beyond its immutable selection boundary. The first replay must
             // therefore start at that boundary rather than at the current frame start.
@@ -1531,7 +1964,7 @@ internal sealed class NearEndDataPlane
                 if (discard)
                     continue;
 
-                FeedFromRecognitionAudio(
+                FeedFromRecognitionAudioCore(
                     audio,
                     new MainAudioObservation(
                         tail.Generation,
@@ -1554,7 +1987,18 @@ internal sealed class NearEndDataPlane
         }
     }
 
-    private void DrainUnfedMainAudioAfterConfirmation()
+    private bool NeedsBacklogDrain(in MainAudioObservation observation)
+    {
+        lock (_lock)
+        {
+            if (_capture.ActiveTurnId == 0 || !_capture.DirectFeed)
+                return false;
+            return observation.StartSample != _capture.DirectFeedNextSample ||
+                observation.EndSample != _timeline.EndSample;
+        }
+    }
+
+    private void DrainUnfedMainAudioBeforeFeed()
     {
         long generation;
         long streamEpoch;
@@ -1575,7 +2019,7 @@ internal sealed class NearEndDataPlane
                 return;
         }
 
-        FeedFromRecognitionAudio(audio, new MainAudioObservation(generation, streamEpoch, startSample, endSample, HasDiscontinuity: false));
+        FeedFromRecognitionAudioCore(audio, new MainAudioObservation(generation, streamEpoch, startSample, endSample, HasDiscontinuity: false));
     }
 
     // ---------------------------------------------------------------------------------------
@@ -1639,6 +2083,13 @@ internal sealed class NearEndDataPlane
     {
         lock (_lock)
             return _capture.IsActive(activeTurnId) && _capture.DirectFeed;
+    }
+
+    private void ClearPendingCaptureLocked()
+    {
+        _pendingCaptureTimer?.Dispose();
+        _pendingCaptureTimer = null;
+        _pendingCapture = null;
     }
 
     private void EndCapture(long turnId, TimeSpan speechDuration, ActiveEndDrainOutcome drainOutcome)
